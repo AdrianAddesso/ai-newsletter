@@ -41,7 +41,6 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import {
   type GenerateNewsletterRequest,
 } from '../services/ai'
-import { updateNewsletterStatus } from '../services/newsletters'
 
 // ⚠️ ARREGLAR ⚠️ — la generacion con IA está mockeada, descomentar cuando el servicio ande
 // import {
@@ -133,7 +132,7 @@ type CreatePageContext = {
   onSaveNewsletterComment: (value: string) => void
   onSaveBlockComment: (blockId: string, value: string) => void
   onExportToPng: () => Promise<void>
-  improvingBlockId: string | null
+  //improvingBlockId: string | null
   isGenerating: boolean
   isSendingForReview: boolean
   aiError: string | null
@@ -1159,7 +1158,7 @@ function CreatePage() {
   const [exportOptions, setExportOptions] = useState<ExportOption[]>([])
   const [isRenderingHtml, setIsRenderingHtml] = useState(false)
   const [isExportingPng, setIsExportingPng] = useState(false)
-  const [improvingBlockId, setImprovingBlockId] = useState<string | null>(null)
+  //const [improvingBlockId, setImprovingBlockId] = useState<string | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
   const [isSendingForReview, setIsSendingForReview] = useState(false)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
@@ -1307,7 +1306,7 @@ function CreatePage() {
       exportOptions,
       isRenderingHtml,
       isExportingPng,
-      improvingBlockId,
+      //improvingBlockId,
       isGenerating,
       isSendingForReview,
       aiError,
@@ -1342,8 +1341,7 @@ function CreatePage() {
       handleImproveBlockText,
       handleSendForReview,
       handleSendFeedback,
-      improvingBlockId,
-      isGenerating,
+      //improvingBlockId,
       isSendingForReview,
       isExportingPng,
       isGenerated,
