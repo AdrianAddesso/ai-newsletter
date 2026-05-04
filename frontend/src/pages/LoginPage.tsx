@@ -12,93 +12,99 @@ import {
   FormControlLabel,
   Typography,
   useTheme,
-} from '@mui/material'
-import { useState, type FormEvent } from 'react'
-import { Navigate, useLocation, useNavigate } from 'react-router'
+} from "@mui/material";
+import { useState, type FormEvent } from "react";
+import { Navigate, useLocation, useNavigate } from "react-router";
 
-import { MICROSOFT_SSO_USERS, useAuth } from '../contexts/AuthContext'
-import { useNotification } from '../hooks/useNotification'
-import { getRoleLabel } from '../utils/role-label'
-
+import { MICROSOFT_SSO_USERS, useAuth } from "../contexts/AuthContext";
+import { useNotification } from "../hooks/useNotification";
+import { getRoleLabel } from "../utils/role-label";
 
 interface LoginFormErrors {
-  email?: string
-  password?: string
+  email?: string;
+  password?: string;
 }
-
 
 const getSafeRedirectPath = (search: string) => {
-  const redirectPath = new URLSearchParams(search).get('redirect')
+  const redirectPath = new URLSearchParams(search).get("redirect");
 
-  if (!redirectPath || !redirectPath.startsWith('/') || redirectPath.startsWith('/login')) {
-    return '/dashboard'
+  if (
+    !redirectPath ||
+    !redirectPath.startsWith("/") ||
+    redirectPath.startsWith("/login")
+  ) {
+    return "/dashboard";
   }
 
-  return redirectPath
-}
+  return redirectPath;
+};
 
-const validateLoginForm = (email: string, password: string): LoginFormErrors => {
-  const errors: LoginFormErrors = {}
-  const trimmedEmail = email.trim()
+const validateLoginForm = (
+  email: string,
+  password: string,
+): LoginFormErrors => {
+  const errors: LoginFormErrors = {};
+  const trimmedEmail = email.trim();
 
   if (!trimmedEmail) {
-    errors.email = 'Ingresa tu email Microsoft'
+    errors.email = "Ingresa tu email Microsoft";
   } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
-    errors.email = 'Ingresa un email valido'
+    errors.email = "Ingresa un email valido";
   }
 
   if (!password) {
-    errors.password = 'Ingresa la clave'
+    errors.password = "Ingresa la clave";
   } else if (password.length < 8) {
-    errors.password = 'La clave debe tener al menos 8 caracteres'
+    errors.password = "La clave debe tener al menos 8 caracteres";
   }
 
-  return errors
-}
+  return errors;
+};
 
 export function LoginPage() {
-  const navigate = useNavigate()
-  const location = useLocation()
-  const { login, isAuthenticated } = useAuth()
-  const { error: notifyError, success: notifySuccess } = useNotification()
-  const theme = useTheme()
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { login, isAuthenticated } = useAuth();
+  const { error: notifyError, success: notifySuccess } = useNotification();
+  const theme = useTheme();
 
-  const redirectPath = getSafeRedirectPath(location.search)
-  const [email, setEmail] = useState(MICROSOFT_SSO_USERS[0].email)
-  const [password, setPassword] = useState('password123')
-  const [formErrors, setFormErrors] = useState<LoginFormErrors>({})
-  const [loading, setLoading] = useState(false)
-  const [errorMessage, setErrorMessage] = useState('')
+  const redirectPath = getSafeRedirectPath(location.search);
+  const [email, setEmail] = useState(MICROSOFT_SSO_USERS[0].email);
+  const [password, setPassword] = useState("password123");
+  const [formErrors, setFormErrors] = useState<LoginFormErrors>({});
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   if (isAuthenticated) {
-    return <Navigate to={redirectPath} replace />
+    return <Navigate to={redirectPath} replace />;
   }
 
   const handleMicrosoftLogin = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    setErrorMessage('')
+    event.preventDefault();
+    setErrorMessage("");
 
-    const nextErrors = validateLoginForm(email, password)
-    setFormErrors(nextErrors)
+    const nextErrors = validateLoginForm(email, password);
+    setFormErrors(nextErrors);
 
     if (Object.keys(nextErrors).length > 0) {
-      return
+      return;
     }
 
-    setLoading(true)
+    setLoading(true);
 
     try {
-      await login(email.trim().toLowerCase(), password)
-      notifySuccess('Sesion iniciada con Microsoft',)
-      navigate(redirectPath, { replace: true })
+      await login(email.trim().toLowerCase(), password);
+      notifySuccess("Sesion iniciada con Microsoft");
+      navigate(redirectPath, { replace: true });
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'No se pudo iniciar sesion'
-      setErrorMessage(message)
-      notifyError(message)
+      const message =
+        err instanceof Error ? err.message : "No se pudo iniciar sesion";
+      setErrorMessage(message);
+      notifyError(message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <Box
@@ -107,14 +113,12 @@ export function LoginPage() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        //: 'background.default',
-        background: `url('/src/assets/brand_shapes/isolated-by-brand/nestle-classic/light-blue.svg') center center / 2000px 2000px no-repeat, ${theme.palette.background.default}`,
+        background: `url('/src/assets/brand_shapes/isolated-by-brand/nestle-classic/light-blue.svg') center center / 1500px 1500px no-repeat, ${theme.palette.background.default}`,
         px: 2,
       }}
     >
       <Container maxWidth="sm">
         <Stack spacing={4}>
-
           <Card
             elevation={8}
             sx={{

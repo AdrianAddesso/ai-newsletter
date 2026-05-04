@@ -10,6 +10,7 @@ export interface User {
   name: string
   role: UserRole
   area?: string
+  state: 'ACTIVE' | 'INACTIVE' | 'REMOVED'
 }
 
 interface StoredSession {
@@ -53,54 +54,6 @@ export const MICROSOFT_SSO_USERS: User[] = [
     name: 'Usuario Normal',
     role: 'USER',
     state: 'INACTIVE',
-    area: 'COMUNICACION_INTERNA'
-  },
-  {
-    id: '4',
-    email: 'funcional@example.com',
-    name: 'Funcional',
-    role: 'FUNCTIONAL',
-    state: 'ACTIVE',
-    area: 'COMUNICACION_CORPORATIVA'
-  },
-  {
-    id: '5',
-    email: 'user@example.com',
-    name: 'Usuario Normal',
-    role: 'USER',
-    state: 'INACTIVE',
-    area: 'COMUNICACION_INTERNA'
-  },
-  {
-    id: '6',
-    email: 'funcional@example.com',
-    name: 'Funcional',
-    role: 'FUNCTIONAL',
-    state: 'ACTIVE',
-    area: 'COMUNICACION_CORPORATIVA'
-  },
-  {
-    id: '7',
-    email: 'user@example.com',
-    name: 'Usuario Normal',
-    role: 'USER',
-    state: 'ACTIVE',
-    area: 'COMUNICACION_INTERNA'
-  },
-  {
-    id: '8',
-    email: 'funcional@example.com',
-    name: 'Funcional',
-    role: 'FUNCTIONAL',
-    state: 'ACTIVE',
-    area: 'COMUNICACION_CORPORATIVA'
-  },
-  {
-    id: '9',
-    email: 'user@example.com',
-    name: 'Usuario Normal',
-    role: 'USER',
-    state: 'ACTIVE',
     area: 'COMUNICACION_INTERNA'
   },
 ]

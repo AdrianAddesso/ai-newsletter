@@ -30,6 +30,7 @@ import { UserRole, UserRoleLabel } from '../../../packages/shared/src/enums/user
 import { UserStatus, UserStatusLabel } from '../../../packages/shared/src/enums/user-status.enum';
 import { enumToOptions } from '../../../packages/shared/src/utils/enum-to-options';
 import type { User } from '../contexts/AuthContext';
+import DownloadIcon from "@mui/icons-material/FileDownloadOutlined";
 
 const STATE_OPTIONS = enumToOptions(UserStatus, UserStatusLabel);
 const AREA_OPTIONS = enumToOptions(AreaName, AreaNameLabel);
@@ -39,7 +40,7 @@ export function UsersPage() {
   const [userToEdit, setUserToEdit] = useState<User | null>(null)
   const [deletedId, setDeletedId] = useState<string | null>(null)
   const [search, setSearch] = useState('')
-  const [showActive, setShowActive] = useState(true)
+  const [showActive, setShowActive] = useState(false)
   const [showInactive, setShowInactive] = useState(false)
   const [orderBy, setOrderBy] = useState('name')
   const [order, setOrder] = useState<'asc' | 'desc'>('asc')
@@ -111,7 +112,7 @@ export function UsersPage() {
         email: 'user@example.com',
         name: 'Usuario Normal',
         role: 'USER',
-        state: 'ACTIVE',
+        state: 'REMOVED',
         area: 'COMUNICACION_INTERNA'
       },
       {
@@ -133,36 +134,36 @@ export function UsersPage() {
     ]
 
     return mockupUsers
-      .filter(user => {
-        if (user.state === UserStatus.REMOVED) {
-          return false
-        }
-        if (user.state === UserStatus.ACTIVE && !showActive) {
-          return false
-        }
-        if (user.state === UserStatus.INACTIVE && !showInactive) {
-          return false
-        }
-        return Object.values(user).some(value =>
-          value?.toString().toLowerCase().includes(search.toLowerCase())
-        )
-      })
-      .sort((a, b) => {
-        const isAsc = order === 'asc'
-        let valueA = a[orderBy as keyof typeof a]
-        let valueB = b[orderBy as keyof typeof b]
+        .filter((user) => {
+            const noFilter = !showActive && !showInactive;
+            if (noFilter) return true; // show all
 
-        if (typeof valueA === 'string') valueA = valueA.toLowerCase();
-        if (typeof valueB === 'string') valueB = valueB.toLowerCase();
+            if (showActive && user.state === UserStatus.ACTIVE) return true;
+            if (
+            showInactive &&
+            (user.state === UserStatus.INACTIVE ||
+                user.state === UserStatus.REMOVED)
+            )
+            return true;
+
+            return false;
+        })
+      .sort((a, b) => {
+        const isAsc = order === "asc";
+        let valueA = a[orderBy as keyof typeof a] ?? "";
+        let valueB = b[orderBy as keyof typeof b] ?? "";
+
+        if (typeof valueA === "string") valueA = valueA.toLowerCase();
+        if (typeof valueB === "string") valueB = valueB.toLowerCase();
 
         if (valueA < valueB) {
-          return isAsc ? -1 : 1
+          return isAsc ? -1 : 1;
         }
         if (valueA > valueB) {
-          return isAsc ? 1 : -1
+          return isAsc ? 1 : -1;
         }
-        return 0
-      })
+        return 0;
+      });
   }, [search, order, orderBy, showActive, showInactive])
 
   const theme = useTheme()
@@ -172,13 +173,16 @@ export function UsersPage() {
       sx={{
         py: theme.nestle.page.sectionPaddingY,
         px: theme.nestle.page.sectionPaddingX,
-        bgcolor: 'background.default',
-        minHeight: '100vh'
+        bgcolor: "background.default",
+        minHeight: "100vh",
       }}
     >
       <Container maxWidth="lg" disableGutters>
         <Stack spacing={4}>
-          <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
+          <Stack
+            direction="row"
+            sx={{ justifyContent: "space-between", alignItems: "center" }}
+          >
             <Stack spacing={1}>
               <Typography variant="h2">Usuarios</Typography>
               <Typography variant="body1" color="text.secondary">
@@ -186,6 +190,25 @@ export function UsersPage() {
               </Typography>
             </Stack>
             <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+              <ToggleButtonGroup
+                size="small"
+                value={[
+                  ...(showActive ? ["active"] : []),
+                  ...(showInactive ? ["inactive"] : []),
+                ]}
+                onChange={(_, newValues) => {
+                  setShowActive(newValues.includes("active"));
+                  setShowInactive(newValues.includes("inactive"));
+                  if (limit > 5) setLimit(5);
+                }}
+              >
+                <ToggleButton value="active" sx={{ px: 2 }}>
+                  Activos
+                </ToggleButton>
+                <ToggleButton value="inactive" sx={{ px: 2 }}>
+                  Inactivos
+                </ToggleButton>
+              </ToggleButtonGroup>
               <TextField
                 placeholder="Buscar ..."
                 size="small"
@@ -196,60 +219,54 @@ export function UsersPage() {
                   input: {
                     startAdornment: (
                       <InputAdornment position="start">
-                        <SearchIcon fontSize="small" sx={{ color: theme.palette.error.main }} />
+                        <SearchIcon
+                          fontSize="small"
+                          sx={{ color: theme.palette.error.main }}
+                        />
                       </InputAdornment>
                     ),
-                  }
+                  },
                 }}
               />
-              <ToggleButtonGroup
-                size="small"
-                value={[
-                  ...(showActive ? ['active'] : []),
-                  ...(showInactive ? ['inactive'] : []),
-                ]}
-                onChange={(_, newValues) => {
-                  setShowActive(newValues.includes('active'))
-                  setShowInactive(newValues.includes('inactive'))
-                  if (limit > 5) setLimit(5)
-                }}
+
+              <Button
+                variant="contained"
+                sx={{ whiteSpace: "nowrap" }}
+                startIcon={<DownloadIcon />}
               >
-                <ToggleButton value="active" sx={{ px: 2 }}>
-                  Activos
-                </ToggleButton>
-                <ToggleButton value="inactive" sx={{ px: 2 }}>
-                  Inactivos
-                </ToggleButton>
-              </ToggleButtonGroup>
+                Exportar Lista
+              </Button>
               <Button
                 variant="contained"
                 startIcon={<Add />}
-                sx={{ whiteSpace: 'nowrap' }}
-              >Nuevo</Button>
-              <Button
-                variant="contained"
-                sx={{ whiteSpace: 'nowrap' }}
-              >Exportar Reporte</Button>
+                sx={{ whiteSpace: "nowrap" }}
+              >
+                Nuevo Usuario
+              </Button>
             </Stack>
           </Stack>
-          <TableContainer component={Card} variant="outlined" sx={{ borderRadius: 2 }}>
+          <TableContainer
+            component={Card}
+            variant="outlined"
+            sx={{ borderRadius: 2 }}
+          >
             <Table>
-              <TableHead sx={{ bgcolor: 'action.hover' }}>
+              <TableHead sx={{ bgcolor: "action.hover" }}>
                 <TableRow>
                   <TableCell>
                     <TableSortLabel
-                      active={orderBy === 'name'}
-                      direction={orderBy === 'name' ? order : 'asc'}
-                      onClick={() => handleRequestSort('name')}
+                      active={orderBy === "name"}
+                      direction={orderBy === "name" ? order : "asc"}
+                      onClick={() => handleRequestSort("name")}
                     >
                       Nombre
                     </TableSortLabel>
                   </TableCell>
                   <TableCell>
                     <TableSortLabel
-                      active={orderBy === 'email'}
-                      direction={orderBy === 'email' ? order : 'asc'}
-                      onClick={() => handleRequestSort('email')}
+                      active={orderBy === "email"}
+                      direction={orderBy === "email" ? order : "asc"}
+                      onClick={() => handleRequestSort("email")}
                     >
                       Email
                     </TableSortLabel>
@@ -266,22 +283,47 @@ export function UsersPage() {
                     <TableRow key={user.id} hover>
                       <TableCell>{user.name}</TableCell>
                       <TableCell>{user.email}</TableCell>
-                      <TableCell>{ROLE_OPTIONS.find(option => option.value === user.role)?.label ?? ''}</TableCell>
-                      <TableCell>{AREA_OPTIONS.find(option => option.value === user.area)?.label ?? ''}</TableCell>
-                      <TableCell sx={{
-                        color: user.state === UserStatus.ACTIVE ? 'success.main' : 'error.main', fontWeight: 600,
-                        fontSize: '0.75rem',
-                        textTransform: 'uppercase'
-                      }}>{STATE_OPTIONS.find(state => state.value === user.state)?.label ?? ''}</TableCell>
+                      <TableCell>
+                        {ROLE_OPTIONS.find(
+                          (option) => option.value === user.role,
+                        )?.label ?? ""}
+                      </TableCell>
+                      <TableCell>
+                        {AREA_OPTIONS.find(
+                          (option) => option.value === user.area,
+                        )?.label ?? ""}
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          color:
+                            user.state === UserStatus.ACTIVE
+                              ? "success.main"
+                              : "error.main",
+                          fontWeight: 600,
+                          fontSize: "0.75rem",
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        {STATE_OPTIONS.find(
+                          (state) => state.value === user.state,
+                        )?.label ?? ""}
+                      </TableCell>
                       <TableCell>
                         <Stack direction="row" spacing={0.5}>
                           <Tooltip title="Editar">
-                            <IconButton size="small" onClick={() => setUserToEdit(user)}>
+                            <IconButton
+                              size="small"
+                              onClick={() => setUserToEdit(user)}
+                            >
                               <EditIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>
                           <Tooltip title="Borrar">
-                            <IconButton size="small" color="error" onClick={() => setDeletedId(user.id)}>
+                            <IconButton
+                              size="small"
+                              color="error"
+                              onClick={() => setDeletedId(user.id)}
+                            >
                               <DeleteOutlined fontSize="small" />
                             </IconButton>
                           </Tooltip>
@@ -302,13 +344,19 @@ export function UsersPage() {
             </Table>
           </TableContainer>
           {limit < filteredAndSortedUsers.length && (
-            <Box sx={{ p: 2, textAlign: 'center', borderTop: '1px solid', borderColor: 'divider' }}>
+            <Box
+              sx={{
+                p: 2,
+                textAlign: "center",
+                borderTop: "1px solid",
+                borderColor: "divider",
+              }}
+            >
               <Button onClick={() => setLimit(limit + 5)}>
                 Cargar más resultados
               </Button>
             </Box>
           )}
-
         </Stack>
       </Container>
       <ModalDelete
@@ -325,5 +373,5 @@ export function UsersPage() {
         user={userToEdit}
       />
     </Box>
-  )
+  );
 }

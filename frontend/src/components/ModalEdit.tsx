@@ -1,6 +1,10 @@
 import {
-    Dialog, DialogTitle, DialogContent, DialogContentText,
-    DialogActions, Button,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogContentText,
+    DialogActions,
+    Button,
     Box,
     TextField,
     Select,
@@ -8,12 +12,16 @@ import {
     InputLabel,
     FormControl
 } from '@mui/material';
+
+import { useForm, Controller } from 'react-hook-form';
+import type { SubmitHandler } from 'react-hook-form';
+
 import type { User } from '../contexts/AuthContext';
+
 import { AreaName, AreaNameLabel } from '../../../packages/shared/src/enums/area-name.enum';
 import { UserRole, UserRoleLabel } from '../../../packages/shared/src/enums/user-role.enum';
 import { UserStatus, UserStatusLabel } from '../../../packages/shared/src/enums/user-status.enum';
 import { enumToOptions } from '../../../packages/shared/src/utils/enum-to-options';
-import { useState, type ChangeEvent } from 'react';
 
 const STATE_OPTIONS = enumToOptions(UserStatus, UserStatusLabel);
 const AREA_OPTIONS = enumToOptions(AreaName, AreaNameLabel);
@@ -26,6 +34,7 @@ interface ModalEditProps {
     description?: string;
     onClose: () => void;
     loading?: boolean;
+    onSubmit?: (data: User) => void; // 👈 ahora es reutilizable
 }
 
 export function ModalEdit({
@@ -35,77 +44,157 @@ export function ModalEdit({
     onClose,
     user,
     loading = false,
+    onSubmit
 }: ModalEditProps) {
 
-    const [formData, setFormData] = useState<User | null>(user);
+    const {
+        control,
+        handleSubmit,
+        reset
+    } = useForm<User>({
+        defaultValues: user ?? undefined
+    });
 
-    const handleInputChange = (event: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-        const { name, value } = event.target;
-
-        setFormData((prevData) => ({
-            ...prevData,
-            [name]: value,
-        }));
+    // 🔥 resetear form cuando se abre o cambia user
+    const handleEnter = () => {
+        if (user) {
+            reset(user);
+        }
     };
 
-    const handleConfirm = (event: ChangeEvent<HTMLFormElement>) => {
-        event.preventDefault();
+    const submitHandler: SubmitHandler<User> = (data) => {
+        console.log("Datos:", data);
+        onSubmit?.(data);
         onClose();
-        console.log("test")
-    }
+    };
 
     return (
-        <Dialog open={open} onClose={onClose}>
-            <form onSubmit={handleConfirm}>
+        <Dialog
+            open={open}
+            onClose={onClose}
+            slotProps={{
+                transition: {
+                    onEnter: handleEnter,
+                },
+            }}
+            fullWidth
+            maxWidth="sm"
+        >
+            <form onSubmit={handleSubmit(submitHandler)}>
                 <DialogTitle>{title}</DialogTitle>
+
                 <DialogContent>
                     <DialogContentText>{description}</DialogContentText>
-                    {formData && (
-                        <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
-                            <TextField name="name" label="Nombre" value={formData?.name} onChange={handleInputChange} />
-                            <TextField name="email" label="Email" value={formData?.email} onChange={handleInputChange} />
-                            <FormControl>
-                                <InputLabel>Rol</InputLabel>
-                                <Select name="role" value={formData?.role} label="Rol" onChange={handleInputChange}>
-                                    {ROLE_OPTIONS.map(role => (
-                                        <MenuItem key={role.value} value={role.value}>
-                                            {role.label}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                            <FormControl>
-                                <InputLabel>Estado</InputLabel>
-                                <Select name="state" value={formData?.state} label="Estado" onChange={handleInputChange}>
-                                    {STATE_OPTIONS.map(state => (
-                                        <MenuItem key={state.value} value={state.value} >
-                                            {state.label}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                            <FormControl>
-                                <InputLabel>Area</InputLabel>
-                                <Select name="area" value={formData?.area} label="Area" onChange={handleInputChange}>
-                                    {AREA_OPTIONS.map(area => (
-                                        <MenuItem key={area.value} value={area.value}>
-                                            {area.label}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                        </Box>
-                    )}
+
+                    <Box
+                        sx={{
+                            mt: 2,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 2
+                        }}
+                    >
+                        {/* Nombre */}
+                        <Controller
+                            name="name"
+                            control={control}
+                            render={({ field }) => (
+                                <TextField
+                                    {...field}
+                                    label="Nombre"
+                                    fullWidth
+                                />
+                            )}
+                        />
+
+                        {/* Email */}
+                        <Controller
+                            name="email"
+                            control={control}
+                            render={({ field }) => (
+                                <TextField
+                                    {...field}
+                                    label="Email"
+                                    fullWidth
+                                />
+                            )}
+                        />
+
+                        {/* Rol */}
+                        <Controller
+                            name="role"
+                            control={control}
+                            render={({ field }) => (
+                                <FormControl fullWidth>
+                                    <InputLabel>Rol</InputLabel>
+                                    <Select {...field} label="Rol">
+                                        {ROLE_OPTIONS.map(role => (
+                                            <MenuItem key={role.value} value={role.value}>
+                                                {role.label}
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                            )}
+                        />
+
+                        {/* Estado */}
+                        <Controller
+                            name="state"
+                            control={control}
+                            render={({ field }) => (
+                                <FormControl fullWidth>
+                                    <InputLabel>Estado</InputLabel>
+                                    <Select {...field} label="Estado">
+                                        {STATE_OPTIONS.map(state => (
+                                            <MenuItem key={state.value} value={state.value}>
+                                                {state.label}
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                            )}
+                        />
+
+                        {/* Área */}
+                        <Controller
+                            name="area"
+                            control={control}
+                            render={({ field }) => (
+                                <FormControl fullWidth>
+                                    <InputLabel>Área</InputLabel>
+                                    <Select {...field} label="Área">
+                                        {AREA_OPTIONS.map(area => (
+                                            <MenuItem key={area.value} value={area.value}>
+                                                {area.label}
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                            )}
+                        />
+                    </Box>
                 </DialogContent>
-                <DialogActions sx={{ padding: '12px 24px', marginBottom: 3}}>
-                <Button onClick={onClose} disabled={loading} variant="contained">
-                    Cancelar
-                </Button>
-                <Button color="success" variant="contained" disabled={loading} type='submit' >
-                    Confirmar
-                </Button>
+
+                <DialogActions sx={{ padding: '12px 24px', marginBottom: 2 }}>
+                    <Button
+                        onClick={onClose}
+                        disabled={loading}
+                        variant="outlined"
+                    >
+                        Cancelar
+                    </Button>
+
+                    <Button
+                        color="success"
+                        variant="contained"
+                        disabled={loading}
+                        type="submit"
+                    >
+                        Confirmar
+                    </Button>
                 </DialogActions>
             </form>
         </Dialog>
-    )
+    );
 }
