@@ -1,7 +1,9 @@
-export enum NewsletterFormat {
-    PORTRAIT = "PORTRAIT",
-    LANDSCAPE = "LANDSCAPE",
-}
+export const NewsletterFormat = {
+    PORTRAIT: "PORTRAIT",
+    LANDSCAPE: "LANDSCAPE",
+} as const;
+
+export type NewsletterFormat = (typeof NewsletterFormat)[keyof typeof NewsletterFormat];
 
 export const NewsletterFormatLabel: Record<NewsletterFormat, string> = {
     [NewsletterFormat.PORTRAIT]: "Vertical",

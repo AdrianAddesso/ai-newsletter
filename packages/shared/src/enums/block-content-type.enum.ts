@@ -1,12 +1,14 @@
-export enum BlockContentType {
-    LAYOUT = "LAYOUT",
-    BASE = "BASE",
-    DIVIDER = "DIVIDER",
-    CONTENT = "CONTENT",
-    MULTIMEDIA = "MULTIMEDIA",
-    ICONS = "ICONS",
-    SPECIAL = "SPECIAL",
-}
+export const BlockContentType = {
+    LAYOUT: "LAYOUT",
+    BASE: "BASE",
+    DIVIDER: "DIVIDER",
+    CONTENT: "CONTENT",
+    MULTIMEDIA: "MULTIMEDIA",
+    ICONS: "ICONS",
+    SPECIAL: "SPECIAL",
+} as const;
+
+export type BlockContentType = (typeof BlockContentType)[keyof typeof BlockContentType];
 
 export const BlockContentTypeLabel: Record<BlockContentType, string> = {
     [BlockContentType.LAYOUT]: "Estructural",
