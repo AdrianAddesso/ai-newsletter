@@ -13,6 +13,7 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
+import lightBlue from "../assets/brand_shapes/isolated-by-brand/nestle-classic/light-blue.svg";
 import { useState, type FormEvent } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router";
 
@@ -113,7 +114,8 @@ export function LoginPage() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: `url('/src/assets/brand_shapes/isolated-by-brand/nestle-classic/light-blue.svg') center center / 1500px 1500px no-repeat, ${theme.palette.background.default}`,
+        background: `url( ${lightBlue}) no-repeat center center fixed`,
+        backgroundSize: "cover",
         px: 2,
       }}
     >

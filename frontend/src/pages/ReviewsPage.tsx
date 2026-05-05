@@ -58,33 +58,42 @@ interface NewsletterReview {
 
 const reviews: NewsletterReview[] = [
   {
-    id: '1',
-    title: 'Newsletter - Marzo 2024',
-    author: 'Juan Perez',
+    id: "1",
+    title: "Newsletter - Marzo 2024",
+    author: "Juan Perez",
     area: AreaName.COMUNICACION_INTERNA,
     status: NewsletterStatus.IN_REVIEW,
-    submittedDate: '2024-03-15',
-    content: 'Contenido de newsletter para marzo...',
+    submittedDate: "2024-03-15",
+    content: "Contenido de newsletter para marzo...",
   },
   {
-    id: '2',
-    title: 'Promocion de Primavera',
-    author: 'Maria Garcia',
+    id: "2",
+    title: "Promocion de Primavera",
+    author: "Maria Garcia",
     area: AreaName.COMUNICACION_CORPORATIVA,
     status: NewsletterStatus.CHANGES_REQUESTED,
-    submittedDate: '2024-03-16',
-    content: 'Contenido de promocion...',
+    submittedDate: "2024-03-16",
+    content: "Contenido de promocion...",
   },
   {
-    id: '3',
-    title: 'Newsletter - Febrero 2024',
-    author: 'Pedro Lopez',
+    id: "2",
+    title: "Promocion de Primavera",
+    author: "Maria Garcia",
+    area: AreaName.COMUNICACION_CORPORATIVA,
+    status: NewsletterStatus.RESUBMITTED,
+    submittedDate: "2024-03-16",
+    content: "Contenido de promocion...",
+  },
+  {
+    id: "3",
+    title: "Newsletter - Febrero 2024",
+    author: "Pedro Lopez",
     area: AreaName.COMUNICACION_INTERNA,
     status: NewsletterStatus.RESUBMITTED,
-    submittedDate: '2024-02-28',
-    content: 'Contenido aprobado...',
+    submittedDate: "2024-02-28",
+    content: "Contenido aprobado...",
   },
-]
+];
 
 const getStatusColor = (status: NewsletterReview['status']): ChipProps['color'] => {
   switch (status) {
