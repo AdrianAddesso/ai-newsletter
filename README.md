@@ -91,11 +91,10 @@ S3_SECRET_KEY="minioadmin123"
 S3_FORCE_PATH_STYLE="true"
 MINIO_ROOT_USER="minioadmin"
 MINIO_ROOT_PASSWORD="minioadmin123"
-AI_PROVIDER="gemini"
-GEMINI_API_KEY="AIza..."
-GEMINI_MODEL="gemini-2.5-flash-lite"
-NESTLE_GENIA_URL="https://eur-sdr-int-pub.nestle.com/api/dv-exp-sandbox-openai-api/1/genai/GCP/gemini-2.5-pro/generateContent"
-NESTLE_GENIA_MODEL="gemini-2.5-pro"
+NESTLE_GENIA_URL="https://eur-sdr-int-pub.nestle.com/api/dv-exp-sandbox-openai-api/1/genai/GCP/gemini-2.0-flash-001/generateContent"
+NESTLE_GENIA_MODEL="gemini-2.0-flash-001"
+CLIENT_ID="your-client-id"
+CLIENT_SECRET="your-client-secret"
 ```
 
 Notes:
@@ -104,10 +103,9 @@ Notes:
 - `DIRECT_URL` is used for direct Prisma tasks and is also accepted by `PrismaService`.
 - `backend/.env` is ignored by Git through the root `.gitignore`.
 - `backend/.env.example` must contain placeholders only, never real secrets.
-- `AI_PROVIDER` selects the active provider for `POST /ai/improve-text` and `POST /ai/generate-newsletter`. Use `gemini` by default or `nestle` to route through Nestle GenIA.
-- `GEMINI_API_KEY` is required when `AI_PROVIDER="gemini"`.
-- `CLIENT_ID` and `CLIENT_SECRET` are required when `AI_PROVIDER="nestle"`.
-- `GEMINI_MODEL`, `NESTLE_GENIA_URL`, and `NESTLE_GENIA_MODEL` are optional overrides for the AI endpoints.
+- `CLIENT_ID` and `CLIENT_SECRET` are required for `POST /ai/improve-text` and `POST /ai/generate-newsletter`.
+- `NESTLE_GENIA_URL` is an optional override for the Nestle GenIA endpoint if the sandbox route changes.
+- `NESTLE_GENIA_MODEL` is an optional override for the model name returned by the backend when the URL alone is not the desired source of truth.
 - `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, and `S3_FORCE_PATH_STYLE` configure the S3-compatible storage client used for MinIO.
 - `MINIO_ROOT_USER` and `MINIO_ROOT_PASSWORD` are local Docker defaults for MinIO. Do not commit real secrets.
 - The current schema still stores the object key in `assets.url` temporarily. Binary content stays in MinIO, not PostgreSQL.
@@ -527,11 +525,10 @@ S3_SECRET_KEY="minioadmin123"
 S3_FORCE_PATH_STYLE="true"
 MINIO_ROOT_USER="minioadmin"
 MINIO_ROOT_PASSWORD="minioadmin123"
-AI_PROVIDER="gemini"
-GEMINI_API_KEY="AIza..."
-GEMINI_MODEL="gemini-2.5-flash-lite"
-NESTLE_GENIA_URL="https://eur-sdr-int-pub.nestle.com/api/dv-exp-sandbox-openai-api/1/genai/GCP/gemini-2.5-pro/generateContent"
-NESTLE_GENIA_MODEL="gemini-2.5-pro"
+NESTLE_GENIA_URL="https://eur-sdr-int-pub.nestle.com/api/dv-exp-sandbox-openai-api/1/genai/GCP/gemini-2.0-flash-001/generateContent"
+NESTLE_GENIA_MODEL="gemini-2.0-flash-001"
+CLIENT_ID="your-client-id"
+CLIENT_SECRET="your-client-secret"
 ```
 
 Notas:
@@ -540,10 +537,9 @@ Notas:
 - `DIRECT_URL` sirve para tareas directas de Prisma y tambien lo acepta `PrismaService`.
 - `backend/.env` esta ignorado por Git desde el `.gitignore` root.
 - `backend/.env.example` debe tener placeholders, nunca secretos reales.
-- `AI_PROVIDER` selecciona el proveedor activo para `POST /ai/improve-text` y `POST /ai/generate-newsletter`. Usar `gemini` por defecto o `nestle` para enrutar por Nestle GenIA.
-- `GEMINI_API_KEY` es obligatoria cuando `AI_PROVIDER="gemini"`.
-- `CLIENT_ID` y `CLIENT_SECRET` son obligatorias cuando `AI_PROVIDER="nestle"`.
-- `GEMINI_MODEL`, `NESTLE_GENIA_URL` y `NESTLE_GENIA_MODEL` son overrides opcionales para los endpoints de IA.
+- `CLIENT_ID` y `CLIENT_SECRET` son obligatorias para `POST /ai/improve-text` y `POST /ai/generate-newsletter`.
+- `NESTLE_GENIA_URL` es un override opcional del endpoint Nestle GenIA si cambia la ruta del sandbox.
+- `NESTLE_GENIA_MODEL` es un override opcional del nombre de modelo que devuelve el backend cuando la URL no alcanza como fuente de verdad.
 - `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET`, `S3_ACCESS_KEY`, `S3_SECRET_KEY` y `S3_FORCE_PATH_STYLE` configuran el cliente S3-compatible usado para MinIO.
 - `MINIO_ROOT_USER` y `MINIO_ROOT_PASSWORD` son defaults locales de Docker para MinIO. No commitear secretos reales.
 - El schema actual guarda temporalmente la object key en `assets.url`. Los binarios quedan en MinIO, no en PostgreSQL.
