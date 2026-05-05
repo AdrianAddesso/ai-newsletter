@@ -47,8 +47,6 @@ export interface GeneratedNewsletterBlockDto {
 
 export interface GenerateNewsletterResponseDto {
   blocks: GeneratedNewsletterBlockDto[];
-  provider: 'gemini' | 'nestle';
-  model: string;
 }
 
 export type GenerateNewsletterRequestDto = z.infer<
