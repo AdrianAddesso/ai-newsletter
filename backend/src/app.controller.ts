@@ -19,21 +19,4 @@ export class AppController {
     return this.appService.getHealth();
   }
 
-  @Get('db-health')
-  async testDatabaseHealth() {
-    try {
-      await this.prisma.$queryRaw`SELECT 1`;
-
-      return {
-        ok: true,
-        message: 'Database connection is healthy',
-      };
-    } catch (error) {
-      return {
-        ok: false,
-        message: 'Database connection failed',
-        error: error instanceof Error ? error.message : 'Unknown error',
-      };
-    }
-  }
 }
