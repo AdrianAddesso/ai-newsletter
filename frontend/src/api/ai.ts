@@ -8,8 +8,6 @@ export type ImproveTextRequest = {
 export type ImproveTextResponse = {
   originalText: string
   improvedText: string
-  provider: 'nestle' | 'gemini'
-  model: string
 }
 
 export type GeneratedNewsletterBlock = {
@@ -37,8 +35,6 @@ export type GenerateNewsletterRequest = {
 
 export type GenerateNewsletterResponse = {
   blocks: GeneratedNewsletterBlock[]
-  provider: 'nestle' | 'gemini'
-  model: string
 }
 
 export async function improveText(
