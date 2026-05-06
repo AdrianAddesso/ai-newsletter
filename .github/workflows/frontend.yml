@@ -5,15 +5,15 @@ on:
   push:
     branches: [main, staging]
     paths:
-    - 'frontend/**'
-    - 'packages/shared/**'
-    - '.github/workflows/frontend.yml'
+      - 'frontend/**'
+      - 'packages/shared/**'
+      - '.github/workflows/frontend.yml'
   pull_request:
     branches: [main, staging]
     paths:
-    - 'frontend/**'
-    - 'packages/shared/**'
-    - '.github/workflows/frontend.yml'
+      - 'frontend/**'
+      - 'packages/shared/**'
+      - '.github/workflows/frontend.yml'
 
 jobs:
   frontend:
