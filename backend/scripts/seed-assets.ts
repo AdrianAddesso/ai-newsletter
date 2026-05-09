@@ -71,6 +71,7 @@ async function main(): Promise<void> {
     const fontsService = app.get(FontsService);
     const prisma = app.get(PrismaService);
     await assertDatabaseReady(prisma);
+    await ensureAssetBucketPrefixes(storageService, ['assets/images/', 'assets/icons/']);
     const seedFiles = await discoverSeedFiles(options.sourceDirectory);
 
     let seededAssets = 0;
@@ -407,6 +408,20 @@ async function linkAssetToBrandKit(
     ],
     skipDuplicates: true,
   });
+}
+
+async function ensureAssetBucketPrefixes(
+  storageService: StorageService,
+  prefixes: string[],
+): Promise<void> {
+  for (const prefix of prefixes) {
+    await storageService.uploadObject(
+      assetBucketName,
+      prefix,
+      Buffer.alloc(0),
+      'application/x-directory',
+    );
+  }
 }
 
 function getObjectPrefix(storageKey: string): string {

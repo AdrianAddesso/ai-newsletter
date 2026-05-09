@@ -4,9 +4,9 @@ services:
     container_name: nestle_postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: nestle
-      POSTGRES_PASSWORD: nestle
-      POSTGRES_DB: nestle_ai_newsletter_db
+      POSTGRES_USER: ${POSTGRES_USER:-nestle}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nestle}
+      POSTGRES_DB: ${POSTGRES_DB:-nestle_ai_newsletter_db}
     ports:
       - "5433:5432"
     volumes:
@@ -50,8 +50,8 @@ services:
       - minio
       - minio-init
     environment:
-      DATABASE_URL: postgresql://nestle:nestle@postgres:5432/nestle_ai_newsletter_db
-      DIRECT_URL: postgresql://nestle:nestle@postgres:5432/nestle_ai_newsletter_db
+      DATABASE_URL: postgresql://${POSTGRES_USER:-nestle}:${POSTGRES_PASSWORD:-nestle}@postgres:5432/${POSTGRES_DB:-nestle_ai_newsletter_db}
+      DIRECT_URL: postgresql://${POSTGRES_USER:-nestle}:${POSTGRES_PASSWORD:-nestle}@postgres:5432/${POSTGRES_DB:-nestle_ai_newsletter_db}
       S3_ENDPOINT: http://minio:9000
       S3_REGION: us-east-1
       S3_ASSETS_BUCKET: ${S3_ASSETS_BUCKET:-nestle-ai-newsletter-assets}
@@ -72,8 +72,8 @@ services:
       - minio
       - minio-init
     environment:
-      DATABASE_URL: postgresql://nestle:nestle@postgres:5432/nestle_ai_newsletter_db
-      DIRECT_URL: postgresql://nestle:nestle@postgres:5432/nestle_ai_newsletter_db
+      DATABASE_URL: postgresql://${POSTGRES_USER:-nestle}:${POSTGRES_PASSWORD:-nestle}@postgres:5432/${POSTGRES_DB:-nestle_ai_newsletter_db}
+      DIRECT_URL: postgresql://${POSTGRES_USER:-nestle}:${POSTGRES_PASSWORD:-nestle}@postgres:5432/${POSTGRES_DB:-nestle_ai_newsletter_db}
       CLIENT_ID: ${CLIENT_ID:-}
       CLIENT_SECRET: ${CLIENT_SECRET:-}
       S3_ENDPOINT: http://minio:9000
