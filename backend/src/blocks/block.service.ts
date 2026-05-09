@@ -23,7 +23,7 @@ export class BlockService {
         where: { newsletter_id: templateId },
       }),
       this.prisma.block_content.createMany({
-        data: blocks.map((b) => ({
+          data: blocks.map((b) => ({
           type: b.type,
           content: b.content,
           must_fill: b.mustFill,
