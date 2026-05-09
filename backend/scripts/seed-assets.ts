@@ -71,7 +71,7 @@ async function main(): Promise<void> {
     const fontsService = app.get(FontsService);
     const prisma = app.get(PrismaService);
     await assertDatabaseReady(prisma);
-    await ensureAssetBucketPrefixes(storageService, ['images/', 'logos/']);
+    await ensureAssetBucketPrefixes(storageService, ['assets/images/', 'assets/icons/']);
     const seedFiles = await discoverSeedFiles(options.sourceDirectory);
 
     let seededAssets = 0;
