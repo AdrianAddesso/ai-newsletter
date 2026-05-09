@@ -757,7 +757,6 @@ export function EditPage() {
               variant="contained"
               size="small"
               endIcon={<SendIcon />}
-              sx={{ borderRadius: 1.5, bgcolor: 'brand.red', '&:hover': { bgcolor: '#e04040' } }}
             >
               Enviar a revisión
             </Button>

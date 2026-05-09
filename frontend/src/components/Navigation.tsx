@@ -28,7 +28,7 @@ const navLinks: NavLink[] = [
   { label: 'Dashboard', path: '/dashboard', roles: ['ADMIN', 'FUNCTIONAL', 'USER'] },
   { label: 'Templates', path: '/templates', roles: ['ADMIN', 'FUNCTIONAL'] },
   { label: 'Analitica', path: '/analytics', roles: ['ADMIN', 'FUNCTIONAL'] },
-  { label: 'Revisiones', path: '/reviews', roles: ['ADMIN', 'FUNCTIONAL', 'USER'] },
+  { label: 'Revisiones', path: '/reviews', roles: ['ADMIN', 'FUNCTIONAL'] },
   { label: 'Usuarios', path: '/users', roles: ['ADMIN'] },
   //{ label: 'Configuracion', path: '/settings', roles: ['ADMIN', 'FUNCTIONAL'] },
 ]

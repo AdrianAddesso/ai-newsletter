@@ -1,4 +1,3 @@
-// utils/role-label.ts
 // Devuelve el label legible para un rol de usuario
 import type { UserRole } from '../contexts/AuthContext'
 
