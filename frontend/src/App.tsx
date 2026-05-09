@@ -31,6 +31,7 @@ import {
   Typography,
   useTheme,
 } from '@mui/material'
+import EditNewsletterPage from './pages/EditNewsletterPage'
 
 type DemoPage = 'assets' | 'colors' | 'typography' | 'components'
 
@@ -719,7 +720,7 @@ function AppRouter() {
             }
           />
           <Route
-            path="/crear"
+            path="/crearNewsletter"
             element={
               <ProtectedRoute>
                 <ProtectedLayout>
@@ -729,11 +730,21 @@ function AppRouter() {
             }
           />
           <Route
-            path="/editar/:id"
+            path="/editarTemplate/:id"
             element={
               <ProtectedRoute>
                 <ProtectedLayout>
                   <EditPage />
+                </ProtectedLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/editarNewsletter/:id"
+            element={
+              <ProtectedRoute>
+                <ProtectedLayout>
+                  <EditNewsletterPage />
                 </ProtectedLayout>
               </ProtectedRoute>
             }
@@ -761,7 +772,7 @@ function AppRouter() {
           <Route
             path="/reviews"
             element={
-              <ProtectedRoute >
+              <ProtectedRoute allowedRoles={['ADMIN', 'FUNCTIONAL']}>
                 <ProtectedLayout>
                   <ReviewsPage />
                 </ProtectedLayout>
@@ -786,22 +797,6 @@ function AppRouter() {
                   <SettingsPage />
                 </ProtectedLayout>
               </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/templates"
-            element={
-              <h1 className="titulo-templates">
-                Página de templates en construcción
-              </h1>
-            }
-          />
-          <Route
-            path="/newsletters"
-            element={
-              <h1 className="titulo-templates">
-                Página de newsletters en construcción
-              </h1>
             }
           />
           <Route
