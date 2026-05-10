@@ -1,4 +1,5 @@
 import axios from 'axios'
+import type { AreaName } from '../types/newsletter'
 
 export type ImproveTextRequest = {
   text: string
@@ -17,8 +18,9 @@ export type GeneratedNewsletterBlock = {
 }
 
 export type GenerateNewsletterRequest = {
-  area: 'COMUNICACION_INTERNA' | 'COMUNICACION_CORPORATIVA'
+  area: AreaName
   templateId: string
+  brandKitId: string
   topic: string
   objective: string
   audience: string

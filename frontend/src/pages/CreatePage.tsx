@@ -54,7 +54,8 @@ function CreatePage() {
         // 2. Crear newsletter en el backend con ID único
         const newsletter = await createNewsletter({
           creatorUserId: currentUserId,
-          templateId: selectedTemplateId,
+          templateId: request.templateId,
+          brandKitId: request.brandKitId,
           blocks,
           generationRequest: request,
         })
@@ -68,7 +69,7 @@ function CreatePage() {
         setIsGenerating(false)
       }
     },
-    [currentUserId, navigate, selectedTemplateId],
+    [currentUserId, navigate],
   )
 
   return (

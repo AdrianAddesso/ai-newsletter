@@ -17,7 +17,7 @@ import {
 } from '@mui/material'
 import { useAuth } from '../contexts/AuthContext'
 import type { UserRole } from '../contexts/AuthContext'
-import { templates } from '../utils/newsletterTemplates'
+import { brandKitLabels, templates } from '../utils/newsletterTemplates'
 import { getNewsletter, updateNewsletter } from '../api/newsletters'
 import { BlockList } from '../components/newsletter/BlockList'
 import { EditPanel } from '../components/newsletter/EditPanel'
@@ -171,6 +171,8 @@ function EditPage() {
   // ── Derived ──
   const selectedBlock = newsletter?.blocks.find((b) => b.id === selectedBlockId) ?? newsletter?.blocks[0]
   const selectedTemplate = templates.find((t) => t.id === newsletter?.templateId) ?? templates[0]
+  const selectedBrandKitId = newsletter?.brandKitId ?? selectedTemplate.brandKitId
+  const selectedBrandKitLabel = brandKitLabels[selectedBrandKitId]
 
   const allCommentaries = useMemo(() => {
     const comments: string[] = [
@@ -392,6 +394,11 @@ function EditPage() {
           <Stack spacing={0.75}>
             <Typography variant="overline">Estado: {newsletter?.state}</Typography>
             <Typography variant="h4">Builder de newsletter</Typography>
+            {newsletter && (
+              <Typography variant="body2" color="text.secondary">
+                Plantilla: {selectedTemplate.name} · BrandKit: {selectedBrandKitLabel}
+              </Typography>
+            )}
           </Stack>
           {right}
         </Stack>
