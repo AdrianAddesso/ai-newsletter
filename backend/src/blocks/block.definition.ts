@@ -1,4 +1,4 @@
-import type {BlockContentType,BlockDefinitionDTO,} from '@shared/types/block.types.js';
+import type {  BlockContentType,  BlockDefinitionDTO,} from '@shared/types/block.types';
 
 export abstract class BlockDefinition {
   abstract readonly type: BlockContentType;

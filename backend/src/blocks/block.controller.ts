@@ -5,7 +5,7 @@ import { Action } from '../modules/auth/enum/actions';
 import { Resource } from '../modules/auth/enum/resources';
 import { MockAuthGuard } from '../modules/auth/guards/mockup.guard';
 import { PermissionsGuard } from '../modules/auth/guards/permissions.guard';
-import type { BlockDefinitionDTO } from '@shared/types/block.types.js';
+import type { BlockDefinitionDTO } from '@shared/types/block.types';
 
 @Controller('blocks')
 @UseGuards(MockAuthGuard, PermissionsGuard)

@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { BlockRegistry } from './block.registry';
-import {  BlockContentType,  BlockDefinitionDTO,} from '@shared/types/block.types.js';
+import {  BlockContentType,  BlockDefinitionDTO,} from '@shared/types/block.types';
 
 export type SaveTemplateBlockInput = {
   type: BlockContentType;
