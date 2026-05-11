@@ -10,7 +10,6 @@ export type NewsletterState =
   | 'DISCARDED'
 
 export type AreaName = 'COMUNICACION_INTERNA' | 'COMUNICACION_CORPORATIVA'
-export type BrandKitId = 'nestle-corporate' | 'nescafe' | 'kit-kat'
 export type TemplateGenerationField =
   | 'relevantDates'
   | 'cta'
@@ -29,9 +28,12 @@ export type NewsletterBlock = {
 export type NewsletterTemplate = {
   id: string
   name: string
-  imageUrl: string
+  description: string | null
   area: AreaName
-  brandKitId: BrandKitId
+  layout: string | null
+  stateCode: string
+  stateName: string
+  createdAt: string
   requiredGenerationFields: TemplateGenerationField[]
   optionalGenerationFields: TemplateGenerationField[]
 }
@@ -52,6 +54,7 @@ export type Newsletter = {
   creatorUserId: string
   state: NewsletterState
   templateId: string
+  brandKitId: string
   blocks: NewsletterBlock[]
   comment: string | null
   generationRequest: GenerateNewsletterRequest | null
@@ -64,12 +67,14 @@ export type Newsletter = {
 export type CreateNewsletterPayload = {
   creatorUserId: string
   templateId: string
+  brandKitId: string
   blocks: NewsletterBlock[]
   generationRequest: GenerateNewsletterRequest
 }
 
 // Para actualizar
 export type UpdateNewsletterPayload = {
+  brandKitId?: string
   blocks?: NewsletterBlock[]
   comment?: string | null
   state?: NewsletterState

@@ -37,6 +37,7 @@ describe('AiController', () => {
       controller.generateNewsletter(undefined, {
         area: 'COMUNICACION_INTERNA',
         templateId: 'weekly-brief',
+        brandKitId: 'nestle-corporate',
         topic: 'Tema',
         objective: 'Objetivo',
         audience: 'Audiencia',

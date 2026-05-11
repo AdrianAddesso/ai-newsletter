@@ -194,6 +194,7 @@ export class AiService {
     const promptContext = {
       area: request.area,
       templateId: request.templateId,
+      brandKitId: request.brandKitId,
       topic: request.topic,
       objective: request.objective,
       audience: request.audience,

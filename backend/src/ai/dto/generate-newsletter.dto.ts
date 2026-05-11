@@ -22,6 +22,7 @@ export const generateNewsletterBodySchema = z
       error: 'Area invalida.',
     }),
     templateId: requiredStringSchema,
+    brandKitId: requiredStringSchema,
     topic: requiredStringSchema,
     objective: requiredStringSchema,
     audience: requiredStringSchema,

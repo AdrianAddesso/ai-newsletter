@@ -137,6 +137,23 @@ const setAxiosAccessToken = (accessToken?: string) => {
   delete axios.defaults.headers.common.Authorization
 }
 
+const setAxiosMockAuthHeaders = (user?: User) => {
+  if (user) {
+    axios.defaults.headers.common['x-user-id'] = user.id
+    axios.defaults.headers.common['x-user-role'] = user.role
+    if (user.area) {
+      axios.defaults.headers.common['x-area'] = user.area
+    } else {
+      delete axios.defaults.headers.common['x-area']
+    }
+    return
+  }
+
+  delete axios.defaults.headers.common['x-user-id']
+  delete axios.defaults.headers.common['x-user-role']
+  delete axios.defaults.headers.common['x-area']
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
@@ -144,12 +161,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const commitSession = useCallback((session: StoredSession) => {
     saveStoredSession(session)
     setAxiosAccessToken(session.accessToken)
+    setAxiosMockAuthHeaders(session.user)
     setUser(session.user)
   }, [])
 
   const logout = useCallback(() => {
     clearStoredSession()
     setAxiosAccessToken()
+    setAxiosMockAuthHeaders()
     setUser(null)
   }, [])
 
@@ -176,6 +195,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       clearStoredSession()
       setAxiosAccessToken()
+      setAxiosMockAuthHeaders()
       setLoading(false)
     }, 0)
 

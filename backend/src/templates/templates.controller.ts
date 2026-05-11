@@ -46,7 +46,7 @@ export class TemplatesController {
   constructor(private readonly templatesService: TemplatesService) {}
 
   @Get()
-  getAll(): string {
+  getAll() {
     return this.templatesService.getAll();
   }
 

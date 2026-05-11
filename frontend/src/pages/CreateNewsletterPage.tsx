@@ -1,16 +1,16 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { Box, Stack, Typography } from '@mui/material'
+import { Alert, Box, CircularProgress, Stack, Typography } from '@mui/material'
 import { useAuth } from '../contexts/AuthContext'
 import { TemplateCarousel } from '../components/newsletter/TemplateCarousel'
 import { GenerationForm } from '../components/newsletter/GenerationForm'
-import { templates } from '../utils/newsletterTemplates'
 import {
   generateNewsletter,
   type GenerateNewsletterRequest,
 } from '../api/ai'
-import type { NewsletterBlock } from '../types/newsletter'
+import type { NewsletterBlock, NewsletterTemplate } from '../types/newsletter'
 import { createNewsletter } from '../api/newsletters'
+import { listTemplates } from '../api/templates'
 
 // Mocks hardcodeados
 /*function buildMockBlocks(request: GenerateNewsletterRequest): NewsletterBlock[] {
@@ -27,12 +27,47 @@ function CreateNewsletterPage() {
   const { user } = useAuth()
   const currentUserId = user?.id ?? 'anonymous'
 
-  const [selectedTemplateId, setSelectedTemplateId] = useState(templates[0].id)
+  const [templates, setTemplates] = useState<NewsletterTemplate[]>([])
+  const [isLoadingTemplates, setIsLoadingTemplates] = useState(true)
+  const [templatesError, setTemplatesError] = useState<string | null>(null)
+  const [selectedTemplateId, setSelectedTemplateId] = useState('')
+  const [selectedBrandKitId, setSelectedBrandKitId] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
   const [aiError, setAiError] = useState<string | null>(null)
 
-  const selectedTemplate =
-    templates.find((t) => t.id === selectedTemplateId) ?? templates[0]
+  useEffect(() => {
+    let mounted = true
+
+    const loadTemplates = async () => {
+      setIsLoadingTemplates(true)
+      setTemplatesError(null)
+
+      try {
+        const data = await listTemplates()
+        if (mounted) {
+          setTemplates(data)
+          setSelectedTemplateId((current) => current || data[0]?.id || '')
+        }
+      } catch {
+        if (mounted) {
+          setTemplates([])
+          setTemplatesError('No se pudieron obtener las plantillas disponibles.')
+        }
+      } finally {
+        if (mounted) {
+          setIsLoadingTemplates(false)
+        }
+      }
+    }
+
+    void loadTemplates()
+
+    return () => {
+      mounted = false
+    }
+  }, [])
+
+  const selectedTemplate = templates.find((template) => template.id === selectedTemplateId) ?? null
 
   const handleGenerate = useCallback(
     async (request: GenerateNewsletterRequest) => {
@@ -54,7 +89,8 @@ function CreateNewsletterPage() {
         // 2. Crear newsletter en el backend con ID único
         const newsletter = await createNewsletter({
           creatorUserId: currentUserId,
-          templateId: selectedTemplateId,
+          templateId: request.templateId,
+          brandKitId: request.brandKitId,
           blocks,
           generationRequest: request,
         })
@@ -68,8 +104,16 @@ function CreateNewsletterPage() {
         setIsGenerating(false)
       }
     },
-    [currentUserId, navigate, selectedTemplateId],
+    [currentUserId, navigate],
   )
+
+  if (isLoadingTemplates) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+        <CircularProgress />
+      </Box>
+    )
+  }
 
   return (
     <Box
@@ -90,19 +134,31 @@ function CreateNewsletterPage() {
           minWidth: 0,
         }}
       >
-        <TemplateCarousel templates={templates} onSelectTemplate={setSelectedTemplateId} />
+        <TemplateCarousel
+          templates={templates}
+          selectedBrandKitId={selectedBrandKitId}
+          onSelectTemplate={setSelectedTemplateId}
+          onSelectBrandKit={setSelectedBrandKitId}
+        />
       </Box>
 
       <Box sx={{ p: { xs: 2, md: 3 }, minWidth: 0 }}>
         <Stack spacing={2}>
           <Typography variant="h4">Crear newsletter</Typography>
-          <GenerationForm
-            selectedTemplate={selectedTemplate}
-            isGenerating={isGenerating}
-            aiError={aiError}
-            onGenerate={handleGenerate}
-            onCancel={() => navigate('/dashboard')}
-          />
+          {templatesError && <Alert severity="error">{templatesError}</Alert>}
+          {!templatesError && templates.length === 0 && (
+            <Alert severity="info">No hay plantillas disponibles en este momento.</Alert>
+          )}
+          {selectedTemplate && selectedBrandKitId && (
+            <GenerationForm
+              selectedTemplate={selectedTemplate}
+              selectedBrandKitId={selectedBrandKitId}
+              isGenerating={isGenerating}
+              aiError={aiError}
+              onGenerate={handleGenerate}
+              onCancel={() => navigate('/dashboard')}
+            />
+          )}
         </Stack>
       </Box>
     </Box>

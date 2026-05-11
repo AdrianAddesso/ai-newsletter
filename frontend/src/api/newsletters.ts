@@ -48,6 +48,7 @@ export async function createNewsletter(
     creatorUserId: payload.creatorUserId,
     state: 'DRAFT',
     templateId: payload.templateId,
+    brandKitId: payload.brandKitId,
     blocks: payload.blocks,
     comment: null,
     generationRequest: payload.generationRequest,
