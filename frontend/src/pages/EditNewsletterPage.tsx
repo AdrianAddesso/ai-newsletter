@@ -75,9 +75,7 @@ async function exportHtmlToPng(): Promise<void> {
   await new Promise<void>((r) => window.setTimeout(r, 250))
 }
 
-async function exportHtmlToEml(
-  html: string,
-): Promise<void> {
+async function exportHtmlToEml(html: string): Promise<void> {
   const emlContent = [
     'X-Unsent: 1',
     'To: ',
@@ -89,26 +87,14 @@ async function exportHtmlToEml(
     html,
   ].join('\r\n')
 
-  const blob = new Blob(
-    [emlContent],
-    {
-      type: 'message/rfc822',
-    },
-  )
-
-  const url =
-    URL.createObjectURL(blob)
-
-  const link =
-    document.createElement('a')
-
+  const blob = new Blob([emlContent], { type: 'message/rfc822' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
   link.href = url
   link.download = 'newsletter.eml'
-
   document.body.appendChild(link)
   link.click()
   document.body.removeChild(link)
-
   URL.revokeObjectURL(url)
 }
 
@@ -170,7 +156,7 @@ function EditNewsletterPage() {
   const [selectedBlockId, setSelectedBlockId] = useState('')
   const [exportOptions, setExportOptions] = useState<ExportOption[]>([])
   const [isRenderingHtml, setIsRenderingHtml] = useState(false)
-  const [exportingFormat, setExportingFormat,] = useState<ExportFormat | null>(null)
+  const [exportingFormat, setExportingFormat] = useState<ExportFormat | null>(null)
   const [isSendingForReview, setIsSendingForReview] = useState(false)
   const [regeneratingBlockId, setRegeneratingBlockId] = useState<string | null>(null)
   const [isRegeneratingAll, setIsRegeneratingAll] = useState(false)
@@ -296,35 +282,19 @@ function EditNewsletterPage() {
   }, [handleRenderHtml, newsletter?.state])
 
   // ── Actions ──
-  const handleSendForReview =
-    useCallback(async () => {
-      setIsSendingForReview(true)
-
-      try {
-        await handleRenderHtml()
-
-        await transitionState(
-          'IN_REVIEW',
-        )
-
-        notifySuccess(
-          'Newsletter enviado con éxito',
-        )
-
-        navigate('/dashboard')
-      } catch {
-        setAiError(
-          'No se pudo enviar a revisión. Intenta de nuevo.',
-        )
-      } finally {
-        setIsSendingForReview(false)
-      }
-    }, [
-      handleRenderHtml,
-      navigate,
-      transitionState,
-      notifySuccess,
-    ])
+  const handleSendForReview = useCallback(async () => {
+    setIsSendingForReview(true)
+    try {
+      await handleRenderHtml()
+      await transitionState('IN_REVIEW')
+      notifySuccess('Newsletter enviado con éxito')
+      navigate('/dashboard')
+    } catch {
+      setAiError('No se pudo enviar a revisión. Intenta de nuevo.')
+    } finally {
+      setIsSendingForReview(false)
+    }
+  }, [handleRenderHtml, navigate, transitionState, notifySuccess])
 
   const handleRegenerateBlock = useCallback(
     async (blockId: string) => {
@@ -398,57 +368,34 @@ function EditNewsletterPage() {
     if (currentUserId !== newsletter?.creatorUserId) navigate('/dashboard')
   }, [currentUserId, navigate, newsletter?.creatorUserId, transitionState])
 
-  const handleExportToPng =
-    useCallback(async () => {
-      setExportingFormat('PNG')
+  const handleExportToPng = useCallback(async () => {
+    setExportingFormat('PNG')
+    try {
+      await exportHtmlToPng()
+    } finally {
+      setExportingFormat(null)
+    }
+  }, [])
 
-      try {
-        await exportHtmlToPng()
-      } finally {
-        setExportingFormat(null)
-      }
-    }, [])
+  const handleExportToEml = useCallback(async () => {
+    setExportingFormat('EML')
+    try {
+      await exportHtmlToEml(newsletter?.renderedHtml || fallbackHtml)
+    } finally {
+      setExportingFormat(null)
+    }
+  }, [newsletter])
 
-  const handleExportToEml =
-    useCallback(async () => {
-      setExportingFormat('EML')
-
-      try {
-        const html =
-          newsletter?.renderedHtml ||
-          fallbackHtml
-
-        await exportHtmlToEml(html)
-      } finally {
-        setExportingFormat(null)
-      }
-    }, [newsletter])
-
-  const handleExport =
-    useCallback(
-      async (
-        format: ExportFormat,
-      ) => {
-        switch (format) {
-          case 'PNG':
-            await handleExportToPng()
-            break
-
-          case 'EML':
-            await handleExportToEml()
-            break
-
-          default:
-            console.warn(
-              `Formato no soportado: ${format}`,
-            )
-        }
-      },
-      [
-        handleExportToPng,
-        handleExportToEml,
-      ],
-    )
+  const handleExport = useCallback(async (format: ExportFormat) => {
+    switch (format) {
+      case 'PNG':
+        await handleExportToPng()
+        break
+      case 'EML':
+        await handleExportToEml()
+        break
+    }
+  }, [handleExportToPng, handleExportToEml])
 
   const handleCancel = useCallback(async () => {
     await transitionState('DISCARDED')
