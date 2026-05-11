@@ -21,10 +21,10 @@
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
-    //"baseUrl": ".",
-    //"ignoreDeprecations": "6.0",
+    "baseUrl": ".",
+    "ignoreDeprecations": "5.0",
     "paths": {
-      "@shared/*": ["../packages/shared/src/*"]
+        "@shared/*": ["../packages/shared/src/*"]
     }
   },
   "references": [
