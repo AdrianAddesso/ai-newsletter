@@ -24,6 +24,12 @@ export async function listAssets(
 ): Promise<UploadAssetsResponse> {
   const response = await axios.get<UploadAssetsResponse>('/assets', {
     params: type ? { type } : undefined,
+    headers: {
+      'Content-Type': 'multipart/form-data',
+      'x-user-id': 'asdsa',
+      'x-user-role': 'ADMIN',
+      'x-area': 'MARKETING'
+    },
   })
 
   return response.data
@@ -43,11 +49,6 @@ export async function uploadAssets(
   const response = await axios.post<UploadAssetsResponse>(
     '/assets',
     formData,
-    {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    },
   )
 
   return response.data

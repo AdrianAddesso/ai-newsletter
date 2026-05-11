@@ -1,4 +1,5 @@
 import type { GenerateNewsletterRequest } from '../api/ai'
+import type { UUID } from '../interfaces/interfaces.newsletters'
 
 export type NewsletterState =
   | 'DRAFT'
@@ -69,4 +70,15 @@ export type UpdateNewsletterPayload = {
   comment?: string | null
   state?: NewsletterState
   renderedHtml?: string | null
+}
+
+export type RowType = {
+    id: UUID;
+    rowIndex: number,
+}
+
+export type ColumnType = {
+    id: UUID,
+    type: string | undefined | null,
+    displayOrder: number
 }
