@@ -8,9 +8,9 @@ COPY package.json pnpm-lock.yaml ./
 
 RUN pnpm install --frozen-lockfile
 
+COPY backend/package.json backend/pnpm-lock.yaml ./
 COPY packages/shared ./packages/shared
-COPY backend ./backend
-WORKDIR /app/backend
+COPY backend .
 
 RUN pnpm run build
 
