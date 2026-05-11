@@ -351,10 +351,12 @@ function EditPage() {
   }, [navigate, transitionState])
 
   // ── Derived states ──
-  //const isEditableState = newsletter?.state === 'DRAFT' || newsletter?.state === 'CHANGES_REQUESTED'
   const isReviewState = newsletter?.state === 'IN_REVIEW' || newsletter?.state === 'RESUBMITTED'
-  const canReview = ['ADMIN', 'FUNCTIONAL'].includes(currentUserRole)
   const isCreator = currentUserId === newsletter?.creatorUserId
+  // KAN-119: ADMIN accede a creación y edición
+  // KAN-120: FUNCTIONAL accede a edición y revisión
+  const canReview = currentUserRole === 'ADMIN' || currentUserRole === 'FUNCTIONAL'
+  const canEdit = currentUserRole === 'ADMIN' || currentUserRole === 'FUNCTIONAL' || isCreator
 
   const submitLabel = newsletter?.state === 'CHANGES_REQUESTED' ? 'Reenviar a revision' : 'Enviar a revision'
   const handleSubmit =
@@ -478,19 +480,31 @@ function EditPage() {
   }
 
   // ── IN_REVIEW / RESUBMITTED ──
+  // KAN-121: usuario normal no puede acceder mientras esté en revisión
+  if (isReviewState && !canReview) {
+    return (
+      <Box component="main" sx={{ p: 4 }}>
+        <Stack spacing={2}>
+          <Alert severity="info">
+            Tu newsletter está en revisión. Vas a poder editarlo nuevamente cuando el revisor te envíe su devolución.
+          </Alert>
+          <Button variant="outlined" onClick={() => navigate('/dashboard')} sx={{ alignSelf: 'flex-start' }}>
+            Volver al inicio
+          </Button>
+        </Stack>
+      </Box>
+    )
+  }
+
   if (isReviewState) {
     return pageLayout(
-      canReview ? (
-        <BlockList
-          blocks={newsletter.blocks}
-          selectedBlockId={selectedBlockId}
-          onSelectBlock={setSelectedBlockId}
-          readOnly
-        />
-      ) : (
-        <PermissionDenied />
-      ),
-      canReview && selectedBlock ? (
+      <BlockList
+        blocks={newsletter.blocks}
+        selectedBlockId={selectedBlockId}
+        onSelectBlock={setSelectedBlockId}
+        readOnly
+      />,
+      selectedBlock ? (
         <ReviewCommentControls
           key={selectedBlock.id}
           selectedBlock={selectedBlock}
@@ -508,15 +522,14 @@ function EditPage() {
           onSendFeedback={handleSendFeedback}
           onApprove={() => void transitionState('APPROVED')}
         />
-      ) : (
-        <PermissionDenied />
-      ),
+      ) : null,
     )
   }
 
   // ── DRAFT / CHANGES_REQUESTED ──
+  // KAN-119/120: ADMIN y FUNCTIONAL pueden editar sin ser creadores
   const leftPane =
-    newsletter.state === 'CHANGES_REQUESTED' && !isCreator ? (
+    !canEdit ? (
       <PermissionDenied />
     ) : (
       <BlockList
@@ -528,7 +541,7 @@ function EditPage() {
     )
 
   const rightPane =
-    newsletter.state === 'CHANGES_REQUESTED' && !isCreator ? (
+    !canEdit ? (
       <PermissionDenied />
     ) : (
       <>

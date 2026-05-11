@@ -123,6 +123,14 @@ export async function deleteNewsletter(
   saveMockDb(db)
 }
 
+export async function getAllNewsletters(): Promise<Newsletter[]> {
+  await new Promise<void>((resolve) => window.setTimeout(resolve, 200))
+  const db = getMockDb()
+  return Object.values(db).sort(
+    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+  )
+}
+
 // ─────────────────────────────────────────────
 // UPDATE STATUS
 // ─────────────────────────────────────────────
@@ -155,6 +163,62 @@ export async function updateNewsletterStatus(
   saveMockDb(db)
 
   return updated
+}
+
+// Puebla el mock DB con datos de prueba si está vacío
+export function seedMockNewslettersIfEmpty(): void {
+  const db = getMockDb()
+  if (Object.keys(db).length > 0) return
+
+  const baseBlocks = [
+    { id: 'header', name: 'Encabezado', text: 'Nestlé Comunica', backgroundColor: '#FFFFFF', comment: null },
+    { id: 'headline', name: 'Título principal', text: 'Actualizaciones del equipo', backgroundColor: '#97CAEB', comment: null },
+    { id: 'body', name: 'Cuerpo', text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.', backgroundColor: '#FFFFFF', comment: null },
+    { id: 'cta', name: 'Llamado a la acción', text: 'Conocé más en el portal interno.', backgroundColor: '#FFC600', comment: null },
+  ]
+
+  const seed: Newsletter[] = [
+    {
+      id: 'seed-draft-user',
+      creatorUserId: '3',
+      state: 'DRAFT',
+      templateId: 'corporate-update',
+      blocks: baseBlocks.map(b => ({ ...b })),
+      comment: null,
+      generationRequest: null,
+      renderedHtml: null,
+      createdAt: new Date(Date.now() - 2 * 86400000).toISOString(),
+      updatedAt: new Date(Date.now() - 2 * 86400000).toISOString(),
+    },
+    {
+      id: 'seed-in-review-user',
+      creatorUserId: '3',
+      state: 'IN_REVIEW',
+      templateId: 'weekly-brief',
+      blocks: baseBlocks.map(b => ({ ...b, text: b.text + ' (en revisión)' })),
+      comment: null,
+      generationRequest: null,
+      renderedHtml: null,
+      createdAt: new Date(Date.now() - 3 * 86400000).toISOString(),
+      updatedAt: new Date(Date.now() - 1 * 86400000).toISOString(),
+    },
+    {
+      id: 'seed-changes-admin',
+      creatorUserId: '1',
+      state: 'CHANGES_REQUESTED',
+      templateId: 'people-story',
+      blocks: baseBlocks.map(b => ({ ...b, text: b.text + ' (cambios pedidos)', comment: 'Revisar el tono del titular.' })),
+      comment: 'Revisar el tono del titular.',
+      generationRequest: null,
+      renderedHtml: null,
+      createdAt: new Date(Date.now() - 5 * 86400000).toISOString(),
+      updatedAt: new Date(Date.now() - 86400000).toISOString(),
+    },
+  ]
+
+  const newDb: Record<string, Newsletter> = {}
+  for (const n of seed) newDb[n.id] = n
+  saveMockDb(newDb)
 }
 
 //CONECTAR CON BACKEND REAL CUANDO ESTÉ DISPONIBLE / TENGO PROBLEMAS CON EL TOKEN PARA GENERAR EL NEWSLETTER

@@ -7,6 +7,9 @@ import { NotificationManager } from './components/NotificationManager'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { ProtectedLayout } from './components/ProtectedLayout'
 import { apiBaseUrl } from './config/api'
+import { seedMockNewslettersIfEmpty } from './api/newsletters'
+
+seedMockNewslettersIfEmpty()
 import { LoginPage } from './pages/LoginPage'
 import { DashboardPage } from './pages/DashboardPage'
 import CreatePage from './pages/CreatePage'
@@ -722,7 +725,7 @@ function AppRouter() {
           <Route
             path="/crearNewsletter"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['ADMIN', 'USER']}>
                 <ProtectedLayout>
                   <CreatePage />
                 </ProtectedLayout>
