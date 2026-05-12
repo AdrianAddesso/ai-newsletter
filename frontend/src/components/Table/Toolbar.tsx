@@ -33,7 +33,7 @@ export function Toolbar({
   const navigate = useNavigate()
 
   const route = () => {
-    navigate('/crearNewsletter')
+    navigate('/templates/biblioteca')
   }
 
   return (
