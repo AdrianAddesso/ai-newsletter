@@ -1,83 +1,90 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
-import axios from 'axios'
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
+import axios from "axios";
 
-export type UserRole = 'ADMIN' | 'FUNCTIONAL' | 'USER'
+export type UserRole = "ADMIN" | "FUNCTIONAL" | "USER";
 
 export interface User {
-  id: string
-  email: string
-  name: string
-  role: UserRole
-  area?: string
-  state: 'ACTIVE' | 'INACTIVE' | 'REMOVED'
+  id: string;
+  email: string;
+  name: string;
+  role: UserRole;
+  area?: string;
+  state: "ACTIVE" | "INACTIVE" | "REMOVED";
 }
 
 interface StoredSession {
-  user: User
-  accessToken: string
-  refreshToken: string
-  accessTokenExpiresAt: number
-  refreshTokenExpiresAt: number
+  user: User;
+  accessToken: string;
+  refreshToken: string;
+  accessTokenExpiresAt: number;
+  refreshTokenExpiresAt: number;
 }
 
 export interface AuthContextType {
-  user: User | null
-  loading: boolean
-  isAuthenticated: boolean
-  login: (email: string, password: string) => Promise<void>
-  loginWithMicrosoft: (email: string) => Promise<void>
-  logout: () => void
-  refreshToken: () => Promise<void>
+  user: User | null;
+  loading: boolean;
+  isAuthenticated: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  loginWithMicrosoft: (email: string) => Promise<void>;
+  logout: () => void;
+  refreshToken: () => Promise<void>;
 }
 
 export const MICROSOFT_SSO_USERS: User[] = [
   {
-    id: '1',
-    email: 'superadmin@example.com',
-    name: 'Administrador',
-    role: 'ADMIN',
-    area: 'COMUNICACION_INTERNA',
-    state: 'ACTIVE'
+    id: "1",
+    email: "superadmin@example.com",
+    name: "Administrador",
+    role: "ADMIN",
+    area: "COMUNICACION_INTERNA",
+    state: "ACTIVE",
   },
   {
-    id: '2',
-    email: 'funcional@example.com',
-    name: 'Funcional',
-    role: 'FUNCTIONAL',
-    state: 'ACTIVE',
-    area: 'COMUNICACION_CORPORATIVA'
+    id: "2",
+    email: "funcional@example.com",
+    name: "Funcional",
+    role: "FUNCTIONAL",
+    state: "ACTIVE",
+    area: "COMUNICACION_CORPORATIVA",
   },
   {
-    id: '3',
-    email: 'user@example.com',
-    name: 'Usuario Normal',
-    role: 'USER',
-    state: 'INACTIVE',
-    area: 'COMUNICACION_INTERNA'
+    id: "3",
+    email: "user@example.com",
+    name: "Usuario Normal",
+    role: "USER",
+    state: "INACTIVE",
+    area: "COMUNICACION_INTERNA",
   },
-]
+];
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined)
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const SESSION_STORAGE_KEY = 'nestle-ai-newsletter:session'
+const SESSION_STORAGE_KEY = "nestle-ai-newsletter:session";
 // MOCK_PASSWORD solo para desarrollo local/demo. No usar en producción.
-const MOCK_PASSWORD = 'password123'
-const ACCESS_TOKEN_TTL = 10 * 60 * 1000
-const REFRESH_TOKEN_TTL = 8 * 60 * 60 * 1000
+const MOCK_PASSWORD = "password123";
+const ACCESS_TOKEN_TTL = 10 * 60 * 1000;
+const REFRESH_TOKEN_TTL = 8 * 60 * 60 * 1000;
 
 const wait = (ms: number) =>
   new Promise<void>((resolve) => {
-    window.setTimeout(resolve, ms)
-  })
+    window.setTimeout(resolve, ms);
+  });
 
 const getUserByEmail = (email: string) =>
-  MICROSOFT_SSO_USERS.find((mockUser) => mockUser.email === email)
+  MICROSOFT_SSO_USERS.find((mockUser) => mockUser.email === email);
 
-const isExpired = (expiresAt: number) => Date.now() >= expiresAt
+const isExpired = (expiresAt: number) => Date.now() >= expiresAt;
 
 const createMockSession = (user: User): StoredSession => {
-  const now = Date.now()
+  const now = Date.now();
 
   return {
     user,
@@ -85,11 +92,11 @@ const createMockSession = (user: User): StoredSession => {
     refreshToken: `ms_refresh_${user.id}_${now}`,
     accessTokenExpiresAt: now + ACCESS_TOKEN_TTL,
     refreshTokenExpiresAt: now + REFRESH_TOKEN_TTL,
-  }
-}
+  };
+};
 
 const refreshStoredSession = (session: StoredSession): StoredSession => {
-  const now = Date.now()
+  const now = Date.now();
 
   return {
     ...session,
@@ -97,168 +104,166 @@ const refreshStoredSession = (session: StoredSession): StoredSession => {
     refreshToken: `ms_refresh_${session.user.id}_${now}`,
     accessTokenExpiresAt: now + ACCESS_TOKEN_TTL,
     refreshTokenExpiresAt: now + REFRESH_TOKEN_TTL,
-  }
-}
+  };
+};
 
 const readStoredSession = (): StoredSession | null => {
-  const storedSession = localStorage.getItem(SESSION_STORAGE_KEY)
+  const storedSession = localStorage.getItem(SESSION_STORAGE_KEY);
 
   if (!storedSession) {
-    return null
+    return null;
   }
 
   try {
-    const parsedSession = JSON.parse(storedSession) as StoredSession
+    const parsedSession = JSON.parse(storedSession) as StoredSession;
 
-    if (!parsedSession.user || !parsedSession.accessToken || !parsedSession.refreshToken) {
-      return null
+    if (
+      !parsedSession.user ||
+      !parsedSession.accessToken ||
+      !parsedSession.refreshToken
+    ) {
+      return null;
     }
 
-    return parsedSession
+    return parsedSession;
   } catch {
-    return null
+    return null;
   }
-}
+};
 
 const saveStoredSession = (session: StoredSession) => {
-  localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session))
-}
+  localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
+};
 
 const clearStoredSession = () => {
-  localStorage.removeItem(SESSION_STORAGE_KEY)
-}
+  localStorage.removeItem(SESSION_STORAGE_KEY);
+};
 
-const setAxiosSessionHeaders = (session?: StoredSession) => {
-  if (session) {
-    axios.defaults.headers.common.Authorization = `Bearer ${session.accessToken}`
-    axios.defaults.headers.common['x-user-id'] = session.user.id
-    axios.defaults.headers.common['x-user-role'] = session.user.role
-    axios.defaults.headers.common['x-area'] = session.user.area
-    return
+const setAxiosAccessToken = (accessToken?: string) => {
+  if (accessToken) {
+    axios.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
+    return;
   }
 
-  delete axios.defaults.headers.common.Authorization
-  delete axios.defaults.headers.common['x-user-id']
-  delete axios.defaults.headers.common['x-user-role']
-  delete axios.defaults.headers.common['x-area']
-}
+  delete axios.defaults.headers.common.Authorization;
+};
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const commitSession = useCallback((session: StoredSession) => {
-    saveStoredSession(session)
-    setAxiosSessionHeaders(session)
-    setUser(session.user)
-  }, [])
+    saveStoredSession(session);
+    setAxiosAccessToken(session.accessToken);
+    setUser(session.user);
+  }, []);
 
   const logout = useCallback(() => {
-    clearStoredSession()
-    setAxiosSessionHeaders()
-    setUser(null)
-  }, [])
+    clearStoredSession();
+    setAxiosAccessToken();
+    setUser(null);
+  }, []);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
-      const storedSession = readStoredSession()
+      const storedSession = readStoredSession();
 
       if (!storedSession) {
-        setLoading(false)
-        return
+        setLoading(false);
+        return;
       }
 
       if (!isExpired(storedSession.accessTokenExpiresAt)) {
-        commitSession(storedSession)
-        setLoading(false)
-        return
+        commitSession(storedSession);
+        setLoading(false);
+        return;
       }
 
       if (!isExpired(storedSession.refreshTokenExpiresAt)) {
-        commitSession(refreshStoredSession(storedSession))
-        setLoading(false)
-        return
+        commitSession(refreshStoredSession(storedSession));
+        setLoading(false);
+        return;
       }
 
-      clearStoredSession()
-      setAxiosSessionHeaders()
-      setLoading(false)
-    }, 0)
+      clearStoredSession();
+      setAxiosAccessToken();
+      setLoading(false);
+    }, 0);
 
     return () => {
-      window.clearTimeout(timeoutId)
-    }
-  }, [commitSession])
+      window.clearTimeout(timeoutId);
+    };
+  }, [commitSession]);
 
   const loginWithMicrosoft = useCallback(
     async (email: string) => {
-      setLoading(true)
+      setLoading(true);
 
       try {
-        await wait(500)
+        await wait(500);
 
-        const microsoftUser = getUserByEmail(email)
+        const microsoftUser = getUserByEmail(email);
 
         if (!microsoftUser) {
-          throw new Error('La cuenta Microsoft no tiene acceso al sistema')
+          throw new Error("La cuenta Microsoft no tiene acceso al sistema");
         }
 
-        commitSession(createMockSession(microsoftUser))
+        commitSession(createMockSession(microsoftUser));
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     },
     [commitSession],
-  )
+  );
 
   const login = useCallback(
     async (email: string, password: string) => {
       if (password !== MOCK_PASSWORD) {
-        throw new Error('Credenciales invalidas')
+        throw new Error("Credenciales invalidas");
       }
 
-      await loginWithMicrosoft(email)
+      await loginWithMicrosoft(email);
     },
     [loginWithMicrosoft],
-  )
+  );
 
   const refreshToken = useCallback(async () => {
-    const storedSession = readStoredSession()
+    const storedSession = readStoredSession();
 
     if (!storedSession || isExpired(storedSession.refreshTokenExpiresAt)) {
-      logout()
+      logout();
       // Lanzar error para notificar al usuario
-      throw new Error('La sesion expiro')
+      throw new Error("La sesion expiro");
     }
 
-    await wait(250)
-    commitSession(refreshStoredSession(storedSession))
-  }, [commitSession, logout])
+    await wait(250);
+    commitSession(refreshStoredSession(storedSession));
+  }, [commitSession, logout]);
 
   useEffect(() => {
     if (!user) {
-      return undefined
+      return undefined;
     }
 
     const intervalId = window.setInterval(() => {
-      const storedSession = readStoredSession()
+      const storedSession = readStoredSession();
 
       if (!storedSession) {
-        logout()
-        return
+        logout();
+        return;
       }
 
       if (isExpired(storedSession.accessTokenExpiresAt)) {
         refreshToken().catch(() => {
-          logout()
-        })
+          logout();
+        });
       }
-    }, 30 * 1000)
+    }, 30 * 1000);
 
     return () => {
-      window.clearInterval(intervalId)
-    }
-  }, [logout, refreshToken, user])
+      window.clearInterval(intervalId);
+    };
+  }, [logout, refreshToken, user]);
 
   const value: AuthContextType = {
     user,
@@ -268,17 +273,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loginWithMicrosoft,
     logout,
     refreshToken,
-  }
+  };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext)
+  const context = useContext(AuthContext);
 
   if (!context) {
-    throw new Error('useAuth must be used within AuthProvider')
+    throw new Error("useAuth must be used within AuthProvider");
   }
 
-  return context
+  return context;
 }

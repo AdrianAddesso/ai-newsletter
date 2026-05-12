@@ -39,7 +39,6 @@ import { MockAuthGuard } from '../modules/auth/guards/mockup.guard';
 import { PermissionsGuard } from '../modules/auth/guards/permissions.guard';
 import { Action } from '../modules/auth/enum/actions';
 import { Resource } from '../modules/auth/enum/resources';
-import type { SaveTemplateBlocksResponse } from '../blocks/block.service';
 
 @Controller(Resource.TEMPLATES)
 @UseGuards(MockAuthGuard, PermissionsGuard)
@@ -93,13 +92,13 @@ export class TemplatesController {
   }
 
   @Post(':id/blocks')
-  @RequirePermission(Action.TEMPLATE_EDIT, Resource.TEMPLATES)
   defineBlocks(
     @Param(new ZodValidationPipe(idParamSchema)) params: IdParam,
     @Body(new ZodValidationPipe(defineTemplateBlocksBodySchema))
     body: DefineTemplateBlocksBody,
-  ): Promise<SaveTemplateBlocksResponse> {
-    return this.templatesService.defineBlocks(params.id, body);
+  ) {
+    void body;
+    return this.templatesService.defineBlocks(params.id);
   }
 
   @Get(':id/assets')

@@ -1,11 +1,33 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+
+export type BrandKitListItem = {
+  id: string;
+  name: string;
+};
 
 @Injectable()
 export class BrandKitService {
-  constructor() {}
+  private readonly logger = new Logger(BrandKitService.name);
 
-  getAll(): string {
-    return 'Desde brand kit';
+  constructor(private readonly prisma: PrismaService) {}
+
+  async getAll(): Promise<BrandKitListItem[]> {
+    try {
+      return this.prisma.brand_kit.findMany({
+        where: { deleted_at: null, active: true },
+        orderBy: { name: 'asc' },
+        select: {
+          id: true,
+          name: true,
+        },
+      });
+    } catch {
+      this.logger.error('Brand kit list failed.');
+      throw new ServiceUnavailableException(
+        'No se pudieron obtener los brand kits en este momento.',
+      );
+    }
   }
 
   create(): string {

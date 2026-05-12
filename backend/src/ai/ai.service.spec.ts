@@ -125,6 +125,7 @@ describe('AiService', () => {
       service.generateNewsletter({
         area: 'COMUNICACION_INTERNA',
         templateId: 'weekly-brief',
+        brandKitId: 'nestle-corporate',
         topic: 'Seguridad',
         objective: 'Informar avances',
         audience: 'Equipo interno',
@@ -154,6 +155,9 @@ describe('AiService', () => {
     expect(fetchBody.contents[0].parts[0].text).toContain('"topic":"Seguridad"');
     expect(fetchBody.contents[0].parts[0].text).toContain(
       '"templateId":"weekly-brief"',
+    );
+    expect(fetchBody.contents[0].parts[0].text).toContain(
+      '"brandKitId":"nestle-corporate"',
     );
     expect(fetchBody.generationConfig).toEqual({
       temperature: 0.5,

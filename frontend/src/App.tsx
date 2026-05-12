@@ -1,22 +1,5 @@
-import { Box } from '@mui/material'
-import { BrowserRouter as Router, Route, Routes } from 'react-router'
-import { AuthProvider } from './contexts/AuthContext'
-import { NotificationProvider } from './contexts/NotificationContext'
-import { AlertProvider, useNotification } from './hooks/useNotification'
-import { NotificationManager } from './components/NotificationManager'
-import { ProtectedRoute } from './components/ProtectedRoute'
-import { ProtectedLayout } from './components/ProtectedLayout'
-import { apiBaseUrl } from './config/api'
-import { LoginPage } from './pages/LoginPage'
-import { DashboardPage } from './pages/DashboardPage'
-import CreatePage from './pages/CreatePage'
-import { EditPage } from './pages/EditPage'
-import TemplatesPage from './pages/TemplatesPage'
-import { AnalyticsPage } from './pages/AnalyticsPage'
-import { ReviewsPage } from './pages/ReviewsPage'
-import { UsersPage } from './pages/UsersPage'
-import { SettingsPage } from './pages/SettingsPage'
 import './App.css'
+<<<<<<< HEAD
 
 // Legacy demo pages
 import axios from 'axios'
@@ -884,16 +867,16 @@ function AppRouter() {
     </Box>
   );
 }
+=======
+import { AppProviders } from './app/AppProviders'
+import { AppRouter } from './app/AppRouter'
+>>>>>>> 496d50088dde3f03be96b6688900121ed28869f9
 
 function App() {
   return (
-    <AuthProvider>
-      <AlertProvider>
-        <NotificationProvider>
-          <AppRouter />
-        </NotificationProvider>
-      </AlertProvider>
-    </AuthProvider>
+    <AppProviders>
+      <AppRouter />
+    </AppProviders>
   )
 }
 
