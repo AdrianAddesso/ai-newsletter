@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams, useNavigate } from 'react-router'
+import { useNavigate } from 'react-router'
 import {
   Box,
   Button,
@@ -15,41 +15,26 @@ import { useTemplateStore } from '../../stores/templates.store'
 import { TemplateCanvas } from '../../components/canvas/TemplateCanvas'
 import { StructureControl } from '../../components/canvas/StructureControl'
 import { EditorControl } from '../../components/canvas/EditorControl'
-
-const TAB_LABELS = ['Crear', 'Editar', 'Revisar']
+import { TAB_LABELS } from '../../utils/constants'
 
 export function CreateTemplate() {
-  const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState(0)
 
-  const { 
-    isSkeletonView, 
-    setIsSkeletonView, 
-    saveTemplate, 
-    resetStore,
-    title 
-  } = useTemplateStore()
+  const { isSkeletonView, setIsSkeletonView, saveTemplate, resetStore, title } = useTemplateStore()
 
-  // Initial load
   useEffect(() => {
-    // If id exists, we should load data from API. For now, we just reset the store.
-    resetStore({ id: id || undefined })
-  }, [id, resetStore])
+    // For now, we just reset the store.
+    resetStore({})
+  }, [resetStore])
 
   const handleConfirmStructure = () => {
     setIsSkeletonView(false)
     setActiveTab(1)
   }
 
-  // const handleSave = async () => {
-  //   await saveTemplate()
-  //   // Show success notification or similar
-  // }
-
   return (
     <Box sx={{ bgcolor: 'grey.50', minHeight: 'calc(100vh - 64px)' }}>
-      {/* Header */}
       <Box
         sx={{
           bgcolor: 'white',
@@ -65,13 +50,11 @@ export function CreateTemplate() {
         <IconButton size="small" onClick={() => navigate(-1)} sx={{ color: 'text.secondary' }}>
           <ChevronLeftIcon />
         </IconButton>
-
         <Box sx={{ flex: 1 }}>
           <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
             {title}
           </Typography>
         </Box>
-
         <Chip
           label="Borrador"
           size="small"
@@ -119,7 +102,6 @@ export function CreateTemplate() {
               {isSkeletonView ? 'Diseño de Estructura' : 'Edición de Contenido'}
             </Typography>
           </Box>
-
           <Box sx={{ flex: 1, overflow: 'auto', p: 4, bgcolor: '#E5E5E5' }}>
             <TemplateCanvas />
           </Box>
@@ -152,16 +134,13 @@ export function CreateTemplate() {
               ))}
             </Tabs>
           </Box>
-
           <Box sx={{ flex: 1, overflow: 'auto', p: 2.5 }}>
             {activeTab === 0 && (
               <StructureControl onConfirm={handleConfirmStructure} />
             )}
-
             {activeTab === 1 && (
               <EditorControl />
             )}
-
             {activeTab === 2 && (
               <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Typography variant="body2" color="text.disabled">
