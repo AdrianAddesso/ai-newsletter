@@ -456,7 +456,8 @@ function EditNewsletterPage() {
 
   // ── Derived states ──
   const isReviewState = newsletter?.state === 'IN_REVIEW' || newsletter?.state === 'RESUBMITTED'
-  const canReview = ['ADMIN', 'FUNCTIONAL'].includes(currentUserRole)
+  const isAdmin = currentUserRole === 'ADMIN'
+  const canReview = currentUserRole === 'ADMIN' || currentUserRole === 'FUNCTIONAL'
   const isCreator = currentUserId === newsletter?.creatorUserId
 
   // Si el newsletter está en revisión y el usuario no puede revisar, ir al dashboard
@@ -473,12 +474,7 @@ function EditNewsletterPage() {
       : () => void handleSendForReview()
 
   const handleStepClick = useCallback((step: number) => {
-    const stateMap: Partial<Record<number, NewsletterState>> = {
-      0: 'DRAFT',
-      1: 'CHANGES_REQUESTED',
-    }
-    const target = stateMap[step]
-    if (target) void transitionState(target)
+    if (step === 1) void transitionState('CHANGES_REQUESTED')
   }, [transitionState])
 
   // ──────────────────────────────────────────────────────────────────────────
@@ -489,8 +485,8 @@ function EditNewsletterPage() {
     <Box component="main" sx={{ minHeight: 'calc(100vh - 64px)', bgcolor: 'background.default' }}>
       {showStepper && (
         <NewsletterStepper
-          activeStep={getStepFromState(newsletter?.state)}
-          onStepClick={handleStepClick}
+          activeStep={Math.max(1, getStepFromState(newsletter?.state))}
+          onStepClick={isReviewState ? handleStepClick : undefined}
         />
       )}
       <Box
@@ -645,22 +641,22 @@ function EditNewsletterPage() {
   }
 
   // ── DRAFT / CHANGES_REQUESTED ──
-  const leftPane =
-    newsletter.state === 'CHANGES_REQUESTED' && !isCreator ? (
-      <PermissionDenied />
-    ) : (
-      <BlockList
-        blocks={newsletter.blocks}
-        selectedBlockId={selectedBlockId}
-        onSelectBlock={setSelectedBlockId}
-        readOnly={false}
-      />
-    )
+  const draftPermissionDenied = !isCreator && !isAdmin
 
-  const rightPane =
-    newsletter.state === 'CHANGES_REQUESTED' && !isCreator ? (
-      <PermissionDenied />
-    ) : (
+  const leftPane = draftPermissionDenied ? (
+    <PermissionDenied />
+  ) : (
+    <BlockList
+      blocks={newsletter.blocks}
+      selectedBlockId={selectedBlockId}
+      onSelectBlock={setSelectedBlockId}
+      readOnly={false}
+    />
+  )
+
+  const rightPane = draftPermissionDenied ? (
+    <PermissionDenied />
+  ) : (
       <>
         <Tabs value={showRegenerationForm ? 0 : 1} onChange={(_, v) => setShowRegenerationForm(v === 0)}>
           <Tab label="Regenerar todo" />
