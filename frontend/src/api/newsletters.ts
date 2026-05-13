@@ -26,9 +26,28 @@ export function generateNewsletterId(): string {
 
 const STORAGE_KEY = 'newsletters_mock_db'
 
+function normalizeNewsletter(newsletter: Newsletter): Newsletter {
+  return {
+    ...newsletter,
+    assetSelection: newsletter.assetSelection ?? null,
+  }
+}
+
 function getMockDb(): Record<string, Newsletter> {
   const stored = localStorage.getItem(STORAGE_KEY)
-  return stored ? JSON.parse(stored) : {}
+
+  if (!stored) {
+    return {}
+  }
+
+  const parsed = JSON.parse(stored) as Record<string, Newsletter>
+
+  return Object.fromEntries(
+    Object.entries(parsed).map(([id, newsletter]) => [
+      id,
+      normalizeNewsletter(newsletter),
+    ]),
+  )
 }
 
 function saveMockDb(db: Record<string, Newsletter>): void {
@@ -52,6 +71,7 @@ export async function createNewsletter(
     blocks: payload.blocks,
     comment: null,
     generationRequest: payload.generationRequest,
+    assetSelection: payload.assetSelection,
     renderedHtml: null,
     createdAt: now,
     updatedAt: now,
@@ -63,7 +83,7 @@ export async function createNewsletter(
 
   saveMockDb(db)
 
-  return newsletter
+  return normalizeNewsletter(newsletter)
 }
 
 export async function getNewsletter(
@@ -80,7 +100,7 @@ export async function getNewsletter(
     throw new Error(`Newsletter con ID ${id} no encontrado`)
   }
 
-  return newsletter
+  return normalizeNewsletter(newsletter)
 }
 
 export async function updateNewsletter(
@@ -108,7 +128,7 @@ export async function updateNewsletter(
 
   saveMockDb(db)
 
-  return updated
+  return normalizeNewsletter(updated)
 }
 
 export async function deleteNewsletter(

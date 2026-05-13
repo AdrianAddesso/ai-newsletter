@@ -254,3 +254,118 @@ WHERE NOT EXISTS (
   FROM public.brand_kit bk
   WHERE bk.name = d.name
 );
+
+
+-- =========================================================
+-- 1) INSERT GLOBAL COLORS
+-- Paleta oficial We Make Nestlé
+-- =========================================================
+
+INSERT INTO colors (id, name, hex, created_at, updated_at, deleted_at)
+VALUES
+  (gen_random_uuid(), 'Nestle Red',       '#FF595A', NOW(), NOW(), NULL),
+  (gen_random_uuid(), 'Dark Oak',         '#30261D', NOW(), NOW(), NULL),
+  (gen_random_uuid(), 'White',            '#FFFFFF', NOW(), NOW(), NULL),
+
+  (gen_random_uuid(), 'Blue Dark',        '#00A0DF', NOW(), NOW(), NULL),
+  (gen_random_uuid(), 'Blue Light',       '#97CAEB', NOW(), NOW(), NULL),
+
+  (gen_random_uuid(), 'Green Dark',       '#61A60E', NOW(), NOW(), NULL),
+  (gen_random_uuid(), 'Green Light',      '#A2D45E', NOW(), NOW(), NULL),
+
+  (gen_random_uuid(), 'Turquoise Dark',   '#00AFAA', NOW(), NOW(), NULL),
+  (gen_random_uuid(), 'Turquoise Light',  '#99D9D9', NOW(), NOW(), NULL),
+
+  (gen_random_uuid(), 'Purple Dark',      '#B14FC5', NOW(), NOW(), NULL),
+  (gen_random_uuid(), 'Purple Light',     '#CB8BDA', NOW(), NOW(), NULL),
+
+  (gen_random_uuid(), 'Orange',           '#FF8300', NOW(), NOW(), NULL),
+
+  (gen_random_uuid(), 'Yellow Dark',      '#F5A800', NOW(), NOW(), NULL),
+  (gen_random_uuid(), 'Yellow Light',     '#FFC600', NOW(), NOW(), NULL)
+ON CONFLICT (hex) DO NOTHING;
+
+
+
+-- =========================================================
+-- 2) INSERT COLOR PALETTE POR BRAND KIT
+-- Asigna 3 colores variados por brand kit.
+-- No usa Red, Dark Oak ni White para brand kits.
+-- =========================================================
+
+INSERT INTO color_palette (brand_kit_id, color_id, created_at, deleted_at)
+SELECT
+  bk.id,
+  c.id,
+  NOW(),
+  NULL
+FROM (
+  VALUES
+    ('Nespresso',             'Blue Dark'),
+    ('Nespresso',             'Turquoise Light'),
+    ('Nespresso',             'Yellow Light'),
+
+    ('Purina',                'Green Dark'),
+    ('Purina',                'Blue Light'),
+    ('Purina',                'Purple Light'),
+
+    ('Maggi',                 'Yellow Light'),
+    ('Maggi',                 'Green Light'),
+    ('Maggi',                 'Turquoise Dark'),
+
+    ('Nido',                  'Blue Light'),
+    ('Nido',                  'Yellow Light'),
+    ('Nido',                  'Orange'),
+
+    ('Milo',                  'Green Dark'),
+    ('Milo',                  'Green Light'),
+    ('Milo',                  'Yellow Light'),
+
+    ('Carnation',             'Purple Light'),
+    ('Carnation',             'Blue Light'),
+    ('Carnation',             'Orange'),
+
+    ('San Pellegrino',        'Turquoise Dark'),
+    ('San Pellegrino',        'Blue Light'),
+    ('San Pellegrino',        'Green Light'),
+
+    ('Nestle Classic',        'Purple Dark'),
+    ('Nestle Classic',        'Yellow Light'),
+    ('Nestle Classic',        'Turquoise Light'),
+
+    ('Nescau',                'Orange'),
+    ('Nescau',                'Blue Dark'),
+    ('Nescau',                'Yellow Light'),
+
+    ('Nestle Health Science', 'Green Light'),
+    ('Nestle Health Science', 'Turquoise Light'),
+    ('Nestle Health Science', 'Blue Dark'),
+
+    ('Nestle',                'Blue Dark'),
+    ('Nestle',                'Green Dark'),
+    ('Nestle',                'Yellow Light'),
+
+    ('Perrier',               'Turquoise Dark'),
+    ('Perrier',               'Green Light'),
+    ('Perrier',               'Yellow Light'),
+
+    ('Kit Kat',               'Purple Dark'),
+    ('Kit Kat',               'Orange'),
+    ('Kit Kat',               'Blue Light'),
+
+    ('Gerber',                'Yellow Light'),
+    ('Gerber',                'Green Light'),
+    ('Gerber',                'Purple Light'),
+
+    ('Nescafe',               'Blue Dark'),
+    ('Nescafe',               'Orange'),
+    ('Nescafe',               'Turquoise Light')
+) AS palette(brand_kit_name, color_name)
+JOIN brand_kit bk
+  ON bk.name = palette.brand_kit_name
+JOIN colors c
+  ON c.name = palette.color_name
+WHERE bk.deleted_at IS NULL
+  AND bk.active = TRUE
+  AND c.deleted_at IS NULL
+ON CONFLICT (brand_kit_id, color_id) DO NOTHING;

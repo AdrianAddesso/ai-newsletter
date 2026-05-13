@@ -22,8 +22,6 @@ export async function listTemplates(): Promise<NewsletterTemplate[]> {
     ...template,
     requiredGenerationFields: template.requiredGenerationFields ?? [],
     optionalGenerationFields:
-      template.optionalGenerationFields?.length > 0
-        ? template.optionalGenerationFields
-        : defaultOptionalGenerationFields,
+      template.optionalGenerationFields ?? defaultOptionalGenerationFields,
   }))
 }

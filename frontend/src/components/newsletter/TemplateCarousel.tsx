@@ -43,12 +43,10 @@ export function TemplateCarousel({
         const kits = await listBrandKits()
         if (mounted) {
           setBrandKitOptions(kits)
-          onSelectBrandKit(selectedBrandKitId || kits[0]?.id || '')
         }
       } catch {
         if (mounted) {
           setBrandKitOptions([])
-          onSelectBrandKit('')
         }
       }
     }
@@ -58,7 +56,13 @@ export function TemplateCarousel({
     return () => {
       mounted = false
     }
-  }, [onSelectBrandKit, selectedBrandKitId])
+  }, [])
+
+  useEffect(() => {
+    if (!selectedBrandKitId && brandKitOptions[0]?.id) {
+      onSelectBrandKit(brandKitOptions[0].id)
+    }
+  }, [brandKitOptions, onSelectBrandKit, selectedBrandKitId])
 
   const effectiveArea = templates.some((template) => template.area === selectedArea)
     ? selectedArea
