@@ -24,7 +24,7 @@ export const protectedRoutes = (
         <Route
             path="/crearNewsletter"
             element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={['ADMIN', 'USER']}>
                     <ProtectedLayout>
                         <CreateNewsletterPage />
                     </ProtectedLayout>
