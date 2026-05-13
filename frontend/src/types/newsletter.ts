@@ -1,4 +1,5 @@
 import type { GenerateNewsletterRequest } from '../api/ai'
+import type { AssetType, UploadedAsset } from '../api/assets'
 import type { UUID } from '../interfaces/interfaces.newsletters'
 
 export type NewsletterState =
@@ -23,6 +24,11 @@ export type NewsletterBlock = {
   text: string
   backgroundColor: string
   comment: string | null
+}
+
+export type NewsletterAssetSelection = {
+  assetType: AssetType
+  selectedAssets: UploadedAsset[]
 }
 
 export type NewsletterTemplate = {
@@ -58,6 +64,7 @@ export type Newsletter = {
   blocks: NewsletterBlock[]
   comment: string | null
   generationRequest: GenerateNewsletterRequest | null
+  assetSelection: NewsletterAssetSelection | null
   renderedHtml: string | null
   createdAt: string
   updatedAt: string
@@ -70,7 +77,8 @@ export type CreateNewsletterPayload = {
   templateId: string
   brandKitId: string
   blocks: NewsletterBlock[]
-  generationRequest?: GenerateNewsletterRequest
+  generationRequest: GenerateNewsletterRequest
+  assetSelection: NewsletterAssetSelection | null
 }
 
 // Para actualizar
@@ -79,6 +87,8 @@ export type UpdateNewsletterPayload = {
   blocks?: NewsletterBlock[]
   comment?: string | null
   state?: NewsletterState
+  generationRequest?: GenerateNewsletterRequest | null
+  assetSelection?: NewsletterAssetSelection | null
   renderedHtml?: string | null
 }
 

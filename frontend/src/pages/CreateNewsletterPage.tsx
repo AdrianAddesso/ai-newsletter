@@ -9,7 +9,11 @@ import {
   generateNewsletter,
   type GenerateNewsletterRequest,
 } from '../api/ai'
-import type { NewsletterBlock, NewsletterTemplate } from '../types/newsletter'
+import type {
+  NewsletterAssetSelection,
+  NewsletterBlock,
+  NewsletterTemplate,
+} from '../types/newsletter'
 import { createNewsletter } from '../api/newsletters'
 import { listTemplates } from '../api/templates'
 
@@ -71,7 +75,10 @@ function CreateNewsletterPage() {
   const selectedTemplate = templates.find((template) => template.id === selectedTemplateId) ?? null
 
   const handleGenerate = useCallback(
-    async (request: GenerateNewsletterRequest) => {
+    async (
+      request: GenerateNewsletterRequest,
+      assetSelection: NewsletterAssetSelection,
+    ) => {
       setIsGenerating(true)
       setAiError(null)
 
@@ -94,6 +101,7 @@ function CreateNewsletterPage() {
           brandKitId: request.brandKitId,
           blocks,
           generationRequest: request,
+          assetSelection,
         })
 
         // 3. Navegar a EditNewsletterPage con el ID
