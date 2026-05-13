@@ -1,5 +1,5 @@
 import axios from "axios";
-import { useEffect, useState, type ChangeEvent } from "react";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import {
   Alert,
   Button,
@@ -19,6 +19,10 @@ import {
   areaLabels,
   generationFieldLabels,
 } from "../../utils/newsletterTemplates";
+import {
+  getBrandKitResources,
+  type BrandKitResourceAsset,
+} from "../../api/brand-kits";
 import {
   listAssets,
   uploadAssets,
@@ -67,6 +71,13 @@ const dedupeAssets = (assets: UploadedAsset[]): UploadedAsset[] => {
 
   return Array.from(assetsById.values());
 };
+
+const toUploadedAsset = (asset: BrandKitResourceAsset): UploadedAsset => ({
+  id: asset.id,
+  name: asset.name,
+  type: asset.type,
+  url: asset.url,
+});
 
 const splitLines = (v: string) =>
   v
@@ -152,6 +163,7 @@ export function GenerationForm({
   const [isAvailableAssetsCollapsed, setIsAvailableAssetsCollapsed] =
     useState(false);
   const [availableAssetsPage, setAvailableAssetsPage] = useState(1);
+  const hasInitializedAssetType = useRef(false);
 
   const visibleFields = new Set([
     ...selectedTemplate.requiredGenerationFields,
@@ -173,7 +185,14 @@ export function GenerationForm({
       setIsLoadingAssets(true);
       setAssetListError(null);
       try {
-        const res = await listAssets(form.assetType);
+        const res =
+          form.assetType === "SHAPE"
+            ? {
+                assets: (await getBrandKitResources(selectedBrandKitId)).assets
+                  .filter((asset) => asset.type === form.assetType)
+                  .map(toUploadedAsset),
+              }
+            : await listAssets(form.assetType);
         if (mounted) setAvailableAssets(res.assets ?? []);
       } catch (err) {
         if (mounted) {
@@ -194,6 +213,19 @@ export function GenerationForm({
       mounted = false;
     };
   }, [form.assetType, selectedBrandKitId]);
+
+  useEffect(() => {
+    if (!hasInitializedAssetType.current) {
+      hasInitializedAssetType.current = true;
+      return;
+    }
+
+    setSelectedExistingAssets([]);
+    setUploadedAssets([]);
+    setForm((current) => ({ ...current, files: [] }));
+    setAssetUploadError(null);
+    setAvailableAssetsPage(1);
+  }, [form.assetType]);
 
   const isAssetSelected = (assetId: string) =>
     selectedExistingAssets.some((asset) => asset.id === assetId);
@@ -458,8 +490,6 @@ export function GenerationForm({
           value={form.assetType}
           onChange={(e: SelectChangeEvent<AssetType>) => {
             update("assetType", e.target.value);
-            setAssetUploadError(null);
-            setAvailableAssetsPage(1);
           }}
         >
           {Object.entries(assetTypeLabels).map(([v, l]) => (

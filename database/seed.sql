@@ -282,7 +282,8 @@ VALUES
   (gen_random_uuid(), 'Orange',           '#FF8300', NOW(), NOW(), NULL),
 
   (gen_random_uuid(), 'Yellow Dark',      '#F5A800', NOW(), NOW(), NULL),
-  (gen_random_uuid(), 'Yellow Light',     '#FFC600', NOW(), NOW(), NULL);
+  (gen_random_uuid(), 'Yellow Light',     '#FFC600', NOW(), NOW(), NULL)
+ON CONFLICT (hex) DO NOTHING;
 
 
 
@@ -366,4 +367,5 @@ JOIN colors c
   ON c.name = palette.color_name
 WHERE bk.deleted_at IS NULL
   AND bk.active = TRUE
-  AND c.deleted_at IS NULL;
+  AND c.deleted_at IS NULL
+ON CONFLICT (brand_kit_id, color_id) DO NOTHING;

@@ -1,16 +1,14 @@
 import templateClassicImage from "../assets/we_make_nestle/wmn-lockup-one-line-dark-oak-on-white.jpg";
 import templateEditorialImage from "../assets/we_make_nestle/wmn-lockup-two-lines-dark-oak-on-white.jpg";
 import templateBriefImage from "../assets/we_make_nestle/wmn-lockup-three-lines-dark-oak-on-white.jpg";
+import { AreaNameLabel } from "../../../packages/shared/src/enums/area-name.enum";
 import type {
   AreaName,
   NewsletterBlock,
   TemplateGenerationField,
 } from "../types/newsletter";
 
-export const areaLabels: Record<AreaName, string> = {
-  COMUNICACION_INTERNA: "Comunicación interna",
-  COMUNICACION_CORPORATIVA: "Comunicación corporativa",
-};
+export const areaLabels: Record<AreaName, string> = AreaNameLabel;
 
 export const generationFieldLabels: Record<TemplateGenerationField, string> = {
   relevantDates: "Fecha CTA",

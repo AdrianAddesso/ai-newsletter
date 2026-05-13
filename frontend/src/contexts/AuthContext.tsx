@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import axios from "axios";
+import type { AreaName } from "../../../packages/shared/src/enums/area-name.enum";
 
 export type UserRole = "ADMIN" | "FUNCTIONAL" | "USER";
 
@@ -16,7 +17,7 @@ export interface User {
   email: string;
   name: string;
   role: UserRole;
-  area?: string;
+  area: AreaName;
   state: "ACTIVE" | "INACTIVE" | "REMOVED";
 }
 
@@ -119,6 +120,7 @@ const readStoredSession = (): StoredSession | null => {
 
     if (
       !parsedSession.user ||
+      !parsedSession.user.area ||
       !parsedSession.accessToken ||
       !parsedSession.refreshToken
     ) {
@@ -139,13 +141,19 @@ const clearStoredSession = () => {
   localStorage.removeItem(SESSION_STORAGE_KEY);
 };
 
-const setAxiosAccessToken = (accessToken?: string) => {
-  if (accessToken) {
-    axios.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
+const setAxiosSessionHeaders = (session?: StoredSession) => {
+  if (session) {
+    axios.defaults.headers.common.Authorization = `Bearer ${session.accessToken}`;
+    axios.defaults.headers.common["x-user-id"] = session.user.id;
+    axios.defaults.headers.common["x-user-role"] = session.user.role;
+    axios.defaults.headers.common["x-area"] = session.user.area;
     return;
   }
 
   delete axios.defaults.headers.common.Authorization;
+  delete axios.defaults.headers.common["x-user-id"];
+  delete axios.defaults.headers.common["x-user-role"];
+  delete axios.defaults.headers.common["x-area"];
 };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -154,13 +162,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const commitSession = useCallback((session: StoredSession) => {
     saveStoredSession(session);
-    setAxiosAccessToken(session.accessToken);
+    setAxiosSessionHeaders(session);
     setUser(session.user);
   }, []);
 
   const logout = useCallback(() => {
     clearStoredSession();
-    setAxiosAccessToken();
+    setAxiosSessionHeaders();
     setUser(null);
   }, []);
 
@@ -186,7 +194,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       clearStoredSession();
-      setAxiosAccessToken();
+      setAxiosSessionHeaders();
       setLoading(false);
     }, 0);
 

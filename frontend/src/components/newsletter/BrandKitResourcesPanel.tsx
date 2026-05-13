@@ -13,7 +13,7 @@ import type { BrandKitResourceAsset, BrandKitResources } from '../../api/brand-k
 import { AssetImageCard } from './AssetImageCard'
 
 const assetTypeLabels: Record<BrandKitResourceAsset['type'], string> = {
-  IMAGE: 'Imagenes',
+  IMAGE: 'Imágenes',
   ICON: 'Iconos',
   LOGO: 'Logos',
   SHAPE: 'Formas',
@@ -132,7 +132,7 @@ export function BrandKitResourcesPanel({
           </Stack>
 
           <Stack spacing={1}>
-            <Typography variant="subtitle2">Tipografias disponibles</Typography>
+            <Typography variant="subtitle2">Tipografías disponibles</Typography>
             {resources.fonts.length > 0 ? (
               <Stack spacing={1}>
                 {resources.fonts.map((font) => (
@@ -147,7 +147,7 @@ export function BrandKitResourcesPanel({
                 ))}
               </Stack>
             ) : (
-              <Alert severity="info">Este brandkit no tiene tipografias disponibles.</Alert>
+              <Alert severity="info">Este brandkit no tiene tipografías disponibles.</Alert>
             )}
           </Stack>
 

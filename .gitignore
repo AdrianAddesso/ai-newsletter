@@ -12,5 +12,6 @@ frontend/src/pages/TestBlockRegistry
 backend/dist/
 frontend/dist/
 frontend/build/
+*.tsbuildinfo
 
 backend/eslint.config.mjs
