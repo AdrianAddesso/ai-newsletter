@@ -708,6 +708,10 @@ function EditNewsletterPage() {
   }
 
   // ── IN_REVIEW / RESUBMITTED ──
+  if (isReviewState && !canReview) {
+    return null
+  }
+
   if (isReviewState) {
     return pageLayout(
       canReview ? (
