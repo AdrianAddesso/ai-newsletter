@@ -26,8 +26,8 @@ import { ModalDelete } from '../ModalDelete';
 import { TableSortLabel } from '@mui/material';
 import Tooltip from "@mui/material/Tooltip";
 import { useNavigate } from 'react-router';
-import { useEffect } from 'react';
-import { getAllNewsletters } from '../../api/newsletters';
+//import { useEffect } from 'react';
+//import { getAllNewsletters } from '../../api/newsletters';
 
 interface NewsletterRow {
   id: string;
@@ -171,7 +171,8 @@ const mockNewsletters: NewsletterRow[] = [
 ];
 
 export function NewslettersTable({ search, filter }: Props) {
-  const [data, setData] = useState<NewsletterRow[]>([]);
+  const [data, setData] = useState<NewsletterRow[]>(mockNewsletters);
+  //const [data, setData] = useState<NewsletterRow[]>([]);
   const [visibleCount, setVisibleCount] = useState(5);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -195,27 +196,31 @@ export function NewslettersTable({ search, filter }: Props) {
     return value.toString().toLowerCase();
   };
 
-  useEffect(() => {
-    const loadNewsletters = async () => {
-      try {
-        const newsletters = await getAllNewsletters()
-        const rows: NewsletterRow[] = newsletters.map((n) => ({
-          id: n.id,
-          title: n.blocks?.[0]?.text || 'Sin título',
-          autor: n.creatorUserId,
-          state: n.state as NewsletterStatus,
-          language: 'Spanish',
-          reviewer: '—',
-          publish_date: null,
-          updated_at: new Date(n.updatedAt).toLocaleDateString(),
-        }))
-        setData(rows)
-      } catch (error) {
-        console.error('Error cargando newsletters:', error)
-      }
+  // Cargar datos desde backend (reemplazar con llamada real cuando esté disponible)
+ /* useEffect(() => {
+  const loadNewsletters = async () => {
+    try {
+      const newsletters = await getAllNewsletters();
+
+      const rows: NewsletterRow[] = newsletters.map((n) => ({
+        id: n.id,
+        title: n.blocks?.[0]?.text || 'Sin título',
+        autor: n.creatorUserId,
+        state: n.state,
+        language: 'Spanish',
+        reviewer: '—',
+        publish_date: null,
+        updated_at: new Date(n.updatedAt).toLocaleDateString(),
+      }));
+
+      setData(rows);
+    } catch (error) {
+      console.error('Error cargando newsletters:', error);
     }
-    void loadNewsletters()
-  }, [])
+  };
+
+  void loadNewsletters();
+}, []);*/
 
   // FILTRO CENTRALIZADO
   const filteredData = useMemo(() => {

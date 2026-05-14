@@ -1,50 +1,58 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router'
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router";
 import {
   Alert,
   Box,
   Button,
   CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
   Stack,
   Tab,
   Tabs,
   Typography,
-} from '@mui/material'
-import { useAuth } from '../contexts/AuthContext'
-import type { UserRole } from '../contexts/AuthContext'
-import { templates } from '../utils/newsletterTemplates'
-import { getNewsletter, updateNewsletter } from '../api/newsletters'
-import { BlockList } from '../components/newsletter/BlockList'
-import { EditPanel } from '../components/newsletter/EditPanel'
-import { ReviewCommentControls } from '../components/newsletter/ReviewCommentControls'
-import { GenerationForm } from '../components/newsletter/GenerationForm'
+} from "@mui/material";
+import { useAuth } from "../contexts/AuthContext";
+import type { UserRole } from "../contexts/AuthContext";
+import { getNewsletter, updateNewsletter } from "../api/newsletters";
+import { BlockList } from "../components/newsletter/BlockList";
+import { EditPanel } from "../components/newsletter/EditPanel";
+import { ReviewCommentControls } from "../components/newsletter/ReviewCommentControls";
+import { GenerationForm } from "../components/newsletter/GenerationForm";
+import { BrandKitResourcesPanel } from "../components/newsletter/BrandKitResourcesPanel";
 import type {
+  NewsletterAssetSelection,
+  ExportFormat,
   ExportOption,
   Newsletter,
   NewsletterBlock,
   NewsletterState,
-} from '../types/newsletter'
+  NewsletterTemplate,
+} from "../types/newsletter";
 import {
   improveText,
   generateNewsletter,
   type GenerateNewsletterRequest,
-} from '../api/ai'
+} from "../api/ai";
+import { listTemplates } from "../api/templates";
+import {
+  getBrandKitResources,
+  listBrandKits,
+  type BrandKit,
+  type BrandKitResources,
+} from "../api/brand-kits";
+import { useNotification } from "../hooks/useNotification";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-const emptyComment = (v: string | null) => !v || v.trim().length === 0
+const emptyComment = (v: string | null) => !v || v.trim().length === 0;
 
 function logStateChange(payload: unknown) {
-  console.info('Newsletter state changed', payload)
+  console.info("Newsletter state changed", payload);
 }
 
-async function renderNewsletterHtml(blocks: NewsletterBlock[]): Promise<string> {
-  await new Promise<void>((r) => window.setTimeout(r, 250))
+async function renderNewsletterHtml(
+  blocks: NewsletterBlock[],
+): Promise<string> {
+  await new Promise<void>((r) => window.setTimeout(r, 250));
   const sections = blocks
     .map(
       (b) => `
@@ -54,17 +62,51 @@ async function renderNewsletterHtml(blocks: NewsletterBlock[]): Promise<string> 
     </section>
   `,
     )
-    .join('')
-  return `<!doctype html><html lang="es"><body style="margin:0;font-family:Arial,sans-serif;color:#30261D;background:#F8F5F2;"><main style="max-width:680px;margin:0 auto;background:#FFFFFF;border:1px solid #E7E1DC;">${sections}</main></body></html>`
+    .join("");
+  return `<!doctype html><html lang="es"><body style="margin:0;font-family:Arial,sans-serif;color:#30261D;background:#F8F5F2;"><main style="max-width:680px;margin:0 auto;background:#FFFFFF;border:1px solid #E7E1DC;">${sections}</main></body></html>`;
 }
 
 async function fetchExportOptions(): Promise<ExportOption[]> {
-  await new Promise<void>((r) => window.setTimeout(r, 150))
-  return [{ id: 'png', label: 'Exportar a PNG', format: 'PNG' }]
+  await new Promise<void>((r) => window.setTimeout(r, 150));
+  return [
+    {
+      id: "png",
+      label: "Exportar a PNG",
+      format: "PNG",
+    },
+    {
+      id: "eml",
+      label: "Exportar a EML",
+      format: "EML",
+    },
+  ];
 }
 
 async function exportHtmlToPng(): Promise<void> {
-  await new Promise<void>((r) => window.setTimeout(r, 250))
+  await new Promise<void>((r) => window.setTimeout(r, 250));
+}
+
+async function exportHtmlToEml(html: string): Promise<void> {
+  const emlContent = [
+    "X-Unsent: 1",
+    "To: ",
+    "Subject: Newsletter Nestlé",
+    "MIME-Version: 1.0",
+    "Content-Type: text/html; charset=UTF-8",
+    "Content-Transfer-Encoding: 8bit",
+    "",
+    html,
+  ].join("\r\n");
+
+  const blob = new Blob([emlContent], { type: "message/rfc822" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "newsletter.eml";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 }
 
 // ⚠️ ARREGLAR ⚠️ — reemplazar por improveText({ text }) de la API real
@@ -83,12 +125,16 @@ function buildMockBlocks(request: GenerateNewsletterRequest): NewsletterBlock[] 
   ]
 }*/
 
-const fallbackHtml = `<!doctype html><html lang="es"><body style="margin:0;font-family:Arial,sans-serif;"><main style="max-width:680px;margin:0 auto;border:1px solid #E7E1DC;"><section style="padding:32px;background:#FF595A;color:#fff;"><h1 style="margin:0;">Newsletter Nestle</h1></section></main></body></html>`
+const fallbackHtml = `<!doctype html><html lang="es"><body style="margin:0;font-family:Arial,sans-serif;"><main style="max-width:680px;margin:0 auto;border:1px solid #E7E1DC;"><section style="padding:32px;background:#FF595A;color:#fff;"><h1 style="margin:0;">Newsletter Nestle</h1></section></main></body></html>`;
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 function PermissionDenied() {
-  return <Alert severity="warning">No tenes permisos para ver esta instancia del flujo.</Alert>
+  return (
+    <Alert severity="warning">
+      No tenes permisos para ver esta instancia del flujo.
+    </Alert>
+  );
 }
 
 function requestToFormValues(req: GenerateNewsletterRequest) {
@@ -96,99 +142,191 @@ function requestToFormValues(req: GenerateNewsletterRequest) {
     topic: req.topic,
     objective: req.objective,
     audience: req.audience,
-    keyMessages: req.keyMessages.join('\n'),
+    keyMessages: req.keyMessages.join("\n"),
     tone: req.tone,
-    relevantDates: req.relevantDates ?? '',
-    cta: req.cta ?? '',
-    contact: req.contact ?? '',
-    linksOrSources: (req.linksOrSources ?? []).join('\n'),
-    additionalContext: req.additionalContext ?? '',
-  }
+    relevantDates: req.relevantDates ?? "",
+    cta: req.cta ?? "",
+    contact: req.contact ?? "",
+    linksOrSources: (req.linksOrSources ?? []).join("\n"),
+    additionalContext: req.additionalContext ?? "",
+  };
 }
 
-// ── EditPage ──────────────────────────────────────────────────────────────────
+// ── EditNewsletterPage ──────────────────────────────────────────────────────────────────
 
-function EditPage() {
-  const navigate = useNavigate()
-  const { id: newsletterId } = useParams<{ id: string }>()
-  const { user } = useAuth()
+function EditNewsletterPage() {
+  const navigate = useNavigate();
+  const { id: newsletterId } = useParams<{ id: string }>();
+  const { user } = useAuth();
+  const { success: notifySuccess } = useNotification();
 
-  const currentUserId: string = user?.id ?? 'anonymous'
-  const currentUserRole: UserRole = user?.role ?? 'USER'
+  const currentUserId: string = user?.id ?? "anonymous";
+  const currentUserRole: UserRole = user?.role ?? "USER";
 
   // ── State ──
-  const [newsletter, setNewsletter] = useState<Newsletter | null>(null)
-  const [isLoadingNewsletter, setIsLoadingNewsletter] = useState(true)
-  const [loadError, setLoadError] = useState<string | null>(null)
+  const [newsletter, setNewsletter] = useState<Newsletter | null>(null);
+  const [isLoadingNewsletter, setIsLoadingNewsletter] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [templates, setTemplates] = useState<NewsletterTemplate[]>([]);
+  const [brandKits, setBrandKits] = useState<BrandKit[]>([]);
+  const [brandKitResources, setBrandKitResources] =
+    useState<BrandKitResources | null>(null);
+  const [isLoadingBrandKitResources, setIsLoadingBrandKitResources] =
+    useState(false);
+  const [brandKitResourcesError, setBrandKitResourcesError] = useState<
+    string | null
+  >(null);
 
-  const [selectedBlockId, setSelectedBlockId] = useState('')
-  const [exportOptions, setExportOptions] = useState<ExportOption[]>([])
-  const [isRenderingHtml, setIsRenderingHtml] = useState(false)
-  const [isExportingPng, setIsExportingPng] = useState(false)
-  const [isSendingForReview, setIsSendingForReview] = useState(false)
-  const [regeneratingBlockId, setRegeneratingBlockId] = useState<string | null>(null)
-  const [isRegeneratingAll, setIsRegeneratingAll] = useState(false)
-  const [showRegenerationForm, setShowRegenerationForm] = useState(false)
-  const [showSuccessModal, setShowSuccessModal] = useState(false)
-  const [aiError, setAiError] = useState<string | null>(null)
+  const [selectedBlockId, setSelectedBlockId] = useState("");
+  const [exportOptions, setExportOptions] = useState<ExportOption[]>([]);
+  const [isRenderingHtml, setIsRenderingHtml] = useState(false);
+  const [exportingFormat, setExportingFormat] = useState<ExportFormat | null>(
+    null,
+  );
+  const [isSendingForReview, setIsSendingForReview] = useState(false);
+  const [regeneratingBlockId, setRegeneratingBlockId] = useState<string | null>(
+    null,
+  );
+  const [isRegeneratingAll, setIsRegeneratingAll] = useState(false);
+  const [showRegenerationForm, setShowRegenerationForm] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
 
   // ── Fetch newsletter ──
   useEffect(() => {
     if (!newsletterId) {
-      navigate('/editarNewsletter', { replace: true })
-      return
+      navigate("/editarNewsletter", { replace: true });
+      return;
     }
 
-    let mounted = true
+    let mounted = true;
 
     const load = async () => {
-      setIsLoadingNewsletter(true)
-      setLoadError(null)
+      setIsLoadingNewsletter(true);
+      setLoadError(null);
 
       try {
-        const data = await getNewsletter(newsletterId)
+        const data = await getNewsletter(newsletterId);
         if (mounted) {
-          setNewsletter(data)
-          setSelectedBlockId(data.blocks[0]?.id ?? '')
+          setNewsletter(data);
+          setSelectedBlockId(data.blocks[0]?.id ?? "");
         }
       } catch (error) {
-        console.error('Error al cargar newsletter:', error)
+        console.error("Error al cargar newsletter:", error);
         if (mounted) {
-          setLoadError('No se pudo cargar el newsletter. Verifica que el ID sea correcto.')
+          setLoadError(
+            "No se pudo cargar el newsletter. Verifica que el ID sea correcto.",
+          );
         }
       } finally {
-        if (mounted) setIsLoadingNewsletter(false)
+        if (mounted) setIsLoadingNewsletter(false);
       }
-    }
+    };
 
-    void load()
+    void load();
 
     return () => {
-      mounted = false
-    }
-  }, [newsletterId, navigate])
+      mounted = false;
+    };
+  }, [newsletterId, navigate]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadCatalogs = async () => {
+      try {
+        const [templateData, brandKitData] = await Promise.all([
+          listTemplates(),
+          listBrandKits(),
+        ]);
+
+        if (mounted) {
+          setTemplates(templateData);
+          setBrandKits(brandKitData);
+        }
+      } catch {
+        if (mounted) {
+          setTemplates([]);
+          setBrandKits([]);
+        }
+      }
+    };
+
+    void loadCatalogs();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   // ── Derived ──
-  const selectedBlock = newsletter?.blocks.find((b) => b.id === selectedBlockId) ?? newsletter?.blocks[0]
-  const selectedTemplate = templates.find((t) => t.id === newsletter?.templateId) ?? templates[0]
+  const selectedBlock =
+    newsletter?.blocks.find((b) => b.id === selectedBlockId) ??
+    newsletter?.blocks[0];
+  const selectedTemplate =
+    templates.find((template) => template.id === newsletter?.templateId) ??
+    null;
+  const selectedBrandKitId = newsletter?.brandKitId ?? "";
+  const selectedBrandKitLabel =
+    brandKits.find((brandKit) => brandKit.id === selectedBrandKitId)?.name ??
+    selectedBrandKitId;
+  const selectedAssets = newsletter?.assetSelection?.selectedAssets ?? [];
 
   const allCommentaries = useMemo(() => {
     const comments: string[] = [
       ...(newsletter?.comment ? [newsletter.comment] : []),
-      ...(newsletter?.blocks.map((b) => b.comment).filter((c): c is string => !!c) ?? []),
-    ]
+      ...(newsletter?.blocks
+        .map((b) => b.comment)
+        .filter((c): c is string => !!c) ?? []),
+    ];
 
-    return comments.filter((c) => !emptyComment(c))
-  }, [newsletter])
+    return comments.filter((c) => !emptyComment(c));
+  }, [newsletter]);
 
+  useEffect(() => {
+    if (!selectedBrandKitId) {
+      return;
+    }
+
+    let mounted = true;
+
+    const loadBrandKitResources = async () => {
+      setIsLoadingBrandKitResources(true);
+      setBrandKitResourcesError(null);
+
+      try {
+        const resources = await getBrandKitResources(selectedBrandKitId);
+
+        if (mounted) {
+          setBrandKitResources(resources);
+        }
+      } catch {
+        if (mounted) {
+          setBrandKitResources(null);
+          setBrandKitResourcesError(
+            "No se pudieron cargar los recursos del brandkit.",
+          );
+        }
+      } finally {
+        if (mounted) {
+          setIsLoadingBrandKitResources(false);
+        }
+      }
+    };
+
+    void loadBrandKitResources();
+
+    return () => {
+      mounted = false;
+    };
+  }, [selectedBrandKitId]);
 
   // ── State machine ──
   const transitionState = useCallback(
     async (newState: NewsletterState) => {
-      if (!newsletter || !newsletterId) return
+      if (!newsletter || !newsletterId) return;
 
-      const previousState = newsletter.state
-      if (previousState === newState) return
+      const previousState = newsletter.state;
+      if (previousState === newState) return;
 
       logStateChange({
         newsletter_id: newsletterId,
@@ -197,116 +335,126 @@ function EditPage() {
         reviewed_by_user_id: currentUserId,
         all_commentaries: allCommentaries,
         created_at: new Date().toISOString(),
-      })
+      });
 
       try {
-        const updated = await updateNewsletter(newsletterId, { state: newState })
-        setNewsletter(updated)
+        const updated = await updateNewsletter(newsletterId, {
+          state: newState,
+        });
+        setNewsletter(updated);
       } catch (error) {
-        console.error('Error al cambiar estado:', error)
-        setAiError('No se pudo actualizar el estado del newsletter.')
+        console.error("Error al cambiar estado:", error);
+        setAiError("No se pudo actualizar el estado del newsletter.");
       }
     },
     [allCommentaries, currentUserId, newsletter, newsletterId],
-  )
+  );
 
   // ── Update blocks ──
   const updateBlocks = useCallback(
     async (newBlocks: NewsletterBlock[]) => {
-      if (!newsletterId) return
+      if (!newsletterId) return;
       try {
-        const updated = await updateNewsletter(newsletterId, { blocks: newBlocks })
-        setNewsletter(updated)
+        const updated = await updateNewsletter(newsletterId, {
+          blocks: newBlocks,
+        });
+        setNewsletter(updated);
       } catch (error) {
-        console.error('Error al actualizar bloques:', error)
-        setAiError('No se pudieron guardar los cambios.')
+        console.error("Error al actualizar bloques:", error);
+        setAiError("No se pudieron guardar los cambios.");
       }
     },
     [newsletterId],
-  )
+  );
 
   // ── Render HTML ──
   const handleRenderHtml = useCallback(async () => {
-    if (!newsletter || !newsletterId || newsletter.renderedHtml) return
+    if (!newsletter || !newsletterId) return;
 
-    setIsRenderingHtml(true)
+    setIsRenderingHtml(true);
     try {
-      const html = await renderNewsletterHtml(newsletter.blocks)
-      const updated = await updateNewsletter(newsletterId, { renderedHtml: html })
-      setNewsletter(updated)
+      const html = await renderNewsletterHtml(newsletter.blocks);
+      const updated = await updateNewsletter(newsletterId, {
+        renderedHtml: html,
+      });
+      setNewsletter(updated);
     } catch (error) {
-      console.error('Error al renderizar HTML:', error)
+      console.error("Error al renderizar HTML:", error);
     } finally {
-      setIsRenderingHtml(false)
+      setIsRenderingHtml(false);
     }
-  }, [newsletter, newsletterId])
+  }, [newsletter, newsletterId]);
 
   useEffect(() => {
-    if (newsletter?.state !== 'APPROVED') return
+    if (newsletter?.state !== "APPROVED") return;
     const id = window.setTimeout(() => {
-      void handleRenderHtml()
-    }, 0)
-    void fetchExportOptions().then(setExportOptions)
-    return () => window.clearTimeout(id)
-  }, [handleRenderHtml, newsletter?.state])
+      void handleRenderHtml();
+    }, 0);
+    void fetchExportOptions().then(setExportOptions);
+    return () => window.clearTimeout(id);
+  }, [handleRenderHtml, newsletter?.state]);
 
   // ── Actions ──
   const handleSendForReview = useCallback(async () => {
-    setIsSendingForReview(true)
+    setIsSendingForReview(true);
     try {
-      await handleRenderHtml()
-      await transitionState('IN_REVIEW')
-      setShowSuccessModal(true)
+      await handleRenderHtml();
+      await transitionState("IN_REVIEW");
+      notifySuccess("Newsletter enviado con éxito");
+      navigate("/dashboard");
     } catch {
-      setAiError('No se pudo enviar a revisión. Intenta de nuevo.')
+      setAiError("No se pudo enviar a revisión. Intenta de nuevo.");
     } finally {
-      setIsSendingForReview(false)
+      setIsSendingForReview(false);
     }
-  }, [handleRenderHtml, transitionState])
+  }, [handleRenderHtml, navigate, transitionState, notifySuccess]);
 
   const handleRegenerateBlock = useCallback(
     async (blockId: string) => {
-      if (!newsletter) return
-      const target = newsletter.blocks.find((b) => b.id === blockId)
-      if (!target) return
+      if (!newsletter) return;
+      const target = newsletter.blocks.find((b) => b.id === blockId);
+      if (!target) return;
 
-      setRegeneratingBlockId(blockId)
-      setAiError(null)
+      setRegeneratingBlockId(blockId);
+      setAiError(null);
 
       try {
         // reemplazado por: const { improvedText } = await improveText({ text: target.text })
         //const improvedText = await mockRegenerateBlock(target)
         const response = await improveText({
           text: target.text,
-        })
+        });
 
-        const improvedText = response.improvedText
+        const improvedText = response.improvedText;
         const newBlocks = newsletter.blocks.map((b) =>
           b.id === blockId ? { ...b, text: improvedText } : b,
-        )
-        await updateBlocks(newBlocks)
+        );
+        await updateBlocks(newBlocks);
       } catch {
-        setAiError('No se pudo regenerar el bloque. Intenta de nuevo.')
+        setAiError("No se pudo regenerar el bloque. Intenta de nuevo.");
       } finally {
-        setRegeneratingBlockId(null)
+        setRegeneratingBlockId(null);
       }
     },
     [newsletter, updateBlocks],
-  )
+  );
 
   const handleRegenerateAll = useCallback(
-    async (request: GenerateNewsletterRequest) => {
-      if (!newsletterId) return
+    async (
+      request: GenerateNewsletterRequest,
+      assetSelection: NewsletterAssetSelection,
+    ) => {
+      if (!newsletterId) return;
 
-      setIsRegeneratingAll(true)
-      setAiError(null)
+      setIsRegeneratingAll(true);
+      setAiError(null);
 
       try {
         // reemplazado por: const response = await generateNewsletterWithAi(request)
         /*await new Promise<void>((r) => window.setTimeout(r, 400))
         const newBlocks = buildMockBlocks(request)*/
 
-        const response = await generateNewsletter(request)
+        const response = await generateNewsletter(request);
 
         const newBlocks: NewsletterBlock[] = response.blocks.map((block) => ({
           id: block.id,
@@ -314,56 +462,82 @@ function EditPage() {
           text: block.text,
           backgroundColor: block.backgroundColor,
           comment: null,
-        }))
+        }));
 
         const updated = await updateNewsletter(newsletterId, {
           blocks: newBlocks,
-        })
-        setNewsletter(updated)
-        setSelectedBlockId(newBlocks[0].id)
-        setShowRegenerationForm(false)
+          generationRequest: request,
+          assetSelection,
+        });
+        setNewsletter(updated);
+        setSelectedBlockId(newBlocks[0].id);
+        setShowRegenerationForm(false);
       } catch {
-        setAiError('No se pudo regenerar el newsletter. Intenta de nuevo.')
+        setAiError("No se pudo regenerar el newsletter. Intenta de nuevo.");
       } finally {
-        setIsRegeneratingAll(false)
+        setIsRegeneratingAll(false);
       }
     },
     [newsletterId],
-  )
+  );
 
   const handleSendFeedback = useCallback(async () => {
-    await transitionState('CHANGES_REQUESTED')
-    if (currentUserId !== newsletter?.creatorUserId) navigate('/dashboard')
-  }, [currentUserId, navigate, newsletter?.creatorUserId, transitionState])
+    await transitionState("CHANGES_REQUESTED");
+    if (currentUserId !== newsletter?.creatorUserId) navigate("/dashboard");
+  }, [currentUserId, navigate, newsletter?.creatorUserId, transitionState]);
 
   const handleExportToPng = useCallback(async () => {
-    setIsExportingPng(true)
+    setExportingFormat("PNG");
     try {
-      await exportHtmlToPng()
+      await exportHtmlToPng();
     } finally {
-      setIsExportingPng(false)
+      setExportingFormat(null);
     }
-  }, [])
+  }, []);
+
+  const handleExportToEml = useCallback(async () => {
+    setExportingFormat("EML");
+    try {
+      await exportHtmlToEml(newsletter?.renderedHtml || fallbackHtml);
+    } finally {
+      setExportingFormat(null);
+    }
+  }, [newsletter]);
+
+  const handleExport = useCallback(
+    async (format: ExportFormat) => {
+      switch (format) {
+        case "PNG":
+          await handleExportToPng();
+          break;
+        case "EML":
+          await handleExportToEml();
+          break;
+      }
+    },
+    [handleExportToPng, handleExportToEml],
+  );
 
   const handleCancel = useCallback(async () => {
-    await transitionState('DISCARDED')
-    navigate('/dashboard')
-  }, [navigate, transitionState])
+    await transitionState("DISCARDED");
+    navigate("/dashboard");
+  }, [navigate, transitionState]);
 
   // ── Derived states ──
-  const isReviewState = newsletter?.state === 'IN_REVIEW' || newsletter?.state === 'RESUBMITTED'
-  const isCreator = currentUserId === newsletter?.creatorUserId
-  const isAdmin = currentUserRole === 'ADMIN'
-  // KAN-119: ADMIN puede editar cualquier newsletter, USUARIO solo los propios
-  // KAN-120: FUNCTIONAL solo accede a revisión (IN_REVIEW/RESUBMITTED), no a edición
-  const canReview = currentUserRole === 'ADMIN' || currentUserRole === 'FUNCTIONAL'
-  const canEdit = isAdmin || isCreator
+  //const isEditableState = newsletter?.state === 'DRAFT' || newsletter?.state === 'CHANGES_REQUESTED'
+  const isReviewState =
+    newsletter?.state === "IN_REVIEW" || newsletter?.state === "RESUBMITTED";
+  const canReview = ["ADMIN", "FUNCTIONAL"].includes(currentUserRole);
+  const isCreator = currentUserId === newsletter?.creatorUserId;
 
-  const submitLabel = newsletter?.state === 'CHANGES_REQUESTED' ? 'Reenviar a revision' : 'Enviar a revision'
+  const submitLabel =
+    newsletter?.state === "CHANGES_REQUESTED"
+      ? "Reenviar a revision"
+      : "Enviar a revision";
   const handleSubmit =
-    newsletter?.state === 'CHANGES_REQUESTED'
-      ? () => void transitionState('RESUBMITTED')
-      : () => void handleSendForReview()
+    newsletter?.state === "CHANGES_REQUESTED"
+      ? () => void transitionState("RESUBMITTED")
+      : () => void handleSendForReview();
 
   // ──────────────────────────────────────────────────────────────────────────
   // RENDER
@@ -373,18 +547,21 @@ function EditPage() {
     <Box
       component="main"
       sx={{
-        minHeight: 'calc(100vh - 64px)',
-        bgcolor: 'background.default',
-        display: 'grid',
-        gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1fr) minmax(380px, 0.72fr)' },
+        minHeight: "calc(100vh - 64px)",
+        bgcolor: "background.default",
+        display: "grid",
+        gridTemplateColumns: {
+          xs: "1fr",
+          lg: "minmax(0, 1fr) minmax(380px, 0.72fr)",
+        },
       }}
     >
       <Box
         sx={{
           p: { xs: 2, md: 3 },
-          borderRight: { lg: '1px solid' },
-          borderBottom: { xs: '1px solid', lg: 'none' },
-          borderColor: 'divider',
+          borderRight: { lg: "1px solid" },
+          borderBottom: { xs: "1px solid", lg: "none" },
+          borderColor: "divider",
           minWidth: 0,
         }}
       >
@@ -393,66 +570,92 @@ function EditPage() {
       <Box sx={{ p: { xs: 2, md: 3 }, minWidth: 0 }}>
         <Stack spacing={2}>
           <Stack spacing={0.75}>
-            <Typography variant="overline">Estado: {newsletter?.state}</Typography>
+            <Typography variant="overline">
+              Estado: {newsletter?.state}
+            </Typography>
             <Typography variant="h4">Builder de newsletter</Typography>
+            {newsletter && selectedTemplate && (
+              <Typography variant="body2" color="text.secondary">
+                Plantilla: {selectedTemplate.name} · BrandKit:{" "}
+                {selectedBrandKitLabel}
+              </Typography>
+            )}
           </Stack>
           {right}
         </Stack>
       </Box>
     </Box>
-  )
+  );
 
   // ── Loading ──
   if (isLoadingNewsletter) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "60vh",
+        }}
+      >
         <CircularProgress />
       </Box>
-    )
+    );
   }
 
   // ── Error ──
   if (loadError || !newsletter) {
     return (
       <Box component="main" sx={{ p: 4 }}>
-        <Alert severity="error">{loadError ?? 'Newsletter no encontrado.'}</Alert>
-        <Button variant="outlined" onClick={() => navigate('/dashboard')} sx={{ mt: 2 }}>
+        <Alert severity="error">
+          {loadError ?? "Newsletter no encontrado."}
+        </Alert>
+        <Button
+          variant="outlined"
+          onClick={() => navigate("/dashboard")}
+          sx={{ mt: 2 }}
+        >
           Volver al inicio
         </Button>
       </Box>
-    )
+    );
   }
 
   // ── DISCARDED ──
-  if (newsletter.state === 'DISCARDED') {
+  if (newsletter.state === "DISCARDED") {
     return (
       <Box component="main" sx={{ p: 4 }}>
         <Stack spacing={2}>
           <Typography variant="h5">Proceso descartado</Typography>
-          <Alert severity="info">La generacion del newsletter fue cancelada y quedo archivada como descartada.</Alert>
+          <Alert severity="info">
+            La generacion del newsletter fue cancelada y quedo archivada como
+            descartada.
+          </Alert>
         </Stack>
       </Box>
-    )
+    );
   }
 
   // ── APPROVED ──
-  if (newsletter.state === 'APPROVED') {
+  if (newsletter.state === "APPROVED") {
     return pageLayout(
       <Stack spacing={2}>
         <Typography variant="h5">Vista final</Typography>
-        {isRenderingHtml && <Alert severity="info">Preparando HTML aprobado...</Alert>}
+        {isRenderingHtml && (
+          <Alert severity="info">Preparando HTML aprobado...</Alert>
+        )}
         <Box
           component="iframe"
           title="Newsletter aprobado"
           srcDoc={newsletter.renderedHtml || fallbackHtml}
           sx={{
-            width: '100%',
-            height: 'calc(100vh - 220px)',
+            width: "100%",
+            height: "calc(100vh - 220px)",
             minHeight: 520,
-            border: '1px solid',
-            borderColor: 'divider',
-            bgcolor: 'background.paper',
-            pointerEvents: 'none',
+            border: "1px solid",
+            borderColor: "divider",
+            bgcolor: "background.paper",
+            pointerEvents: "none",
           }}
         />
       </Stack>,
@@ -468,69 +671,58 @@ function EditPage() {
           <Button
             key={opt.id}
             variant="contained"
-            disabled={isExportingPng}
-            onClick={() => {
-              if (opt.format === 'PNG') void handleExportToPng()
-            }}
+            disabled={exportingFormat !== null}
+            onClick={() => void handleExport(opt.format)}
           >
-            {isExportingPng ? 'Exportando...' : opt.label}
+            {exportingFormat === opt.format ? "Exportando..." : opt.label}
           </Button>
         ))}
       </Stack>,
-    )
+    );
   }
 
   // ── IN_REVIEW / RESUBMITTED ──
-  // KAN-121: usuario normal no puede acceder mientras esté en revisión
-  if (isReviewState && !canReview) {
-    return (
-      <Box component="main" sx={{ p: 4 }}>
-        <Stack spacing={2}>
-          <Alert severity="info">
-            Tu newsletter está en revisión. Vas a poder editarlo nuevamente cuando el revisor te envíe su devolución.
-          </Alert>
-          <Button variant="outlined" onClick={() => navigate('/dashboard')} sx={{ alignSelf: 'flex-start' }}>
-            Volver al inicio
-          </Button>
-        </Stack>
-      </Box>
-    )
-  }
-
   if (isReviewState) {
     return pageLayout(
-      <BlockList
-        blocks={newsletter.blocks}
-        selectedBlockId={selectedBlockId}
-        onSelectBlock={setSelectedBlockId}
-        readOnly
-      />,
-      selectedBlock ? (
+      canReview ? (
+        <BlockList
+          blocks={newsletter.blocks}
+          selectedBlockId={selectedBlockId}
+          onSelectBlock={setSelectedBlockId}
+          readOnly
+        />
+      ) : (
+        <PermissionDenied />
+      ),
+      canReview && selectedBlock ? (
         <ReviewCommentControls
           key={selectedBlock.id}
           selectedBlock={selectedBlock}
           newsletterComment={newsletter.comment}
           onSaveNewsletterComment={async (v) => {
-            const updated = await updateNewsletter(newsletterId!, { comment: v.trim() || null })
-            setNewsletter(updated)
+            const updated = await updateNewsletter(newsletterId!, {
+              comment: v.trim() || null,
+            });
+            setNewsletter(updated);
           }}
           onSaveBlockComment={async (blockId, v) => {
             const newBlocks = newsletter.blocks.map((b) =>
               b.id === blockId ? { ...b, comment: v.trim() || null } : b,
-            )
-            await updateBlocks(newBlocks)
+            );
+            await updateBlocks(newBlocks);
           }}
           onSendFeedback={handleSendFeedback}
-          onApprove={() => void transitionState('APPROVED')}
+          onApprove={() => void transitionState("APPROVED")}
         />
-      ) : null,
-    )
+      ) : (
+        <PermissionDenied />
+      ),
+    );
   }
 
   // ── DRAFT / CHANGES_REQUESTED ──
-  // KAN-119/120: ADMIN y FUNCTIONAL pueden editar sin ser creadores
   const leftPane =
-    !canEdit ? (
+    newsletter.state === "CHANGES_REQUESTED" && !isCreator ? (
       <PermissionDenied />
     ) : (
       <BlockList
@@ -539,31 +731,54 @@ function EditPage() {
         onSelectBlock={setSelectedBlockId}
         readOnly={false}
       />
-    )
+    );
 
   const rightPane =
-    !canEdit ? (
+    newsletter.state === "CHANGES_REQUESTED" && !isCreator ? (
       <PermissionDenied />
     ) : (
       <>
-        <Tabs value={showRegenerationForm ? 0 : 1} onChange={(_, v) => setShowRegenerationForm(v === 0)}>
+        <Tabs
+          value={showRegenerationForm ? 0 : 1}
+          onChange={(_, v) => setShowRegenerationForm(v === 0)}
+        >
           <Tab label="Regenerar todo" />
           <Tab label="Editar" />
         </Tabs>
+        <BrandKitResourcesPanel
+          selectedAssets={selectedAssets}
+          resources={brandKitResources}
+          isLoading={isLoadingBrandKitResources}
+          loadError={brandKitResourcesError}
+          defaultCollapsed
+        />
 
-        {showRegenerationForm ? (
+        {showRegenerationForm && selectedTemplate ? (
           <Stack spacing={1}>
-            <Alert severity="info">Modificá los datos y volvé a generar. Los bloques actuales serán reemplazados.</Alert>
+            <Alert severity="info">
+              Modificá los datos y volvé a generar. Los bloques actuales serán
+              reemplazados.
+            </Alert>
             <GenerationForm
               selectedTemplate={selectedTemplate}
+              selectedBrandKitId={selectedBrandKitId}
               isGenerating={isRegeneratingAll}
               aiError={aiError}
-              initialValues={newsletter.generationRequest ? requestToFormValues(newsletter.generationRequest) : undefined}
+              initialValues={
+                newsletter.generationRequest
+                  ? requestToFormValues(newsletter.generationRequest)
+                  : undefined
+              }
+              initialAssetSelection={newsletter.assetSelection}
               onGenerate={handleRegenerateAll}
               onCancel={() => setShowRegenerationForm(false)}
               cancelLabel="Volver a editar"
             />
           </Stack>
+        ) : showRegenerationForm ? (
+          <Alert severity="warning">
+            No se pudo cargar la plantilla asociada a este newsletter.
+          </Alert>
         ) : selectedBlock ? (
           <EditPanel
             selectedBlock={selectedBlock}
@@ -574,14 +789,16 @@ function EditPage() {
             isRegeneratingBlock={regeneratingBlockId === selectedBlock.id}
             aiError={aiError}
             onUpdateText={async (blockId, value) => {
-              const newBlocks = newsletter.blocks.map((b) => (b.id === blockId ? { ...b, text: value } : b))
-              await updateBlocks(newBlocks)
+              const newBlocks = newsletter.blocks.map((b) =>
+                b.id === blockId ? { ...b, text: value } : b,
+              );
+              await updateBlocks(newBlocks);
             }}
             onUpdateBackground={async (blockId, value) => {
               const newBlocks = newsletter.blocks.map((b) =>
                 b.id === blockId ? { ...b, backgroundColor: value } : b,
-              )
-              await updateBlocks(newBlocks)
+              );
+              await updateBlocks(newBlocks);
             }}
             onRegenerateBlock={handleRegenerateBlock}
             onRegenerateAll={() => setShowRegenerationForm(true)}
@@ -590,27 +807,8 @@ function EditPage() {
           />
         ) : null}
       </>
-    )
-
-  return (
-    <>
-      {pageLayout(leftPane, rightPane)}
-      <Dialog open={showSuccessModal} onClose={() => setShowSuccessModal(false)}>
-        <DialogTitle>Newsletter enviado a revisión</DialogTitle>
-        <DialogContent>
-          <DialogContentText>Tu newsletter fue enviado correctamente. ¿Qué querés hacer ahora?</DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => navigate('/dashboard')} color="inherit">
-            Ir al inicio
-          </Button>
-          <Button onClick={() => navigate('/crearNewsletter')} variant="contained">
-            Crear otro
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </>
-  )
+    );
+  return pageLayout(leftPane, rightPane);
 }
 
-export default EditPage
+export default EditNewsletterPage;
