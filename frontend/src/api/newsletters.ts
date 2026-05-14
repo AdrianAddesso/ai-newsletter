@@ -64,7 +64,7 @@ export async function createNewsletter(
 
   const newsletter: Newsletter = {
     id: generateNewsletterId(),
-    creatorUserId: payload.creatorUserId,
+    creatorUserId: payload.creatorUserId ?? '',
     state: 'DRAFT',
     templateId: payload.templateId,
     brandKitId: payload.brandKitId,
