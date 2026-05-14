@@ -38,7 +38,7 @@ export class AssetsController {
   constructor(private readonly assetsService: AssetsService) {}
 
   @Get()
-  @RequirePermission(Action.TEMPLATE_VIEW_COPY, Resource.ASSETS)
+  @RequirePermission(Action.CONTENT_GENERATE_AI, Resource.ASSETS)
   listAssets(
     @Query('type') type?: string,
   ): Promise<UploadAssetsResponseDto> {

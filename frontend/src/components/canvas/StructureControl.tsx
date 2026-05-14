@@ -1,36 +1,28 @@
 import React from 'react';
-import { 
-  Box, 
-  Button, 
-  Stack, 
-  Typography, 
-  ToggleButtonGroup, 
-  ToggleButton, 
+import {
+  Box,
+  Button,
+  Stack,
+  Typography,
+  ToggleButtonGroup,
+  ToggleButton,
   Divider,
   IconButton
 } from '@mui/material';
-import { useNewsletterStore } from '../../stores/templates.store';
+import { useTemplateStore } from '../../stores/templates.store';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
-import ViewStreamIcon from '@mui/icons-material/ViewStream';
-import ViewWeekIcon from '@mui/icons-material/ViewWeek';
+import DeleteIcon from '@mui/icons-material/Delete';
+import { CropLandscape, CropPortrait } from '@mui/icons-material';
 
 export const StructureControl: React.FC<{ onConfirm: () => void }> = ({ onConfirm }) => {
-  const { 
-    layoutMode, 
-    setMode, 
-    rows, 
-    addRow, 
-    removeRow, 
-    addColumn, 
-    removeColumn 
-  } = useNewsletterStore();
+  const { layoutMode, setMode, rows, addRow, removeRow, addColumn, removeColumn } = useTemplateStore();
 
   return (
     <Stack spacing={3}>
       <Box>
         <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 700 }}>
-          MODO DE DISEÑO
+          Orientación
         </Typography>
         <ToggleButtonGroup
           value={layoutMode}
@@ -40,51 +32,25 @@ export const StructureControl: React.FC<{ onConfirm: () => void }> = ({ onConfir
           size="small"
         >
           <ToggleButton value="PORTRAIT">
-            <ViewStreamIcon sx={{ mr: 1 }} /> PORTRAIT (Max 4)
+            <CropPortrait sx={{ mr: 1 }} /> PORTRAIT (Max 4)
           </ToggleButton>
           <ToggleButton value="LANDSCAPE">
-            <ViewWeekIcon sx={{ mr: 1 }} /> LANDSCAPE (Max 8)
+            <CropLandscape sx={{ mr: 1 }} /> LANDSCAPE (Max 8)
           </ToggleButton>
         </ToggleButtonGroup>
       </Box>
       <Divider />
+      <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 700 }}>
+        Configuración
+      </Typography>
       <Box>
-        <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 700 }}>
-          GESTIÓN DE FILAS
-        </Typography>
-        <Stack direction="row" spacing={2}>
-          <Button 
-            variant="outlined" 
-            fullWidth 
-            startIcon={<AddIcon />} 
-            onClick={addRow}
-          >
-            Añadir Fila
-          </Button>
-          <Button 
-            variant="outlined" 
-            fullWidth 
-            color="error" 
-            startIcon={<RemoveIcon />} 
-            onClick={() => rows.length > 0 && removeRow(rows[rows.length - 1].id)}
-            disabled={rows.length === 0}
-          >
-            Quitar Última
-          </Button>
-        </Stack>
-      </Box>
-      <Divider />
-      <Box>
-        <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 700 }}>
-          COLUMNAS POR FILA
-        </Typography>
         <Stack spacing={1}>
           {rows.map((row, index) => (
-            <Box 
-              key={row.id} 
-              sx={{ 
-                display: 'flex', 
-                alignItems: 'center', 
+            <Box
+              key={row.id}
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
                 justifyContent: 'space-between',
                 p: 1,
                 bgcolor: 'grey.50',
@@ -92,23 +58,34 @@ export const StructureControl: React.FC<{ onConfirm: () => void }> = ({ onConfir
               }}
             >
               <Typography variant="caption" sx={{ fontWeight: 600 }}>
-                Fila {index + 1} ({row.columns.length} col)
+                Fila {index + 1} | {row.columns.length} {row.columns.length > 1 ? 'columnas' : 'columna'}
               </Typography>
-              <Stack direction="row" spacing={1}>
-                <IconButton 
-                  size="small" 
+              <Stack direction="row" sx={{ spacing: '0.5', alignItems: 'center'}}>
+                <IconButton
+                  size="small"
                   onClick={() => removeColumn(row.id)}
                   disabled={row.columns.length <= 1}
+                  title="Quitar columna"
                 >
                   <RemoveIcon fontSize="small" />
                 </IconButton>
-                <IconButton 
-                  size="small" 
+                <IconButton
+                  size="small"
                   color="primary"
                   onClick={() => addColumn(row.id)}
                   disabled={row.columns.length >= (layoutMode === 'PORTRAIT' ? 4 : 8)}
+                  title="Añadir columna"
                 >
                   <AddIcon fontSize="small" />
+                </IconButton>
+                <Divider orientation="vertical" flexItem sx={{ mx: 0.5, height: 16, alignSelf: 'center' }} />
+                <IconButton
+                  size="small"
+                  color="error"
+                  onClick={() => removeRow(row.id)}
+                  title="Eliminar fila"
+                >
+                  <DeleteIcon fontSize="small" />
                 </IconButton>
               </Stack>
             </Box>
@@ -120,10 +97,21 @@ export const StructureControl: React.FC<{ onConfirm: () => void }> = ({ onConfir
           )}
         </Stack>
       </Box>
-      <Button 
-        variant="contained" 
-        fullWidth 
-        size="large" 
+      <Box>
+        <Button
+          variant="outlined"
+          fullWidth
+          startIcon={<AddIcon />}
+          onClick={addRow}
+        >
+          Añadir Fila
+        </Button>
+      </Box>
+      <Divider />
+      <Button
+        variant="contained"
+        fullWidth
+        size="large"
         onClick={onConfirm}
         disabled={rows.length === 0}
         sx={{ mt: 2, bgcolor: 'brand.red', '&:hover': { bgcolor: '#e04040' } }}
