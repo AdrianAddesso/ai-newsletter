@@ -1,4 +1,9 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { AiService } from './ai.service';
 import type {
   ImproveTextRequestDto,
@@ -9,10 +14,12 @@ import type {
   GenerateNewsletterResponseDto,
 } from './dto/generate-newsletter.dto';
 import { generateNewsletterBodySchema } from './dto/generate-newsletter.dto';
+import { MockAuthGuard } from '../modules/auth/guards/mockup.guard';
 import { Resource } from '../modules/auth/enum/resources';
 import { ZodValidationPipe } from '../common/zod/zod-validation.pipe';
 
 @Controller(Resource.AI)
+@UseGuards(MockAuthGuard)
 export class AiController {
   constructor(private readonly aiService: AiService) {}
 

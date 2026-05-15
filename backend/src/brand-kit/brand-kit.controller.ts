@@ -1,7 +1,13 @@
 import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { BrandKitService } from './brand-kit.service';
-import { idParamSchema } from '../common/zod/route-params.schema';
-import type { IdParam } from '../common/zod/route-params.schema';
+import {
+  brandKitIdParamSchema,
+  idParamSchema,
+} from '../common/zod/route-params.schema';
+import type {
+  BrandKitIdParam,
+  IdParam,
+} from '../common/zod/route-params.schema';
 import { ZodValidationPipe } from '../common/zod/zod-validation.pipe';
 import {
   createBrandKitBodySchema,
@@ -16,6 +22,7 @@ import { Action } from '../modules/auth/enum/actions';
 import { MockAuthGuard } from '../modules/auth/guards/mockup.guard';
 import { PermissionsGuard } from '../modules/auth/guards/permissions.guard';
 import { Resource } from '../modules/auth/enum/resources';
+import type { BrandKitListItem, BrandKitResources } from './brand-kit.service';
 
 @Controller('brand-kit')
 @UseGuards(MockAuthGuard, PermissionsGuard)
@@ -23,8 +30,16 @@ export class BrandKitController {
   constructor(private readonly brandKitService: BrandKitService) {}
 
   @Get()
-  getAll(): string {
+  getAll(): Promise<BrandKitListItem[]> {
     return this.brandKitService.getAll();
+  }
+
+  @Get(':brandKitId/resources')
+  getResources(
+    @Param(new ZodValidationPipe(brandKitIdParamSchema))
+    params: BrandKitIdParam,
+  ): Promise<BrandKitResources> {
+    return this.brandKitService.getResources(params.brandKitId);
   }
 
   @Post()

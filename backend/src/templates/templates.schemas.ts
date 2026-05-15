@@ -49,7 +49,7 @@ export const defineTemplateBlocksBodySchema = z
       .array(
         z
           .object({
-            content: optionalStringFieldSchema,
+            content: optionalStringFieldSchema.nullable(),
             displayOrder: optionalIntegerFieldSchema,
             mustFill: optionalBooleanFieldSchema,
             type: blockContentTypeSchema,

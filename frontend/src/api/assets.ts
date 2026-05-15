@@ -26,10 +26,7 @@ export async function listAssets(
     params: type ? { type } : undefined,
     headers: {
       'Content-Type': 'multipart/form-data',
-      'x-user-id': 'asdsa',
-      'x-user-role': 'ADMIN',
-      'x-area': 'MARKETING'
-    },
+    }
   })
 
   return response.data

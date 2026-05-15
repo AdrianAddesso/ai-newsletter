@@ -11,6 +11,7 @@ import { AiModule } from './ai/ai.module';
 import { BrandKitModule } from './brand-kit/brand-kit.module';
 import { AssetsModule } from './assets/assets.module';
 import { FontsModule } from './fonts/fonts.module';
+import { BlockModule } from './blocks/block.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { FontsModule } from './fonts/fonts.module';
     BrandKitModule,
     AssetsModule,
     FontsModule,
+    BlockModule,
     ConfigModule.forRoot({
       isGlobal: true, // no tener que importarlo en cada módulo
     }),

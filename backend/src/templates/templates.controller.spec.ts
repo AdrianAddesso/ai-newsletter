@@ -1,15 +1,15 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { TemplatesController } from './templates.controller';
+import { TemplatesService } from './templates.service';
 
 describe('TemplatesController', () => {
   let controller: TemplatesController;
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      controllers: [TemplatesController],
-    }).compile();
+  beforeEach(() => {
+    const templatesService = {
+      getAll: jest.fn(),
+    } as unknown as TemplatesService;
 
-    controller = module.get<TemplatesController>(TemplatesController);
+    controller = new TemplatesController(templatesService);
   });
 
   it('should be defined', () => {

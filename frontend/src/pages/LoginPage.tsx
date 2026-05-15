@@ -11,7 +11,6 @@ import {
   RadioGroup,
   FormControlLabel,
   Typography,
-  useTheme,
 } from "@mui/material";
 import lightBlue from "../assets/brand_shapes/isolated-by-brand/nestle-classic/light-blue.svg";
 import { useState, type FormEvent } from "react";
@@ -67,7 +66,6 @@ export function LoginPage() {
   const location = useLocation();
   const { login, isAuthenticated } = useAuth();
   const { error: notifyError, success: notifySuccess } = useNotification();
-  const theme = useTheme();
 
   const redirectPath = getSafeRedirectPath(location.search);
   const [email, setEmail] = useState(MICROSOFT_SSO_USERS[0].email);

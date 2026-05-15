@@ -74,6 +74,7 @@ jobs:
       - name: Build and optionally push Docker image
         uses: docker/build-push-action@v6
         with:
-          context: ./backend
+          context: .                      # ✅ repo root
+          file: ./backend/Dockerfile      # ✅ explicit path
           push: ${{ github.event_name == 'push' }}
           tags: ${{ steps.docker_tags.outputs.tags }}

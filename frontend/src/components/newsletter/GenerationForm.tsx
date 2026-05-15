@@ -1,193 +1,320 @@
-import axios from 'axios'
-import { useEffect, useState, type ChangeEvent } from 'react'
+import axios from "axios";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import {
   Alert,
   Button,
-  Chip,
+  Collapse,
   Divider,
   FormControl,
   InputLabel,
   MenuItem,
+  Pagination,
   Select,
   Stack,
   TextField,
   Typography,
   type SelectChangeEvent,
-} from '@mui/material'
-import { areaLabels, generationFieldLabels } from '../../utils/newsletterTemplates'
-import { listAssets, uploadAssets, type AssetType, type UploadedAsset } from '../../api/assets'
-import type { GenerateNewsletterRequest } from '../../api/ai'
-import type { NewsletterTemplate } from '../../types/newsletter'
+} from "@mui/material";
+import {
+  areaLabels,
+  generationFieldLabels,
+} from "../../utils/newsletterTemplates";
+import {
+  getBrandKitResources,
+  type BrandKitResourceAsset,
+} from "../../api/brand-kits";
+import {
+  listAssets,
+  uploadAssets,
+  type AssetType,
+  type UploadedAsset,
+} from "../../api/assets";
+import type { GenerateNewsletterRequest } from "../../api/ai";
+import type {
+  NewsletterAssetSelection,
+  NewsletterTemplate,
+} from "../../types/newsletter";
+import { AssetImageCard } from "./AssetImageCard";
 
 type FormValues = {
-  topic: string
-  objective: string
-  audience: string
-  keyMessages: string
-  tone: string
-  relevantDates: string
-  cta: string
-  contact: string
-  linksOrSources: string
-  additionalContext: string
-  assetType: AssetType
-  files: File[]
-}
+  topic: string;
+  objective: string;
+  audience: string;
+  keyMessages: string;
+  tone: string;
+  relevantDates: string;
+  cta: string;
+  contact: string;
+  linksOrSources: string;
+  additionalContext: string;
+  assetType: AssetType;
+  files: File[];
+};
 
 const assetTypeLabels: Record<AssetType, string> = {
-  IMAGE: 'Imagen',
-  ICON: 'Icono',
-  LOGO: 'Logo',
-  SHAPE: 'Forma',
-  LOCKUP: 'Lockup',
-  KEYWORD: 'Keyword',
-}
+  IMAGE: "Imagen",
+  ICON: "Icono",
+  LOGO: "Logo",
+  SHAPE: "Forma",
+  LOCKUP: "Lockup",
+  KEYWORD: "Keyword",
+};
+
+const assetsPerPage = 12;
+
+const dedupeAssets = (assets: UploadedAsset[]): UploadedAsset[] => {
+  const assetsById = new Map<string, UploadedAsset>();
+
+  assets.forEach((asset) => {
+    assetsById.set(asset.id, asset);
+  });
+
+  return Array.from(assetsById.values());
+};
+
+const toUploadedAsset = (asset: BrandKitResourceAsset): UploadedAsset => ({
+  id: asset.id,
+  name: asset.name,
+  type: asset.type,
+  url: asset.url,
+});
 
 const splitLines = (v: string) =>
-  v.split('\n').map((l) => l.trim()).filter((l) => l.length > 0)
+  v
+    .split("\n")
+    .map((l) => l.trim())
+    .filter((l) => l.length > 0);
 
 const isValidUrl = (link: string) => {
   try {
-    const u = new URL(link)
-    return u.protocol === 'http:' || u.protocol === 'https:'
-  } catch { return false }
-}
+    const u = new URL(link);
+    return u.protocol === "http:" || u.protocol === "https:";
+  } catch {
+    return false;
+  }
+};
 
 const validateLinks = (v: string): string | null => {
-  const links = v.split('\n').map((l) => l.trim()).filter((l) => l.length > 0)
+  const links = v
+    .split("\n")
+    .map((l) => l.trim())
+    .filter((l) => l.length > 0);
   return links.length > 0 && links.some((l) => !isValidUrl(l))
-    ? 'Todos los links deben ser válidos (http/https).'
-    : null
-}
+    ? "Todos los links deben ser válidos (http/https)."
+    : null;
+};
 
 const validateDate = (v: string): string | null =>
-  v.trim() && isNaN(Date.parse(v)) ? 'Debe ser una fecha válida.' : null
+  v.trim() && isNaN(Date.parse(v)) ? "Debe ser una fecha válida." : null;
 
 type Props = {
-  selectedTemplate: NewsletterTemplate
-  isGenerating: boolean
-  aiError: string | null
+  selectedTemplate: NewsletterTemplate;
+  selectedBrandKitId: string;
+  isGenerating: boolean;
+  aiError: string | null;
   // Prefilled values when regenerating globally
-  initialValues?: Partial<Omit<FormValues, 'files'>>
-  onGenerate: (request: GenerateNewsletterRequest) => Promise<void>
-  onCancel: () => void
-  cancelLabel?: string
-}
+  initialValues?: Partial<Omit<FormValues, "files">>;
+  initialAssetSelection?: NewsletterAssetSelection | null;
+  onGenerate: (
+    request: GenerateNewsletterRequest,
+    assetSelection: NewsletterAssetSelection,
+  ) => Promise<void>;
+  onCancel: () => void;
+  cancelLabel?: string;
+};
 
 export function GenerationForm({
   selectedTemplate,
+  selectedBrandKitId,
   isGenerating,
   aiError,
   initialValues,
+  initialAssetSelection,
   onGenerate,
   onCancel,
-  cancelLabel = 'Cancelar',
+  cancelLabel = "Cancelar",
 }: Props) {
+  const initialAssetType =
+    initialAssetSelection?.assetType ?? initialValues?.assetType ?? "IMAGE";
   const [form, setForm] = useState<FormValues>({
-    topic: initialValues?.topic ?? '',
-    objective: initialValues?.objective ?? '',
-    audience: initialValues?.audience ?? '',
-    keyMessages: initialValues?.keyMessages ?? '',
-    tone: initialValues?.tone ?? '',
-    relevantDates: initialValues?.relevantDates ?? '',
-    cta: initialValues?.cta ?? '',
-    contact: initialValues?.contact ?? '',
-    linksOrSources: initialValues?.linksOrSources ?? '',
-    additionalContext: initialValues?.additionalContext ?? '',
-    assetType: initialValues?.assetType ?? 'IMAGE',
+    topic: initialValues?.topic ?? "",
+    objective: initialValues?.objective ?? "",
+    audience: initialValues?.audience ?? "",
+    keyMessages: initialValues?.keyMessages ?? "",
+    tone: initialValues?.tone ?? "",
+    relevantDates: initialValues?.relevantDates ?? "",
+    cta: initialValues?.cta ?? "",
+    contact: initialValues?.contact ?? "",
+    linksOrSources: initialValues?.linksOrSources ?? "",
+    additionalContext: initialValues?.additionalContext ?? "",
+    assetType: initialAssetType,
     files: [],
-  })
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({})
-  const [availableAssets, setAvailableAssets] = useState<UploadedAsset[]>([])
-  const [uploadedAssets, setUploadedAssets] = useState<UploadedAsset[]>([])
-  const [selectedExistingAssetIds, setSelectedExistingAssetIds] = useState<string[]>([])
-  const [assetListError, setAssetListError] = useState<string | null>(null)
-  const [isLoadingAssets, setIsLoadingAssets] = useState(false)
-  const [assetUploadError, setAssetUploadError] = useState<string | null>(null)
-  const [isUploadingAssets, setIsUploadingAssets] = useState(false)
+  });
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [availableAssets, setAvailableAssets] = useState<UploadedAsset[]>([]);
+  const [uploadedAssets, setUploadedAssets] = useState<UploadedAsset[]>([]);
+  const [selectedExistingAssets, setSelectedExistingAssets] = useState<
+    UploadedAsset[]
+  >(initialAssetSelection?.selectedAssets ?? []);
+  const [assetListError, setAssetListError] = useState<string | null>(null);
+  const [isLoadingAssets, setIsLoadingAssets] = useState(false);
+  const [assetUploadError, setAssetUploadError] = useState<string | null>(null);
+  const [isUploadingAssets, setIsUploadingAssets] = useState(false);
+  const [isAvailableAssetsCollapsed, setIsAvailableAssetsCollapsed] =
+    useState(false);
+  const [availableAssetsPage, setAvailableAssetsPage] = useState(1);
+  const hasInitializedAssetType = useRef(false);
 
   const visibleFields = new Set([
     ...selectedTemplate.requiredGenerationFields,
     ...selectedTemplate.optionalGenerationFields,
-  ])
+  ]);
 
   const update = (field: keyof FormValues, value: string | File[]) => {
-    setForm((f) => ({ ...f, [field]: value }))
-    setFormErrors((e) => { const n = { ...e }; delete n[field]; return n })
-  }
+    setForm((f) => ({ ...f, [field]: value }));
+    setFormErrors((e) => {
+      const n = { ...e };
+      delete n[field];
+      return n;
+    });
+  };
 
   useEffect(() => {
-    let mounted = true
+    let mounted = true;
     const load = async () => {
-      setIsLoadingAssets(true)
-      setAssetListError(null)
+      setIsLoadingAssets(true);
+      setAssetListError(null);
       try {
-        const res = await listAssets(form.assetType)
-        if (mounted) setAvailableAssets(res.assets ?? [])
+        const res =
+          form.assetType === "SHAPE"
+            ? {
+                assets: (await getBrandKitResources(selectedBrandKitId)).assets
+                  .filter((asset) => asset.type === form.assetType)
+                  .map(toUploadedAsset),
+              }
+            : await listAssets(form.assetType);
+        if (mounted) setAvailableAssets(res.assets ?? []);
       } catch (err) {
         if (mounted) {
           setAssetListError(
             axios.isAxiosError(err)
-              ? err.response?.data?.message ?? 'No se pudieron obtener los assets.'
-              : 'No se pudieron obtener los assets.',
-          )
-          setAvailableAssets([])
+              ? (err.response?.data?.message ??
+                  "No se pudieron obtener los assets.")
+              : "No se pudieron obtener los assets.",
+          );
+          setAvailableAssets([]);
         }
       } finally {
-        if (mounted) setIsLoadingAssets(false)
+        if (mounted) setIsLoadingAssets(false);
       }
+    };
+    void load();
+    return () => {
+      mounted = false;
+    };
+  }, [form.assetType, selectedBrandKitId]);
+
+  useEffect(() => {
+    if (!hasInitializedAssetType.current) {
+      hasInitializedAssetType.current = true;
+      return;
     }
-    void load()
-    return () => { mounted = false }
-  }, [form.assetType])
+
+    setSelectedExistingAssets([]);
+    setUploadedAssets([]);
+    setForm((current) => ({ ...current, files: [] }));
+    setAssetUploadError(null);
+    setAvailableAssetsPage(1);
+  }, [form.assetType]);
+
+  const isAssetSelected = (assetId: string) =>
+    selectedExistingAssets.some((asset) => asset.id === assetId);
+
+  const toggleExistingAsset = (asset: UploadedAsset) => {
+    setSelectedExistingAssets((current) =>
+      current.some((selectedAsset) => selectedAsset.id === asset.id)
+        ? current.filter((selectedAsset) => selectedAsset.id !== asset.id)
+        : [...current, asset],
+    );
+  };
+
+  const removeSelectedAsset = (assetId: string) => {
+    setSelectedExistingAssets((current) =>
+      current.filter((asset) => asset.id !== assetId),
+    );
+  };
 
   const validate = (): boolean => {
-    const errors: Record<string, string> = {}
-    if (!form.topic.trim()) errors.topic = 'El tema es obligatorio.'
-    if (!form.objective.trim()) errors.objective = 'El objetivo es obligatorio.'
-    if (!form.audience.trim()) errors.audience = 'La audiencia es obligatoria.'
-    if (splitLines(form.keyMessages).length < 1) errors.keyMessages = 'Ingresa al menos un mensaje clave.'
-    if (!form.tone.trim()) errors.tone = 'El tono deseado es obligatorio.'
-    const linkErr = validateLinks(form.linksOrSources)
-    if (linkErr) errors.linksOrSources = linkErr
-    const dateErr = validateDate(form.relevantDates)
-    if (dateErr) errors.relevantDates = dateErr
+    const errors: Record<string, string> = {};
+    if (!form.topic.trim()) errors.topic = "El tema es obligatorio.";
+    if (!form.objective.trim())
+      errors.objective = "El objetivo es obligatorio.";
+    if (!form.audience.trim()) errors.audience = "La audiencia es obligatoria.";
+    if (splitLines(form.keyMessages).length < 1)
+      errors.keyMessages = "Ingresa al menos un mensaje clave.";
+    if (!form.tone.trim()) errors.tone = "El tono deseado es obligatorio.";
+    const linkErr = validateLinks(form.linksOrSources);
+    if (linkErr) errors.linksOrSources = linkErr;
+    const dateErr = validateDate(form.relevantDates);
+    if (dateErr) errors.relevantDates = dateErr;
     selectedTemplate.requiredGenerationFields.forEach((field) => {
       if (!form[field]?.toString().trim())
-        errors[field] = `${generationFieldLabels[field]} es obligatorio para esta plantilla.`
-    })
-    setFormErrors(errors)
-    return Object.keys(errors).length === 0
-  }
+        errors[field] =
+          `${generationFieldLabels[field]} es obligatorio para esta plantilla.`;
+    });
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const availableAssetsPageCount = Math.max(
+    1,
+    Math.ceil(availableAssets.length / assetsPerPage),
+  );
+  const currentAvailableAssetsPage = Math.min(
+    availableAssetsPage,
+    availableAssetsPageCount,
+  );
+  const paginatedAvailableAssets = availableAssets.slice(
+    (currentAvailableAssetsPage - 1) * assetsPerPage,
+    currentAvailableAssetsPage * assetsPerPage,
+  );
 
   const submit = async () => {
-    if (!validate()) return
-    let assetIds = [...selectedExistingAssetIds]
-    setAssetUploadError(null)
+    if (!validate()) return;
+    let selectedAssets = dedupeAssets(selectedExistingAssets);
+    let assetIds = selectedAssets.map((asset) => asset.id);
+    setAssetUploadError(null);
 
     if (form.files.length > 0) {
-      setIsUploadingAssets(true)
+      setIsUploadingAssets(true);
       try {
-        const res = await uploadAssets(form.files, form.assetType)
-        setUploadedAssets(res.assets)
-        assetIds = [...selectedExistingAssetIds, ...res.assets.map((a) => a.id)]
+        const res = await uploadAssets(form.files, form.assetType);
+        setUploadedAssets(res.assets);
+        selectedAssets = dedupeAssets([
+          ...selectedExistingAssets,
+          ...res.assets,
+        ]);
+        setSelectedExistingAssets(selectedAssets);
+        assetIds = selectedAssets.map((asset) => asset.id);
       } catch (err) {
         setAssetUploadError(
           axios.isAxiosError(err)
-            ? err.response?.data?.message ?? 'No se pudieron cargar los assets.'
-            : 'No se pudieron cargar los assets.',
-        )
-        return
+            ? (err.response?.data?.message ??
+                "No se pudieron cargar los assets.")
+            : "No se pudieron cargar los assets.",
+        );
+        return;
       } finally {
-        setIsUploadingAssets(false)
+        setIsUploadingAssets(false);
       }
     } else {
-      setUploadedAssets([])
+      setUploadedAssets([]);
     }
 
-    await onGenerate({
+    const request: GenerateNewsletterRequest = {
       area: selectedTemplate.area,
       templateId: selectedTemplate.id,
+      brandKitId: selectedBrandKitId,
       topic: form.topic.trim(),
       objective: form.objective.trim(),
       audience: form.audience.trim(),
@@ -199,14 +326,21 @@ export function GenerationForm({
       linksOrSources: splitLines(form.linksOrSources),
       additionalContext: form.additionalContext.trim() || undefined,
       assetIds,
-    })
-  }
+    };
+
+    await onGenerate(request, {
+      assetType: form.assetType,
+      selectedAssets,
+    });
+  };
 
   return (
     <Stack spacing={2}>
       {aiError && <Alert severity="error">{aiError}</Alert>}
       {assetUploadError && <Alert severity="error">{assetUploadError}</Alert>}
-      <Alert severity="info">Plantilla seleccionada: {selectedTemplate.name}</Alert>
+      <Alert severity="info">
+        Plantilla seleccionada: {selectedTemplate.name}
+      </Alert>
 
       <TextField
         label="Departamento o area"
@@ -219,7 +353,9 @@ export function GenerationForm({
         required
         slotProps={{ inputLabel: { required: false } }}
         value={form.topic}
-        onChange={(e: ChangeEvent<HTMLInputElement>) => update('topic', e.target.value)}
+        onChange={(e: ChangeEvent<HTMLInputElement>) =>
+          update("topic", e.target.value)
+        }
         error={!!formErrors.topic}
         helperText={formErrors.topic}
         fullWidth
@@ -229,7 +365,9 @@ export function GenerationForm({
         required
         slotProps={{ inputLabel: { required: false } }}
         value={form.objective}
-        onChange={(e: ChangeEvent<HTMLInputElement>) => update('objective', e.target.value)}
+        onChange={(e: ChangeEvent<HTMLInputElement>) =>
+          update("objective", e.target.value)
+        }
         error={!!formErrors.objective}
         helperText={formErrors.objective}
         multiline
@@ -241,7 +379,9 @@ export function GenerationForm({
         required
         slotProps={{ inputLabel: { required: false } }}
         value={form.audience}
-        onChange={(e: ChangeEvent<HTMLInputElement>) => update('audience', e.target.value)}
+        onChange={(e: ChangeEvent<HTMLInputElement>) =>
+          update("audience", e.target.value)
+        }
         error={!!formErrors.audience}
         helperText={formErrors.audience}
         fullWidth
@@ -251,9 +391,11 @@ export function GenerationForm({
         required
         slotProps={{ inputLabel: { required: false } }}
         value={form.keyMessages}
-        onChange={(e: ChangeEvent<HTMLInputElement>) => update('keyMessages', e.target.value)}
+        onChange={(e: ChangeEvent<HTMLInputElement>) =>
+          update("keyMessages", e.target.value)
+        }
         error={!!formErrors.keyMessages}
-        helperText={formErrors.keyMessages || 'Escribi un mensaje por linea.'}
+        helperText={formErrors.keyMessages || "Escribi un mensaje por linea."}
         multiline
         minRows={3}
         fullWidth
@@ -263,7 +405,9 @@ export function GenerationForm({
         required
         slotProps={{ inputLabel: { required: false } }}
         value={form.tone}
-        onChange={(e: ChangeEvent<HTMLInputElement>) => update('tone', e.target.value)}
+        onChange={(e: ChangeEvent<HTMLInputElement>) =>
+          update("tone", e.target.value)
+        }
         error={!!formErrors.tone}
         helperText={formErrors.tone}
         fullWidth
@@ -271,59 +415,67 @@ export function GenerationForm({
 
       {selectedTemplate.requiredGenerationFields.length > 0 && (
         <Alert severity="warning">
-          Esta plantilla requiere:{' '}
-          {selectedTemplate.requiredGenerationFields.map((f) => generationFieldLabels[f]).join(', ')}
+          Esta plantilla requiere:{" "}
+          {selectedTemplate.requiredGenerationFields
+            .map((f) => generationFieldLabels[f])
+            .join(", ")}
         </Alert>
       )}
-      {visibleFields.has('relevantDates') && (
+      {visibleFields.has("relevantDates") && (
         <TextField
           label="Fecha CTA"
           type="date"
           slotProps={{ inputLabel: { shrink: true } }}
           value={form.relevantDates}
-          onChange={(e: ChangeEvent<HTMLInputElement>) => update('relevantDates', e.target.value)}
+          onChange={(e: ChangeEvent<HTMLInputElement>) =>
+            update("relevantDates", e.target.value)
+          }
           error={!!formErrors.relevantDates}
           helperText={formErrors.relevantDates}
           fullWidth
         />
       )}
-      {visibleFields.has('cta') && (
+      {visibleFields.has("cta") && (
         <TextField
           label="Texto CTA"
           value={form.cta}
-          onChange={(e: ChangeEvent<HTMLInputElement>) => update('cta', e.target.value)}
+          onChange={(e: ChangeEvent<HTMLInputElement>) =>
+            update("cta", e.target.value)
+          }
           error={!!formErrors.cta}
           helperText={formErrors.cta}
           fullWidth
         />
       )}
-      {visibleFields.has('contact') && (
+      {visibleFields.has("contact") && (
         <TextField
           label="Contacto"
           value={form.contact}
-          onChange={(e: ChangeEvent<HTMLInputElement>) => update('contact', e.target.value)}
+          onChange={(e: ChangeEvent<HTMLInputElement>) =>
+            update("contact", e.target.value)
+          }
           error={!!formErrors.contact}
           helperText={formErrors.contact}
           fullWidth
         />
       )}
-      {visibleFields.has('linksOrSources') && (
+      {visibleFields.has("linksOrSources") && (
         <TextField
           label="Link CTA"
           type="url"
           value={form.linksOrSources}
           onChange={(e: ChangeEvent<HTMLInputElement>) => {
-            update('linksOrSources', e.target.value)
-            const err = validateLinks(e.target.value)
+            update("linksOrSources", e.target.value);
+            const err = validateLinks(e.target.value);
             setFormErrors((prev) => {
-              const next = { ...prev }
-              if (err) next.linksOrSources = err
-              else delete next.linksOrSources
-              return next
-            })
+              const next = { ...prev };
+              if (err) next.linksOrSources = err;
+              else delete next.linksOrSources;
+              return next;
+            });
           }}
           error={!!formErrors.linksOrSources}
-          helperText={formErrors.linksOrSources || 'Escribi un link por linea.'}
+          helperText={formErrors.linksOrSources || "Escribi un link por linea."}
           multiline
           minRows={2}
           fullWidth
@@ -337,42 +489,94 @@ export function GenerationForm({
           label="Tipo de asset"
           value={form.assetType}
           onChange={(e: SelectChangeEvent<AssetType>) => {
-            update('assetType', e.target.value)
-            setSelectedExistingAssetIds([])
-            setUploadedAssets([])
-            setAssetUploadError(null)
+            update("assetType", e.target.value);
           }}
         >
           {Object.entries(assetTypeLabels).map(([v, l]) => (
-            <MenuItem key={v} value={v}>{l}</MenuItem>
+            <MenuItem key={v} value={v}>
+              {l}
+            </MenuItem>
           ))}
         </Select>
       </FormControl>
 
       {assetListError && <Alert severity="error">{assetListError}</Alert>}
+      {selectedExistingAssets.length > 0 && (
+        <Stack spacing={1}>
+          <Typography variant="subtitle2">Assets seleccionados</Typography>
+          <Stack
+            direction="row"
+            spacing={1.5}
+            useFlexGap
+            sx={{ flexWrap: "wrap" }}
+          >
+            {selectedExistingAssets.map((asset) => (
+              <AssetImageCard
+                key={asset.id}
+                alt={asset.name}
+                imageUrl={asset.url}
+                isSelected
+                onRemove={() => removeSelectedAsset(asset.id)}
+              />
+            ))}
+          </Stack>
+        </Stack>
+      )}
       {isLoadingAssets ? (
         <Alert severity="info">Cargando assets existentes...</Alert>
       ) : availableAssets.length > 0 ? (
         <Stack spacing={1}>
-          <Typography variant="subtitle2">Assets existentes</Typography>
-          <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
-            {availableAssets.map((asset) => {
-              const isSelected = selectedExistingAssetIds.includes(asset.id)
-              return (
-                <Chip
-                  key={asset.id}
-                  label={asset.name}
-                  color={isSelected ? 'primary' : 'default'}
-                  variant={isSelected ? 'filled' : 'outlined'}
-                  onClick={() =>
-                    setSelectedExistingAssetIds((ids) =>
-                      ids.includes(asset.id) ? ids.filter((id) => id !== asset.id) : [...ids, asset.id],
-                    )
-                  }
-                />
-              )
-            })}
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={1}
+            sx={{
+              alignItems: { xs: "stretch", sm: "center" },
+              justifyContent: "space-between",
+            }}
+          >
+            <Typography variant="subtitle2">Assets existentes</Typography>
+            <Button
+              variant="text"
+              size="small"
+              onClick={() =>
+                setIsAvailableAssetsCollapsed((current) => !current)
+              }
+            >
+              {isAvailableAssetsCollapsed ? "Expandir" : "Colapsar"}
+            </Button>
           </Stack>
+          <Collapse in={!isAvailableAssetsCollapsed}>
+            <Stack spacing={1.5}>
+              <Stack
+                direction="row"
+                spacing={1.5}
+                useFlexGap
+                sx={{ flexWrap: "wrap" }}
+              >
+                {paginatedAvailableAssets.map((asset) => {
+                  const isSelected = isAssetSelected(asset.id);
+                  return (
+                    <AssetImageCard
+                      key={asset.id}
+                      alt={asset.name}
+                      imageUrl={asset.url}
+                      isSelected={isSelected}
+                      onClick={() => toggleExistingAsset(asset)}
+                    />
+                  );
+                })}
+              </Stack>
+              {availableAssets.length > assetsPerPage && (
+                <Pagination
+                  count={availableAssetsPageCount}
+                  page={currentAvailableAssetsPage}
+                  onChange={(_event, page) => setAvailableAssetsPage(page)}
+                  color="primary"
+                  size="small"
+                />
+              )}
+            </Stack>
+          </Collapse>
         </Stack>
       ) : (
         <Alert severity="info">No hay assets existentes para este tipo.</Alert>
@@ -386,28 +590,34 @@ export function GenerationForm({
           multiple
           accept=".jpg,.jpeg,.png,.webp,.gif,.svg"
           onChange={(e: ChangeEvent<HTMLInputElement>) => {
-            update('files', Array.from(e.target.files ?? []))
-            setUploadedAssets([])
-            setAssetUploadError(null)
+            update("files", Array.from(e.target.files ?? []));
+            setUploadedAssets([]);
+            setAssetUploadError(null);
           }}
         />
       </Button>
       {form.files.length > 0 && (
-        <Alert severity="info">Archivos seleccionados: {form.files.map((f) => f.name).join(', ')}</Alert>
+        <Alert severity="info">
+          Archivos seleccionados: {form.files.map((f) => f.name).join(", ")}
+        </Alert>
       )}
       {uploadedAssets.length > 0 && (
-        <Alert severity="success">Assets cargados: {uploadedAssets.map((a) => a.name).join(', ')}</Alert>
+        <Alert severity="success">
+          Assets cargados: {uploadedAssets.map((a) => a.name).join(", ")}
+        </Alert>
       )}
 
       <Divider />
 
-      {visibleFields.has('additionalContext') && (
+      {visibleFields.has("additionalContext") && (
         <Stack spacing={2}>
           <Typography variant="h6">Contexto adicional</Typography>
           <TextField
             label="Notas adicionales"
             value={form.additionalContext}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => update('additionalContext', e.target.value)}
+            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              update("additionalContext", e.target.value)
+            }
             multiline
             minRows={3}
             fullWidth
@@ -420,11 +630,11 @@ export function GenerationForm({
         disabled={isGenerating || isUploadingAssets}
         onClick={() => void submit()}
       >
-        {isGenerating || isUploadingAssets ? 'Generando...' : 'Generar'}
+        {isGenerating || isUploadingAssets ? "Generando..." : "Generar"}
       </Button>
       <Button variant="outlined" color="error" onClick={onCancel}>
         {cancelLabel}
       </Button>
     </Stack>
-  )
+  );
 }

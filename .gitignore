@@ -6,10 +6,12 @@ frontend/.corepack/
 .env.deploy
 backend/.env
 frontend/.env
+frontend/src/pages/TestBlockRegistry
 
 # Build output
 backend/dist/
 frontend/dist/
 frontend/build/
+*.tsbuildinfo
 
 backend/eslint.config.mjs

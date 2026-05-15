@@ -20,6 +20,12 @@
     "forceConsistentCasingInFileNames": true,
     "noImplicitAny": false,
     "strictBindCallApply": false,
-    "noFallthroughCasesInSwitch": false
-  }
+    "noFallthroughCasesInSwitch": false,
+    "paths": {
+        "@shared/*": ["../packages/shared/src/*"]
+    }
+  },
+  "references": [
+    { "path": "../packages/shared/tsconfig.json" }
+  ],
 }

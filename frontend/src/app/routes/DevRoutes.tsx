@@ -26,16 +26,6 @@ export const devRoutes= (
           />
         }
       />
-
-      <Route
-        path="/admin/templates/create"
-        element={
-          <UnderConstructionPage
-            title="crear template"
-          />
-        }
-      />
-
       <Route
         path="/admin/templates/edit/:id"
         element={

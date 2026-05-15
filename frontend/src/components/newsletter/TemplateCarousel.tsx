@@ -14,23 +14,64 @@ import {
 } from '@mui/material'
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
-import { areaLabels, brandKitLabels } from '../../utils/newsletterTemplates'
-import type { AreaName, BrandKitId, NewsletterTemplate } from '../../types/newsletter'
+import { areaLabels, getTemplatePreviewImage } from '../../utils/newsletterTemplates'
+import type { AreaName, NewsletterTemplate } from '../../types/newsletter'
+import { listBrandKits } from '../../api/brand-kits'
 
 type Props = {
   templates: NewsletterTemplate[]
+  selectedBrandKitId: string
   onSelectTemplate: (templateId: string) => void
+  onSelectBrandKit: (brandKitId: string) => void
 }
 
-export function TemplateCarousel({ templates, onSelectTemplate }: Props) {
+export function TemplateCarousel({
+  templates,
+  selectedBrandKitId,
+  onSelectTemplate,
+  onSelectBrandKit,
+}: Props) {
   const [selectedArea, setSelectedArea] = useState<AreaName>('COMUNICACION_INTERNA')
-  const [selectedBrandKitId, setSelectedBrandKitId] = useState<BrandKitId>('nestle-corporate')
   const [selectedIndex, setSelectedIndex] = useState(0)
+  const [brandKitOptions, setBrandKitOptions] = useState<Array<{ id: string; name: string }>>([])
 
-  const filtered = templates.filter(
-    (t) => t.area === selectedArea && t.brandKitId === selectedBrandKitId,
-  )
+  useEffect(() => {
+    let mounted = true
+
+    const loadBrandKits = async () => {
+      try {
+        const kits = await listBrandKits()
+        if (mounted) {
+          setBrandKitOptions(kits)
+        }
+      } catch {
+        if (mounted) {
+          setBrandKitOptions([])
+        }
+      }
+    }
+
+    void loadBrandKits()
+
+    return () => {
+      mounted = false
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!selectedBrandKitId && brandKitOptions[0]?.id) {
+      onSelectBrandKit(brandKitOptions[0].id)
+    }
+  }, [brandKitOptions, onSelectBrandKit, selectedBrandKitId])
+
+  const effectiveArea = templates.some((template) => template.area === selectedArea)
+    ? selectedArea
+    : (templates[0]?.area ?? 'COMUNICACION_INTERNA')
+
+  const filtered = templates.filter((template) => template.area === effectiveArea)
   const selected = filtered[selectedIndex] ?? filtered[0]
+  const selectedBrandKitName =
+    brandKitOptions.find((brandKit) => brandKit.id === selectedBrandKitId)?.name ?? selectedBrandKitId
 
   useEffect(() => {
     if (selected) onSelectTemplate(selected.id)
@@ -44,8 +85,8 @@ export function TemplateCarousel({ templates, onSelectTemplate }: Props) {
     setSelectedIndex(0)
   }
 
-  const onBrandKitChange = (e: SelectChangeEvent<BrandKitId>) => {
-    setSelectedBrandKitId(e.target.value as BrandKitId)
+  const onBrandKitChange = (e: SelectChangeEvent<string>) => {
+    onSelectBrandKit(e.target.value)
     setSelectedIndex(0)
   }
 
@@ -56,7 +97,7 @@ export function TemplateCarousel({ templates, onSelectTemplate }: Props) {
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
           <FormControl fullWidth size="small">
             <InputLabel id="area-label">Area</InputLabel>
-            <Select labelId="area-label" label="Area" value={selectedArea} onChange={onAreaChange}>
+            <Select labelId="area-label" label="Area" value={effectiveArea} onChange={onAreaChange}>
               {Object.entries(areaLabels).map(([v, l]) => (
                 <MenuItem key={v} value={v}>{l}</MenuItem>
               ))}
@@ -65,8 +106,10 @@ export function TemplateCarousel({ templates, onSelectTemplate }: Props) {
           <FormControl fullWidth size="small">
             <InputLabel id="brandkit-label">BrandKit</InputLabel>
             <Select labelId="brandkit-label" label="BrandKit" value={selectedBrandKitId} onChange={onBrandKitChange}>
-              {Object.entries(brandKitLabels).map(([v, l]) => (
-                <MenuItem key={v} value={v}>{l}</MenuItem>
+              {brandKitOptions.map((brandKit) => (
+                <MenuItem key={brandKit.id} value={brandKit.id}>
+                  {brandKit.name}
+                </MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -104,7 +147,7 @@ export function TemplateCarousel({ templates, onSelectTemplate }: Props) {
             >
               <Box
                 component="img"
-                src={selected.imageUrl}
+                src={getTemplatePreviewImage(selected.layout)}
                 alt={selected.name}
                 sx={{
                   width: '100%',
@@ -119,7 +162,10 @@ export function TemplateCarousel({ templates, onSelectTemplate }: Props) {
               <Box sx={{ p: 2 }}>
                 <Typography variant="subtitle1">{selected.name}</Typography>
                 <Typography variant="body2" color="text.secondary">{areaLabels[selected.area]}</Typography>
-                <Typography variant="body2" color="text.secondary">{brandKitLabels[selected.brandKitId]}</Typography>
+                <Typography variant="body2" color="text.secondary">{selectedBrandKitName}</Typography>
+                {selected.description && (
+                  <Typography variant="body2" color="text.secondary">{selected.description}</Typography>
+                )}
               </Box>
             </Paper>
             <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
