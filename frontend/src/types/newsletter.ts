@@ -1,6 +1,6 @@
 import type { GenerateNewsletterRequest } from '../api/ai'
 import type { AssetType, UploadedAsset } from '../api/assets'
-import type { UUID } from '../interfaces/interfaces.newsletters'
+import type { UUID } from '../interfaces/interfaces.templates'
 
 export type NewsletterState =
   | 'DRAFT'

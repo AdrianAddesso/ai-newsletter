@@ -95,7 +95,7 @@ export function TemplatesPage() {
               <Button 
                 variant="contained" 
                 startIcon={<AddIcon />}
-                onClick={() => navigate('#')}
+                onClick={() => navigate('/templates/create')}
                 sx={{ whiteSpace: 'nowrap' }}
               >
                 Nuevo Template

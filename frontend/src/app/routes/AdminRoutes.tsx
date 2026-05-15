@@ -5,6 +5,7 @@ import { AnalyticsPage } from '../../pages/AnalyticsPage'
 import { ReviewsPage } from '../../pages/ReviewsPage'
 import TemplatesPage from '../../pages/TemplatesPage'
 import { UsersPage } from '../../pages/UsersPage'
+import { CreateTemplate } from '../../pages/templates/CreateTemplate'
 
 export const adminRoutes = (
     <>
@@ -36,6 +37,16 @@ export const adminRoutes = (
                 <ProtectedRoute allowedRoles={['ADMIN', 'FUNCTIONAL']}>
                     <ProtectedLayout>
                         <ReviewsPage />
+                    </ProtectedLayout>
+                </ProtectedRoute>
+            }
+        />
+        <Route
+            path="/templates/create"
+            element={
+                <ProtectedRoute allowedRoles={['ADMIN', 'FUNCTIONAL']}>
+                    <ProtectedLayout>
+                        <CreateTemplate />
                     </ProtectedLayout>
                 </ProtectedRoute>
             }

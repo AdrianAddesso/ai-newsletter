@@ -76,15 +76,6 @@ const reviews: NewsletterReview[] = [
     content: "Contenido de promocion...",
   },
   {
-    id: "2",
-    title: "Promocion de Primavera",
-    author: "Maria Garcia",
-    area: AreaName.COMUNICACION_CORPORATIVA,
-    status: NewsletterStatus.RESUBMITTED,
-    submittedDate: "2024-03-16",
-    content: "Contenido de promocion...",
-  },
-  {
     id: "3",
     title: "Newsletter - Febrero 2024",
     author: "Pedro Lopez",
@@ -92,6 +83,15 @@ const reviews: NewsletterReview[] = [
     status: NewsletterStatus.RESUBMITTED,
     submittedDate: "2024-02-28",
     content: "Contenido aprobado...",
+  },
+    {
+    id: "4",
+    title: "Promocion de Primavera",
+    author: "Maria Garcia",
+    area: AreaName.COMUNICACION_CORPORATIVA,
+    status: NewsletterStatus.RESUBMITTED,
+    submittedDate: "2024-03-16",
+    content: "Contenido de promocion...",
   },
 ];
 

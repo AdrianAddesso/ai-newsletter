@@ -159,39 +159,62 @@ export class TemplatesService {
     }
   }
 
-  getById(id: string) {
-    return 'Desde templates con ID' + id;
+  async getById(id: string) {
+    return this.prisma.templates.findFirst({
+      where: {
+        id,
+        deleted_at: null,
+      },
+      include: {
+        areas: {
+          select: {
+            name: true,
+          },
+        },
+        template_states: {
+          select: {
+            code: true,
+            name: true,
+          },
+        },
+      },
+    })
   }
 
-  create() {
-    return 'Desde templates';
+  async create() {
+    return 'Desde templates'
   }
 
-  update(id: string) {
-    return 'Desde update templates con ID' + id;
+  async update(id: string) {
+    return 'Desde update templates con ID' + id
   }
 
-  delete(id: string) {
-    return 'Desde delete templates con ID' + id;
+  async delete(id: string) {
+    return this.prisma.templates.update({
+      where: { id },
+      data: {
+        deleted_at: new Date(),
+      },
+    })
   }
 
-  updateStatus(id: string) {
-    return 'Desde update status templates con ID' + id;
+  async updateStatus(id: string) {
+    return 'Desde update status templates con ID' + id
   }
 
-  defineBlocks(id: string) {
-    return 'Desde define blocks templates con ID' + id;
+  async defineBlocks(id: string) {
+    return 'Desde define blocks templates con ID' + id
   }
 
-  getAssets(templateId: string) {
-    return `Desde assets templates con ID ${templateId}`;
+  async getAssets(templateId: string) {
+    return `Desde assets templates con ID ${templateId}`
   }
 
-  addAsset(templateId: string) {
-    return `Desde add asset templates con ID ${templateId}`;
+  async addAsset(templateId: string) {
+    return `Desde add asset templates con ID ${templateId}`
   }
 
-  updateAsset(templateId: string, assetId: string) {
-    return `Desde update asset templates con ID ${templateId} y asset ID ${assetId}`;
+  async updateAsset(templateId: string, assetId: string) {
+    return `Desde update asset templates con ID ${templateId} y asset ID ${assetId}`
   }
 }
