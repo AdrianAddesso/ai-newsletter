@@ -9,7 +9,8 @@ import {
 import { useTemplateStore } from '../../stores/templates.store';
 import { useBlockDefinitions } from '../../hooks/useBlockDefinitions';
 import { getBlockPreviewUrl } from '../../utils/block.utils';
-import { TYPE_LABELS } from '../../utils/constants';
+import { BlockContentType, BlockContentTypeLabel } from '../../../../packages/shared/src/enums/block-content-type.enum';
+import { enumToOptions } from '../../../../packages/shared/src/utils/enum-to-options';
 
 export const EditorControl: React.FC = () => {
   const { selectedBlockId, rows, updateColumnBlock } = useTemplateStore();
@@ -17,19 +18,15 @@ export const EditorControl: React.FC = () => {
   const { data: definitions } = useBlockDefinitions();
 
   const groupedDefinitions = useMemo(() => {
-    if (!definitions) return {};
+    if (!definitions) return [];
 
-    return definitions.reduce((acc, block) => {
-      
-      const type = block.type;
-      
-      if (!acc[type]) acc[type] = [];
-      
-      acc[type].push(block);
-      
-      return acc;
+    const groups = Object.groupBy(definitions, (block) => block.type);
 
-    }, {} as Record<string, typeof definitions>);
+    return enumToOptions(BlockContentType, BlockContentTypeLabel).map(({ value: type, label }) => ({
+      type,
+      label,
+      blocks: groups[type] || []
+    })).filter(group => group.blocks.length > 0);
 
   }, [definitions]);
 
@@ -69,10 +66,10 @@ export const EditorControl: React.FC = () => {
           >
           </Box>
         </Box>
-        {Object.entries(groupedDefinitions).map(([type, blocks]) => (
+        {groupedDefinitions.map(({ type, label, blocks }) => (
           <Box key={type}>
             <Typography variant="caption" sx={{ mb: 1.5, display: 'block', fontWeight: 600, color: 'text.secondary' }}>
-              {TYPE_LABELS[type] || type}
+              {label}
             </Typography>
             <Box
               sx={{

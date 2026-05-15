@@ -3,7 +3,7 @@ import { Box, Typography, IconButton } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useTemplateStore } from '../../stores/templates.store';
 import { BlockRenderer } from '../blocks/BlockRenderer';
-import { constants } from '../../utils/constants';
+import { CONSTANTS_CANVAS } from '../../../../packages/shared/src/enums/templates-canvas'
 import { useBlockDefinitions } from '../../hooks/useBlockDefinitions';
 import type { ColumnObject } from '../../interfaces/interfaces.templates';
 
@@ -17,7 +17,7 @@ export const TemplateCanvas: React.FC = () => {
 
   return (
     <Box sx={{
-      maxWidth: constants.BASE_WIDTH,
+      maxWidth: CONSTANTS_CANVAS.BASE_WIDTH,
       width: '100%',
       margin: "0 auto",
       bgcolor: 'white',

@@ -15,7 +15,7 @@ import { useTemplateStore } from '../../stores/templates.store'
 import { TemplateCanvas } from '../../components/canvas/TemplateCanvas'
 import { StructureControl } from '../../components/canvas/StructureControl'
 import { EditorControl } from '../../components/canvas/EditorControl'
-import { TAB_LABELS } from '../../utils/constants'
+import { TAB_LABELS} from '../../../../packages/shared/src/enums/tab-enum'
 
 export function CreateTemplate() {
   const navigate = useNavigate()
