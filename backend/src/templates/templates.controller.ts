@@ -46,7 +46,7 @@ export class TemplatesController {
   constructor(private readonly templatesService: TemplatesService) {}
 
   @Get()
-  getAll() {
+  async getAll() {
     return this.templatesService.getAll();
   }
 
@@ -61,7 +61,7 @@ export class TemplatesController {
   }
 
   @Get(':id')
-  getById(@Param(new ZodValidationPipe(idParamSchema)) params: IdParam) {
+  async getById(@Param(new ZodValidationPipe(idParamSchema)) params: IdParam) {
     return this.templatesService.getById(params.id);
   }
 
@@ -77,7 +77,7 @@ export class TemplatesController {
   }
 
   @Delete(':id')
-  delete(@Param(new ZodValidationPipe(idParamSchema)) params: IdParam) {
+  async delete(@Param(new ZodValidationPipe(idParamSchema)) params: IdParam) {
     return this.templatesService.delete(params.id);
   }
 

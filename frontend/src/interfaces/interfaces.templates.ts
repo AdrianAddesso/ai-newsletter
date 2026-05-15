@@ -1,6 +1,6 @@
 export type UUID = string;
 
-export interface NewsletterState {
+export interface TemplateState {
     id: UUID;
     title: string;
     layoutMode: "PORTRAIT" | "LANDSCAPE";
@@ -17,6 +17,8 @@ export interface RowObject {
 
 export interface ColumnObject {
     id: UUID; 
-    type: string | null; //This will store the block_content_id (UUID)
+    type: string | null; 
+    content: string | null;
+    mustFill: boolean;
     displayOrder: number;
 }

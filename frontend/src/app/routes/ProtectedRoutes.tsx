@@ -74,5 +74,16 @@ export const protectedRoutes = (
                 </ProtectedRoute>
             }
         />
+
+        <Route
+            path="/templates/biblioteca"
+            element={
+                <ProtectedRoute>
+                    <ProtectedLayout>
+                        <TemplateLibraryPage />
+                    </ProtectedLayout>
+                </ProtectedRoute>
+            }
+        />
     </>
 )

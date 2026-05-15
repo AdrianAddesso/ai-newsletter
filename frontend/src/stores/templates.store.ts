@@ -1,33 +1,40 @@
 import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
 import { constants } from '../utils/constants';
-import { type NewsletterState } from '../interfaces/interfaces.newsletters';
+import { type TemplateState } from '../interfaces/interfaces.templates';
+import type { BlockDefinitionDTO } from '../../../packages/shared/src/types/block.types';
 
-interface NewsletterStore extends NewsletterState {
+interface TemplateStore extends TemplateState {
   setMode: (mode: 'PORTRAIT' | 'LANDSCAPE') => void;
   setIsSkeletonView: (isSkeleton: boolean) => void;
   setSelectedBlockId: (id: string | null) => void;
-  
+
   addRow: () => void;
   removeRow: (rowId: string) => void;
-  
+
   addColumn: (rowId: string) => void;
   removeColumn: (rowId: string) => void;
-  
-  updateColumnBlock: (rowId: string, columnId: string, blockContentId: string) => void;
-  
-  resetStore: (initialData?: Partial<NewsletterState>) => void;
-  
+
+  updateColumnBlock: (rowId: string, columnId: string, definition: BlockDefinitionDTO | null) => void;
+
+  resetStore: (initialData?: Partial<TemplateState>) => void;
+
   saveTemplate: () => Promise<void>;
 }
 
 
-export const useNewsletterStore = create<NewsletterStore>((set, get) => ({
+export const useTemplateStore = create<TemplateStore>((set, get) => ({
   id: uuidv4(),
-  title: 'Nuevo Newsletter',
+  title: 'Nuevo Template',
   layoutMode: 'PORTRAIT',
   isSkeletonView: true,
-  rows: [],
+  rows: [
+    {
+      id: uuidv4(),
+      rowIndex: 0,
+      columns: [{ id: uuidv4(), type: null, content: null, mustFill: false, displayOrder: 0 }]
+    }
+  ],
   selectedBlockId: null,
 
   setMode: (mode) => {
@@ -41,7 +48,7 @@ export const useNewsletterStore = create<NewsletterStore>((set, get) => ({
   },
 
   setIsSkeletonView: (isSkeleton) => set({ isSkeletonView: isSkeleton }),
-  
+
   setSelectedBlockId: (id) => set({ selectedBlockId: id }),
 
   addRow: () => set((state) => ({
@@ -50,7 +57,7 @@ export const useNewsletterStore = create<NewsletterStore>((set, get) => ({
       {
         id: uuidv4(),
         rowIndex: state.rows.length,
-        columns: [{ id: uuidv4(), type: null, displayOrder: 0 }]
+        columns: [{ id: uuidv4(), type: null, content: null, mustFill: false, displayOrder: 0 }]
       }
     ]
   })),
@@ -68,7 +75,7 @@ export const useNewsletterStore = create<NewsletterStore>((set, get) => ({
             ...row,
             columns: [
               ...row.columns,
-              { id: uuidv4(), type: null, displayOrder: row.columns.length }
+              { id: uuidv4(), type: null, content: null, mustFill: false, displayOrder: row.columns.length }
             ]
           };
         }
@@ -89,13 +96,20 @@ export const useNewsletterStore = create<NewsletterStore>((set, get) => ({
     })
   })),
 
-  updateColumnBlock: (rowId, columnId, blockContentId) => set((state) => ({
+  updateColumnBlock: (rowId, columnId, definition) => set((state) => ({
     rows: state.rows.map(row => {
       if (row.id === rowId) {
         return {
           ...row,
-          columns: row.columns.map(col => 
-            col.id === columnId ? { ...col, type: blockContentId } : col
+          columns: row.columns.map(col =>
+            col.id === columnId
+              ? {
+                ...col,
+                type: definition?.type ?? null,
+                content: definition?.defaultContent ?? null,
+                mustFill: definition?.mustFill ?? false
+              }
+              : col
           )
         };
       }
@@ -105,29 +119,34 @@ export const useNewsletterStore = create<NewsletterStore>((set, get) => ({
 
   resetStore: (initialData) => set({
     id: uuidv4(),
-    title: 'Nuevo Newsletter',
+    title: 'Nuevo Template',
     layoutMode: 'PORTRAIT',
     isSkeletonView: true,
-    rows: [],
+    rows: [
+      {
+        id: uuidv4(),
+        rowIndex: 0,
+        columns: [{ id: uuidv4(), type: null, content: null, mustFill: false, displayOrder: 0 }]
+      }
+    ],
     selectedBlockId: null,
     ...initialData
   }),
 
   saveTemplate: async () => {
     const { id, rows } = get();
-
-    const blocksToSave = rows.flatMap((row, rowIndex) => 
+    const blocksToSave = rows.flatMap((row, rowIndex) =>
       row.columns.map((col, colIndex) => ({
         newsletter_id: id,
-        block_content_id: col.type,
+        block_type: col.type,
+        content: col.content,
         row: rowIndex,
         grid_column: colIndex,
         display_order: col.displayOrder
       }))
     );
-    
-    console.log('Saving blocks:', blocksToSave);
-    // Aquí iría la llamada a la API
+    // Aquí iría la lógica para enviar `blocksToSave` a la API
+    console.log('Enviando a API:', blocksToSave);
   }
 }));
 

@@ -134,37 +134,45 @@ export function UsersPage() {
     ]
 
     return mockupUsers
-        .filter((user) => {
-            const noFilter = !showActive && !showInactive;
-            if (noFilter) return true; // show all
+    .filter((user) => {
+      // Lógica de búsqueda por texto
+      const searchTerm = search.toLowerCase();
+      const matchesSearch = 
+        user.name.toLowerCase().includes(searchTerm) || 
+        user.email.toLowerCase().includes(searchTerm);
 
-            if (showActive && user.state === UserStatus.ACTIVE) return true;
-            if (
-            showInactive &&
-            (user.state === UserStatus.INACTIVE ||
-                user.state === UserStatus.REMOVED)
-            )
-            return true;
+      // Lógica de filtros por estado (Active/Inactive)
+      const noStatusFilter = !showActive && !showInactive;
+      let matchesStatus = false;
 
-            return false;
-        })
-      .sort((a, b) => {
-        const isAsc = order === "asc";
-        let valueA = a[orderBy as keyof typeof a] ?? "";
-        let valueB = b[orderBy as keyof typeof b] ?? "";
-
-        if (typeof valueA === "string") valueA = valueA.toLowerCase();
-        if (typeof valueB === "string") valueB = valueB.toLowerCase();
-
-        if (valueA < valueB) {
-          return isAsc ? -1 : 1;
+      if (noStatusFilter) {
+        matchesStatus = true;
+      } else {
+        if (showActive && user.state === UserStatus.ACTIVE) matchesStatus = true;
+        if (
+          showInactive &&
+          (user.state === UserStatus.INACTIVE || user.state === UserStatus.REMOVED)
+        ) {
+          matchesStatus = true;
         }
-        if (valueA > valueB) {
-          return isAsc ? 1 : -1;
-        }
-        return 0;
-      });
-  }, [search, order, orderBy, showActive, showInactive])
+      }
+
+      // El usuario debe cumplir AMBAS condiciones
+      return matchesSearch && matchesStatus;
+    })
+    .sort((a, b) => {
+      const isAsc = order === "asc";
+      let valueA = a[orderBy as keyof typeof a] ?? "";
+      let valueB = b[orderBy as keyof typeof b] ?? "";
+
+      if (typeof valueA === "string") valueA = valueA.toLowerCase();
+      if (typeof valueB === "string") valueB = valueB.toLowerCase();
+
+      if (valueA < valueB) return isAsc ? -1 : 1;
+      if (valueA > valueB) return isAsc ? 1 : -1;
+      return 0;
+    });
+}, [search, order, orderBy, showActive, showInactive]);
 
   const theme = useTheme()
 

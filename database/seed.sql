@@ -184,6 +184,139 @@ ON CONFLICT (code) DO UPDATE
 SET name = EXCLUDED.name;
 
 -- ========================================
+-- TEMPLATES
+-- ========================================
+
+WITH desired_templates AS (
+  SELECT
+    v.name,
+    v.description,
+    a.id AS area_id,
+    v.layout,
+    ts.id AS state_id,
+    v.prompt_base,
+    u.id AS created_by_user_id,
+    v.created_at,
+    v.updated_at,
+    v.deleted_at
+  FROM (
+    VALUES
+      (
+        'Cultura y reconocimiento',
+        'Formato para destacar cultura, reconocimientos y acciones de engagement.',
+        'COMUNICACION_INTERNA',
+        'EDITORIAL',
+        $json${"promptText":"Plantilla para cultura organizacional y reconocimiento.","requiredGenerationFields":[],"optionalGenerationFields":["relevantDates","cta","linksOrSources","additionalContext"]}$json$,
+        '2026-05-10 06:20:08.60622+00'::timestamptz,
+        '2026-05-10 06:20:08.60622+00'::timestamptz,
+        NULL::timestamptz
+      ),
+      (
+        'Mensaje de liderazgo',
+        'Comunicaciones formales de liderazgo con llamado a la accion y contacto.',
+        'COMUNICACION_INTERNA',
+        'CLASSIC',
+        $json${"promptText":"Plantilla para mensajes institucionales de liderazgo.","requiredGenerationFields":["contact"],"optionalGenerationFields":["relevantDates","cta","linksOrSources","additionalContext"]}$json$,
+        '2026-05-10 06:20:08.60622+00'::timestamptz,
+        '2026-05-10 06:20:08.60622+00'::timestamptz,
+        NULL::timestamptz
+      ),
+      (
+        'Resumen semanal',
+        'Plantilla breve para resumir noticias clave y proximos hitos semanales.',
+        'COMUNICACION_INTERNA',
+        'BRIEF',
+        $json${"promptText":"Plantilla para resumenes ejecutivos semanales.","requiredGenerationFields":[],"optionalGenerationFields":["relevantDates","cta","linksOrSources","additionalContext"]}$json$,
+        '2026-05-10 06:20:08.60622+00'::timestamptz,
+        '2026-05-10 06:20:08.60622+00'::timestamptz,
+        NULL::timestamptz
+      ),
+      (
+        'Actualizacion corporativa',
+        'Comunicados internos con foco en hitos, avances y decisiones corporativas.',
+        'COMUNICACION_CORPORATIVA',
+        'CLASSIC',
+        $json${"promptText":"Plantilla para novedades corporativas internas.","requiredGenerationFields":[],"optionalGenerationFields":["relevantDates","cta","linksOrSources","additionalContext"]}$json$,
+        '2026-05-10 06:20:08.60622+00'::timestamptz,
+        '2026-05-10 06:20:08.60622+00'::timestamptz,
+        NULL::timestamptz
+      ),
+      (
+        'Historia de equipos',
+        'Formato editorial para contar iniciativas, logros y testimonios de equipos.',
+        'COMUNICACION_CORPORATIVA',
+        'EDITORIAL',
+        $json${"promptText":"Plantilla para historias de equipos y reconocimiento interno.","requiredGenerationFields":["contact"],"optionalGenerationFields":["relevantDates","cta","linksOrSources","additionalContext"]}$json$,
+        '2026-05-10 06:20:08.60622+00'::timestamptz,
+        '2026-05-10 06:20:08.60622+00'::timestamptz,
+        NULL::timestamptz
+      )
+  ) AS v(
+    name,
+    description,
+    area_name,
+    layout,
+    prompt_base,
+    created_at,
+    updated_at,
+    deleted_at
+  )
+  JOIN public.areas a
+    ON a.name = v.area_name::area_name
+  JOIN public.template_states ts
+    ON ts.code = 'ACTIVE'
+  JOIN public.users u
+    ON u.email = 'admin@local.test'
+),
+updated_templates AS (
+  UPDATE public.templates t
+  SET
+    description = d.description,
+    area_id = d.area_id,
+    layout = d.layout,
+    state_id = d.state_id,
+    prompt_base = d.prompt_base,
+    created_by_user_id = d.created_by_user_id,
+    created_at = d.created_at,
+    updated_at = d.updated_at,
+    deleted_at = d.deleted_at
+  FROM desired_templates d
+  WHERE t.name = d.name
+  RETURNING t.name
+)
+INSERT INTO public.templates (
+  id,
+  name,
+  description,
+  area_id,
+  layout,
+  state_id,
+  prompt_base,
+  created_by_user_id,
+  created_at,
+  updated_at,
+  deleted_at
+)
+SELECT
+  gen_random_uuid(),
+  d.name,
+  d.description,
+  d.area_id,
+  d.layout,
+  d.state_id,
+  d.prompt_base,
+  d.created_by_user_id,
+  d.created_at,
+  d.updated_at,
+  d.deleted_at
+FROM desired_templates d
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM updated_templates ut
+  WHERE ut.name = d.name
+);
+
+-- ========================================
 -- BRAND KITS
 -- ========================================
 
