@@ -14,9 +14,34 @@ describe('request body schemas', () => {
       language: 'SPA',
       format: 'PORTRAIT',
       areaId: '550e8400-e29b-41d4-a716-446655440000',
+      assetSelection: {
+        selectedAssets: [
+          {
+            id: '550e8400-e29b-41d4-a716-446655440001',
+            keywordText: 'Hola',
+          },
+        ],
+      },
     });
 
     expect(result.success).toBe(true);
+  });
+
+  it('rejects newsletter asset payloads with non-persisted fields', () => {
+    const result = createNewsletterBodySchema.safeParse({
+      title: 'Newsletter de abril',
+      assetSelection: {
+        selectedAssets: [
+          {
+            id: '550e8400-e29b-41d4-a716-446655440001',
+            keywordText: 'Hola',
+            svgTemplate: '<svg />',
+          },
+        ],
+      },
+    });
+
+    expect(result.success).toBe(false);
   });
 
   it('rejects an invalid newsletter status payload', () => {

@@ -20,10 +20,6 @@ import {
   generationFieldLabels,
 } from "../../utils/newsletterTemplates";
 import {
-  getBrandKitResources,
-  type BrandKitResourceAsset,
-} from "../../api/brand-kits";
-import {
   listAssets,
   uploadAssets,
   type AssetType,
@@ -72,16 +68,6 @@ const dedupeAssets = (assets: UploadedAsset[]): UploadedAsset[] => {
 
   return Array.from(assetsById.values());
 };
-
-const toUploadedAsset = (asset: BrandKitResourceAsset): UploadedAsset => ({
-  id: asset.id,
-  name: asset.name,
-  type: asset.type,
-  url: asset.url,
-  svgTemplate: asset.svgTemplate,
-  maxChars: asset.maxChars,
-  keywordText: asset.keywordText,
-});
 
 const splitLines = (v: string) =>
   v
@@ -138,8 +124,7 @@ export function GenerationForm({
   onCancel,
   cancelLabel = "Cancelar",
 }: Props) {
-  const initialAssetType =
-    initialAssetSelection?.assetType ?? initialValues?.assetType ?? "IMAGE";
+  const initialAssetType = initialValues?.assetType ?? "IMAGE";
   const [form, setForm] = useState<FormValues>({
     topic: initialValues?.topic ?? "",
     objective: initialValues?.objective ?? "",
@@ -192,14 +177,7 @@ export function GenerationForm({
       setIsLoadingAssets(true);
       setAssetListError(null);
       try {
-        const res =
-          form.assetType === "SHAPE"
-            ? {
-                assets: (await getBrandKitResources(selectedBrandKitId)).assets
-                  .filter((asset) => asset.type === form.assetType)
-                  .map(toUploadedAsset),
-              }
-            : await listAssets(form.assetType);
+        const res = await listAssets(form.assetType);
         if (mounted) setAvailableAssets(res.assets ?? []);
       } catch (err) {
         if (mounted) {
@@ -219,7 +197,7 @@ export function GenerationForm({
     return () => {
       mounted = false;
     };
-  }, [form.assetType, selectedBrandKitId]);
+  }, [form.assetType]);
 
   useEffect(() => {
     if (!hasInitializedAssetType.current) {
@@ -388,7 +366,6 @@ export function GenerationForm({
     };
 
     await onGenerate(request, {
-      assetType: form.assetType,
       selectedAssets,
     });
   };
