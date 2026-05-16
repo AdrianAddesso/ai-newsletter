@@ -85,7 +85,7 @@ export async function createNewsletter(
 
   const newsletter: Newsletter = {
     id: generateNewsletterId(),
-    creatorUserId: payload.creatorUserId,
+    creatorUserId: payload.creatorUserId ?? '',
     state: 'DRAFT',
     templateId: payload.templateId,
     brandKitId: payload.brandKitId,
@@ -163,6 +163,11 @@ export async function deleteNewsletter(
   delete db[id]
 
   saveMockDb(db)
+}
+
+export async function getAllNewsletters(): Promise<Newsletter[]> {
+  await new Promise<void>((resolve) => window.setTimeout(resolve, 200))
+  return Object.values(getMockDb())
 }
 
 // ─────────────────────────────────────────────

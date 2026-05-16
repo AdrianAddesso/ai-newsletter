@@ -1,6 +1,7 @@
 services:
   postgres:
     image: postgres:16
+    platform: linux/arm64
     container_name: nestle_postgres
     restart: unless-stopped
     environment:
@@ -42,7 +43,9 @@ services:
 
   assets-seed:
     profiles: ["seed"]
-    build: ./backend
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
     command: pnpm run assets:seed-minio
     restart: "no"
     depends_on:
@@ -62,9 +65,9 @@ services:
       S3_FORCE_PATH_STYLE: "true"
 
   backend:
-    build: 
-      context: ./backend
-      dockerfile: Dockerfile
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
     ports:
       - "3000:3000"
     depends_on:

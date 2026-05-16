@@ -72,7 +72,8 @@ export type Newsletter = {
 
 // Para crear un nuevo newsletter
 export type CreateNewsletterPayload = {
-  creatorUserId: string
+  title?: string
+  creatorUserId?: string
   templateId: string
   brandKitId: string
   blocks: NewsletterBlock[]
@@ -82,6 +83,7 @@ export type CreateNewsletterPayload = {
 
 // Para actualizar
 export type UpdateNewsletterPayload = {
+  templateId?: string
   brandKitId?: string
   blocks?: NewsletterBlock[]
   comment?: string | null

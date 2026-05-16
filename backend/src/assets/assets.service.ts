@@ -143,6 +143,27 @@ export class AssetsService {
     }
   }
 
+  async getBlockPreviewAsset(previewKey: string): Promise<UploadedAssetDto> {
+    return this.getSeededAsset(`assets/blocks/${this.normalizePreviewKey(previewKey)}`, asset_type.IMAGE);
+  }
+
+  async getSeededAsset(
+    storageKey: string,
+    type: asset_type,
+  ): Promise<UploadedAssetDto> {
+    const normalizedStorageKey = this.normalizeSeededStorageKey(storageKey);
+    const fileName = this.getFileName(normalizedStorageKey);
+
+    return this.upsertSeededAsset({
+      name: fileName,
+      type,
+      storageKey: normalizedStorageKey,
+      description: `Seeded asset: ${normalizedStorageKey}`,
+      mimeType: this.inferMimeType(fileName),
+      fromBrand: true,
+    });
+  }
+
   async upsertSeededAsset(
     input: SeededAssetInput,
   ): Promise<UploadedAssetDto> {
@@ -263,6 +284,58 @@ export class AssetsService {
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '')
       .slice(0, 80) || 'asset';
+  }
+
+  private normalizePreviewKey(previewKey: string): string {
+    const normalizedPreviewKey = basename(previewKey.trim());
+
+    if (!normalizedPreviewKey || normalizedPreviewKey !== previewKey.trim()) {
+      throw new BadRequestException('Debe indicar una imagen de preview valida.');
+    }
+
+    const extension = extname(normalizedPreviewKey).toLowerCase();
+
+    if (!['.jpg', '.jpeg', '.png', '.webp', '.gif', '.svg'].includes(extension)) {
+      throw new BadRequestException('Debe indicar una imagen de preview valida.');
+    }
+
+    return normalizedPreviewKey;
+  }
+
+  private normalizeSeededStorageKey(storageKey: string): string {
+    const trimmedStorageKey = storageKey.trim().replace(/\\/g, '/');
+    const normalizedStorageKey = posix.normalize(trimmedStorageKey);
+
+    if (
+      !normalizedStorageKey.startsWith('assets/') ||
+      normalizedStorageKey !== trimmedStorageKey ||
+      normalizedStorageKey.includes('/../')
+    ) {
+      throw new BadRequestException('Debe indicar un asset valido.');
+    }
+
+    const extension = extname(normalizedStorageKey).toLowerCase();
+
+    if (!['.jpg', '.jpeg', '.png', '.webp', '.gif', '.svg'].includes(extension)) {
+      throw new BadRequestException('Debe indicar un asset valido.');
+    }
+
+    return normalizedStorageKey;
+  }
+
+  private inferMimeType(fileName: string): string | null {
+    const extension = extname(fileName).toLowerCase();
+
+    const mimeTypesByExtension: Record<string, string> = {
+      '.gif': 'image/gif',
+      '.jpeg': 'image/jpeg',
+      '.jpg': 'image/jpeg',
+      '.png': 'image/png',
+      '.svg': 'image/svg+xml',
+      '.webp': 'image/webp',
+    };
+
+    return mimeTypesByExtension[extension] ?? null;
   }
 
   private getObjectPrefix(storageKey: string): string {

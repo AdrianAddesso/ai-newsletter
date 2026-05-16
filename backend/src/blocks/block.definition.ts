@@ -1,7 +1,8 @@
 import type {  BlockContentType,  BlockDefinitionDTO,} from '@shared/types/block.types';
 
 export abstract class BlockDefinition {
-  abstract readonly type: BlockContentType;
+  abstract readonly type: string;
+  abstract readonly category: BlockContentType;
   abstract readonly label: string;
   abstract readonly description: string;
   abstract readonly icon: string;
@@ -13,6 +14,7 @@ export abstract class BlockDefinition {
   toDTO(): BlockDefinitionDTO {
     return {
       type: this.type,
+      category: this.category,
       label: this.label,
       description: this.description,
       icon: this.icon,
