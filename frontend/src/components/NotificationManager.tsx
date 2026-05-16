@@ -1,4 +1,4 @@
-import { Alert, Snackbar, Stack } from '@mui/material'
+import { Alert, Stack } from '@mui/material'
 import type { Notification } from '../hooks/useNotification'
 
 interface NotificationManagerProps {
@@ -11,31 +11,24 @@ export function NotificationManager({ notifications, onClose }: NotificationMana
     <Stack
       sx={{
         position: 'fixed',
-        top: 16,
-        right: 16,
+        bottom: 24,
+        right: 24,
         zIndex: 9999,
         maxWidth: 400,
+        width: '100%',
       }}
       spacing={1}
     >
       {notifications.map((notification) => (
-        <Snackbar
+        <Alert
           key={notification.id}
-          open={true}
-          autoHideDuration={6000}
           onClose={() => onClose(notification.id)}
-          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-          sx={{ position: 'relative', top: 'auto', right: 'auto' }}
+          severity={notification.type === 'info' ? 'info' : notification.type}
+          variant="filled"
+          sx={{ width: '100%', boxShadow: 3 }}
         >
-          <Alert
-            onClose={() => onClose(notification.id)}
-            severity={notification.type === 'info' ? 'info' : notification.type}
-            variant="filled"
-            sx={{ width: '100%' }}
-          >
-            {notification.message}
-          </Alert>
-        </Snackbar>
+          {notification.message}
+        </Alert>
       ))}
     </Stack>
   )

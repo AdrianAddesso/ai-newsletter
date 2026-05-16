@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import {
   Box,
   Button,
@@ -33,6 +33,8 @@ import {
 } from '../../../packages/shared/src/enums/area-name.enum'
 import { useAuth, type User } from '../contexts/AuthContext'
 import SearchBar from '../components/SearchBar'
+import { useLocation } from 'react-router'
+import { seedNewsletterIfMissing } from '../api/newsletters'
 
 type NewsletterReviewStatus = Extract<
   NewsletterStatusValue,
@@ -56,7 +58,7 @@ interface NewsletterReview {
   content: string
 }
 
-const reviews: NewsletterReview[] = [
+const initialReviews: NewsletterReview[] = [
   {
     id: "1",
     title: "Newsletter - Marzo 2024",
@@ -141,6 +143,29 @@ export function ReviewsPage() {
   const { user } = useAuth()
   const theme = useTheme()
   const navigate = useNavigate()
+  const location = useLocation()
+
+  const [reviews, setReviews] = useState<NewsletterReview[]>(initialReviews)
+  const appliedRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    initialReviews.forEach((r) => seedNewsletterIfMissing(r.id, r.status))
+  }, [])
+
+  useEffect(() => {
+    const { updatedId, newStatus } = (location.state ?? {}) as { updatedId?: string; newStatus?: string }
+    if (!updatedId || !newStatus || appliedRef.current === updatedId + newStatus) return
+    appliedRef.current = updatedId + newStatus
+    if (newStatus === 'APPROVED') {
+      setReviews((prev) => prev.filter((r) => r.id !== updatedId))
+    } else {
+      setReviews((prev) =>
+        prev.map((r) =>
+          r.id === updatedId ? { ...r, status: newStatus as NewsletterReview['status'] } : r,
+        ),
+      )
+    }
+  }, [location.state])
 
   const [search, setSearch]   = useState('')
   const [orderBy, setOrderBy] = useState<SortableKey>('submittedDate')
@@ -160,7 +185,7 @@ export function ReviewsPage() {
         const isAsc = order === 'asc'
         return (a[orderBy] < b[orderBy] ? -1 : 1) * (isAsc ? 1 : -1)
       })
-  }, [search, order, orderBy, isAdmin, userArea])
+  }, [reviews, search, order, orderBy, isAdmin, userArea])
 
   const handleRequestSort = (property: SortableKey) => {
     const isAsc = orderBy === property && order === 'asc'
@@ -269,7 +294,7 @@ export function ReviewsPage() {
                               <IconButton
                                 size="small"
                                 color="primary"
-                                onClick={() => navigate(`/reviews/${review.id}`)}
+                                onClick={() => navigate(`/reviews/${review.id}`, { state: { review } })}
                               >
                                 <ReviewIcon fontSize="small" />
                               </IconButton>

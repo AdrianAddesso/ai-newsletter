@@ -90,13 +90,13 @@ export class NewslettersController {
   }
 
   @Post(':id/status')
+  @RequirePermission(Action.REVIEW_FINAL_APPROVE_COMMENT, Resource.NEWSLETTERS)
   updateStatus(
     @Param(new ZodValidationPipe(idParamSchema)) params: IdParam,
     @Body(new ZodValidationPipe(updateNewsletterStatusBodySchema))
     body: UpdateNewsletterStatusBody,
   ) {
-    void body;
-    return this.newslettersService.updateStatus(params.id);
+    return this.newslettersService.updateStatus(params.id, body);
   }
 
   @Post(':id/logs')
