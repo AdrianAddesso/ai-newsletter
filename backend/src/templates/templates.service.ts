@@ -28,6 +28,7 @@ export type TemplateListItem = {
   description: string | null;
   area: area_name;
   layout: string | null;
+  orientation: string | null;
   stateCode: string;
   stateName: string;
   createdAt: string;
@@ -113,6 +114,7 @@ export class TemplatesService {
           name: true,
           description: true,
           layout: true,
+          orientation: true,
           prompt_base: true,
           created_at: true,
           areas: {
@@ -143,6 +145,7 @@ export class TemplatesService {
             description: template.description,
             area: template.areas.name,
             layout: template.layout,
+              orientation: template.orientation ?? null,
             stateCode: template.template_states.code,
             stateName: template.template_states.name,
             createdAt: template.created_at.toISOString(),

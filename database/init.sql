@@ -80,6 +80,17 @@ $$;
 
 DO $$
 BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'template_orientation') THEN
+        CREATE TYPE public.template_orientation AS ENUM (
+            'PORTRAIT',
+            'LANDSCAPE'
+        );
+    END IF;
+END
+$$;
+
+DO $$
+BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'newsletter_state') THEN
         CREATE TYPE public.newsletter_state AS ENUM (
             'DRAFT',
@@ -283,6 +294,7 @@ CREATE TABLE public.templates (
     description text,
     area_id uuid,
     layout text,
+    orientation public.template_orientation NOT NULL,
     state_id uuid NOT NULL,
     prompt_base text,
     created_by_user_id uuid,

@@ -187,6 +187,7 @@ CREATE TABLE public.templates (
   description text,
   area_id uuid,
   layout text,
+  orientation USER-DEFINED NOT NULL,
   state_id uuid NOT NULL,
   prompt_base text,
   created_by_user_id uuid,

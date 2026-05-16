@@ -311,6 +311,7 @@ model templates {
   description        String?
   area_id            String?         @db.Uuid
   layout             String?
+  orientation        template_orientation
   state_id           String          @db.Uuid
   prompt_base        String?
   created_by_user_id String?         @db.Uuid
@@ -439,6 +440,11 @@ enum user_role {
   ADMIN
   FUNCTIONAL
   USER
+}
+
+enum template_orientation {
+  PORTRAIT
+  LANDSCAPE
 }
 
 enum user_state {
