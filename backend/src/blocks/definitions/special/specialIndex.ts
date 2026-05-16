@@ -1,0 +1,1 @@
+export { SpecialBoxBackgroundFullBlock } from './specialBoxBackgroundFull.block';

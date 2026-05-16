@@ -8,7 +8,7 @@ import {
 } from '@mui/material';
 import { useTemplateStore } from '../../stores/templates.store';
 import { useBlockDefinitions } from '../../hooks/useBlockDefinitions';
-import { getBlockPreviewUrl } from '../../utils/block.utils';
+import { useBlockPreviewUrls } from '../../hooks/useBlockPreviewUrls';
 import { BlockContentType, BlockContentTypeLabel } from '../../../../packages/shared/src/enums/block-content-type.enum';
 import { enumToOptions } from '../../../../packages/shared/src/utils/enum-to-options';
 
@@ -16,11 +16,14 @@ export const EditorControl: React.FC = () => {
   const { selectedBlockId, rows, updateColumnBlock } = useTemplateStore();
 
   const { data: definitions } = useBlockDefinitions();
+  const previewUrls = useBlockPreviewUrls(
+    definitions?.map((definition) => definition.previewKey) ?? [],
+  );
 
   const groupedDefinitions = useMemo(() => {
     if (!definitions) return [];
 
-    const groups = Object.groupBy(definitions, (block) => block.type);
+    const groups = Object.groupBy(definitions, (block) => block.category);
 
     return enumToOptions(BlockContentType, BlockContentTypeLabel).map(({ value: type, label }) => ({
       type,
@@ -105,7 +108,7 @@ export const EditorControl: React.FC = () => {
                   >
                     <Box
                       component="img"
-                      src={getBlockPreviewUrl(block.previewKey)}
+                      src={previewUrls[block.previewKey] ?? ''}
                       sx={{
                         width: '100%',
                         height: 'auto',

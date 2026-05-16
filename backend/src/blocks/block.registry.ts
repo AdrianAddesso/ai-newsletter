@@ -1,6 +1,5 @@
 import { BlockDefinition } from './block.definition';
-import { Example1Block } from './definitions/example1.block';
-import { Example2Block } from './definitions/example2.block';
+import * as AllBlocks from './definitions/index';
 
 export class BlockRegistry {
     private static instance: BlockRegistry;
@@ -8,11 +7,9 @@ export class BlockRegistry {
 
     private constructor() {
         // Se registran todos los tipos disponibles al iniciar
-        const definitions: BlockDefinition[] = [
-        new Example1Block(),
-        new Example2Block(),
-        // ...
-        ];
+        const definitions: BlockDefinition[] = Object.values(AllBlocks).map(
+        (BlockClass) => new BlockClass(),
+        );
         definitions.forEach((b) => this.blocks.set(b.type, b));
     }
 

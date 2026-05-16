@@ -21,7 +21,7 @@ export const TemplateCanvas: React.FC = () => {
       width: '100%',
       margin: "0 auto",
       bgcolor: 'white',
-      boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+      boxShadow: 'none',
       overflow: 'hidden',
       '& *': { boxSizing: 'border-box' }
     }}>
@@ -110,7 +110,7 @@ export const TemplateCanvas: React.FC = () => {
                           right: 4,
                           bgcolor: 'white',
                           color: 'error.main',
-                          boxShadow: 1,
+                          boxShadow: "none",
                           zIndex: 3,
                           '&:hover': {
                             bgcolor: 'error.lighter',
