@@ -14,7 +14,7 @@ export class AreasController {
   }
 
   @Get(':id')
-  findOne(@Param(new ZodValidationPipe(idParamSchema)) params: IdParam) {
+  findOne(@Param(new ZodValidationPipe(idParamSchema)) params: IdParam): Promise<{ id: string; name: string } | null> {
     return this.areasService.findOne(params.id);
   }
 }

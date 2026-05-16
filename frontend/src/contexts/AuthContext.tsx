@@ -52,20 +52,20 @@ export const MICROSOFT_SSO_USERS: User[] = [
     state: "ACTIVE",
   },
   {
-    id: "2",
+    id: "a1e21954-62ea-4e65-a2f1-97d27fd1c9c7",
     email: "funcional@example.com",
     name: "Funcional",
     role: "FUNCTIONAL",
     state: "ACTIVE",
-    area: "COMUNICACION_CORPORATIVA",
+    area: "COMUNICACION_INTERNA",
   },
   {
-    id: "3",
+    id: "17b864c8-c286-46f5-8119-272d915e2247",
     email: "user@example.com",
     name: "Usuario Normal",
     role: "USER",
-    state: "INACTIVE",
-    area: "COMUNICACION_INTERNA",
+    state: "ACTIVE",
+    area: "COMUNICACION_CORPORATIVA",
   },
 ];
 
@@ -157,6 +157,19 @@ const setAxiosHeaders = (session?: StoredSession) => {
   }
 
   delete axios.defaults.headers.common.Authorization;
+  delete axios.defaults.headers.common["x-user-id"];
+  delete axios.defaults.headers.common["x-user-role"];
+  delete axios.defaults.headers.common["x-area"];
+};
+
+const setAxiosMockHeaders = (user?: User) => {
+  if (user) {
+    axios.defaults.headers.common["x-user-id"] = user.id;
+    axios.defaults.headers.common["x-user-role"] = user.role;
+    axios.defaults.headers.common["x-area"] = user.area ?? "";
+    return;
+  }
+
   delete axios.defaults.headers.common["x-user-id"];
   delete axios.defaults.headers.common["x-user-role"];
   delete axios.defaults.headers.common["x-area"];

@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -17,7 +18,7 @@ export class AreasService {
     });
   }
 
-  findOne(id: string) {
+  findOne(id: string): Prisma.PrismaPromise<{ id: string; name: string } | null> {
     return this.prisma.areas.findUnique({
       where: { id },
       select: {
