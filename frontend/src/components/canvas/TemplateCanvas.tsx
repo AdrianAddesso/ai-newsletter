@@ -3,7 +3,7 @@ import { Box, Typography, IconButton } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useTemplateStore } from '../../stores/templates.store';
 import { BlockRenderer } from '../blocks/BlockRenderer';
-import { constants } from '../../utils/constants';
+import { CONSTANTS_CANVAS } from '../../../../packages/shared/src/enums/templates-canvas'
 import { useBlockDefinitions } from '../../hooks/useBlockDefinitions';
 import type { ColumnObject } from '../../interfaces/interfaces.templates';
 
@@ -17,11 +17,11 @@ export const TemplateCanvas: React.FC = () => {
 
   return (
     <Box sx={{
-      maxWidth: constants.BASE_WIDTH,
+      maxWidth: CONSTANTS_CANVAS.BASE_WIDTH,
       width: '100%',
       margin: "0 auto",
       bgcolor: 'white',
-      boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+      boxShadow: 'none',
       overflow: 'hidden',
       '& *': { boxSizing: 'border-box' }
     }}>
@@ -110,7 +110,7 @@ export const TemplateCanvas: React.FC = () => {
                           right: 4,
                           bgcolor: 'white',
                           color: 'error.main',
-                          boxShadow: 1,
+                          boxShadow: "none",
                           zIndex: 3,
                           '&:hover': {
                             bgcolor: 'error.lighter',

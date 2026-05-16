@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Get,
+  Param,
   Post,
   Query,
   UploadedFiles,
@@ -18,6 +19,7 @@ import { MockAuthGuard } from '../modules/auth/guards/mockup.guard';
 import { PermissionsGuard } from '../modules/auth/guards/permissions.guard';
 import { AssetsService } from './assets.service';
 import type {
+  UploadedAssetDto,
   UploadedAssetFile,
   UploadAssetsResponseDto,
 } from './dto/upload-asset.dto';
@@ -47,6 +49,31 @@ export class AssetsController {
     }
 
     return this.assetsService.listAssets(type as asset_type | undefined);
+  }
+
+  @Get('block-previews/:previewKey')
+  @RequirePermission(Action.TEMPLATE_VIEW_COPY, Resource.TEMPLATES)
+  getBlockPreviewAsset(
+    @Param('previewKey') previewKey: string,
+  ): Promise<UploadedAssetDto> {
+    return this.assetsService.getBlockPreviewAsset(previewKey);
+  }
+
+  @Get('seeded')
+  @RequirePermission(Action.TEMPLATE_VIEW_COPY, Resource.TEMPLATES)
+  getSeededAsset(
+    @Query('storageKey') storageKey: string | undefined,
+    @Query('type') type: string | undefined,
+  ): Promise<UploadedAssetDto> {
+    if (!storageKey) {
+      throw new BadRequestException('Debe indicar un asset valido.');
+    }
+
+    if (!this.isAssetType(type)) {
+      throw new BadRequestException('Debe indicar un tipo de asset valido.');
+    }
+
+    return this.assetsService.getSeededAsset(storageKey, type);
   }
 
   @Post()

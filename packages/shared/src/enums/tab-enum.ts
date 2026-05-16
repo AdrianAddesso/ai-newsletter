@@ -1,0 +1,1 @@
+export const TAB_LABELS: string[] = ['Crear', 'Editar']

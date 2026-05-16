@@ -9,17 +9,17 @@ import {
   Tab,
   Tabs,
   Typography,
-} from "@mui/material";
-import { useAuth } from "../contexts/AuthContext";
-import type { UserRole } from "../contexts/AuthContext";
-import { getNewsletter, updateNewsletter } from "../api/newsletters";
-import { BlockList } from "../components/newsletter/BlockList";
-import { EditPanel } from "../components/newsletter/EditPanel";
-import { ReviewCommentControls } from "../components/newsletter/ReviewCommentControls";
-import { GenerationForm } from "../components/newsletter/GenerationForm";
-import { BrandKitResourcesPanel } from "../components/newsletter/BrandKitResourcesPanel";
-import NewsletterStepper from '../components/newsletter/NewsletterStepper'
-
+} from '@mui/material'
+import { useAuth } from '../contexts/AuthContext'
+import type { UserRole } from '../contexts/AuthContext'
+import { getNewsletter, updateNewsletter } from '../api/newsletters'
+import { BlockList } from '../components/newsletter/BlockList'
+import { EditPanel } from '../components/newsletter/EditPanel'
+import { ReviewCommentControls } from '../components/newsletter/ReviewCommentControls'
+import { GenerationForm } from '../components/newsletter/GenerationForm'
+import { NewsletterStepper, getStepFromState } from '../components/newsletter/NewsletterStepper'
+import CreationFlowStepper from '../components/newsletter/CreationFlowStepper'
+import { BrandKitResourcesPanel } from '../components/newsletter/BrandKitResourcesPanel'
 import type {
   NewsletterAssetSelection,
   ExportFormat,
@@ -46,6 +46,7 @@ import { useNotification } from "../hooks/useNotification";
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 const emptyComment = (v: string | null) => !v || v.trim().length === 0;
+
 
 function logStateChange(payload: unknown) {
   console.info("Newsletter state changed", payload);
@@ -371,7 +372,7 @@ function EditNewsletterPage() {
 
   // ── Render HTML ──
   const handleRenderHtml = useCallback(async () => {
-    if (!newsletter || !newsletterId) return;
+    if (!newsletter || !newsletterId || newsletter.renderedHtml) return;
 
     setIsRenderingHtml(true);
     try {
@@ -410,6 +411,20 @@ function EditNewsletterPage() {
       setIsSendingForReview(false);
     }
   }, [handleRenderHtml, navigate, transitionState, notifySuccess]);
+
+  const handleResubmit = useCallback(async () => {
+    setIsSendingForReview(true)
+    try {
+      await handleRenderHtml()
+      await transitionState('RESUBMITTED')
+      notifySuccess('Newsletter reenviado con éxito')
+      navigate('/dashboard')
+    } catch {
+      setAiError('No se pudo reenviar a revisión. Intenta de nuevo.')
+    } finally {
+      setIsSendingForReview(false)
+    }
+  }, [handleRenderHtml, navigate, transitionState, notifySuccess])
 
   const handleRegenerateBlock = useCallback(
     async (blockId: string) => {
@@ -526,32 +541,57 @@ function EditNewsletterPage() {
   }, [navigate, transitionState]);
 
   // ── Derived states ──
-  //const isEditableState = newsletter?.state === 'DRAFT' || newsletter?.state === 'CHANGES_REQUESTED'
-  const isReviewState =
-    newsletter?.state === "IN_REVIEW" || newsletter?.state === "RESUBMITTED";
-  const canReview = ["ADMIN", "FUNCTIONAL"].includes(currentUserRole);
-  const isCreator = currentUserId === newsletter?.creatorUserId;
+  const isReviewState = newsletter?.state === 'IN_REVIEW' || newsletter?.state === 'RESUBMITTED'
+  const isAdmin = currentUserRole === 'ADMIN'
+  const canReview = currentUserRole === 'ADMIN' || currentUserRole === 'FUNCTIONAL'
+  const isCreator = currentUserId === newsletter?.creatorUserId
 
-  const submitLabel =
-    newsletter?.state === "CHANGES_REQUESTED"
-      ? "Reenviar a revision"
-      : "Enviar a revision";
+  // Si el newsletter está en revisión y el usuario no puede revisar, ir al dashboard
+  useEffect(() => {
+    if (newsletter && isReviewState && !canReview) {
+      navigate('/dashboard')
+    }
+  }, [newsletter, isReviewState, canReview, navigate])
+
+  const submitLabel = newsletter?.state === 'CHANGES_REQUESTED' ? 'Reenviar a revision' : 'Enviar a revision'
   const handleSubmit =
-    newsletter?.state === "CHANGES_REQUESTED"
-      ? () => void transitionState("RESUBMITTED")
-      : () => void handleSendForReview();
+    newsletter?.state === 'CHANGES_REQUESTED'
+      ? () => void handleResubmit()
+      : () => void handleSendForReview()
+
+  const handleStepClick = useCallback((step: number) => {
+    if (step === 0 && !isReviewState) navigate('/crearNewsletter', {
+      state: {
+        newsletterId,
+        templateId: newsletter?.templateId,
+        brandKitId: newsletter?.brandKitId,
+        generationRequest: newsletter?.generationRequest,
+      },
+    })
+    if (step === 1 && isReviewState) {
+      void transitionState('CHANGES_REQUESTED')
+      if (!isCreator) navigate('/dashboard')
+    }
+  }, [isCreator, isReviewState, navigate, newsletterId, newsletter, transitionState])
 
   // ──────────────────────────────────────────────────────────────────────────
   // RENDER
-  // ──────────────────────────────────────────────────────────────────────────
-
-  const pageLayout = (left: React.ReactNode, right: React.ReactNode) => (
-    <>
-      <NewsletterStepper
-        activeStep={1}
-        newsletterId={newsletterId}
-        userRole={currentUserRole}
-      />      
+  // ──────────────────────────────────────────────────────────────────────────   
+  const pageLayout = (left: React.ReactNode, right: React.ReactNode, showStepper = true) => (
+    <Box component="main" sx={{ minHeight: 'calc(100vh - 64px)', bgcolor: 'background.default' }}>
+      {showStepper && (
+        <CreationFlowStepper
+          activeStep={1}
+          newsletterId={newsletterId}
+          userRole={currentUserRole}
+        />
+      )}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1fr) minmax(380px, 0.72fr)' },
+        }}
+      >
       <Box
         component="main"
         sx={{
@@ -593,7 +633,8 @@ function EditNewsletterPage() {
           </Stack>
         </Box>
       </Box>
-    </>  
+      </Box>
+    </Box>
   );
 
   // ── Loading ──
@@ -687,10 +728,15 @@ function EditNewsletterPage() {
           </Button>
         ))}
       </Stack>,
-    );
+      false,
+    )
   }
 
   // ── IN_REVIEW / RESUBMITTED ──
+  if (isReviewState && !canReview) {
+    return null
+  }
+
   if (isReviewState) {
     return pageLayout(
       canReview ? (
@@ -730,22 +776,22 @@ function EditNewsletterPage() {
   }
 
   // ── DRAFT / CHANGES_REQUESTED ──
-  const leftPane =
-    newsletter.state === "CHANGES_REQUESTED" && !isCreator ? (
-      <PermissionDenied />
-    ) : (
-      <BlockList
-        blocks={newsletter.blocks}
-        selectedBlockId={selectedBlockId}
-        onSelectBlock={setSelectedBlockId}
-        readOnly={false}
-      />
-    );
+  const draftPermissionDenied = !isCreator && !isAdmin
 
-  const rightPane =
-    newsletter.state === "CHANGES_REQUESTED" && !isCreator ? (
-      <PermissionDenied />
-    ) : (
+  const leftPane = draftPermissionDenied ? (
+    <PermissionDenied />
+  ) : (
+    <BlockList
+      blocks={newsletter.blocks}
+      selectedBlockId={selectedBlockId}
+      onSelectBlock={setSelectedBlockId}
+      readOnly={false}
+    />
+  )
+
+  const rightPane = draftPermissionDenied ? (
+    <PermissionDenied />
+  ) : (
       <>
         <Tabs
           value={showRegenerationForm ? 0 : 1}

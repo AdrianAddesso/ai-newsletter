@@ -1,172 +1,73 @@
-import { useNavigate } from 'react-router';
-import {
-  Box,
-  Stepper,
-  Step,
-  StepLabel,
-  StepButton,
-  Typography,
-} from '@mui/material';
-import { styled } from '@mui/material/styles';
-import type { StepIconProps } from '@mui/material/StepIcon';
+import { Box, Step, StepLabel, Stepper } from '@mui/material'
+import type { StepIconProps } from '@mui/material/StepIcon'
+import type { NewsletterState } from '../../types/newsletter'
 
+const STEPS = ['Borrador', 'Editar', 'En revisión']
 
-type UserRole = 'ADMIN' | 'FUNCTIONAL' | 'USER';
-
-interface NewsletterStepperProps {
-  /** 0 = Generar | 1 = Editar | 2 = Exportar */
-  activeStep: 0 | 1 | 2;
-  /** ID del newsletter (necesario para navegar a /editarNewsletter/:id) */
-  newsletterId?: string;
-  /** Rol del usuario autenticado */
-  userRole: UserRole;
+export function getStepFromState(state: NewsletterState | undefined): number {
+  switch (state) {
+    case 'DRAFT': return 0
+    case 'CHANGES_REQUESTED': return 1
+    case 'IN_REVIEW':
+    case 'RESUBMITTED': return 2
+    default: return 0
+  }
 }
 
-//Definición de pasos 
-
-const ALL_STEPS = [
-  { label: 'Generar',  path: (id?: string) => '/crearNewsletter' },
-  { label: 'Editar',   path: (id?: string) => `/editarNewsletter/${id}` },
-  { label: 'Exportar', path: (id?: string) => `/exportarNewsletter/${id}` },
-];
-
-const ROLES_WITH_EXPORT: UserRole[] = ['ADMIN', 'FUNCTIONAL'];
-
-// Icono de paso personalizado (círculo con número o check) 
-
-const StepIconRoot = styled('div')<{
-  ownerState: { active: boolean; completed: boolean; disabled: boolean };
-}>(({ ownerState }) => ({
-  width: 32,
-  height: 32,
-  borderRadius: '50%',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  fontFamily: 'inherit',
-  fontSize: '0.85rem',
-  fontWeight: 700,
-  transition: 'background 0.2s, color 0.2s',
-
-  // Activo
-  ...(ownerState.active && {
-    backgroundColor: '#FF595A',
-    color: '#fff',
-    boxShadow: '0 2px 8px rgba(255,89,90,0.35)',
-  }),
-
-  // Completado
-  ...(ownerState.completed && {
-    backgroundColor: '#FF595A',
-    color: '#fff',
-  }),
-
-  // Deshabilitado / pendiente
-  ...(!ownerState.active && !ownerState.completed && {
-    backgroundColor: '#E0E0E0',
-    color: '#9E9E9E',
-  }),
-}));
-
-function CustomStepIcon(props: StepIconProps) {
-  const { active, completed, className, icon } = props;
-  const disabled = !active && !completed;
-
-  return (
-    <StepIconRoot ownerState={{ active: !!active, completed: !!completed, disabled }} className={className}>
-      {completed ? '✓' : icon}
-    </StepIconRoot>
-  );
-}
-
-// ─── Componente principal ─────────────────────────────────────────────────────
-
-export default function NewsletterStepper({
-  activeStep,
-  newsletterId,
-  userRole,
-}: NewsletterStepperProps) {
-  const navigate = useNavigate();
-
-  const canExport = ROLES_WITH_EXPORT.includes(userRole);
-
-  // Los pasos que se muestran dependen del rol
-  const steps = canExport ? ALL_STEPS : ALL_STEPS.slice(0, 2);
-
-  const handleStepClick = (index: number) => {
-    // Solo se puede navegar a pasos ya completados o al activo
-    if (index > activeStep) return;
-
-    const targetPath = steps[index].path(newsletterId);
-    navigate(targetPath);
-  };
-
+function StepNumberIcon({ active, completed, icon }: StepIconProps) {
   return (
     <Box
       sx={{
-        width: '100%',
-        borderBottom: '1px solid #EBEBEB',
-        backgroundColor: '#fff',
-        px: { xs: 2, md: 4 },
-        py: 2,
+        width: 24,
+        height: 24,
+        borderRadius: '50%',
+        bgcolor: active || completed ? 'primary.main' : 'grey.400',
+        color: '#fff',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '0.75rem',
+        fontWeight: 600,
       }}
     >
-      <Stepper
-        activeStep={activeStep}
-        nonLinear
-        sx={{
-          maxWidth: canExport ? 480 : 360,
+      {icon}
+    </Box>
+  )
+}
 
-          // Línea conectora entre pasos
-          '& .MuiStepConnector-line': {
-            borderColor: '#E0E0E0',
-            borderTopWidth: 2,
-          },
-          '& .MuiStepConnector-root.Mui-completed .MuiStepConnector-line': {
-            borderColor: '#FF595A',
-          },
-        }}
-      >
-        {steps.map((step, index) => {
-          const isCompleted = index < activeStep;
-          const isActive = index === activeStep;
-          const isDisabled = index > activeStep;
+interface Props {
+  activeStep: number
+  onStepClick?: (step: number) => void
+}
 
+export function NewsletterStepper({ activeStep, onStepClick }: Props) {
+  return (
+    <Box
+      sx={{
+        px: { xs: 2, md: 4 },
+        py: 1.5,
+        bgcolor: 'background.paper',
+        borderBottom: '1px solid',
+        borderColor: 'divider',
+      }}
+    >
+      <Stepper activeStep={activeStep} alternativeLabel nonLinear>
+        {STEPS.map((label, index) => {
+          const clickable = !!onStepClick && index < activeStep
           return (
-            <Step key={step.label} completed={isCompleted}>
-              <StepButton
-                onClick={() => handleStepClick(index)}
-                disabled={isDisabled}
-                sx={{
-                  cursor: isDisabled ? 'default' : 'pointer',
-                  '&:hover': {
-                    backgroundColor: isDisabled ? 'transparent' : 'rgba(255,89,90,0.06)',
-                    borderRadius: 2,
-                  },
-                }}
-              >
-                <StepLabel
-                  slots={{ stepIcon: CustomStepIcon }}
-                  sx={{
-                    '& .MuiStepLabel-label': {
-                      fontWeight: isActive ? 700 : 400,
-                      fontSize: '0.875rem',
-                      color: isDisabled
-                        ? '#BDBDBD'
-                        : isActive
-                        ? '#FF595A'
-                        : '#30261D',
-                      transition: 'color 0.2s',
-                    },
-                  }}
-                >
-                  {step.label}
-                </StepLabel>
-              </StepButton>
+            <Step
+              key={label}
+              completed={index < activeStep}
+              onClick={clickable ? () => onStepClick(index) : undefined}
+              sx={clickable ? { cursor: 'pointer', '&:hover .MuiStepLabel-root': { opacity: 0.75 } } : undefined}
+            >
+              <StepLabel slots={{ stepIcon: StepNumberIcon }}>
+                {label}
+              </StepLabel>
             </Step>
-          );
+          )
         })}
       </Stepper>
     </Box>
-  );
+  )
 }

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
-import { constants } from '../utils/constants';
+import { CONSTANTS_CANVAS } from '../../../packages/shared/src/enums/templates-canvas'
 import { type TemplateState } from '../interfaces/interfaces.templates';
 import type { BlockDefinitionDTO } from '../../../packages/shared/src/types/block.types';
 
@@ -39,7 +39,7 @@ export const useTemplateStore = create<TemplateStore>((set, get) => ({
 
   setMode: (mode) => {
     const { rows } = get();
-    const maxCols = constants.COLUMN_LIMITS[mode];
+    const maxCols = CONSTANTS_CANVAS.COLUMN_LIMITS[mode];
     const updatedRows = rows.map(row => ({
       ...row,
       columns: row.columns.slice(0, maxCols)
@@ -67,7 +67,7 @@ export const useTemplateStore = create<TemplateStore>((set, get) => ({
   })),
 
   addColumn: (rowId) => set((state) => {
-    const maxCols = constants.COLUMN_LIMITS[state.layoutMode];
+    const maxCols = CONSTANTS_CANVAS.COLUMN_LIMITS[state.layoutMode];
     return {
       rows: state.rows.map(row => {
         if (row.id === rowId && row.columns.length < maxCols) {

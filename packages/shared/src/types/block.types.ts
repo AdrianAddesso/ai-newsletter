@@ -1,8 +1,10 @@
 export type BlockContentType = "LAYOUT" | "BASE" | "DIVIDER" | "CONTENT" | "MULTIMEDIA" | "ICONS" | "SPECIAL";
 
+export type BlockType = string;
 
 export interface BlockDefinitionDTO {
-  type: BlockContentType;
+  type: BlockType;
+  category: BlockContentType;
   label: string;
   description: string;
   icon: string;
@@ -20,7 +22,7 @@ export interface BlockDefinitionDTO {
 // Instancia en memoria — aún sin persistir
 export interface BlockInstance {
   localId: string; // crypto.randomUUID() en el cliente
-  type: BlockContentType;
+  type: BlockType;
   content: string | null;
   mustFill: boolean;
   displayOrder: number;
