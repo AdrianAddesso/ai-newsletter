@@ -12,6 +12,8 @@ export interface UploadedAssetDto {
   name: string;
   url: string;
   type: asset_type;
+  svgTemplate?: string | null;
+  maxChars?: number | null;
 }
 
 export interface UploadAssetsResponseDto {

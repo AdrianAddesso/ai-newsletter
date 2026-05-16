@@ -11,6 +11,9 @@ export type BrandKitResourceAsset = {
   name: string
   type: AssetType
   url: string
+  svgTemplate?: string | null
+  maxChars?: number | null
+  keywordText?: string | null
 }
 
 export type BrandKitResourceColor = {

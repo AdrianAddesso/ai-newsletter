@@ -84,6 +84,11 @@ export function BrandKitResourcesPanel({
                     key={asset.id}
                     alt={asset.name}
                     imageUrl={asset.url}
+                    assetType={asset.type}
+                    svgTemplate={asset.svgTemplate}
+                    keywordText={asset.keywordText}
+                    maxChars={asset.maxChars}
+                    readOnlyKeyword
                     width={160}
                     height={104}
                   />
@@ -118,6 +123,11 @@ export function BrandKitResourcesPanel({
                           key={asset.id}
                           alt={asset.name}
                           imageUrl={asset.url}
+                          assetType={asset.type}
+                          svgTemplate={asset.svgTemplate}
+                          keywordText={asset.keywordText}
+                          maxChars={asset.maxChars}
+                          readOnlyKeyword
                           width={160}
                           height={104}
                         />

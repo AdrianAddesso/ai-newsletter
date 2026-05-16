@@ -61,6 +61,7 @@ const assetTypeLabels: Record<AssetType, string> = {
 };
 
 const assetsPerPage = 12;
+const keywordDefaultMaxChars = 20;
 
 const dedupeAssets = (assets: UploadedAsset[]): UploadedAsset[] => {
   const assetsById = new Map<string, UploadedAsset>();
@@ -77,6 +78,9 @@ const toUploadedAsset = (asset: BrandKitResourceAsset): UploadedAsset => ({
   name: asset.name,
   type: asset.type,
   url: asset.url,
+  svgTemplate: asset.svgTemplate,
+  maxChars: asset.maxChars,
+  keywordText: asset.keywordText,
 });
 
 const splitLines = (v: string) =>
@@ -164,6 +168,9 @@ export function GenerationForm({
     useState(false);
   const [availableAssetsPage, setAvailableAssetsPage] = useState(1);
   const hasInitializedAssetType = useRef(false);
+  const [editingKeywordAssetId, setEditingKeywordAssetId] = useState<
+    string | null
+  >(null);
 
   const visibleFields = new Set([
     ...selectedTemplate.requiredGenerationFields,
@@ -220,11 +227,11 @@ export function GenerationForm({
       return;
     }
 
-    setSelectedExistingAssets([]);
     setUploadedAssets([]);
     setForm((current) => ({ ...current, files: [] }));
     setAssetUploadError(null);
     setAvailableAssetsPage(1);
+    setEditingKeywordAssetId(null);
   }, [form.assetType]);
 
   const isAssetSelected = (assetId: string) =>
@@ -238,9 +245,54 @@ export function GenerationForm({
     );
   };
 
+  const toggleAssetSelection = (asset: UploadedAsset) => {
+    if (asset.type === "KEYWORD") {
+      setSelectedExistingAssets((current) => {
+        const existingAsset = current.find(
+          (selectedAsset) => selectedAsset.id === asset.id,
+        );
+
+        if (existingAsset) {
+          return current;
+        }
+
+        return [
+          ...current,
+          {
+            ...asset,
+            keywordText: asset.keywordText ?? "",
+          },
+        ];
+      });
+      setEditingKeywordAssetId(asset.id);
+      return;
+    }
+
+    toggleExistingAsset(asset);
+  };
+
   const removeSelectedAsset = (assetId: string) => {
     setSelectedExistingAssets((current) =>
       current.filter((asset) => asset.id !== assetId),
+    );
+    setEditingKeywordAssetId((current) =>
+      current === assetId ? null : current,
+    );
+  };
+
+  const updateKeywordText = (assetId: string, value: string) => {
+    setSelectedExistingAssets((current) =>
+      current.map((asset) =>
+        asset.id === assetId
+          ? {
+              ...asset,
+              keywordText: value.slice(
+                0,
+                asset.maxChars ?? keywordDefaultMaxChars,
+              ),
+            }
+          : asset,
+      ),
     );
   };
 
@@ -257,6 +309,13 @@ export function GenerationForm({
     if (linkErr) errors.linksOrSources = linkErr;
     const dateErr = validateDate(form.relevantDates);
     if (dateErr) errors.relevantDates = dateErr;
+    const invalidKeywordSelection = selectedExistingAssets.some(
+      (asset) => asset.type === "KEYWORD" && !asset.keywordText?.trim(),
+    );
+    if (invalidKeywordSelection) {
+      errors.assetSelection =
+        "Cada keyword seleccionado debe tener un texto antes de generar.";
+    }
     selectedTemplate.requiredGenerationFields.forEach((field) => {
       if (!form[field]?.toString().trim())
         errors[field] =
@@ -501,6 +560,9 @@ export function GenerationForm({
       </FormControl>
 
       {assetListError && <Alert severity="error">{assetListError}</Alert>}
+      {formErrors.assetSelection && (
+        <Alert severity="warning">{formErrors.assetSelection}</Alert>
+      )}
       {selectedExistingAssets.length > 0 && (
         <Stack spacing={1}>
           <Typography variant="subtitle2">Assets seleccionados</Typography>
@@ -515,6 +577,19 @@ export function GenerationForm({
                 key={asset.id}
                 alt={asset.name}
                 imageUrl={asset.url}
+                assetType={asset.type}
+                svgTemplate={asset.svgTemplate}
+                keywordText={asset.keywordText}
+                maxChars={asset.maxChars}
+                isKeywordEditing={editingKeywordAssetId === asset.id}
+                onKeywordTextChange={(value) =>
+                  updateKeywordText(asset.id, value)
+                }
+                onClick={
+                  asset.type === "KEYWORD"
+                    ? () => setEditingKeywordAssetId(asset.id)
+                    : undefined
+                }
                 isSelected
                 onRemove={() => removeSelectedAsset(asset.id)}
               />
@@ -560,8 +635,22 @@ export function GenerationForm({
                       key={asset.id}
                       alt={asset.name}
                       imageUrl={asset.url}
+                      assetType={asset.type}
+                      svgTemplate={asset.svgTemplate}
+                      keywordText={
+                        selectedExistingAssets.find(
+                          (selectedAsset) => selectedAsset.id === asset.id,
+                        )?.keywordText
+                      }
+                      maxChars={asset.maxChars}
+                      isKeywordEditing={
+                        editingKeywordAssetId === asset.id && !isSelected
+                      }
+                      onKeywordTextChange={(value) =>
+                        updateKeywordText(asset.id, value)
+                      }
                       isSelected={isSelected}
-                      onClick={() => toggleExistingAsset(asset)}
+                      onClick={() => toggleAssetSelection(asset)}
                     />
                   );
                 })}
@@ -582,29 +671,38 @@ export function GenerationForm({
         <Alert severity="info">No hay assets existentes para este tipo.</Alert>
       )}
 
-      <Button variant="outlined" component="label">
-        Seleccionar imagenes o assets
-        <input
-          hidden
-          type="file"
-          multiple
-          accept=".jpg,.jpeg,.png,.webp,.gif,.svg"
-          onChange={(e: ChangeEvent<HTMLInputElement>) => {
-            update("files", Array.from(e.target.files ?? []));
-            setUploadedAssets([]);
-            setAssetUploadError(null);
-          }}
-        />
-      </Button>
-      {form.files.length > 0 && (
+      {form.assetType === "KEYWORD" ? (
         <Alert severity="info">
-          Archivos seleccionados: {form.files.map((f) => f.name).join(", ")}
+          Los keywords usan solo las plantillas SVG predefinidas. Seleccioná una
+          y editá el texto inline.
         </Alert>
-      )}
-      {uploadedAssets.length > 0 && (
-        <Alert severity="success">
-          Assets cargados: {uploadedAssets.map((a) => a.name).join(", ")}
-        </Alert>
+      ) : (
+        <>
+          <Button variant="outlined" component="label">
+            Seleccionar imagenes o assets
+            <input
+              hidden
+              type="file"
+              multiple
+              accept=".jpg,.jpeg,.png,.webp,.gif,.svg"
+              onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                update("files", Array.from(e.target.files ?? []));
+                setUploadedAssets([]);
+                setAssetUploadError(null);
+              }}
+            />
+          </Button>
+          {form.files.length > 0 && (
+            <Alert severity="info">
+              Archivos seleccionados: {form.files.map((f) => f.name).join(", ")}
+            </Alert>
+          )}
+          {uploadedAssets.length > 0 && (
+            <Alert severity="success">
+              Assets cargados: {uploadedAssets.map((a) => a.name).join(", ")}
+            </Alert>
+          )}
+        </>
       )}
 
       <Divider />

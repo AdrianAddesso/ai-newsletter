@@ -36,6 +36,7 @@ type SeededAssetInput = {
 
 const userStorageObjectSource: storage_object_source = 'USER';
 const systemStorageObjectSource: storage_object_source = 'SYSTEM';
+const keywordMaxChars = 20;
 
 @Injectable()
 export class AssetsService {
@@ -233,12 +234,26 @@ export class AssetsService {
   private async toUploadedAssetDto(
     asset: PersistedAsset,
   ): Promise<UploadedAssetDto> {
+    const keywordSvgTemplate =
+      asset.type === asset_type.KEYWORD
+        ? await this.getKeywordSvgTemplate(asset.bucket, asset.object_key)
+        : null;
+
     return {
       id: asset.id,
       name: asset.name,
       type: asset.type,
       url: await this.storageService.getSignedUrl(asset.bucket, asset.object_key),
+      svgTemplate: keywordSvgTemplate,
+      maxChars: keywordSvgTemplate ? keywordMaxChars : null,
     };
+  }
+
+  private async getKeywordSvgTemplate(
+    bucket: string,
+    objectKey: string,
+  ): Promise<string> {
+    return this.storageService.getObjectText(bucket, objectKey);
   }
 
   private getAssetBucketName(): string {
