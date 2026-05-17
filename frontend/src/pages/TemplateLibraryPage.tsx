@@ -103,7 +103,7 @@ export function TemplateLibraryPage() {
   }
 
   const handleSelect = (id: string) => {
-    navigate('/crearNewsletter', { state: { templateId: id } })
+    navigate(`/crearNewsletter/${id}`)
   }
 
   if (loading) {

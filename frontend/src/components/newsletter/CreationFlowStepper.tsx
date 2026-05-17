@@ -12,6 +12,8 @@ interface CreationStepperProps {
   newsletterId?: string;
   /** Rol del usuario autenticado */
   userRole: UserRole;
+  /** Callback opcional para override de navegacion */
+  onStepClick?: (step: number) => void;
 }
 
 const CREATION_STEPS = [
@@ -60,13 +62,25 @@ function CustomStepIcon(props: StepIconProps) {
   );
 }
 
-export default function CreationFlowStepper({ activeStep, newsletterId, userRole }: CreationStepperProps) {
+export default function CreationFlowStepper({
+  activeStep,
+  newsletterId,
+  userRole,
+  onStepClick,
+}: CreationStepperProps) {
   const navigate = useNavigate();
   const canExport = ROLES_WITH_EXPORT.includes(userRole);
   const steps = canExport ? CREATION_STEPS : CREATION_STEPS.slice(0, 2);
 
   const handleStepClick = (index: number) => {
     if (index > activeStep) return;
+    if (index > 0 && !newsletterId) return;
+
+    if (onStepClick) {
+      onStepClick(index);
+      return;
+    }
+
     const targetPath = steps[index].path(newsletterId);
     navigate(targetPath);
   };
