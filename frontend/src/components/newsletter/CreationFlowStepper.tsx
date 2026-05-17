@@ -67,6 +67,7 @@ export default function CreationFlowStepper({ activeStep, newsletterId, userRole
 
   const handleStepClick = (index: number) => {
     if (index > activeStep) return;
+    if (index > 0 && !newsletterId) return;
     const targetPath = steps[index].path(newsletterId);
     navigate(targetPath);
   };
