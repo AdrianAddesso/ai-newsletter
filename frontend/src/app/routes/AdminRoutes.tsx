@@ -3,6 +3,7 @@ import { ProtectedLayout } from '../../components/ProtectedLayout'
 import { ProtectedRoute } from '../../components/ProtectedRoute'
 import { AnalyticsPage } from '../../pages/AnalyticsPage'
 import { ReviewsPage } from '../../pages/ReviewsPage'
+import { ReviewDetailPage } from '../../pages/ReviewDetailPage'
 import TemplatesPage from '../../pages/TemplatesPage'
 import { UsersPage } from '../../pages/UsersPage'
 import { CreateTemplate } from '../../pages/templates/CreateTemplate'
@@ -37,6 +38,17 @@ export const adminRoutes = (
                 <ProtectedRoute allowedRoles={['ADMIN', 'FUNCTIONAL']}>
                     <ProtectedLayout>
                         <ReviewsPage />
+                    </ProtectedLayout>
+                </ProtectedRoute>
+            }
+        />
+
+        <Route
+            path="/reviews/:id"
+            element={
+                <ProtectedRoute allowedRoles={['ADMIN', 'FUNCTIONAL']}>
+                    <ProtectedLayout>
+                        <ReviewDetailPage />
                     </ProtectedLayout>
                 </ProtectedRoute>
             }

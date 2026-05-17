@@ -54,6 +54,27 @@ function saveMockDb(db: Record<string, Newsletter>): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(db))
 }
 
+export function seedNewsletterIfMissing(id: string, state: NewsletterStatus): void {
+  const db = getMockDb()
+  if (db[id]) return
+  const now = new Date().toISOString()
+  db[id] = {
+    id,
+    creatorUserId: '',
+    state,
+    templateId: '',
+    brandKitId: '',
+    blocks: [],
+    comment: null,
+    generationRequest: null,
+    assetSelection: null,
+    renderedHtml: null,
+    createdAt: now,
+    updatedAt: now,
+  }
+  saveMockDb(db)
+}
+
 export async function createNewsletter(
   payload: CreateNewsletterPayload,
 ): Promise<Newsletter> {
@@ -156,6 +177,7 @@ export async function getAllNewsletters(): Promise<Newsletter[]> {
 export async function updateNewsletterStatus(
   newsletterId: string,
   state: NewsletterStatus,
+  comment?: string | null,
 ): Promise<Newsletter> {
 
   await new Promise<void>((resolve) => window.setTimeout(resolve, 200))
@@ -164,16 +186,17 @@ export async function updateNewsletterStatus(
 
   const newsletter = db[newsletterId]
 
+  const now = new Date().toISOString()
+
   if (!newsletter) {
-    throw new Error(
-      `Newsletter con ID ${newsletterId} no encontrado`,
-    )
+    throw new Error(`Newsletter con ID ${newsletterId} no encontrado`)
   }
 
   const updated: Newsletter = {
     ...newsletter,
     state,
-    updatedAt: new Date().toISOString(),
+    comment: comment !== undefined ? comment : newsletter.comment,
+    updatedAt: now,
   }
 
   db[newsletterId] = updated

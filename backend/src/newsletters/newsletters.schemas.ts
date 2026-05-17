@@ -26,6 +26,19 @@ const newsletterFormatSchema = z.nativeEnum(newsletter_format, {
   error: 'Formato de newsletter invalido.',
 });
 
+const newsletterSelectedAssetSchema = z
+  .object({
+    id: uuidFieldSchema,
+    keywordText: optionalStringFieldSchema.nullable().optional(),
+  })
+  .strict();
+
+const newsletterAssetSelectionSchema = z
+  .object({
+    selectedAssets: z.array(newsletterSelectedAssetSchema),
+  })
+  .strict();
+
 export const createNewsletterBodySchema = z
   .object({
     title: requiredStringFieldSchema,
@@ -39,6 +52,7 @@ export const createNewsletterBodySchema = z
     state: newsletterStateSchema.optional(),
     language: newsletterLanguageSchema.optional(),
     format: newsletterFormatSchema.optional(),
+    assetSelection: newsletterAssetSelectionSchema.optional(),
   })
   .strict();
 

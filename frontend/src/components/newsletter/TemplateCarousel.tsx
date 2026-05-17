@@ -20,6 +20,7 @@ import { listBrandKits } from '../../api/brand-kits'
 
 type Props = {
   templates: NewsletterTemplate[]
+  selectedTemplateId: string
   selectedBrandKitId: string
   onSelectTemplate: (templateId: string) => void
   onSelectBrandKit: (brandKitId: string) => void
@@ -27,12 +28,12 @@ type Props = {
 
 export function TemplateCarousel({
   templates,
+  selectedTemplateId,
   selectedBrandKitId,
   onSelectTemplate,
   onSelectBrandKit,
 }: Props) {
   const [selectedArea, setSelectedArea] = useState<AreaName>('COMUNICACION_INTERNA')
-  const [selectedIndex, setSelectedIndex] = useState(0)
   const [brandKitOptions, setBrandKitOptions] = useState<Array<{ id: string; name: string }>>([])
 
   useEffect(() => {
@@ -64,30 +65,59 @@ export function TemplateCarousel({
     }
   }, [brandKitOptions, onSelectBrandKit, selectedBrandKitId])
 
-  const effectiveArea = templates.some((template) => template.area === selectedArea)
-    ? selectedArea
-    : (templates[0]?.area ?? 'COMUNICACION_INTERNA')
+  const selectedTemplateFromId = templates.find(
+    (template) => template.id === selectedTemplateId,
+  )
+  const effectiveArea = selectedTemplateFromId?.area
+    ?? (templates.some((template) => template.area === selectedArea)
+      ? selectedArea
+      : (templates[0]?.area ?? 'COMUNICACION_INTERNA'))
 
   const filtered = templates.filter((template) => template.area === effectiveArea)
+  const selectedIndex = Math.max(
+    filtered.findIndex((template) => template.id === selectedTemplateId),
+    0,
+  )
   const selected = filtered[selectedIndex] ?? filtered[0]
   const selectedBrandKitName =
     brandKitOptions.find((brandKit) => brandKit.id === selectedBrandKitId)?.name ?? selectedBrandKitId
 
   useEffect(() => {
-    if (selected) onSelectTemplate(selected.id)
-  }, [onSelectTemplate, selected])
+    if (selected && selected.id !== selectedTemplateId) {
+      onSelectTemplate(selected.id)
+    }
+  }, [onSelectTemplate, selected, selectedTemplateId])
 
-  const prev = () => setSelectedIndex((i) => (i === 0 ? filtered.length - 1 : i - 1))
-  const next = () => setSelectedIndex((i) => (i === filtered.length - 1 ? 0 : i + 1))
+  const prev = () => {
+    if (filtered.length === 0) {
+      return
+    }
+
+    const nextIndex = selectedIndex === 0 ? filtered.length - 1 : selectedIndex - 1
+    onSelectTemplate(filtered[nextIndex].id)
+  }
+
+  const next = () => {
+    if (filtered.length === 0) {
+      return
+    }
+
+    const nextIndex = selectedIndex === filtered.length - 1 ? 0 : selectedIndex + 1
+    onSelectTemplate(filtered[nextIndex].id)
+  }
 
   const onAreaChange = (e: SelectChangeEvent<AreaName>) => {
-    setSelectedArea(e.target.value as AreaName)
-    setSelectedIndex(0)
+    const nextArea = e.target.value as AreaName
+    setSelectedArea(nextArea)
+    const nextAreaTemplates = templates.filter((template) => template.area === nextArea)
+
+    if (nextAreaTemplates[0]) {
+      onSelectTemplate(nextAreaTemplates[0].id)
+    }
   }
 
   const onBrandKitChange = (e: SelectChangeEvent<string>) => {
     onSelectBrandKit(e.target.value)
-    setSelectedIndex(0)
   }
 
   return (

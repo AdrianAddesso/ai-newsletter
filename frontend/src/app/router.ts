@@ -13,7 +13,10 @@ export const routes = {
 
   analytics: '/analytics',
 
-  reviews: '/reviews',
+  reviews: {
+    list: '/reviews',
+    detail: (id: string) => `/reviews/${id}`,
+  },
 
   users: '/users',
 

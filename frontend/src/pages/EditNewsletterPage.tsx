@@ -17,7 +17,8 @@ import { BlockList } from '../components/newsletter/BlockList'
 import { EditPanel } from '../components/newsletter/EditPanel'
 import { ReviewCommentControls } from '../components/newsletter/ReviewCommentControls'
 import { GenerationForm } from '../components/newsletter/GenerationForm'
-import { NewsletterStepper, getStepFromState } from '../components/newsletter/NewsletterStepper'
+import { getStepFromState } from '../components/newsletter/NewsletterStepper'
+import CreationFlowStepper from '../components/newsletter/CreationFlowStepper'
 import { BrandKitResourcesPanel } from '../components/newsletter/BrandKitResourcesPanel'
 import type {
   NewsletterAssetSelection,
@@ -42,7 +43,7 @@ import {
 } from "../api/brand-kits";
 import { useNotification } from "../hooks/useNotification";
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬ Helpers Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
 const emptyComment = (v: string | null) => !v || v.trim().length === 0;
 
@@ -92,7 +93,7 @@ async function exportHtmlToEml(html: string): Promise<void> {
   const emlContent = [
     "X-Unsent: 1",
     "To: ",
-    "Subject: Newsletter Nestlé",
+    "Subject: Newsletter NestlÃƒÂ©",
     "MIME-Version: 1.0",
     "Content-Type: text/html; charset=UTF-8",
     "Content-Transfer-Encoding: 8bit",
@@ -111,25 +112,25 @@ async function exportHtmlToEml(html: string): Promise<void> {
   URL.revokeObjectURL(url);
 }
 
-// ⚠️ ARREGLAR ⚠️ — reemplazar por improveText({ text }) de la API real
+// Replace with improveText({ text }) from the real API.
 /*async function mockRegenerateBlock(block: NewsletterBlock): Promise<string> {
   await new Promise<void>((r) => window.setTimeout(r, 600))
-  return `[IA] ${block.text} — versión mejorada.`
+  return `[IA] ${block.text} Ã¢â‚¬â€ versiÃƒÂ³n mejorada.`
 }
 
-// ⚠️ ARREGLAR ⚠️ — reemplazar por generateNewsletterWithAi(request)
+// Replace with generateNewsletterWithAi(request) when that API exists.
 function buildMockBlocks(request: GenerateNewsletterRequest): NewsletterBlock[] {
   return [
     { id: 'header', name: 'Encabezado', text: request.topic, backgroundColor: '#FFFFFF', comment: null },
     { id: 'headline', name: 'Titulo principal', text: request.objective, backgroundColor: '#97CAEB', comment: null },
-    { id: 'body', name: 'Cuerpo', text: request.keyMessages.join(' · '), backgroundColor: '#FFFFFF', comment: null },
+    { id: 'body', name: 'Cuerpo', text: request.keyMessages.join(' Ã‚Â· '), backgroundColor: '#FFFFFF', comment: null },
     { id: 'cta', name: 'Llamado a la accion', text: request.cta ?? 'Conoce mas en el portal interno.', backgroundColor: '#FFC600', comment: null },
   ]
 }*/
 
 const fallbackHtml = `<!doctype html><html lang="es"><body style="margin:0;font-family:Arial,sans-serif;"><main style="max-width:680px;margin:0 auto;border:1px solid #E7E1DC;"><section style="padding:32px;background:#FF595A;color:#fff;"><h1 style="margin:0;">Newsletter Nestle</h1></section></main></body></html>`;
 
-// ── Sub-components ────────────────────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬ Sub-components Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
 function PermissionDenied() {
   return (
@@ -154,7 +155,7 @@ function requestToFormValues(req: GenerateNewsletterRequest) {
   };
 }
 
-// ── EditNewsletterPage ──────────────────────────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬ EditNewsletterPage Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
 function EditNewsletterPage() {
   const navigate = useNavigate();
@@ -165,7 +166,7 @@ function EditNewsletterPage() {
   const currentUserId: string = user?.id ?? "anonymous";
   const currentUserRole: UserRole = user?.role ?? "USER";
 
-  // ── State ──
+  // Ã¢â€â‚¬Ã¢â€â‚¬ State Ã¢â€â‚¬Ã¢â€â‚¬
   const [newsletter, setNewsletter] = useState<Newsletter | null>(null);
   const [isLoadingNewsletter, setIsLoadingNewsletter] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -193,7 +194,7 @@ function EditNewsletterPage() {
   const [showRegenerationForm, setShowRegenerationForm] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
 
-  // ── Fetch newsletter ──
+  // Ã¢â€â‚¬Ã¢â€â‚¬ Fetch newsletter Ã¢â€â‚¬Ã¢â€â‚¬
   useEffect(() => {
     if (!newsletterId) {
       navigate("/editarNewsletter", { replace: true });
@@ -260,7 +261,7 @@ function EditNewsletterPage() {
     };
   }, []);
 
-  // ── Derived ──
+  // Ã¢â€â‚¬Ã¢â€â‚¬ Derived Ã¢â€â‚¬Ã¢â€â‚¬
   const selectedBlock =
     newsletter?.blocks.find((b) => b.id === selectedBlockId) ??
     newsletter?.blocks[0];
@@ -322,7 +323,7 @@ function EditNewsletterPage() {
     };
   }, [selectedBrandKitId]);
 
-  // ── State machine ──
+  // Ã¢â€â‚¬Ã¢â€â‚¬ State machine Ã¢â€â‚¬Ã¢â€â‚¬
   const transitionState = useCallback(
     async (newState: NewsletterState) => {
       if (!newsletter || !newsletterId) return;
@@ -352,7 +353,7 @@ function EditNewsletterPage() {
     [allCommentaries, currentUserId, newsletter, newsletterId],
   );
 
-  // ── Update blocks ──
+  // Ã¢â€â‚¬Ã¢â€â‚¬ Update blocks Ã¢â€â‚¬Ã¢â€â‚¬
   const updateBlocks = useCallback(
     async (newBlocks: NewsletterBlock[]) => {
       if (!newsletterId) return;
@@ -369,7 +370,7 @@ function EditNewsletterPage() {
     [newsletterId],
   );
 
-  // ── Render HTML ──
+  // Ã¢â€â‚¬Ã¢â€â‚¬ Render HTML Ã¢â€â‚¬Ã¢â€â‚¬
   const handleRenderHtml = useCallback(async () => {
     if (!newsletter || !newsletterId || newsletter.renderedHtml) return;
 
@@ -396,16 +397,16 @@ function EditNewsletterPage() {
     return () => window.clearTimeout(id);
   }, [handleRenderHtml, newsletter?.state]);
 
-  // ── Actions ──
+  // Ã¢â€â‚¬Ã¢â€â‚¬ Actions Ã¢â€â‚¬Ã¢â€â‚¬
   const handleSendForReview = useCallback(async () => {
     setIsSendingForReview(true);
     try {
       await handleRenderHtml();
       await transitionState("IN_REVIEW");
-      notifySuccess("Newsletter enviado con éxito");
+      notifySuccess("Newsletter enviado con ÃƒÂ©xito");
       navigate("/dashboard");
     } catch {
-      setAiError("No se pudo enviar a revisión. Intenta de nuevo.");
+      setAiError("No se pudo enviar a revisiÃƒÂ³n. Intenta de nuevo.");
     } finally {
       setIsSendingForReview(false);
     }
@@ -416,10 +417,10 @@ function EditNewsletterPage() {
     try {
       await handleRenderHtml()
       await transitionState('RESUBMITTED')
-      notifySuccess('Newsletter reenviado con éxito')
+      notifySuccess('Newsletter reenviado con ÃƒÂ©xito')
       navigate('/dashboard')
     } catch {
-      setAiError('No se pudo reenviar a revisión. Intenta de nuevo.')
+      setAiError('No se pudo reenviar a revisiÃƒÂ³n. Intenta de nuevo.')
     } finally {
       setIsSendingForReview(false)
     }
@@ -466,7 +467,7 @@ function EditNewsletterPage() {
       setAiError(null);
 
       try {
-        // reemplazado por: const response = await generateNewsletterWithAi(request)
+        // Replace with generateNewsletterWithAi(request) when that API exists.
         /*await new Promise<void>((r) => window.setTimeout(r, 400))
         const newBlocks = buildMockBlocks(request)*/
 
@@ -539,13 +540,13 @@ function EditNewsletterPage() {
     navigate("/dashboard");
   }, [navigate, transitionState]);
 
-  // ── Derived states ──
+  // Ã¢â€â‚¬Ã¢â€â‚¬ Derived states Ã¢â€â‚¬Ã¢â€â‚¬
   const isReviewState = newsletter?.state === 'IN_REVIEW' || newsletter?.state === 'RESUBMITTED'
   const isAdmin = currentUserRole === 'ADMIN'
   const canReview = currentUserRole === 'ADMIN' || currentUserRole === 'FUNCTIONAL'
   const isCreator = currentUserId === newsletter?.creatorUserId
 
-  // Si el newsletter está en revisión y el usuario no puede revisar, ir al dashboard
+  // Si el newsletter estÃƒÂ¡ en revisiÃƒÂ³n y el usuario no puede revisar, ir al dashboard
   useEffect(() => {
     if (newsletter && isReviewState && !canReview) {
       navigate('/dashboard')
@@ -559,29 +560,37 @@ function EditNewsletterPage() {
       : () => void handleSendForReview()
 
   const handleStepClick = useCallback((step: number) => {
-    if (step === 0 && !isReviewState) navigate('/crearNewsletter', {
-      state: {
-        newsletterId,
-        templateId: newsletter?.templateId,
-        brandKitId: newsletter?.brandKitId,
-        generationRequest: newsletter?.generationRequest,
-      },
-    })
+    if (step === 0 && !isReviewState) {
+      const createNewsletterPath = newsletter?.templateId
+        ? `/crearNewsletter/${newsletter.templateId}`
+        : '/crearNewsletter'
+
+      navigate(createNewsletterPath, {
+        state: {
+          newsletterId,
+          templateId: newsletter?.templateId,
+          brandKitId: newsletter?.brandKitId,
+          generationRequest: newsletter?.generationRequest,
+        },
+      })
+    }
+
     if (step === 1 && isReviewState) {
       void transitionState('CHANGES_REQUESTED')
       if (!isCreator) navigate('/dashboard')
     }
   }, [isCreator, isReviewState, navigate, newsletterId, newsletter, transitionState])
 
-  // ──────────────────────────────────────────────────────────────────────────
+  // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   // RENDER
-  // ──────────────────────────────────────────────────────────────────────────
-
+  // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   const pageLayout = (left: React.ReactNode, right: React.ReactNode, showStepper = true) => (
     <Box component="main" sx={{ minHeight: 'calc(100vh - 64px)', bgcolor: 'background.default' }}>
       {showStepper && (
-        <NewsletterStepper
-          activeStep={Math.max(1, getStepFromState(newsletter?.state))}
+        <CreationFlowStepper
+          activeStep={Math.max(1, getStepFromState(newsletter?.state)) as 1 | 2}
+          newsletterId={newsletterId}
+          userRole={currentUserRole}
           onStepClick={handleStepClick}
         />
       )}
@@ -591,39 +600,39 @@ function EditNewsletterPage() {
           gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1fr) minmax(380px, 0.72fr)' },
         }}
       >
-      <Box
-        sx={{
-          p: { xs: 2, md: 3 },
-          borderRight: { lg: "1px solid" },
-          borderBottom: { xs: "1px solid", lg: "none" },
-          borderColor: "divider",
-          minWidth: 0,
-        }}
-      >
-        {left}
-      </Box>
-      <Box sx={{ p: { xs: 2, md: 3 }, minWidth: 0 }}>
-        <Stack spacing={2}>
-          <Stack spacing={0.75}>
-            <Typography variant="overline">
-              Estado: {newsletter?.state}
-            </Typography>
-            <Typography variant="h4">Builder de newsletter</Typography>
-            {newsletter && selectedTemplate && (
-              <Typography variant="body2" color="text.secondary">
-                Plantilla: {selectedTemplate.name} · BrandKit:{" "}
-                {selectedBrandKitLabel}
+        <Box
+          sx={{
+            p: { xs: 2, md: 3 },
+            borderRight: { lg: "1px solid" },
+            borderBottom: { xs: "1px solid", lg: "none" },
+            borderColor: "divider",
+            minWidth: 0,
+          }}
+        >
+          {left}
+        </Box>
+        <Box sx={{ p: { xs: 2, md: 3 }, minWidth: 0 }}>
+          <Stack spacing={2}>
+            <Stack spacing={0.75}>
+              <Typography variant="overline">
+                Estado: {newsletter?.state}
               </Typography>
-            )}
+              <Typography variant="h4">Builder de newsletter</Typography>
+              {newsletter && selectedTemplate && (
+                <Typography variant="body2" color="text.secondary">
+                  Plantilla: {selectedTemplate.name} Ã‚Â· BrandKit:{" "}
+                  {selectedBrandKitLabel}
+                </Typography>
+              )}
+            </Stack>
+            {right}
           </Stack>
-          {right}
-        </Stack>
-      </Box>
+        </Box>
       </Box>
     </Box>
   );
 
-  // ── Loading ──
+  // Ã¢â€â‚¬Ã¢â€â‚¬ Loading Ã¢â€â‚¬Ã¢â€â‚¬
   if (isLoadingNewsletter) {
     return (
       <Box
@@ -639,7 +648,7 @@ function EditNewsletterPage() {
     );
   }
 
-  // ── Error ──
+  // Ã¢â€â‚¬Ã¢â€â‚¬ Error Ã¢â€â‚¬Ã¢â€â‚¬
   if (loadError || !newsletter) {
     return (
       <Box component="main" sx={{ p: 4 }}>
@@ -657,7 +666,7 @@ function EditNewsletterPage() {
     );
   }
 
-  // ── DISCARDED ──
+  // Ã¢â€â‚¬Ã¢â€â‚¬ DISCARDED Ã¢â€â‚¬Ã¢â€â‚¬
   if (newsletter.state === "DISCARDED") {
     return (
       <Box component="main" sx={{ p: 4 }}>
@@ -672,7 +681,7 @@ function EditNewsletterPage() {
     );
   }
 
-  // ── APPROVED ──
+  // Ã¢â€â‚¬Ã¢â€â‚¬ APPROVED Ã¢â€â‚¬Ã¢â€â‚¬
   if (newsletter.state === "APPROVED") {
     return pageLayout(
       <Stack spacing={2}>
@@ -718,7 +727,7 @@ function EditNewsletterPage() {
     )
   }
 
-  // ── IN_REVIEW / RESUBMITTED ──
+  // Ã¢â€â‚¬Ã¢â€â‚¬ IN_REVIEW / RESUBMITTED Ã¢â€â‚¬Ã¢â€â‚¬
   if (isReviewState && !canReview) {
     return null
   }
@@ -761,7 +770,7 @@ function EditNewsletterPage() {
     );
   }
 
-  // ── DRAFT / CHANGES_REQUESTED ──
+  // Ã¢â€â‚¬Ã¢â€â‚¬ DRAFT / CHANGES_REQUESTED Ã¢â€â‚¬Ã¢â€â‚¬
   const draftPermissionDenied = !isCreator && !isAdmin
 
   const leftPane = draftPermissionDenied ? (
@@ -797,7 +806,7 @@ function EditNewsletterPage() {
         {showRegenerationForm && selectedTemplate ? (
           <Stack spacing={1}>
             <Alert severity="info">
-              Modificá los datos y volvé a generar. Los bloques actuales serán
+              ModificÃƒÂ¡ los datos y volvÃƒÂ© a generar. Los bloques actuales serÃƒÂ¡n
               reemplazados.
             </Alert>
             <GenerationForm

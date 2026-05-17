@@ -1,5 +1,5 @@
 import type { GenerateNewsletterRequest } from '../api/ai'
-import type { AssetType, UploadedAsset } from '../api/assets'
+import type { UploadedAsset } from '../api/assets'
 import type { UUID } from '../interfaces/interfaces.templates'
 
 export type NewsletterState =
@@ -27,7 +27,6 @@ export type NewsletterBlock = {
 }
 
 export type NewsletterAssetSelection = {
-  assetType: AssetType
   selectedAssets: UploadedAsset[]
 }
 
@@ -37,6 +36,7 @@ export type NewsletterTemplate = {
   description: string | null
   area: AreaName
   layout: string | null
+  orientation: 'PORTRAIT' | 'LANDSCAPE'
   stateCode: string
   stateName: string
   createdAt: string

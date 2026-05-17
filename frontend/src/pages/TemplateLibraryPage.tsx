@@ -1,70 +1,157 @@
-import { useState, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
-  Box, Container, Typography, Stack,
-  Grid, MenuItem, Select, FormControl,
-  InputLabel
+  Alert,
+  Box,
+  CircularProgress,
+  Container,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  Stack,
+  Typography,
 } from '@mui/material'
 import type { SelectChangeEvent } from '@mui/material'
-import { useNavigate } from 'react-router'
 import { useTheme } from '@mui/material/styles'
-import { TemplateCard } from '../components/TemplateCard'
+import { useNavigate } from 'react-router'
+import { listTemplates } from '../api/templates'
 import SearchBar from '../components/SearchBar'
+import { TemplateCard } from '../components/TemplateCard'
+import type { NewsletterTemplate } from '../types/newsletter'
 
+const AREA_LABELS: Record<NewsletterTemplate['area'], string> = {
+  COMUNICACION_INTERNA: 'Comunicación Interna',
+  COMUNICACION_CORPORATIVA: 'Comunicación Corporativa',
+}
 
-// Cuando el backend esté listo, esto se reemplaza por una llamada a la API
-const TEMPLATES = [
-  { id: 'uuid-1', name: 'Verano 2024', area_id: 'Marketing', state_id: 'state_1', description: 'Recomendado para promociones y campañas estacionales.', orientation: 'Landscape' as const },
-  { id: 'uuid-2', name: 'Newsletter IT', area_id: 'Tecnología', state_id: 'state_2', description: 'Recomendado para updates internos del área de tecnología.', orientation: 'Portrait' as const },
-  { id: 'uuid-3', name: 'Black Friday', area_id: 'Ventas', state_id: 'state_3', description: 'Recomendado para campañas anuales de alto impacto.', orientation: 'Portrait' as const },
-]
-
-// Áreas únicas para el filtro
-const AREAS = ['Todas', ...Array.from(new Set(TEMPLATES.map(t => t.area_id)))]
-const ORIENTATIONS = ['Todas', 'Portrait', 'Landscape']
+type TemplateDisplay = Omit<NewsletterTemplate, 'orientation'> & {
+  area_id: NewsletterTemplate['area']
+  state_id: string
+  state_name: string
+  orientation: 'Portrait' | 'Landscape'
+}
 
 export function TemplateLibraryPage() {
   const theme = useTheme()
   const navigate = useNavigate()
 
+  const [templates, setTemplates] = useState<TemplateDisplay[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
   const [search, setSearch] = useState('')
   const [areaFilter, setAreaFilter] = useState('Todas')
   const [orientationFilter, setOrientationFilter] = useState('Todas')
 
+  useEffect(() => {
+    const fetchTemplates = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+
+        const data = await listTemplates()
+        const displayTemplates: TemplateDisplay[] = data.map((template) => ({
+          ...template,
+          area_id: template.area,
+          state_id: template.stateCode,
+          state_name: template.stateName,
+          orientation:
+            template.orientation === 'PORTRAIT' ? 'Portrait' : 'Landscape',
+        }))
+
+        setTemplates(displayTemplates)
+      } catch (err) {
+        console.error('Error loading templates:', err)
+        setError('No se pudieron cargar las plantillas. Por favor, intentá más tarde.')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    void fetchTemplates()
+  }, [])
+
+  const uniqueAreas = useMemo(() => {
+    return ['Todas', ...Array.from(new Set(templates.map((template) => template.area_id)))]
+  }, [templates])
+
+  const orientations: Array<'Todas' | 'Portrait' | 'Landscape'> = [
+    'Todas',
+    'Portrait',
+    'Landscape',
+  ]
+
   const filteredTemplates = useMemo(() => {
-    return TEMPLATES.filter(t => {
-      const matchesSearch =
-        t.name.toLowerCase().includes(search.toLowerCase()) ||
-        t.description.toLowerCase().includes(search.toLowerCase())
-      const matchesArea = areaFilter === 'Todas' || t.area_id === areaFilter
-      const matchesOrientation = orientationFilter === 'Todas' || t.orientation === orientationFilter
-      return matchesSearch && matchesArea && matchesOrientation
-    })
-    // Solo mostramos los publicados (state_1 y state_3)
-    // a los usuarios normales
-    .filter(t => t.state_id !== 'state_2')
-  }, [search, areaFilter, orientationFilter])
+    return templates
+      .filter((template) => {
+        const matchesSearch =
+          template.name.toLowerCase().includes(search.toLowerCase()) ||
+          (template.description?.toLowerCase().includes(search.toLowerCase()) ?? false)
+        const matchesArea =
+          areaFilter === 'Todas' || template.area_id === areaFilter
+        const matchesOrientation =
+          orientationFilter === 'Todas' ||
+          template.orientation === orientationFilter
+
+        return matchesSearch && matchesArea && matchesOrientation
+      })
+      .filter((template) => template.stateCode !== 'DRAFT')
+  }, [templates, search, areaFilter, orientationFilter])
 
   const handlePreview = (id: string) => {
-    // Por ahora solo loguea, cuando esté lista la vista previa se navega
     console.log('Preview del template:', id)
   }
 
   const handleSelect = (id: string) => {
-    // Al seleccionar navega al formulario de creación con el template elegido
-    navigate(`/crearNewsletter?templateId=${id}`)
+    navigate(`/crearNewsletter/${id}`)
+  }
+
+  if (loading) {
+    return (
+      <Box
+        sx={{
+          py: theme.nestle?.page?.sectionPaddingY || 4,
+          px: theme.nestle?.page?.sectionPaddingX || 2,
+          bgcolor: 'background.default',
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    )
+  }
+
+  if (error) {
+    return (
+      <Box
+        sx={{
+          py: theme.nestle?.page?.sectionPaddingY || 4,
+          px: theme.nestle?.page?.sectionPaddingX || 2,
+          bgcolor: 'background.default',
+          minHeight: '100vh',
+        }}
+      >
+        <Container maxWidth="lg" disableGutters>
+          <Alert severity="error">{error}</Alert>
+        </Container>
+      </Box>
+    )
   }
 
   return (
-    <Box sx={{
-      py: theme.nestle?.page?.sectionPaddingY || 4,
-      px: theme.nestle?.page?.sectionPaddingX || 2,
-      bgcolor: 'background.default',
-      minHeight: '100vh'
-    }}>
+    <Box
+      sx={{
+        py: theme.nestle?.page?.sectionPaddingY || 4,
+        px: theme.nestle?.page?.sectionPaddingX || 2,
+        bgcolor: 'background.default',
+        minHeight: '100vh',
+      }}
+    >
       <Container maxWidth="lg" disableGutters>
         <Stack spacing={4}>
-
-          {/* Header */}
           <Stack spacing={1}>
             <Typography variant="h2">Biblioteca de Plantillas</Typography>
             <Typography variant="body1" color="text.secondary">
@@ -72,61 +159,79 @@ export function TemplateLibraryPage() {
             </Typography>
           </Stack>
 
-          {/* Filtros */}
           <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
-            <SearchBar
-              value={search}
-              onChange={setSearch}
-            />
+            <SearchBar value={search} onChange={setSearch} />
+
             <FormControl size="small" sx={{ minWidth: 160 }}>
               <InputLabel>Área</InputLabel>
               <Select
                 value={areaFilter}
                 label="Área"
-                onChange={(e: SelectChangeEvent) => setAreaFilter(e.target.value)}
+                onChange={(event: SelectChangeEvent) => setAreaFilter(event.target.value)}
               >
-                {AREAS.map(area => (
-                  <MenuItem key={area} value={area}>{area}</MenuItem>
+                {uniqueAreas.map((area) => (
+                  <MenuItem key={area} value={area}>
+                    {area === 'Todas'
+                      ? 'Todas'
+                      : AREA_LABELS[area as NewsletterTemplate['area']] || area}
+                  </MenuItem>
                 ))}
               </Select>
             </FormControl>
+
             <FormControl size="small" sx={{ minWidth: 160 }}>
               <InputLabel>Orientación</InputLabel>
               <Select
                 value={orientationFilter}
                 label="Orientación"
-                onChange={(e: SelectChangeEvent) => setOrientationFilter(e.target.value)}
+                onChange={(event: SelectChangeEvent) =>
+                  setOrientationFilter(event.target.value)
+                }
               >
-                {ORIENTATIONS.map(o => (
-                  <MenuItem key={o} value={o}>{o}</MenuItem>
+                {orientations.map((orientation) => (
+                  <MenuItem key={orientation} value={orientation}>
+                    {orientation}
+                  </MenuItem>
                 ))}
               </Select>
             </FormControl>
           </Stack>
 
-          {/* Grid de cards */}
           {filteredTemplates.length === 0 ? (
             <Typography color="text.secondary" sx={{ textAlign: 'center', py: 8 }}>
               No se encontraron plantillas con esos filtros.
             </Typography>
           ) : (
-            <Grid container spacing={3}>
-              {filteredTemplates.map(template => (
-                <Grid size={{ xs: 12, sm: 6, md: 4 }} key={template.id}>
+            <Box
+              sx={{
+                display: 'grid',
+                gap: 3,
+                gridTemplateColumns: {
+                  xs: '1fr',
+                  sm: 'repeat(2, minmax(0, 1fr))',
+                  md: 'repeat(3, minmax(0, 1fr))',
+                },
+              }}
+            >
+              {filteredTemplates.map((template) => (
+                <Box key={template.id}>
                   <TemplateCard
-                    {...template}
-                    onPreview={handlePreview}
-                    onSelect={handleSelect}
+                    id={template.id}
+                    name={template.name}
+                    area_id={template.area_id}
+                    state_code={template.state_id}
+                    state_name={template.state_name}
+                    description={template.description}
+                    orientation={template.orientation}
+                    onPreview={() => handlePreview(template.id)}
+                    onSelect={() => handleSelect(template.id)}
                   />
-                </Grid>
+                </Box>
               ))}
-            </Grid>
+            </Box>
           )}
-
         </Stack>
       </Container>
     </Box>
   )
 }
-
-export default TemplateLibraryPage

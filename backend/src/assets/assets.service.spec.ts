@@ -3,12 +3,14 @@ import { PrismaService } from '../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
 import { AssetsService } from './assets.service';
 import type { UploadedAssetFile } from './dto/upload-asset.dto';
+import { KEYWORD_MAX_CHARS } from '../../../packages/shared/src/enums/assets-config';
 
 function createService() {
   const uploadObjectMock = jest.fn().mockResolvedValue(undefined);
   const getSignedUrlMock = jest
     .fn()
     .mockResolvedValue('http://localhost:9000/nestle-ai-newsletter-assets/fake');
+  const getObjectTextMock = jest.fn().mockResolvedValue('<svg><g id="Text" /></svg>');
   const prisma = {
     assets: {
       create: jest.fn().mockResolvedValue({
@@ -36,16 +38,18 @@ function createService() {
   const storageService = {
     uploadObject: uploadObjectMock,
     getSignedUrl: getSignedUrlMock,
+    getObjectText: getObjectTextMock,
     getAssetsBucket: jest
       .fn()
       .mockReturnValue('nestle-ai-newsletter-assets'),
   } as unknown as StorageService;
 
   return {
-    service: new AssetsService(prisma, storageService),
-    uploadObjectMock,
-    getSignedUrlMock,
-    prisma,
+      service: new AssetsService(prisma, storageService),
+      uploadObjectMock,
+      getSignedUrlMock,
+      getObjectTextMock,
+      prisma,
   };
 }
 
@@ -73,6 +77,8 @@ describe('AssetsService', () => {
           name: 'banner.png',
           type: 'IMAGE',
           url: 'http://localhost:9000/nestle-ai-newsletter-assets/fake',
+          svgTemplate: null,
+          maxChars: null,
         },
       ],
     });
@@ -95,6 +101,8 @@ describe('AssetsService', () => {
           name: 'dark-green.svg',
           type: 'SHAPE',
           url: 'http://localhost:9000/nestle-ai-newsletter-assets/fake',
+          svgTemplate: null,
+          maxChars: null,
         },
       ],
     });
@@ -113,5 +121,36 @@ describe('AssetsService', () => {
         } as UploadedAssetFile,
       ], 'IMAGE'),
     ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('caches keyword svg templates across repeated reads', async () => {
+    const { service, prisma, getObjectTextMock } = createService();
+
+    (prisma.assets.findMany as jest.Mock).mockResolvedValue([
+      {
+        id: 'keyword-asset-id',
+        name: 'keyword-template.svg',
+        type: 'KEYWORD',
+        bucket: 'nestle-ai-newsletter-assets',
+        object_key: 'assets/keywords/keyword-template.svg',
+      },
+    ]);
+
+    await expect(service.listAssets('KEYWORD')).resolves.toEqual({
+      assets: [
+        {
+          id: 'keyword-asset-id',
+          name: 'keyword-template.svg',
+          type: 'KEYWORD',
+          url: 'http://localhost:9000/nestle-ai-newsletter-assets/fake',
+          svgTemplate: '<svg><g id="Text" /></svg>',
+          maxChars: KEYWORD_MAX_CHARS,
+        },
+      ],
+    });
+
+    await service.listAssets('KEYWORD');
+
+    expect(getObjectTextMock).toHaveBeenCalledTimes(1);
   });
 });

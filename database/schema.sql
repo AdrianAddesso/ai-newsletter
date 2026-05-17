@@ -169,7 +169,7 @@ CREATE TABLE public.permissions (
   CONSTRAINT permissions_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.permission_categories(id)
 );
 CREATE TABLE public.role_permissions (
-  role USER-DEFINED NOT NULL,
+  role public.user_role NOT NULL,
   permission_id uuid NOT NULL,
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   CONSTRAINT role_permissions_pkey PRIMARY KEY (role, permission_id),
@@ -187,6 +187,7 @@ CREATE TABLE public.templates (
   description text,
   area_id uuid,
   layout text,
+  orientation public.template_orientation NOT NULL,
   state_id uuid NOT NULL,
   prompt_base text,
   created_by_user_id uuid,
@@ -203,8 +204,8 @@ CREATE TABLE public.users (
   email text NOT NULL UNIQUE,
   area_id uuid,
   created_at timestamp with time zone NOT NULL DEFAULT now(),
-  role USER-DEFINED NOT NULL DEFAULT 'USER'::user_role,
-  state USER-DEFINED NOT NULL DEFAULT 'ACTIVE'::user_state,
+  role public.user_role NOT NULL DEFAULT 'USER'::user_role,
+  state public.user_state NOT NULL DEFAULT 'ACTIVE'::user_state,
   CONSTRAINT users_pkey PRIMARY KEY (id),
   CONSTRAINT users_area_id_fkey FOREIGN KEY (area_id) REFERENCES public.areas(id)
 );

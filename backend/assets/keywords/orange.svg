@@ -20,8 +20,6 @@
     <rect class="cls-3" x="0" y="0" width="887.17" height="156.16" rx="44.03" ry="44.03"/>
   </g>
   <g id="Text">
-    <g>
-      
-    </g>
+    <text id="editable-text" class="cls-1" x="443.585" y="78.08" text-anchor="middle" dominant-baseline="middle" font-family="system-ui, sans-serif" font-size="56" font-weight="700"></text>
   </g>
 </svg>

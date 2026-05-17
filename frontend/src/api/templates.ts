@@ -8,6 +8,7 @@ type TemplateApiResponse = {
   description: string | null
   area: NewsletterTemplate['area']
   layout: string | null
+  orientation: 'PORTRAIT' | 'LANDSCAPE'
   stateCode: string
   stateName: string
   createdAt: string
@@ -24,4 +25,28 @@ export async function listTemplates(): Promise<NewsletterTemplate[]> {
     optionalGenerationFields:
       template.optionalGenerationFields ?? defaultOptionalGenerationFields,
   }))
+}
+
+export async function getTemplateById(id: string): Promise<NewsletterTemplate> {
+  const response = await axios.get<TemplateApiResponse>(`/templates/${id}`)
+
+  return {
+    ...response.data,
+    requiredGenerationFields: response.data.requiredGenerationFields ?? [],
+    optionalGenerationFields:
+      response.data.optionalGenerationFields ?? defaultOptionalGenerationFields,
+  }
+}
+
+export type TemplateAsset = {
+  id?: string
+  name: string
+  url: string
+  description?: string | null
+  type: string
+}
+
+export async function getTemplateAssets(id: string): Promise<TemplateAsset[]> {
+  const response = await axios.get<TemplateAsset[]>(`/templates/${id}/assets`)
+  return response.data
 }

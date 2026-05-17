@@ -13,6 +13,9 @@ export type UploadedAsset = {
   name: string
   url: string
   type: AssetType
+  svgTemplate?: string | null
+  maxChars?: number | null
+  keywordText?: string | null
 }
 
 export type UploadAssetsResponse = {
