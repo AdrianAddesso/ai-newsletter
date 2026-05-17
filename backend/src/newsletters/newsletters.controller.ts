@@ -105,8 +105,12 @@ export class NewslettersController {
     @Body(new ZodValidationPipe(addNewsletterLogBodySchema))
     body: AddNewsletterLogBody,
   ) {
-    void body;
-    return this.newslettersService.addLog(params.id);
+    return this.newslettersService.addLog(params.id, {
+      previousState: body.previousState,
+      newState: body.newState,
+      reviewedByUserId: body.reviewedByUserId,
+      allCommentaries: body.allCommentaries,
+    });
   }
 
   @Get(':id/logs')
@@ -154,5 +158,45 @@ export class NewslettersController {
   @Get(':id/exports')
   getExports(@Param(new ZodValidationPipe(idParamSchema)) params: IdParam) {
     return this.newslettersService.getExports(params.id);
+  }
+
+  @Post(':id/logs/approve')
+  @RequirePermission(Action.REVIEW_FINAL_APPROVE_COMMENT, Resource.NEWSLETTERS)
+  addApprovalLog(
+    @Param(new ZodValidationPipe(idParamSchema)) params: IdParam,
+    @Body(new ZodValidationPipe(addNewsletterLogBodySchema)) body: AddNewsletterLogBody,
+  ) {
+    return this.newslettersService.addLog(params.id, {
+      previousState: body.previousState,
+      newState: 'APPROVED',
+      reviewedByUserId: body.reviewedByUserId,
+    });
+  }
+
+  @Post(':id/logs/request-changes')
+  addChangesRequestedLog(
+    @Param(new ZodValidationPipe(idParamSchema)) params: IdParam,
+    @Body(new ZodValidationPipe(addNewsletterLogBodySchema)) body: AddNewsletterLogBody,
+  ) {
+    return this.newslettersService.addLog(params.id, {
+      previousState: body.previousState,
+      newState: 'CHANGES_REQUESTED',
+      reviewedByUserId: body.reviewedByUserId,
+      allCommentaries: body.allCommentaries,
+    });
+  }
+
+  @Post(':id/logs/export')
+  @RequirePermission(Action.CONTENT_EXPORT_APPROVED, Resource.NEWSLETTERS) 
+  addExportLog(
+    @Param(new ZodValidationPipe(idParamSchema)) params: IdParam,
+    @Body(new ZodValidationPipe(addNewsletterLogBodySchema)) body: AddNewsletterLogBody,
+  ) {
+    return this.newslettersService.addLog(params.id, {
+      previousState: 'APPROVED',
+      newState: 'APPROVED',
+      reviewedByUserId: body.reviewedByUserId,
+      allCommentaries: body.allCommentaries,
+    });
   }
 }

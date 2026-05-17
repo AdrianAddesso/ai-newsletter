@@ -1,5 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { newsletter_state } from '@prisma/client';
+import { validateNewsletterStateLogTransition } from './validators/newsletter.validator';
 
 @Injectable()
 export class NewsLettersService {
@@ -59,10 +61,27 @@ export class NewsLettersService {
     return 'Desde logs newsletters con ID' + id;
   }
 
-  addLog(id: string) {
-    return 'Desde add log newsletters con ID' + id;
-  }
+  async addLog(id: string, logData: { previousState?: newsletter_state, newState?: newsletter_state, reviewedByUserId?: string, allCommentaries?: string }) {
 
+    const newsletter = await this.prisma.newsletters.findUnique({ where: { id } });
+
+    if (!newsletter) {
+      throw new BadRequestException('Newsletter no encontrada');
+    }
+
+    validateNewsletterStateLogTransition(newsletter.state, logData);
+        
+    return this.prisma.newsletter_state_log.create({
+      data: {
+        newsletter_id: id,
+        previous_state: logData.previousState,
+        new_state: logData.newState,
+        reviewed_by_user_id: logData.reviewedByUserId,
+        all_commentaries: logData.allCommentaries,
+      },
+    });
+  }
+  
   getComments(id: string) {
     return 'Desde comments newsletters con ID' + id;
   }
@@ -80,6 +99,6 @@ export class NewsLettersService {
   }
 
   getExports(id: string) {
-    return `Desde exports newsletters con ID ${id}`;
+    return `Desde export newsletter con ID ${id}`;
   }
 }
