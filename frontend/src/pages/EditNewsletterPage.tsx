@@ -18,6 +18,7 @@ import { EditPanel } from '../components/newsletter/EditPanel'
 import { ReviewCommentControls } from '../components/newsletter/ReviewCommentControls'
 import { GenerationForm } from '../components/newsletter/GenerationForm'
 import { NewsletterStepper, getStepFromState } from '../components/newsletter/NewsletterStepper'
+import CreationFlowStepper from '../components/newsletter/CreationFlowStepper'
 import { BrandKitResourcesPanel } from '../components/newsletter/BrandKitResourcesPanel'
 import type {
   NewsletterAssetSelection,
@@ -575,14 +576,14 @@ function EditNewsletterPage() {
 
   // ──────────────────────────────────────────────────────────────────────────
   // RENDER
-  // ──────────────────────────────────────────────────────────────────────────
-
+  // ──────────────────────────────────────────────────────────────────────────   
   const pageLayout = (left: React.ReactNode, right: React.ReactNode, showStepper = true) => (
     <Box component="main" sx={{ minHeight: 'calc(100vh - 64px)', bgcolor: 'background.default' }}>
       {showStepper && (
-        <NewsletterStepper
-          activeStep={Math.max(1, getStepFromState(newsletter?.state))}
-          onStepClick={handleStepClick}
+        <CreationFlowStepper
+          activeStep={1}
+          newsletterId={newsletterId}
+          userRole={currentUserRole}
         />
       )}
       <Box
@@ -592,32 +593,45 @@ function EditNewsletterPage() {
         }}
       >
       <Box
+        component="main"
         sx={{
-          p: { xs: 2, md: 3 },
-          borderRight: { lg: "1px solid" },
-          borderBottom: { xs: "1px solid", lg: "none" },
-          borderColor: "divider",
-          minWidth: 0,
+          minHeight: "calc(100vh - 64px)",
+          bgcolor: "background.default",
+          display: "grid",
+          gridTemplateColumns: {
+            xs: "1fr",
+            lg: "minmax(0, 1fr) minmax(380px, 0.72fr)",
+          },
         }}
       >
-        {left}
-      </Box>
-      <Box sx={{ p: { xs: 2, md: 3 }, minWidth: 0 }}>
-        <Stack spacing={2}>
-          <Stack spacing={0.75}>
-            <Typography variant="overline">
-              Estado: {newsletter?.state}
-            </Typography>
-            <Typography variant="h4">Builder de newsletter</Typography>
-            {newsletter && selectedTemplate && (
-              <Typography variant="body2" color="text.secondary">
-                Plantilla: {selectedTemplate.name} · BrandKit:{" "}
-                {selectedBrandKitLabel}
+        <Box
+          sx={{
+            p: { xs: 2, md: 3 },
+            borderRight: { lg: "1px solid" },
+            borderBottom: { xs: "1px solid", lg: "none" },
+            borderColor: "divider",
+            minWidth: 0,
+          }}
+        >
+          {left}
+        </Box>
+        <Box sx={{ p: { xs: 2, md: 3 }, minWidth: 0 }}>
+          <Stack spacing={2}>
+            <Stack spacing={0.75}>
+              <Typography variant="overline">
+                Estado: {newsletter?.state}
               </Typography>
-            )}
+              <Typography variant="h4">Builder de newsletter</Typography>
+              {newsletter && selectedTemplate && (
+                <Typography variant="body2" color="text.secondary">
+                  Plantilla: {selectedTemplate.name} · BrandKit:{" "}
+                  {selectedBrandKitLabel}
+                </Typography>
+              )}
+            </Stack>
+            {right}
           </Stack>
-          {right}
-        </Stack>
+        </Box>
       </Box>
       </Box>
     </Box>
