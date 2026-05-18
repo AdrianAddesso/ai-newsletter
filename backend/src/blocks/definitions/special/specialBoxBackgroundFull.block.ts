@@ -6,7 +6,7 @@ export class SpecialBoxBackgroundFullBlock extends BlockDefinition {
   readonly label = 'Bloque Especial con Fondo';
   readonly description = 'Bloque de tres columnas con etiqueta, textos e imagen con fondo';
   readonly icon = 'text_fields';
-  readonly previewKey = 'asset1.jpg';
+  readonly previewKey = 'SpecialBoxBackgroundFullRenderer.svg';
   readonly mustFill = true;
   readonly layout = { minCols: 1, minRows: 1, resizable: true };
 }

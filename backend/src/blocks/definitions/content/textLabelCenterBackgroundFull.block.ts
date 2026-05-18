@@ -7,7 +7,7 @@ export class TextLabelCenterBackgroundFullBlock extends BlockDefinition {
   readonly description =
     'Texto alineado a la izquierda con etiqueta centrada debajo y fondo';
   readonly icon = 'text_fields';
-  readonly previewKey = 'asset1.jpg';
+  readonly previewKey = 'TextLabelCenterBackgroundFullRenderer.svg';
   readonly mustFill = true;
   readonly layout = { minCols: 1, minRows: 1, resizable: true };
 }

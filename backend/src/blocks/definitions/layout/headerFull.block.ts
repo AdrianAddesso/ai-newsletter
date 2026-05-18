@@ -6,7 +6,7 @@ export class HeaderFullBlock extends BlockDefinition {
   readonly label = 'Header Principal';
   readonly description = 'Esta es la cabecera principal';
   readonly icon = 'text_fields';
-  readonly previewKey = 'asset1.jpg';
+  readonly previewKey = 'HeaderFullRenderer.svg';
   readonly mustFill = true;
   readonly layout = { minCols: 1, minRows: 1, resizable: true };
 }

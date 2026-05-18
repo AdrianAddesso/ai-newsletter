@@ -88,7 +88,7 @@ WHERE code IN (
   'CONTENT_UPLOAD',
   'CONTENT_EXPORT_APPROVED',
   'REVIEW_REQUEST_PREVIEW',
-  'REVIEW_COMMENT_VIEW_REPLY',
+  'REVIEW_COMMENT_VIEW_REPLY'
 )
 ON CONFLICT (role, permission_id) DO NOTHING;
 
@@ -193,7 +193,7 @@ WITH desired_templates AS (
     v.description,
     a.id AS area_id,
     v.layout,
-    v.orientation,
+    v.orientation::public.template_orientation AS orientation,
     ts.id AS state_id,
     v.prompt_base,
     u.id AS created_by_user_id,

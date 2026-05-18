@@ -209,6 +209,10 @@ function inferSeedTarget(relativePath: string): AssetSeedTarget {
     return { kind: 'asset', type: asset_type.KEYWORD };
   }
 
+  if (relativePath.startsWith('blocks/')) {
+    return { kind: 'asset', type: asset_type.IMAGE };
+  }
+
   if (relativePath.startsWith('logos/')) {
     return { kind: 'asset', type: asset_type.LOGO };
   }
@@ -230,6 +234,10 @@ function buildStorageKey(
 
   if (relativePath.startsWith('keywords/')) {
     return `assets/keywords/${basename(relativePath)}`;
+  }
+
+  if (relativePath.startsWith('blocks/')) {
+    return `assets/blocks/${basename(relativePath)}`;
   }
 
   if (relativePath.startsWith('logos/')) {

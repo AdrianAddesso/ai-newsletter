@@ -6,7 +6,7 @@ export class ImageFullBlock extends BlockDefinition {
   readonly label = 'Imagen Completa';
   readonly description = 'Imagen a ancho completo sin fondo';
   readonly icon = 'text_fields';
-  readonly previewKey = 'asset1.jpg';
+  readonly previewKey = 'ImageFullRenderer.svg';
   readonly mustFill = true;
   readonly layout = { minCols: 1, minRows: 1, resizable: true };
 }

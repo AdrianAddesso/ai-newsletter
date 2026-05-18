@@ -6,7 +6,7 @@ export class ImageBackgroundFullBlock extends BlockDefinition {
   readonly label = 'Imagen con Fondo';
   readonly description = 'Imagen centrada al 80% con fondo visible';
   readonly icon = 'text_fields';
-  readonly previewKey = 'asset1.jpg';
+  readonly previewKey = 'ImageBackgroundFullRenderer.svg';
   readonly mustFill = true;
   readonly layout = { minCols: 1, minRows: 1, resizable: true };
 }

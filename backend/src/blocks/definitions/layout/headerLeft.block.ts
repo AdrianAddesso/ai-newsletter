@@ -6,7 +6,7 @@ export class HeaderLeftBlock extends BlockDefinition {
   readonly label = 'Header Solo Izquierda';
   readonly description = 'Esta es la cabecera con el logo a la izquierda';
   readonly icon = 'text_fields';
-  readonly previewKey = 'asset1.jpg';
+  readonly previewKey = 'HeaderLeftRenderer.svg';
   readonly mustFill = true;
   readonly layout = { minCols: 1, minRows: 1, resizable: true };
 }

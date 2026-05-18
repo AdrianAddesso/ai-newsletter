@@ -7,7 +7,7 @@ export class LabelLeftBackgroundSmallBlock extends BlockDefinition {
   readonly description =
     'Etiqueta destacada pequeña alineada a la izquierda con fondo';
   readonly icon = 'text_fields';
-  readonly previewKey = 'asset1.jpg';
+  readonly previewKey = 'LabelLeftBackgroundSmallRenderer.svg';
   readonly mustFill = true;
   readonly layout = { minCols: 1, minRows: 1, resizable: true };
 }

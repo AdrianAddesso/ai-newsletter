@@ -6,7 +6,7 @@ export class LabelLeftBackgroundFullBlock extends BlockDefinition {
   readonly label = 'Etiqueta Izquierda con Fondo';
   readonly description = 'Etiqueta destacada alineada a la izquierda con fondo';
   readonly icon = 'text_fields';
-  readonly previewKey = 'asset1.jpg';
+  readonly previewKey = 'LabelLeftBackgroundFullRenderer.svg';
   readonly mustFill = true;
   readonly layout = { minCols: 1, minRows: 1, resizable: true };
 }
