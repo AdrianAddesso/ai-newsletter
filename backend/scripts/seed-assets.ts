@@ -210,7 +210,7 @@ function inferSeedTarget(relativePath: string): AssetSeedTarget {
   }
 
   if (relativePath.startsWith('blocks/')) {
-    return { kind: 'asset', type: asset_type.IMAGE };
+    return { kind: 'asset', type: asset_type.BLOCK };
   }
 
   if (relativePath.startsWith('logos/')) {
