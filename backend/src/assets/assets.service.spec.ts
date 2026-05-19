@@ -108,6 +108,12 @@ describe('AssetsService', () => {
     });
   });
 
+  it('excludes block assets from list responses', async () => {
+    const { service } = createService();
+
+    await expect(service.listAssets('BLOCK')).resolves.toEqual({ assets: [] });
+  });
+
   it('rejects invalid asset files', async () => {
     const { service } = createService();
 

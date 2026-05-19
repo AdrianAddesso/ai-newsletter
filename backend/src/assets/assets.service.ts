@@ -119,8 +119,12 @@ export class AssetsService {
 
   async listAssets(type?: asset_type): Promise<UploadAssetsResponseDto> {
     try {
+      if (type === asset_type.BLOCK) {
+        return { assets: [] };
+      }
+
       const assets = await this.prisma.assets.findMany({
-        where: type ? { type } : undefined,
+        where: type ? { type } : { type: { not: asset_type.BLOCK } },
         orderBy: [{ type: 'asc' }, { name: 'asc' }],
         select: {
           id: true,

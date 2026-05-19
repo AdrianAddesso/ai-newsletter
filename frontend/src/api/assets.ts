@@ -1,12 +1,13 @@
 import axios from 'axios'
 
 export type AssetType =
-  | 'IMAGE'
-  | 'ICON'
-  | 'LOGO'
-  | 'SHAPE'
-  | 'LOCKUP'
-  | 'KEYWORD'
+  | "IMAGE"
+  | "ICON"
+  | "LOGO"
+  | "SHAPE"
+  | "LOCKUP"
+  | "KEYWORD"
+  | "BLOCK"
 
 export type UploadedAsset = {
   id: string
