@@ -47,17 +47,30 @@ type FormValues = {
   contact: string;
   linksOrSources: string;
   additionalContext: string;
-  assetType: AssetType;
+  assetType: SelectableAssetType;
   files: File[];
 };
 
-const assetTypeLabels: Record<AssetType, string> = {
+type SelectableAssetType = Exclude<AssetType, "BLOCK">;
+
+const assetTypeLabels: Record<SelectableAssetType, string> = {
   IMAGE: "Imagen",
   ICON: "Icono",
   LOGO: "Logo",
   SHAPE: "Forma",
   LOCKUP: "Lockup",
   KEYWORD: "Keyword",
+};
+
+const selectableAssetTypes = Object.entries(assetTypeLabels) as [
+  SelectableAssetType,
+  string,
+][];
+
+const normalizeAssetType = (
+  assetType: AssetType | undefined,
+): SelectableAssetType => {
+  return assetType && assetType !== "BLOCK" ? assetType : "IMAGE";
 };
 
 const dedupeAssets = (assets: UploadedAsset[]): UploadedAsset[] => {
@@ -125,7 +138,7 @@ export function GenerationForm({
   onCancel,
   cancelLabel = "Cancelar",
 }: Props) {
-  const initialAssetType = initialValues?.assetType ?? "IMAGE";
+  const initialAssetType = normalizeAssetType(initialValues?.assetType);
   const [form, setForm] = useState<FormValues>({
     topic: initialValues?.topic ?? "",
     objective: initialValues?.objective ?? "",
@@ -522,11 +535,11 @@ export function GenerationForm({
           labelId="asset-type-label"
           label="Tipo de asset"
           value={form.assetType}
-          onChange={(e: SelectChangeEvent<AssetType>) => {
+          onChange={(e: SelectChangeEvent<SelectableAssetType>) => {
             update("assetType", e.target.value);
           }}
         >
-          {Object.entries(assetTypeLabels).map(([v, l]) => (
+          {selectableAssetTypes.map(([v, l]) => (
             <MenuItem key={v} value={v}>
               {l}
             </MenuItem>
