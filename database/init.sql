@@ -24,7 +24,8 @@ BEGIN
             'LOGO',
             'SHAPE',
             'LOCKUP',
-            'KEYWORD'
+            'KEYWORD',
+            'BLOCK'
         );
     END IF;
 END
