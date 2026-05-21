@@ -7,7 +7,8 @@ import {
   ToggleButtonGroup,
   ToggleButton,
   Divider,
-  IconButton
+  IconButton,
+  TextField
 } from '@mui/material';
 import { useTemplateStore } from '../../stores/templates.store';
 import AddIcon from '@mui/icons-material/Add';
@@ -16,7 +17,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { CropLandscape, CropPortrait } from '@mui/icons-material';
 
 export const StructureControl: React.FC<{ onConfirm: () => void }> = ({ onConfirm }) => {
-  const { layoutMode, setMode, rows, addRow, removeRow, addColumn, removeColumn } = useTemplateStore();
+  const { layoutMode, setMode, rows, addRow, removeRow, addColumn, removeColumn, setTemplateDetails, name, description, basePrompt } = useTemplateStore();
 
   return (
     <Stack spacing={3}>
@@ -45,6 +46,24 @@ export const StructureControl: React.FC<{ onConfirm: () => void }> = ({ onConfir
       </Typography>
       <Box>
         <Stack spacing={1}>
+          <TextField
+            label="Nombre"
+            fullWidth
+            value={name}
+            onChange={(e) => setTemplateDetails(e.target.value)}
+          />
+          <TextField
+            label="Descripcion"
+            fullWidth
+            value={description}
+            onChange={(e) => setTemplateDetails(undefined, e.target.value, undefined)}
+          />
+          <TextField
+            label="Prompt Base"
+            fullWidth
+            value={basePrompt}
+            onChange={(e) => setTemplateDetails( undefined, undefined, e.target.value)}
+          />
           {rows.map((row, index) => (
             <Box
               key={row.id}
@@ -60,7 +79,7 @@ export const StructureControl: React.FC<{ onConfirm: () => void }> = ({ onConfir
               <Typography variant="caption" sx={{ fontWeight: 600 }}>
                 Fila {index + 1} | {row.columns.length} {row.columns.length > 1 ? 'columnas' : 'columna'}
               </Typography>
-              <Stack direction="row" sx={{ spacing: '0.5', alignItems: 'center'}}>
+              <Stack direction="row" sx={{ spacing: '0.5', alignItems: 'center' }}>
                 <IconButton
                   size="small"
                   onClick={() => removeColumn(row.id)}
@@ -113,7 +132,7 @@ export const StructureControl: React.FC<{ onConfirm: () => void }> = ({ onConfir
         fullWidth
         size="large"
         onClick={onConfirm}
-        disabled={rows.length === 0}
+        disabled={basePrompt.length === 0 || name.length === 0 || description.length === 0}
         sx={{ mt: 2, bgcolor: 'brand.red', '&:hover': { bgcolor: '#e04040' } }}
       >
         Confirmar Estructura

@@ -108,7 +108,7 @@ export const EditorControl: React.FC = () => {
                   >
                     <Box
                       component="img"
-                      src={previewUrls[block.previewKey] ?? ''}
+                      src={previewUrls[block.previewKey]}
                       sx={{
                         width: '100%',
                         height: 'auto',

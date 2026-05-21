@@ -21,7 +21,7 @@ export function CreateTemplate() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState(0)
 
-  const { isSkeletonView, setIsSkeletonView, saveTemplate, resetStore, title } = useTemplateStore()
+  const { isSkeletonView, setIsSkeletonView, saveTemplate, resetStore } = useTemplateStore()
 
   useEffect(() => {
     // For now, we just reset the store.
@@ -52,7 +52,7 @@ export function CreateTemplate() {
         </IconButton>
         <Box sx={{ flex: 1 }}>
           <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
-            {title}
+            Nuevo Template
           </Typography>
         </Box>
         <Chip

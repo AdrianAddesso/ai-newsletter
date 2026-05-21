@@ -9,6 +9,8 @@ interface TemplateStore extends TemplateState {
   setIsSkeletonView: (isSkeleton: boolean) => void;
   setSelectedBlockId: (id: string | null) => void;
 
+  setTemplateDetails: (name?: string, description?: string, basePrompt?: string) => void;
+
   addRow: () => void;
   removeRow: (rowId: string) => void;
 
@@ -24,8 +26,9 @@ interface TemplateStore extends TemplateState {
 
 
 export const useTemplateStore = create<TemplateStore>((set, get) => ({
-  id: uuidv4(),
-  title: 'Nuevo Template',
+  name: '',
+  description: '',
+  basePrompt: '',
   layoutMode: 'PORTRAIT',
   isSkeletonView: true,
   rows: [
@@ -46,6 +49,12 @@ export const useTemplateStore = create<TemplateStore>((set, get) => ({
     }));
     set({ layoutMode: mode, rows: updatedRows });
   },
+
+  setTemplateDetails:(name, description, basePrompt) => set(state => ({
+    name: name !== undefined ? name : state.name,
+    description: description !== undefined ? description : state.description,
+    basePrompt: basePrompt !== undefined ? basePrompt : state.basePrompt
+  })), 
 
   setIsSkeletonView: (isSkeleton) => set({ isSkeletonView: isSkeleton }),
 
@@ -118,10 +127,11 @@ export const useTemplateStore = create<TemplateStore>((set, get) => ({
   })),
 
   resetStore: (initialData) => set({
-    id: uuidv4(),
-    title: 'Nuevo Template',
     layoutMode: 'PORTRAIT',
     isSkeletonView: true,
+    name: '',
+    description: '',
+    basePrompt: '',
     rows: [
       {
         id: uuidv4(),
@@ -134,10 +144,9 @@ export const useTemplateStore = create<TemplateStore>((set, get) => ({
   }),
 
   saveTemplate: async () => {
-    const { id, rows } = get();
+    const { rows } = get();
     const blocksToSave = rows.flatMap((row, rowIndex) =>
       row.columns.map((col, colIndex) => ({
-        newsletter_id: id,
         block_type: col.type,
         content: col.content,
         row: rowIndex,

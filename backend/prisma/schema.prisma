@@ -310,7 +310,7 @@ model templates {
   name               String
   description        String?
   area_id            String?         @db.Uuid
-  layout             String?
+  layout             Json?
   orientation        template_orientation
   state_id           String          @db.Uuid
   prompt_base        String?

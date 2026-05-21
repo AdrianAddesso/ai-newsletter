@@ -206,7 +206,12 @@ WITH desired_templates AS (
         'Cultura y reconocimiento',
         'Formato para destacar cultura, reconocimientos y acciones de engagement.',
         'COMUNICACION_INTERNA',
-        'EDITORIAL',
+        $json${
+          "blocks": [
+            { "type": "BANNER_HERO", "content": "Título de cultura", "row": 0, "grid_column": 0, "displayOrder": 0 },
+            { "type": "TEXT_2_COLUMNS", "content": "Cuerpo del reconocimiento", "row": 1, "grid_column": 0, "displayOrder": 1 }
+          ]
+        }$json$::json,
         'PORTRAIT',
         $json${"promptText":"Plantilla para cultura organizacional y reconocimiento.","requiredGenerationFields":[],"optionalGenerationFields":["relevantDates","cta","linksOrSources","additionalContext"]}$json$,
         '2026-05-10 06:20:08.60622+00'::timestamptz,
@@ -217,7 +222,12 @@ WITH desired_templates AS (
         'Mensaje de liderazgo',
         'Comunicaciones formales de liderazgo con llamado a la accion y contacto.',
         'COMUNICACION_INTERNA',
-        'CLASSIC',
+        $json${
+          "blocks": [
+            { "type": "BANNER_HERO", "content": "Título de liderazgo", "row": 0, "grid_column": 0, "displayOrder": 0 },
+            { "type": "TEXT_2_COLUMNS", "content": "Cuerpo del mensaje", "row": 1, "grid_column": 0, "displayOrder": 1 }
+          ]
+        }$json$::json,
         'PORTRAIT',
         $json${"promptText":"Plantilla para mensajes institucionales de liderazgo.","requiredGenerationFields":["contact"],"optionalGenerationFields":["relevantDates","cta","linksOrSources","additionalContext"]}$json$,
         '2026-05-10 06:20:08.60622+00'::timestamptz,
@@ -228,7 +238,12 @@ WITH desired_templates AS (
         'Resumen semanal',
         'Plantilla breve para resumir noticias clave y proximos hitos semanales.',
         'COMUNICACION_INTERNA',
-        'BRIEF',
+        $json${
+          "blocks": [
+            { "type": "BANNER_HERO", "content": "Título de resumen", "row": 0, "grid_column": 0, "displayOrder": 0 },
+            { "type": "TEXT_2_COLUMNS", "content": "Cuerpo del resumen", "row": 1, "grid_column": 0, "displayOrder": 1 }
+          ]
+        }$json$::json,
         'PORTRAIT',
         $json${"promptText":"Plantilla para resumenes ejecutivos semanales.","requiredGenerationFields":[],"optionalGenerationFields":["relevantDates","cta","linksOrSources","additionalContext"]}$json$,
         '2026-05-10 06:20:08.60622+00'::timestamptz,
@@ -239,7 +254,12 @@ WITH desired_templates AS (
         'Actualizacion corporativa',
         'Comunicados internos con foco en hitos, avances y decisiones corporativas.',
         'COMUNICACION_CORPORATIVA',
-        'CLASSIC',
+        $json${
+          "blocks": [
+            { "type": "BANNER_HERO", "content": "Título de actualización", "row": 0, "grid_column": 0, "displayOrder": 0 },
+            { "type": "TEXT_2_COLUMNS", "content": "Cuerpo de la actualización", "row": 1, "grid_column": 0, "displayOrder": 1 }
+          ]
+        }$json$::json,
         'PORTRAIT',
         $json${"promptText":"Plantilla para novedades corporativas internas.","requiredGenerationFields":[],"optionalGenerationFields":["relevantDates","cta","linksOrSources","additionalContext"]}$json$,
         '2026-05-10 06:20:08.60622+00'::timestamptz,
@@ -250,7 +270,12 @@ WITH desired_templates AS (
         'Historia de equipos',
         'Formato editorial para contar iniciativas, logros y testimonios de equipos.',
         'COMUNICACION_CORPORATIVA',
-        'EDITORIAL',
+        $json${
+          "blocks": [
+            { "type": "BANNER_HERO", "content": "Título de historia", "row": 0, "grid_column": 0, "displayOrder": 0 },
+            { "type": "TEXT_2_COLUMNS", "content": "Cuerpo de la historia", "row": 1, "grid_column": 0, "displayOrder": 1 }
+          ]
+        }$json$::json,
         'PORTRAIT',
         $json${"promptText":"Plantilla para historias de equipos y reconocimiento interno.","requiredGenerationFields":["contact"],"optionalGenerationFields":["relevantDates","cta","linksOrSources","additionalContext"]}$json$,
         '2026-05-10 06:20:08.60622+00'::timestamptz,

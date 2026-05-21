@@ -1,12 +1,13 @@
 export type UUID = string;
 
 export interface TemplateState {
-    id: UUID;
-    title: string;
     layoutMode: "PORTRAIT" | "LANDSCAPE";
     isSkeletonView: boolean;
     rows: RowObject[];
     selectedBlockId: string | null;
+    name: string;
+    description: string;
+    basePrompt: string;
 }
 
 export interface RowObject {
