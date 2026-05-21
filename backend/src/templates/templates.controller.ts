@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -39,6 +40,7 @@ import { MockAuthGuard } from '../modules/auth/guards/mockup.guard';
 import { PermissionsGuard } from '../modules/auth/guards/permissions.guard';
 import { Action } from '../modules/auth/enum/actions';
 import { Resource } from '../modules/auth/enum/resources';
+import { GetUser } from '../modules/auth/decorators/user.decorator';
 
 @Controller(Resource.TEMPLATES)
 @UseGuards(MockAuthGuard, PermissionsGuard)
@@ -52,12 +54,26 @@ export class TemplatesController {
 
   @Post()
   @RequirePermission(Action.TEMPLATE_CREATE_RETIRE, Resource.TEMPLATES)
-  create(
-    @Body(new ZodValidationPipe(createTemplateBodySchema))
-    body: CreateTemplateBody,
+  async create(
+    @Body(new ZodValidationPipe(createTemplateBodySchema)) body: CreateTemplateBody,
+    @GetUser() user: { id: string },
   ) {
-    void body;
-    return this.templatesService.create();
+    try {
+      const newTemplate = await this.templatesService.create(body, user.id);
+
+      return {
+        message: 'Template creado exitosamente',
+        newTemplate,
+        status: 201
+      }
+
+    } catch (error) {
+      throw new BadRequestException({
+        message: 'No se pudo crear el template en este momento.',
+        error: error instanceof Error ? error.message : 'Error desconocido',
+        status: 400
+      });
+    }
   }
 
   @Get(':id')

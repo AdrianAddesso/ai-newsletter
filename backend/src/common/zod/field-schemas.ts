@@ -32,3 +32,5 @@ export const optionalUrlFieldSchema = z
   .trim()
   .url('Debe ser una URL valida.')
   .optional();
+
+export const requiredJsonFieldSchema = z.object().required();

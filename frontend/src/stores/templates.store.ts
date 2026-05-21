@@ -144,7 +144,7 @@ export const useTemplateStore = create<TemplateStore>((set, get) => ({
   }),
 
   saveTemplate: async () => {
-    const { rows } = get();
+    const { rows, name, description, basePrompt, layoutMode} = get();
     const blocksToSave = rows.flatMap((row, rowIndex) =>
       row.columns.map((col, colIndex) => ({
         block_type: col.type,
@@ -155,7 +155,13 @@ export const useTemplateStore = create<TemplateStore>((set, get) => ({
       }))
     );
     // Aquí iría la lógica para enviar `blocksToSave` a la API
-    console.log('Enviando a API:', blocksToSave);
+    console.log('Enviando a API:', {
+      name,
+      description,
+      prompt_base: basePrompt,
+      orientation: layoutMode,
+      layout: blocksToSave
+    });
   }
 }));
 
