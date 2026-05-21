@@ -27,6 +27,7 @@ import { TableSortLabel } from '@mui/material';
 import Tooltip from "@mui/material/Tooltip";
 import { useNavigate } from 'react-router';
 import { getAllNewsletters } from '../../api/newsletters';
+import { NewsletterPreviewModal } from '../newsletter/NewsletterPreviewModal'
 
 interface NewsletterRow {
   id: string;
@@ -75,6 +76,8 @@ export function NewslettersTable({ search, filter }: Props) {
   const navigate = useNavigate();
   const [orderBy, setOrderBy] = useState<keyof NewsletterRow>('updated_at');
   const [order, setOrder] = useState<'asc' | 'desc'>('desc');
+  const [previewOpen, setPreviewOpen] = useState(false)
+  const [previewNewsletterId, setPreviewNewsletterId] = useState<string | null>(null)
 
   const handleSort = (property: keyof NewsletterRow) => {
     const isAsc = orderBy === property && order === 'asc';
@@ -92,6 +95,11 @@ export function NewslettersTable({ search, filter }: Props) {
 
     return value.toString().toLowerCase();
   };
+
+  const handlePreview = (id: string) => {
+    setPreviewNewsletterId(id)
+    setPreviewOpen(true)
+  }
 
   useEffect(() => {
     const loadNewsletters = async () => {
@@ -263,7 +271,7 @@ export function NewslettersTable({ search, filter }: Props) {
                     sx={{ justifyContent: "flex-end" }}
                   >
                     <Tooltip title="Vista Previa" arrow>
-                      <IconButton>
+                      <IconButton size="small" onClick={() => handlePreview(n.id)}>
                         <VisibilityIcon />
                       </IconButton>
                     </Tooltip>
@@ -303,6 +311,17 @@ export function NewslettersTable({ search, filter }: Props) {
           setDeleteId(null);
         }}
       />
+
+      {/* Modal preview */}
+      <NewsletterPreviewModal
+        open={previewOpen}
+        newsletterId={previewNewsletterId}
+        onClose={() => {
+          setPreviewOpen(false)
+          setPreviewNewsletterId(null)
+        }}
+      />
+
     </Paper>
   );
 }

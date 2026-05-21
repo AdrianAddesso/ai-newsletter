@@ -43,7 +43,6 @@ import {
 } from "../api/brand-kits";
 import { useNotification } from "../hooks/useNotification";
 
-// Ã¢â€â‚¬Ã¢â€â‚¬ Helpers Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
 const emptyComment = (v: string | null) => !v || v.trim().length === 0;
 
@@ -403,10 +402,10 @@ function EditNewsletterPage() {
     try {
       await handleRenderHtml();
       await transitionState("IN_REVIEW");
-      notifySuccess("Newsletter enviado con ÃƒÂ©xito");
+      notifySuccess("Newsletter enviado con exito");
       navigate("/dashboard");
     } catch {
-      setAiError("No se pudo enviar a revisiÃƒÂ³n. Intenta de nuevo.");
+      setAiError("No se pudo enviar a revision. Intenta de nuevo.");
     } finally {
       setIsSendingForReview(false);
     }
@@ -417,10 +416,10 @@ function EditNewsletterPage() {
     try {
       await handleRenderHtml()
       await transitionState('RESUBMITTED')
-      notifySuccess('Newsletter reenviado con ÃƒÂ©xito')
+      notifySuccess('Newsletter reenviado con exito')
       navigate('/dashboard')
     } catch {
-      setAiError('No se pudo reenviar a revisiÃƒÂ³n. Intenta de nuevo.')
+      setAiError('No se pudo reenviar a revision. Intenta de nuevo.')
     } finally {
       setIsSendingForReview(false)
     }
@@ -546,7 +545,7 @@ function EditNewsletterPage() {
   const canReview = currentUserRole === 'ADMIN' || currentUserRole === 'FUNCTIONAL'
   const isCreator = currentUserId === newsletter?.creatorUserId
 
-  // Si el newsletter estÃƒÂ¡ en revisiÃƒÂ³n y el usuario no puede revisar, ir al dashboard
+  // Si el newsletter esta en revision y el usuario no puede revisar, ir al dashboard
   useEffect(() => {
     if (newsletter && isReviewState && !canReview) {
       navigate('/dashboard')
