@@ -12,14 +12,15 @@ import type { UploadedAsset } from '../../api/assets'
 import type { BrandKitResourceAsset, BrandKitResources } from '../../api/brand-kits'
 import { AssetImageCard } from './AssetImageCard'
 
-const assetTypeLabels: Record<BrandKitResourceAsset['type'], string> = {
-  IMAGE: 'Imágenes',
-  ICON: 'Iconos',
-  LOGO: 'Logos',
-  SHAPE: 'Formas',
-  LOCKUP: 'Lockups',
-  KEYWORD: 'Keywords',
-}
+const assetTypeLabels: Record<BrandKitResourceAsset["type"], string> = {
+  IMAGE: "Imágenes",
+  ICON: "Iconos",
+  LOGO: "Logos",
+  SHAPE: "Formas",
+  LOCKUP: "Lockups",
+  KEYWORD: "Keywords",
+  BLOCK: "Blocks"
+};
 
 type Props = {
   selectedAssets: UploadedAsset[]

@@ -401,6 +401,7 @@ enum asset_type {
   SHAPE
   LOCKUP
   KEYWORD
+  BLOCK
 }
 
 enum storage_object_source {
