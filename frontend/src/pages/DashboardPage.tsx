@@ -35,6 +35,7 @@ export function DashboardPage() {
           <NewslettersTable 
             search={search}
             filter={filter}
+            userRole={userRole}
             />
         </Box>
       </Container>

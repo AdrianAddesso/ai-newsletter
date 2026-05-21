@@ -16,6 +16,7 @@ import {
 } from '@mui/material';
 
 import DeleteIcon from '@mui/icons-material/Delete';
+import IosShareIcon from '@mui/icons-material/IosShare'
 import EditIcon from '@mui/icons-material/Edit';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import {
@@ -43,6 +44,7 @@ interface NewsletterRow {
 interface Props {
   search: string;
   filter: 'ALL' | 'PENDING';
+  userRole: string;
 }
 
 const pendingStatuses = new Set<NewsletterStatus>([
@@ -68,7 +70,7 @@ const getStatusColor = (status: NewsletterStatus) => {
 };
 
 
-export function NewslettersTable({ search, filter }: Props) {
+export function NewslettersTable({ search, filter, userRole, }: Props) {
   const [data, setData] = useState<NewsletterRow[]>([]);
   //const [data, setData] = useState<NewsletterRow[]>([]);
   const [visibleCount, setVisibleCount] = useState(5);
@@ -150,6 +152,11 @@ export function NewslettersTable({ search, filter }: Props) {
   }, [data, search, filter, order, orderBy]);
 
   const visibleData = filteredData.slice(0, visibleCount);
+
+  const editableStatuses = new Set<NewsletterStatus>([
+    NewsletterStatus.DRAFT,
+    NewsletterStatus.CHANGES_REQUESTED,
+  ])
 
   return (
     <Paper sx={{ p: 2 }}>
@@ -236,59 +243,103 @@ export function NewslettersTable({ search, filter }: Props) {
           </TableHead>
 
           <TableBody>
-            {visibleData.map((n) => (
-              <TableRow key={n.id} hover>
-                <TableCell>
-                  <Stack direction="row" spacing={1.5}>
-                    <Box>
-                      <Typography sx={{ fontWeight: 600 }}>
-                        {n.title}
-                      </Typography>
-                    </Box>
-                  </Stack>
-                </TableCell>
+            {visibleData.map((n) => {
+              const isPrivilegedUser =
+                userRole === 'ADMIN' || userRole === 'FUNCTIONAL'
 
-                <TableCell>{n.autor}</TableCell>
-                <TableCell>{n.language}</TableCell>
-                <TableCell>{n.reviewer}</TableCell>
+              const canEdit =
+                isPrivilegedUser || editableStatuses.has(n.state)
 
-                <TableCell>{n.publish_date ?? "—"}</TableCell>
+              const canDelete = isPrivilegedUser
 
-                <TableCell>
-                  <Chip
-                    size="small"
-                    label={NewsletterStatusLabel[n.state]}
-                    color={getStatusColor(n.state)}
-                  />
-                </TableCell>
+              const canExport =
+                n.state === NewsletterStatus.APPROVED
 
-                <TableCell>{n.updated_at}</TableCell>
+              return (
+                <TableRow key={n.id} hover>
+                  <TableCell>
+                    <Stack direction="row" spacing={1.5}>
+                      <Box>
+                        <Typography sx={{ fontWeight: 600 }}>
+                          {n.title}
+                        </Typography>
+                      </Box>
+                    </Stack>
+                  </TableCell>
 
-                <TableCell align="right">
-                  <Stack
-                    direction="row"
-                    spacing={1}
-                    sx={{ justifyContent: "flex-end" }}
-                  >
-                    <Tooltip title="Vista Previa" arrow>
-                      <IconButton size="small" onClick={() => handlePreview(n.id)}>
-                        <VisibilityIcon />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Editar" arrow>
-                      <IconButton size="small" onClick={() => navigate(`/editarNewsletter/${n.id}`)}>
-                        <EditIcon />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Eliminar" arrow>
-                      <IconButton onClick={() => setDeleteId(n.id)}>
-                        <DeleteIcon />
-                      </IconButton>
-                    </Tooltip>
-                  </Stack>
-                </TableCell>
-              </TableRow>
-            ))}
+                  <TableCell>{n.autor}</TableCell>
+                  <TableCell>{n.language}</TableCell>
+                  <TableCell>{n.reviewer}</TableCell>
+
+                  <TableCell>{n.publish_date ?? "—"}</TableCell>
+
+                  <TableCell>
+                    <Chip
+                      size="small"
+                      label={NewsletterStatusLabel[n.state]}
+                      color={getStatusColor(n.state)}
+                    />
+                  </TableCell>
+
+                  <TableCell>{n.updated_at}</TableCell>
+
+                  <TableCell align="right">
+                    <Stack
+                      direction="row"
+                      spacing={1}
+                      sx={{ justifyContent: 'flex-end' }}
+                    >
+                      <Tooltip title="Vista previa" arrow>
+                        <IconButton
+                          size="small"
+                          onClick={() => handlePreview(n.id)}
+                        >
+                          <VisibilityIcon />
+                        </IconButton>
+                      </Tooltip>
+
+                      <Tooltip
+                        title={
+                          canEdit
+                            ? 'Editar'
+                            : 'Solo se puede editar borradores o newsletters con cambios solicitados'
+                        }
+                        arrow
+                      >
+                        <span>
+                          <IconButton
+                            size="small"
+                            disabled={!canEdit}
+                            onClick={() => navigate(`/editarNewsletter/${n.id}`)}
+                          >
+                            <EditIcon />
+                          </IconButton>
+                        </span>
+                      </Tooltip>
+
+                      {canExport && (
+                        <Tooltip title="Exportar" arrow>
+                          <IconButton
+                            size="small"
+                            onClick={() => navigate(`/editarNewsletter/${n.id}`)}
+                          >
+                            <IosShareIcon />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+
+                      {canDelete && (
+                        <Tooltip title="Eliminar" arrow>
+                          <IconButton onClick={() => setDeleteId(n.id)}>
+                            <DeleteIcon />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                    </Stack>
+                  </TableCell>
+                </TableRow>
+              )
+            })}
           </TableBody>
         </MuiTable>
       </TableContainer>
