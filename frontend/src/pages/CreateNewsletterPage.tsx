@@ -2,9 +2,9 @@ import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useLocation, useParams } from "react-router";
 import { Alert, Box, CircularProgress, Stack, Typography } from "@mui/material";
 import { useAuth } from "../contexts/AuthContext";
-import { TemplateCarousel } from "../components/newsletter/TemplateCarousel";
-import { GenerationForm } from "../components/newsletter/GenerationForm";
-import CreationFlowStepper from "../components/newsletter/CreationFlowStepper";
+import { TemplateCarousel } from "./newsletter/components/TemplateCarousel";
+import { GenerationForm } from "./newsletter/components/GenerationForm";
+import CreationFlowStepper from "./newsletter/components/CreationFlowStepper";
 
 import { generateNewsletter, type GenerateNewsletterRequest } from "../api/ai";
 import type {

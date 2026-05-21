@@ -28,7 +28,7 @@ import { TableSortLabel } from '@mui/material';
 import Tooltip from "@mui/material/Tooltip";
 import { useNavigate } from 'react-router';
 import { getAllNewsletters } from '../../api/newsletters';
-import { NewsletterPreviewModal } from '../newsletter/NewsletterPreviewModal'
+import { NewsletterPreviewModal } from '../../pages/newsletter/viewer/NewsletterPreviewModal'
 
 interface NewsletterRow {
   id: string;
@@ -248,7 +248,7 @@ export function NewslettersTable({ search, filter, userRole, }: Props) {
                 userRole === 'ADMIN' || userRole === 'FUNCTIONAL'
 
               const canEdit =
-                isPrivilegedUser || editableStatuses.has(n.state)
+                (isPrivilegedUser || editableStatuses.has(n.state)) && n.state !== NewsletterStatus.APPROVED
 
               const canDelete = isPrivilegedUser
 
@@ -289,6 +289,17 @@ export function NewslettersTable({ search, filter, userRole, }: Props) {
                       spacing={1}
                       sx={{ justifyContent: 'flex-end' }}
                     >
+                        {canExport && (
+                        <Tooltip title="Exportar" arrow>
+                          <IconButton
+                            size="small"
+                            onClick={() => navigate(`/editarNewsletter/${n.id}`)}
+                          >
+                            <IosShareIcon />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+
                       <Tooltip title="Vista previa" arrow>
                         <IconButton
                           size="small"
@@ -316,17 +327,6 @@ export function NewslettersTable({ search, filter, userRole, }: Props) {
                           </IconButton>
                         </span>
                       </Tooltip>
-
-                      {canExport && (
-                        <Tooltip title="Exportar" arrow>
-                          <IconButton
-                            size="small"
-                            onClick={() => navigate(`/editarNewsletter/${n.id}`)}
-                          >
-                            <IosShareIcon />
-                          </IconButton>
-                        </Tooltip>
-                      )}
 
                       {canDelete && (
                         <Tooltip title="Eliminar" arrow>

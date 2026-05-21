@@ -7,7 +7,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
-import type { NewsletterBlock, NewsletterState } from '../../types/newsletter'
+import type { NewsletterBlock, NewsletterState } from '../../../types/newsletter'
 
 type Props = {
   selectedBlock: NewsletterBlock
