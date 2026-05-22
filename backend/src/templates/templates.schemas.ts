@@ -24,7 +24,7 @@ const assetTypeSchema = z.nativeEnum(asset_type, {
 export const createTemplateBodySchema = z
   .object({
     name: requiredStringFieldSchema,
-    description: optionalStringFieldSchema,
+    description: requiredStringFieldSchema,
     area: areaNameSchema,
     layout:
       z.array(
@@ -38,7 +38,7 @@ export const createTemplateBodySchema = z
         })
       ).min(1, 'El layout debe contener al menos un bloque.'),
     state: requiredStringFieldSchema,
-    promptBase: optionalStringFieldSchema,
+    promptBase: requiredStringFieldSchema,
     orientation: z.enum([newsletter_format.PORTRAIT, newsletter_format.LANDSCAPE])
   })
   .strict();
