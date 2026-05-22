@@ -13,5 +13,8 @@ backend/dist/
 frontend/dist/
 frontend/build/
 *.tsbuildinfo
+node_modules/
+dist/
+packages/shared/dist/
 
 backend/eslint.config.mjs

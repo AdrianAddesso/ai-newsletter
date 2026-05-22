@@ -18,23 +18,23 @@ import {
 import {
   areaLabels,
   generationFieldLabels,
-} from "../../utils/newsletterTemplates";
+} from "../../../utils/newsletterTemplates";
 import {
   listAssets,
   uploadAssets,
   type AssetType,
   type UploadedAsset,
-} from "../../api/assets";
-import type { GenerateNewsletterRequest } from "../../api/ai";
+} from "../../../api/assets";
+import type { GenerateNewsletterRequest } from "../../../api/ai";
 import type {
   NewsletterAssetSelection,
   NewsletterTemplate,
-} from "../../types/newsletter";
+} from "../../../types/newsletter";
 import { AssetImageCard } from "./AssetImageCard";
 import {
   ASSETS_PER_PAGE,
   KEYWORD_MAX_CHARS,
-} from "../../../../packages/shared/src/enums/assets-config";
+} from "../../../../../packages/shared/src/enums/assets-config";
 
 type FormValues = {
   topic: string;

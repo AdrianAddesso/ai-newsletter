@@ -9,8 +9,8 @@ import {
   Typography,
 } from '@mui/material'
 import CloseIcon from '@mui/icons-material/Close'
-import type { AssetType } from '../../api/assets'
-import { KEYWORD_MAX_CHARS } from '../../../../packages/shared/src/enums/assets-config'
+import type { AssetType } from '../../../api/assets'
+import { KEYWORD_MAX_CHARS } from '../../../../../packages/shared/src/enums/assets-config'
 
 type AssetImageCardProps = {
   alt: string

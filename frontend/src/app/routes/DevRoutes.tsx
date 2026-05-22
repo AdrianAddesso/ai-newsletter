@@ -10,15 +10,6 @@ export const devRoutes= (
       />
 
       <Route
-        path="/newsletters/edit/:id"
-        element={
-          <UnderConstructionPage
-            title="newsletters"
-          />
-        }
-      />
-
-      <Route
         path="/reviews/:id"
         element={
           <UnderConstructionPage
@@ -31,15 +22,6 @@ export const devRoutes= (
         element={
           <UnderConstructionPage
             title="editar template"
-          />
-        }
-      />
-
-      <Route
-        path="/newsletters/preview/:id"
-        element={
-          <UnderConstructionPage
-            title="preview newsletter"
           />
         }
       />

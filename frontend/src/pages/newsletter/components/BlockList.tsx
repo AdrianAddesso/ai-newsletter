@@ -1,5 +1,5 @@
 import { Alert, Chip, Paper, Stack, Typography } from '@mui/material'
-import type { NewsletterBlock } from '../../types/newsletter'
+import type { NewsletterBlock } from '../../../types/newsletter'
 
 type Props = {
   blocks: NewsletterBlock[]
