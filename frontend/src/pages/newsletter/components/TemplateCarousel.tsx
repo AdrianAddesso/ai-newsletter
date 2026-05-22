@@ -14,9 +14,9 @@ import {
 } from '@mui/material'
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
-import { areaLabels, getTemplatePreviewImage } from '../../utils/newsletterTemplates'
-import type { AreaName, NewsletterTemplate } from '../../types/newsletter'
-import { listBrandKits } from '../../api/brand-kits'
+import { areaLabels, getTemplatePreviewImage } from '../../../utils/newsletterTemplates'
+import type { AreaName, NewsletterTemplate } from '../../../types/newsletter'
+import { listBrandKits } from '../../../api/brand-kits'
 
 type Props = {
   templates: NewsletterTemplate[]

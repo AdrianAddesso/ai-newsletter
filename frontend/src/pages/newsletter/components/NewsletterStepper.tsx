@@ -1,6 +1,6 @@
 import { Box, Step, StepLabel, Stepper } from '@mui/material'
 import type { StepIconProps } from '@mui/material/StepIcon'
-import type { NewsletterState } from '../../types/newsletter'
+import type { NewsletterState } from '../../../types/newsletter'
 
 const STEPS = ['Borrador', 'Editar', 'En revisión']
 

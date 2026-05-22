@@ -47,6 +47,7 @@ export type NewsletterTemplate = {
 export type ExportFormat =
   | 'PNG'
   | 'EML'
+  | 'PDF'
 
 export type ExportOption = {
   id: string

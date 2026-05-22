@@ -8,8 +8,8 @@ import {
   Typography,
 } from '@mui/material'
 import { useState } from 'react'
-import type { UploadedAsset } from '../../api/assets'
-import type { BrandKitResourceAsset, BrandKitResources } from '../../api/brand-kits'
+import type { UploadedAsset } from '../../../api/assets'
+import type { BrandKitResourceAsset, BrandKitResources } from '../../../api/brand-kits'
 import { AssetImageCard } from './AssetImageCard'
 
 const assetTypeLabels: Record<BrandKitResourceAsset["type"], string> = {

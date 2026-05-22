@@ -1,6 +1,6 @@
 import { useState, type ChangeEvent } from 'react'
 import { Button, Divider, Stack, Tab, Tabs, TextField, Typography } from '@mui/material'
-import type { NewsletterBlock } from '../../types/newsletter'
+import type { NewsletterBlock } from '../../../types/newsletter'
 
 type Props = {
   selectedBlock: NewsletterBlock
