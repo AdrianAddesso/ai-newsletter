@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import axios from "axios";
-import type { AreaName } from "../../../packages/shared/src/enums/area-name.enum";
+import type { AreaName } from "@shared/enums/area-name.enum";
 
 export type UserRole = "ADMIN" | "FUNCTIONAL" | "USER";
 

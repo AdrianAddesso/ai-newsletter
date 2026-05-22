@@ -9,8 +9,8 @@ import {
 import { useTemplateStore } from '../../stores/templates.store';
 import { useBlockDefinitions } from '../../hooks/useBlockDefinitions';
 import { useBlockPreviewUrls } from '../../hooks/useBlockPreviewUrls';
-import { BlockContentType, BlockContentTypeLabel } from '../../../../packages/shared/src/enums/block-content-type.enum';
-import { enumToOptions } from '../../../../packages/shared/src/utils/enum-to-options';
+import { BlockContentType, BlockContentTypeLabel } from '@shared/enums/block-content-type.enum';
+import { enumToOptions } from '@shared/utils/enum-to-options';
 
 export const EditorControl: React.FC = () => {
   const { selectedBlockId, rows, updateColumnBlock } = useTemplateStore();

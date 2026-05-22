@@ -3,7 +3,7 @@ import { Box, Typography, IconButton } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useTemplateStore } from '../../stores/templates.store';
 import { BlockRenderer } from '../blocks/BlockRenderer';
-import { CONSTANTS_CANVAS } from '../../../../packages/shared/src/enums/templates-canvas'
+import { CONSTANTS_CANVAS } from '@shared/enums/templates-canvas'
 import { useBlockDefinitions } from '../../hooks/useBlockDefinitions';
 import type { ColumnObject } from '../../interfaces/interfaces.templates';
 

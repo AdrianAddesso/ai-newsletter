@@ -8,7 +8,7 @@ import {
 import type { ReactElement } from 'react'
 import { useBlockDefinitions } from '../../hooks/useBlockDefinitions'
 import { useBlockPreviewUrls } from '../../hooks/useBlockPreviewUrls'
-import type { BlockType } from '../../../../packages/shared/src/types/block.types'
+import type { BlockType } from '@shared/types/block.types'
 
 type BlockPickerProps = {
   onSelect: (type: BlockType) => void
