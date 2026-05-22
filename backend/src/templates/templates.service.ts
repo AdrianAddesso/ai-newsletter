@@ -27,6 +27,9 @@ type TemplatePromptConfig = {
   optionalGenerationFields: TemplateGenerationField[];
 };
 
+const uuidPattern =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 export type TemplateListItem = {
   id: string;
   name: string;
@@ -197,13 +200,19 @@ export class TemplatesService {
 
     const validateBlocks = template.layout.map(block => validateTemplateBlocks(block, this.blockRegistry));
 
-    const [area, state] = await Promise.all([
+    const [area, state, creator] = await Promise.all([
       this.prisma.areas.findUnique({
         where: { name: template.area },
       }),
       this.prisma.template_states.findUnique({
         where: { code: template.state },
       }),
+      uuidPattern.test(userId)
+        ? this.prisma.users.findUnique({
+          where: { id: userId },
+          select: { id: true },
+        })
+        : Promise.resolve(null),
     ]);
 
     if (!area) {
@@ -218,11 +227,15 @@ export class TemplatesService {
       });
     }
 
+    if (!creator) {
+      this.logger.warn('Template creator user was not found; saving template without creator reference.');
+    }
+
     try {
       const newTemplate = await this.prisma.templates.create({
         data: {
           name: template.name, description: template.description, area_id: area.id, layout: validateBlocks,
-          state_id: state.id, prompt_base: template.promptBase, created_by_user_id: userId, orientation: template.orientation
+          state_id: state.id, prompt_base: template.promptBase, created_by_user_id: creator?.id ?? null, orientation: template.orientation
         },
       });
 
