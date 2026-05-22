@@ -23,7 +23,7 @@ export function CreateTemplate() {
   const { success, error } = useNotification()
   const [activeTab, setActiveTab] = useState(0)
 
-  const { isSkeletonView, setIsSkeletonView, saveTemplate, resetStore } = useTemplateStore()
+  const { isSkeletonView, setIsSkeletonView, saveTemplate, resetStore, rows } = useTemplateStore()
 
   useEffect(() => {
     // For now, we just reset the store.
@@ -47,6 +47,7 @@ export function CreateTemplate() {
     }
   }
 
+  const isSaveDisabled = !rows.some(row => row.columns.some(col => col.type))
   return (
     <Box sx={{ bgcolor: 'grey.50', minHeight: 'calc(100vh - 64px)' }}>
       <Box
@@ -169,7 +170,7 @@ export function CreateTemplate() {
           >
             {
               !isSkeletonView && activeTab === 1 && (
-                <Button variant="contained" fullWidth onClick={handleSaveTemplate} disabled={isSkeletonView}>
+                <Button variant="contained" fullWidth onClick={handleSaveTemplate} disabled={isSaveDisabled}>
                   Guardar Template
                 </Button>
               )

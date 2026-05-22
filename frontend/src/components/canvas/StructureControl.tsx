@@ -51,26 +51,40 @@ export const StructureControl: React.FC<{ onConfirm: () => void }> = ({ onConfir
         Configuración
       </Typography>
       <Box>
-        <Stack spacing={1}>
+        <Stack spacing={2} sx={{ mb: 2 }}>
           <TextField
             label="Nombre"
             fullWidth
+            size="small"
+            required
+            error={name.length > 0 && (name.length < 3 || name.length > 50)}
+            helperText={(name.length > 0 && (name.length < 3 || name.length > 50)) ? "Debe tener entre 3 y 50 caracteres" : ""}
             value={name}
             onChange={(e) => setTemplateDetails(e.target.value)}
           />
           <TextField
-            label="Descripcion"
+            label="Descripción"
             fullWidth
+            size="small"
+            required
+            error={description.length > 0 && (description.length < 5 || description.length > 200)}
+            helperText={(description.length > 0 && (description.length < 5 || description.length > 200)) ? "Debe tener entre 5 y 200 caracteres" : ""}
             value={description}
             onChange={(e) => setTemplateDetails(undefined, e.target.value, undefined)}
           />
           <TextField
             label="Prompt Base"
             fullWidth
+            size="small"
+            required
+            multiline
+            rows={3}
+            error={promptBase.length > 0 && (promptBase.length < 10 || promptBase.length > 500)}
+            helperText={(promptBase.length > 0 && (promptBase.length < 10 || promptBase.length > 500)) ? "Debe tener entre 10 y 500 caracteres" : ""}
             value={promptBase}
             onChange={(e) => setTemplateDetails(undefined, undefined, e.target.value)}
           />
-          <FormControl size="small" sx={{ minWidth: 160 }}>
+          <FormControl size="small" fullWidth required error={area.length === 0}>
             <InputLabel>Area</InputLabel>
             <Select
               value={area}
@@ -84,6 +98,8 @@ export const StructureControl: React.FC<{ onConfirm: () => void }> = ({ onConfir
               ))}
             </Select>
           </FormControl>
+        </Stack>
+        <Stack spacing={1}>
           {rows.map((row, index) => (
             <Box
               key={row.id}
@@ -152,7 +168,12 @@ export const StructureControl: React.FC<{ onConfirm: () => void }> = ({ onConfir
         fullWidth
         size="large"
         onClick={onConfirm}
-        disabled={promptBase.length === 0 || name.length === 0 || description.length === 0 || area.length === 0}
+        disabled={
+          name.length < 3 || name.length > 50 ||
+          description.length < 5 || description.length > 200 ||
+          promptBase.length < 10 || promptBase.length > 500 ||
+          area.length === 0
+        }
         sx={{ mt: 2, bgcolor: 'brand.red', '&:hover': { bgcolor: '#e04040' } }}
       >
         Confirmar Estructura
