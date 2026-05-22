@@ -7,7 +7,8 @@ export interface TemplateState {
     selectedBlockId: string | null;
     name: string;
     description: string;
-    basePrompt: string;
+    promptBase: string;
+    area: string;
 }
 
 export interface RowObject {

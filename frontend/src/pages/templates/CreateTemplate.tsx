@@ -12,6 +12,7 @@ import {
 } from '@mui/material'
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
 import { useTemplateStore } from '../../stores/templates.store'
+import { useNotification } from '../../hooks/useNotification'
 import { TemplateCanvas } from '../../components/canvas/TemplateCanvas'
 import { StructureControl } from '../../components/canvas/StructureControl'
 import { EditorControl } from '../../components/canvas/EditorControl'
@@ -19,6 +20,7 @@ import { TAB_LABELS} from '../../../../packages/shared/src/enums/tab-enum'
 
 export function CreateTemplate() {
   const navigate = useNavigate()
+  const { success, error } = useNotification()
   const [activeTab, setActiveTab] = useState(0)
 
   const { isSkeletonView, setIsSkeletonView, saveTemplate, resetStore } = useTemplateStore()
@@ -31,6 +33,18 @@ export function CreateTemplate() {
   const handleConfirmStructure = () => {
     setIsSkeletonView(false)
     setActiveTab(1)
+  }
+
+  const handleSaveTemplate = async () => {
+    try {
+      const res = await saveTemplate()
+      success(res?.message || 'Template creado exitosamente')
+      navigate('/dashboard')
+    } catch (err:unknown) {
+      if(err instanceof Error) {
+        error(err.message || 'Error al guardar el template')
+      }
+    }
   }
 
   return (
@@ -155,7 +169,7 @@ export function CreateTemplate() {
           >
             {
               !isSkeletonView && activeTab === 1 && (
-                <Button variant="contained" fullWidth onClick={saveTemplate}>
+                <Button variant="contained" fullWidth onClick={handleSaveTemplate} disabled={isSkeletonView}>
                   Guardar Template
                 </Button>
               )

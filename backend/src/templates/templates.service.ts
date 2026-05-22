@@ -34,6 +34,7 @@ export type TemplateListItem = {
   area: area_name;
   layout: JsonValue | null;
   orientation: string | null;
+  stateName: string;
   state: string;
   prompt_base: string | null;
   createdAt: string;
@@ -153,6 +154,7 @@ export class TemplatesService {
             area: template.areas.name,
             layout: template.layout,
             orientation: template.orientation ?? null,
+            stateName: template.template_states.name,
             state: template.template_states.code,
             prompt_base: template.prompt_base,
             createdAt: template.created_at.toISOString(),
@@ -207,13 +209,13 @@ export class TemplatesService {
     if (!area) {
       throw new BadRequestException({
         message: `Área no encontrada: ${template.area}`,
-       });
+      });
     }
 
     if (!state) {
       throw new BadRequestException({
         message: `Estado no encontrado: ${template.state}`,
-      }); 
+      });
     }
 
     try {

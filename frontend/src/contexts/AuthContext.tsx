@@ -44,7 +44,7 @@ export interface AuthContextType {
 
 export const MICROSOFT_SSO_USERS: User[] = [
   {
-    id: crypto.randomUUID(),
+    id: "368324de-372f-4961-9b37-f4e1b99d91c0",
     email: "superadmin@example.com",
     name: "Administrador",
     role: "ADMIN",
@@ -52,7 +52,7 @@ export const MICROSOFT_SSO_USERS: User[] = [
     state: "ACTIVE",
   },
   {
-    id: "a1e21954-62ea-4e65-a2f1-97d27fd1c9c7",
+    id: "4d0be22f-4265-4cbe-8728-77919ba72951",
     email: "funcional@example.com",
     name: "Funcional",
     role: "FUNCTIONAL",
@@ -60,7 +60,7 @@ export const MICROSOFT_SSO_USERS: User[] = [
     area: "COMUNICACION_INTERNA",
   },
   {
-    id: "17b864c8-c286-46f5-8119-272d915e2247",
+    id: "4b7c9f0d-d18d-43e5-9b27-6fd06bce0c1d",
     email: "user@example.com",
     name: "Usuario Normal",
     role: "USER",

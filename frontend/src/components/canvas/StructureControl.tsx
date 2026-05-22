@@ -8,16 +8,22 @@ import {
   ToggleButton,
   Divider,
   IconButton,
-  TextField
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem
 } from '@mui/material';
 import { useTemplateStore } from '../../stores/templates.store';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { CropLandscape, CropPortrait } from '@mui/icons-material';
+import { AreaName, AreaNameLabel } from '../../../../packages/shared/src/enums/area-name.enum';
+import { enumToOptions } from '../../../../packages/shared/src/utils/enum-to-options';
 
 export const StructureControl: React.FC<{ onConfirm: () => void }> = ({ onConfirm }) => {
-  const { layoutMode, setMode, rows, addRow, removeRow, addColumn, removeColumn, setTemplateDetails, name, description, basePrompt } = useTemplateStore();
+  const { layoutMode, setMode, rows, addRow, removeRow, addColumn, removeColumn, setTemplateDetails, name, description, promptBase, area } = useTemplateStore();
 
   return (
     <Stack spacing={3}>
@@ -61,9 +67,23 @@ export const StructureControl: React.FC<{ onConfirm: () => void }> = ({ onConfir
           <TextField
             label="Prompt Base"
             fullWidth
-            value={basePrompt}
-            onChange={(e) => setTemplateDetails( undefined, undefined, e.target.value)}
+            value={promptBase}
+            onChange={(e) => setTemplateDetails(undefined, undefined, e.target.value)}
           />
+          <FormControl size="small" sx={{ minWidth: 160 }}>
+            <InputLabel>Area</InputLabel>
+            <Select
+              value={area}
+              label="Area"
+              onChange={(e) => setTemplateDetails(undefined, undefined, undefined, e.target.value)}
+            >
+              {enumToOptions(AreaName, AreaNameLabel).map(({ value, label }) => (
+                <MenuItem key={value} value={value}>
+                  {label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
           {rows.map((row, index) => (
             <Box
               key={row.id}
@@ -132,7 +152,7 @@ export const StructureControl: React.FC<{ onConfirm: () => void }> = ({ onConfir
         fullWidth
         size="large"
         onClick={onConfirm}
-        disabled={basePrompt.length === 0 || name.length === 0 || description.length === 0}
+        disabled={promptBase.length === 0 || name.length === 0 || description.length === 0 || area.length === 0}
         sx={{ mt: 2, bgcolor: 'brand.red', '&:hover': { bgcolor: '#e04040' } }}
       >
         Confirmar Estructura
