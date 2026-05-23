@@ -180,7 +180,7 @@ export function BrandkitPage() {
             ---------------------------------------------------------------- */}
             <Box>
                 <Stack spacing={1} sx={{ mb: 2 }}>
-                <Typography variant="subtitle1" fontWeight={700}>
+                <Typography variant="subtitle1">
                     Assets del brandkit
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
