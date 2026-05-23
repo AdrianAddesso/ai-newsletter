@@ -25,14 +25,15 @@ interface NavLink {
 }
 
 const navLinks: NavLink[] = [
-  { label: 'Dashboard', path: '/dashboard', roles: ['ADMIN', 'FUNCTIONAL', 'USER'] },
-  { label: 'Biblioteca de Templates', path: '/templates/biblioteca', roles: ['ADMIN', 'FUNCTIONAL', 'USER'] },
-  { label: 'Templates', path: '/templates', roles: ['ADMIN', 'FUNCTIONAL'] },
-  { label: 'Analitica', path: '/analytics', roles: ['ADMIN', 'FUNCTIONAL'] },
-  { label: 'Revisiones', path: '/reviews', roles: ['ADMIN', 'FUNCTIONAL'] },
-  { label: 'Usuarios', path: '/users', roles: ['ADMIN'] },
-  //{ label: 'Configuracion', path: '/settings', roles: ['ADMIN', 'FUNCTIONAL'] },
-]
+  {
+    label: "Newsletters",
+    path: "/dashboard",
+    roles: ["ADMIN", "FUNCTIONAL", "USER"],
+  },
+  { label: "Templates", path: "/templates", roles: ["ADMIN", "FUNCTIONAL"] },
+  { label: "Analitica", path: "/analytics", roles: ["ADMIN", "FUNCTIONAL"] },
+  { label: "Revisiones", path: "/reviews", roles: ["ADMIN", "FUNCTIONAL"] },
+];
 
 export function Navigation() {
   const navigate = useNavigate()
@@ -63,38 +64,46 @@ export function Navigation() {
   }
 
   return (
-    <AppBar position="static" elevation={0} sx={{ bgcolor: 'brand.red', borderBottom: '1px solid', borderColor: 'divider' }}>
+    <AppBar
+      position="static"
+      elevation={0}
+      sx={{
+        bgcolor: "brand.red",
+        borderBottom: "1px solid",
+        borderColor: "divider",
+      }}
+    >
       <Container maxWidth="lg" disableGutters>
         <Toolbar
           sx={{
             px: theme.nestle.page.sectionPaddingX,
             py: 2,
-            justifyContent: 'space-between',
+            justifyContent: "space-between",
           }}
         >
           {/* Logo */}
           <Box
             sx={{
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
               gap: 2,
             }}
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate("/dashboard")}
           >
             <Box
               component="img"
               src={theme.nestle.assets.logos.nestWhite}
               alt="Nestle"
-              sx={{ width: 80, height: 'auto' }}
+              sx={{ width: 80, height: "auto" }}
             />
             <Box>
               <Typography
                 variant="h6"
                 sx={{
-                  color: 'brand.white',
+                  color: "brand.white",
                   fontWeight: 700,
-                  fontSize: '0.875rem',
+                  fontSize: "0.875rem",
                 }}
               >
                 NEWSLETTER
@@ -109,8 +118,8 @@ export function Navigation() {
             useFlexGap
             sx={{
               flex: 1,
-              justifyContent: 'center',
-              display: { xs: 'none', md: 'flex' },
+              justifyContent: "center",
+              display: { xs: "none", md: "flex" },
             }}
           >
             {visibleLinks.map((link) => (
@@ -118,16 +127,18 @@ export function Navigation() {
                 key={link.path}
                 onClick={() => navigate(link.path)}
                 sx={{
-                  color: isActive(link.path) ? 'brand.darkOak' : 'brand.white',
-                  bgcolor: isActive(link.path) ? 'brand.white' : 'transparent',
+                  color: isActive(link.path) ? "brand.darkOak" : "brand.white",
+                  bgcolor: isActive(link.path) ? "brand.white" : "transparent",
                   borderRadius: 1,
                   px: 2,
                   py: 1,
-                  fontSize: '0.875rem',
+                  fontSize: "0.875rem",
                   fontWeight: 600,
-                  transition: 'all 0.2s',
-                  '&:hover': {
-                    bgcolor: isActive(link.path) ? 'brand.white' : 'rgba(255,255,255,0.1)',
+                  transition: "all 0.2s",
+                  "&:hover": {
+                    bgcolor: isActive(link.path)
+                      ? "brand.white"
+                      : "rgba(255,255,255,0.1)",
                   },
                 }}
               >
@@ -140,15 +151,19 @@ export function Navigation() {
           <Stack
             direction="row"
             spacing={2}
-            sx={{ alignItems: 'center', minWidth: 200 }}
+            sx={{ alignItems: "center", minWidth: 200 }}
           >
-            <Stack direction="column" spacing={0.5} sx={{ display: { xs: 'none', sm: 'flex' } }}>
+            <Stack
+              direction="column"
+              spacing={0.5}
+              sx={{ display: { xs: "none", sm: "flex" } }}
+            >
               <Typography
                 variant="body2"
                 sx={{
-                  color: 'brand.white',
+                  color: "brand.white",
                   fontWeight: 600,
-                  textAlign: 'right',
+                  textAlign: "right",
                 }}
               >
                 {user.name}
@@ -156,8 +171,8 @@ export function Navigation() {
               <Typography
                 variant="caption"
                 sx={{
-                  color: 'rgba(255,255,255,0.8)',
-                  textAlign: 'right',
+                  color: "rgba(255,255,255,0.8)",
+                  textAlign: "right",
                 }}
               >
                 {getRoleLabel(user.role)}
@@ -167,13 +182,13 @@ export function Navigation() {
             <Avatar
               onClick={handleMenuOpen}
               sx={{
-                cursor: 'pointer',
-                bgcolor: 'brand.white',
-                color: 'brand.red',
+                cursor: "pointer",
+                bgcolor: "brand.white",
+                color: "brand.red",
                 fontWeight: 700,
-                transition: 'all 0.2s',
-                '&:hover': {
-                  transform: 'scale(1.1)',
+                transition: "all 0.2s",
+                "&:hover": {
+                  transform: "scale(1.1)",
                 },
               }}
             >
@@ -204,11 +219,28 @@ export function Navigation() {
                 </Stack>
               </MenuItem>
               <Divider />
-             {/*<MenuItem onClick={() => { handleMenuClose(); navigate('/settings') }}>
-                Configuracion
-              </MenuItem>*/}
+              {user.role.includes("ADMIN") && (
+                <MenuItem
+                  onClick={() => {
+                    handleMenuClose();
+                    navigate("/users");
+                  }}
+                >
+                  Usuarios
+                </MenuItem>
+              )}
+              {user.role.includes("ADMIN") && (
+                <MenuItem
+                  onClick={() => {
+                    handleMenuClose();
+                    navigate("/admin");
+                  }}
+                >
+                  Admin Panel
+                </MenuItem>
+              )}
               <Divider />
-              <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
+              <MenuItem onClick={handleLogout} sx={{ color: "error.main" }}>
                 Cerrar sesión
               </MenuItem>
             </Menu>
@@ -216,5 +248,5 @@ export function Navigation() {
         </Toolbar>
       </Container>
     </AppBar>
-  )
+  );
 }

@@ -7,8 +7,8 @@ import { ReviewDetailPage } from '../../pages/ReviewDetailPage'
 import TemplatesPage from '../../pages/TemplatesPage'
 import { UsersPage } from '../../pages/UsersPage'
 import { CreateTemplate } from '../../pages/templates/CreateTemplate'
-import { BackofficePage } from "../../pages/backoffice/BackofficePage";
-import { BrandkitPage } from "../../pages/backoffice/BrandkitPage";
+import { BackofficePage } from "../../pages/admin/AdminPanelPage";
+import { BrandkitPage } from "../../pages/admin/BrandkitPage";
 
 export const adminRoutes = (
   <>
@@ -77,7 +77,7 @@ export const adminRoutes = (
       }
     />
     <Route
-      path="/backoffice"
+      path="/admin"
       element={
         <ProtectedRoute allowedRoles={["ADMIN"]}>
           <ProtectedLayout>
@@ -87,7 +87,7 @@ export const adminRoutes = (
       }
     />
     <Route
-      path="/backoffice/brandkit"
+      path="/admin/brandkit"
       element={
         <ProtectedRoute allowedRoles={["ADMIN"]}>
           <ProtectedLayout>

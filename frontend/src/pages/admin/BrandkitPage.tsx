@@ -15,11 +15,11 @@ import {
   SaveOutlined as SaveIcon,
 } from "@mui/icons-material";
 import { useNavigate, useSearchParams } from "react-router";
-import { BrandInfo } from "../../components/backoffice/branding/BrandInfo";
-import { TypographyList } from "../../components/backoffice/branding/TypographyList";
-import { ColorList } from "../../components/backoffice/branding/ColorList";
-import { AssetsList } from "../../components/backoffice/assets/AssetsList";
-import type { BrandInfoValues } from "../../components/backoffice/branding/BrandInfo";
+import { BrandInfo } from "../../components/admin/branding/BrandInfo";
+import { TypographyList } from "../../components/admin/branding/TypographyList";
+import { ColorList } from "../../components/admin/branding/ColorList";
+import { AssetsList } from "../../components/admin/assets/AssetsList";
+import type { BrandInfoValues } from "../../components/admin/branding/BrandInfo";
 
 // ---------------------------------------------------------------------------
 // Page

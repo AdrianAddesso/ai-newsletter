@@ -15,8 +15,8 @@ export const routes = {
   },
 
   users: '/users',
-  settings: '/settings',
-  backoffice: '/backoffice',
-  brandkit: '/backoffice/brandkit',
+  //settings: '/settings',
+  backoffice: '/admin',
+  brandkit: '/admin/brandkit',
   demo: '/demo',
 }

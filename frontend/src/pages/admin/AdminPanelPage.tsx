@@ -13,9 +13,9 @@ import {
   PaletteOutlined as BrandingIcon,
 } from "@mui/icons-material";
 import { useState } from "react";
-import { AiConfig } from "../../components/backoffice/ai/AiConfig";
-import { AssetsList } from "../../components/backoffice/assets/AssetsList";
-import { BrandkitList } from "../../components/backoffice/branding/BrandkitList";
+import { AiConfig } from "../../components/admin/ai/AiConfig";
+import { AssetsList } from "../../components/admin/assets/AssetsList";
+import { BrandkitList } from "../../components/admin/branding/BrandkitList";
 
 
 interface TabPanelProps {
@@ -64,7 +64,7 @@ function TabPanel({ children, value, index }: TabPanelProps) {
             <Stack spacing={4}>
             {/* Page header */}
             <Stack spacing={1}>
-                <Typography variant="h2">Backoffice</Typography>
+                <Typography variant="h2">Admin Panel</Typography>
                 <Typography variant="body1" color="text.secondary">
                 Configuración global de IA, assets y branding de la plataforma.
                 </Typography>
