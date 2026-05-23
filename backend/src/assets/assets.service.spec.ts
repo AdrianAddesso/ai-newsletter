@@ -1,9 +1,15 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { asset_type } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
 import { AssetsService } from './assets.service';
 import type { UploadedAssetFile } from './dto/upload-asset.dto';
 import { KEYWORD_MAX_CHARS } from '../../../packages/shared/src/enums/assets-config';
+
+const createdAt = new Date('2026-05-23T12:00:00.000Z');
+const createdAtIso = createdAt.toISOString();
+const updatedAt = new Date('2026-05-23T12:00:00.000Z');
+const updatedAtIso = updatedAt.toISOString();
 
 function createService() {
   const uploadObjectMock = jest.fn().mockResolvedValue(undefined);
@@ -11,11 +17,14 @@ function createService() {
     .fn()
     .mockResolvedValue('http://localhost:9000/nestle-ai-newsletter-assets/fake');
   const getObjectTextMock = jest.fn().mockResolvedValue('<svg><g id="Text" /></svg>');
+  const updateAssetMock = jest.fn();
   const prisma = {
     assets: {
       create: jest.fn().mockResolvedValue({
         id: 'asset-id',
         name: 'banner.png',
+        created_at: createdAt,
+        updated_at: updatedAt,
         type: 'IMAGE',
         bucket: 'nestle-ai-newsletter-assets',
         object_key: 'assets/uploads/image/banner-fake.png',
@@ -24,6 +33,8 @@ function createService() {
         {
           id: 'seed-asset-id',
           name: 'dark-green.svg',
+          created_at: createdAt,
+          updated_at: updatedAt,
           type: 'SHAPE',
           bucket: 'nestle-ai-newsletter-assets',
           object_key:
@@ -31,7 +42,7 @@ function createService() {
         },
       ]),
       findFirst: jest.fn().mockResolvedValue(null),
-      update: jest.fn(),
+      update: updateAssetMock,
     },
   } as unknown as PrismaService;
 
@@ -49,6 +60,7 @@ function createService() {
       uploadObjectMock,
       getSignedUrlMock,
       getObjectTextMock,
+      updateAssetMock,
       prisma,
   };
 }
@@ -75,6 +87,8 @@ describe('AssetsService', () => {
         {
           id: 'asset-id',
           name: 'banner.png',
+          created_at: createdAtIso,
+          updated_at: updatedAtIso,
           type: 'IMAGE',
           url: 'http://localhost:9000/nestle-ai-newsletter-assets/fake',
           svgTemplate: null,
@@ -99,6 +113,8 @@ describe('AssetsService', () => {
         {
           id: 'seed-asset-id',
           name: 'dark-green.svg',
+          created_at: createdAtIso,
+          updated_at: updatedAtIso,
           type: 'SHAPE',
           url: 'http://localhost:9000/nestle-ai-newsletter-assets/fake',
           svgTemplate: null,
@@ -129,6 +145,87 @@ describe('AssetsService', () => {
     ).rejects.toBeInstanceOf(BadRequestException);
   });
 
+  it('updates persisted asset metadata', async () => {
+    const { service, prisma, updateAssetMock } = createService();
+
+    (prisma.assets.findFirst as jest.Mock).mockResolvedValue({
+      id: 'asset-id',
+      type: asset_type.IMAGE,
+      bucket: 'nestle-ai-newsletter-assets',
+      object_key: 'assets/uploads/image/banner-fake.png',
+    });
+    updateAssetMock.mockResolvedValue({
+      id: 'asset-id',
+      name: 'Updated banner',
+      created_at: createdAt,
+      updated_at: updatedAt,
+      type: asset_type.LOGO,
+      bucket: 'nestle-ai-newsletter-assets',
+      object_key: 'assets/uploads/image/banner-fake.png',
+    });
+
+    await expect(
+      service.updateAsset('asset-id', {
+        name: ' Updated banner ',
+        type: asset_type.LOGO,
+      }),
+    ).resolves.toEqual({
+      id: 'asset-id',
+      name: 'Updated banner',
+      created_at: createdAtIso,
+      updated_at: updatedAtIso,
+      type: asset_type.LOGO,
+      url: 'http://localhost:9000/nestle-ai-newsletter-assets/fake',
+      svgTemplate: null,
+      maxChars: null,
+    });
+
+    expect(updateAssetMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: {
+          name: 'Updated banner',
+          type: asset_type.LOGO,
+        },
+      }),
+    );
+  });
+
+  it('soft deletes persisted assets', async () => {
+    const { service, prisma, updateAssetMock } = createService();
+
+    (prisma.assets.findFirst as jest.Mock).mockResolvedValue({
+      id: 'asset-id',
+      type: asset_type.IMAGE,
+      bucket: 'nestle-ai-newsletter-assets',
+      object_key: 'assets/uploads/image/banner-fake.png',
+    });
+    updateAssetMock.mockResolvedValue({
+      id: 'asset-id',
+    });
+
+    await expect(service.deleteAsset('asset-id')).resolves.toBeUndefined();
+
+    expect(updateAssetMock).toHaveBeenCalledWith({
+      where: {
+        id: 'asset-id',
+      },
+      data: {
+        deleted_at: expect.any(Date) as Date,
+      },
+    });
+  });
+
+  it('rejects updates for missing assets', async () => {
+    const { service } = createService();
+
+    await expect(
+      service.updateAsset('missing-id', {
+        name: 'Missing asset',
+        type: asset_type.IMAGE,
+      }),
+    ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
   it('caches keyword svg templates across repeated reads', async () => {
     const { service, prisma, getObjectTextMock } = createService();
 
@@ -136,6 +233,8 @@ describe('AssetsService', () => {
       {
         id: 'keyword-asset-id',
         name: 'keyword-template.svg',
+        created_at: createdAt,
+        updated_at: updatedAt,
         type: 'KEYWORD',
         bucket: 'nestle-ai-newsletter-assets',
         object_key: 'assets/keywords/keyword-template.svg',
@@ -147,6 +246,8 @@ describe('AssetsService', () => {
         {
           id: 'keyword-asset-id',
           name: 'keyword-template.svg',
+          created_at: createdAtIso,
+          updated_at: updatedAtIso,
           type: 'KEYWORD',
           url: 'http://localhost:9000/nestle-ai-newsletter-assets/fake',
           svgTemplate: '<svg><g id="Text" /></svg>',

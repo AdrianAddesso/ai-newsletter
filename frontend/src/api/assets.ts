@@ -12,6 +12,8 @@ export type AssetType =
 export type UploadedAsset = {
   id: string
   name: string
+  created_at: string
+  updated_at: string
   url: string
   type: AssetType
   svgTemplate?: string | null
@@ -23,14 +25,16 @@ export type UploadAssetsResponse = {
   assets: UploadedAsset[]
 }
 
+export type UpdateAssetRequest = {
+  name: string
+  type: Exclude<AssetType, 'BLOCK'>
+}
+
 export async function listAssets(
   type?: AssetType,
 ): Promise<UploadAssetsResponse> {
   const response = await axios.get<UploadAssetsResponse>('/assets', {
     params: type ? { type } : undefined,
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    }
   })
 
   return response.data
@@ -53,4 +57,16 @@ export async function uploadAssets(
   )
 
   return response.data
+}
+
+export async function updateAsset(
+  id: string,
+  data: UpdateAssetRequest,
+): Promise<UploadedAsset> {
+  const response = await axios.patch<UploadedAsset>(`/assets/${id}`, data)
+  return response.data
+}
+
+export async function deleteAsset(id: string): Promise<void> {
+  await axios.delete(`/assets/${id}`)
 }

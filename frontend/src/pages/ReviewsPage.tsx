@@ -206,25 +206,29 @@ export function ReviewsPage() {
   return (
     <Box
       sx={{
-        py: theme.nestle.page.sectionPaddingY,
-        px: theme.nestle.page.sectionPaddingX,
-        bgcolor: 'background.default',
-        minHeight: '100vh',
+        py: 4,
+        px: 3,
+        bgcolor: "background.default",
+        height: "100vh",
+        overflowY: "auto",
+        scrollbarGutter: "stable",
       }}
     >
       <Container maxWidth="lg" disableGutters>
         <Stack spacing={4}>
-
           {/* Header */}
-          <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'flex-end' }}>
+          <Stack
+            direction="row"
+            sx={{ justifyContent: "space-between", alignItems: "flex-end" }}
+          >
             <Stack spacing={1}>
               <Typography variant="h2">Revisión de Newsletters</Typography>
               <Typography variant="body1" color="text.secondary">
                 {isAdmin
-                  ? 'Revisá todos los newsletters pendientes.'
+                  ? "Revisá todos los newsletters pendientes."
                   : userArea
                     ? `Mostrando newsletters de tu área: ${AreaNameLabel[userArea]}.`
-                    : 'Mostrando newsletters para revisión.'}
+                    : "Mostrando newsletters para revisión."}
               </Typography>
             </Stack>
 
@@ -232,15 +236,19 @@ export function ReviewsPage() {
           </Stack>
 
           {/* Tabla */}
-          <TableContainer component={Card} variant="outlined" sx={{ borderRadius: 2 }}>
+          <TableContainer
+            component={Card}
+            variant="outlined"
+            sx={{ borderRadius: 2 }}
+          >
             <Table>
-              <TableHead sx={{ bgcolor: 'action.hover' }}>
+              <TableHead sx={{ bgcolor: "action.hover" }}>
                 <TableRow>
-                  <TableCell>{sortLabel('Título', 'title')}</TableCell>
-                  <TableCell>{sortLabel('Autor', 'author')}</TableCell>
-                  <TableCell>{sortLabel('Área', 'area')}</TableCell>
-                  <TableCell>{sortLabel('Estado', 'status')}</TableCell>
-                  <TableCell>{sortLabel('Fecha', 'submittedDate')}</TableCell>
+                  <TableCell>{sortLabel("Título", "title")}</TableCell>
+                  <TableCell>{sortLabel("Autor", "author")}</TableCell>
+                  <TableCell>{sortLabel("Área", "area")}</TableCell>
+                  <TableCell>{sortLabel("Estado", "status")}</TableCell>
+                  <TableCell>{sortLabel("Fecha", "submittedDate")}</TableCell>
                   <TableCell align="right">Acciones</TableCell>
                 </TableRow>
               </TableHead>
@@ -249,7 +257,7 @@ export function ReviewsPage() {
                 {filteredReviews.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
-                      <Stack spacing={1} sx={{ alignItems: 'center' }}>
+                      <Stack spacing={1} sx={{ alignItems: "center" }}>
                         <Typography variant="h6">¡Todo al día! 🎉</Typography>
                         <Typography variant="body2" color="text.secondary">
                           No hay newsletters pendientes de revisión por ahora.
@@ -261,12 +269,14 @@ export function ReviewsPage() {
                   filteredReviews.slice(0, limit).map((review) => (
                     <TableRow key={review.id} hover>
                       <TableCell>
-                        <Typography variant="subtitle2">{review.title}</Typography>
+                        <Typography variant="subtitle2">
+                          {review.title}
+                        </Typography>
                         <Typography
                           variant="caption"
                           color="text.secondary"
                           noWrap
-                          sx={{ maxWidth: 220, display: 'block' }}
+                          sx={{ maxWidth: 220, display: "block" }}
                         >
                           {review.content}
                         </Typography>
@@ -288,13 +298,21 @@ export function ReviewsPage() {
                       </TableCell>
 
                       <TableCell align="right">
-                        <Stack direction="row" spacing={0.5} sx={{ justifyContent: 'flex-end' }}>
+                        <Stack
+                          direction="row"
+                          spacing={0.5}
+                          sx={{ justifyContent: "flex-end" }}
+                        >
                           {actionableReviewStatuses.has(review.status) && (
                             <Tooltip title="Revisar">
                               <IconButton
                                 size="small"
                                 color="primary"
-                                onClick={() => navigate(`/reviews/${review.id}`, { state: { review } })}
+                                onClick={() =>
+                                  navigate(`/reviews/${review.id}`, {
+                                    state: { review },
+                                  })
+                                }
                               >
                                 <ReviewIcon fontSize="small" />
                               </IconButton>
@@ -309,16 +327,22 @@ export function ReviewsPage() {
             </Table>
 
             {limit < filteredReviews.length && (
-              <Box sx={{ p: 2, textAlign: 'center', borderTop: '1px solid', borderColor: 'divider' }}>
+              <Box
+                sx={{
+                  p: 2,
+                  textAlign: "center",
+                  borderTop: "1px solid",
+                  borderColor: "divider",
+                }}
+              >
                 <Button onClick={() => setLimit((l) => l + 5)}>
                   Cargar más
                 </Button>
               </Box>
             )}
           </TableContainer>
-
         </Stack>
       </Container>
     </Box>
-  )
+  );
 }

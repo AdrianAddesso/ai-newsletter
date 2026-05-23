@@ -177,14 +177,7 @@ export function UsersPage() {
   const theme = useTheme()
 
   return (
-    <Box
-      sx={{
-        py: theme.nestle.page.sectionPaddingY,
-        px: theme.nestle.page.sectionPaddingX,
-        bgcolor: "background.default",
-        minHeight: "100vh",
-      }}
-    >
+    <Box sx={{ py: 4, px: 3, bgcolor: "background.default" }}>
       <Container maxWidth="lg" disableGutters>
         <Stack spacing={4}>
           <Stack
