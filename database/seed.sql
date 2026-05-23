@@ -537,3 +537,36 @@ WHERE bk.deleted_at IS NULL
   AND bk.active = TRUE
   AND c.deleted_at IS NULL
 ON CONFLICT (brand_kit_id, color_id) DO NOTHING;
+
+-- ========================================
+-- AI CONFIG
+-- ========================================
+
+INSERT INTO public.ai_config (name, type, temperature, top_p, top_k, max_output_tokens)
+VALUES
+  ('Newsletter Generation', 'CREATE',     0.5, 0.8, 20, 4000),
+  ('Text Improvement',      'REGENERATE', 0.1, 0.8, 20, 4000)
+ON CONFLICT (type) DO UPDATE
+SET
+  name              = EXCLUDED.name,
+  temperature       = EXCLUDED.temperature,
+  top_p             = EXCLUDED.top_p,
+  top_k             = EXCLUDED.top_k,
+  max_output_tokens = EXCLUDED.max_output_tokens,
+  updated_at        = now();
+
+
+-- ========================================
+-- PROMPT COMMANDS
+-- ========================================
+
+INSERT INTO public.prompt_commands (name, type, display_order, instruction)
+VALUES
+  ('System instruction',       'REGENERATE', 0, 'You are a Spanish copy editor for internal Nestle newsletters. Improve the text for clarity, fluency, tone, and readability while keeping the original meaning. Return only the improved text in Spanish, with no markdown, bullets, or explanations.'),
+  ('Role definition',          'CREATE',     1, 'You are a Spanish copywriter for internal Nestle newsletters.'),
+  ('Task instruction',         'CREATE',     2, 'Generate concise, brand-safe newsletter copy in Spanish for an internal communications team.'),
+  ('Output format instruction','CREATE',     3, 'Return only valid JSON with this exact shape:'),
+  ('JSON schema example',      'CREATE',     4, '{"blocks":[{"id":"header","name":"Encabezado","text":"...","backgroundColor":"#FFFFFF"},{"id":"headline","name":"Titulo principal","text":"...","backgroundColor":"#97CAEB"},{"id":"body","name":"Cuerpo","text":"...","backgroundColor":"#FFFFFF"},{"id":"cta","name":"Llamado a la accion","text":"...","backgroundColor":"#FFC600"}]}'),
+  ('Format constraints',       'CREATE',     5, 'Do not include markdown, comments, explanations, HTML, or fields not shown in the schema.'),
+  ('Source material constraint','CREATE',    6, 'Use the supplied structured context as the only source material. If a value is missing, write a neutral internal-newsletter fallback.')
+ON CONFLICT DO NOTHING;
