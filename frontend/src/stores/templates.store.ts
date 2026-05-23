@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
-import { CONSTANTS_CANVAS } from '../../../packages/shared/src/enums/templates-canvas'
+import { CONSTANTS_CANVAS } from '@shared/enums/templates-canvas'
 import { type TemplateState } from '../interfaces/interfaces.templates';
 import type { BlockDefinitionDTO } from '../../../packages/shared/src/types/block.types';
 import type { CreateTemplateResponse} from '../../../packages/shared/src/types/template.types';

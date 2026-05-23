@@ -18,10 +18,10 @@ import type { SubmitHandler } from 'react-hook-form';
 
 import type { User } from '../contexts/AuthContext';
 
-import { AreaName, AreaNameLabel } from '../../../packages/shared/src/enums/area-name.enum';
-import { UserRole, UserRoleLabel } from '../../../packages/shared/src/enums/user-role.enum';
-import { UserStatus, UserStatusLabel } from '../../../packages/shared/src/enums/user-status.enum';
-import { enumToOptions } from '../../../packages/shared/src/utils/enum-to-options';
+import { AreaName, AreaNameLabel } from '@shared/enums/area-name.enum';
+import { UserRole, UserRoleLabel } from '@shared/enums/user-role.enum';
+import { UserStatus, UserStatusLabel } from '@shared/enums/user-status.enum';
+import { enumToOptions } from '@shared/utils/enum-to-options';
 
 const STATE_OPTIONS = enumToOptions(UserStatus, UserStatusLabel);
 const AREA_OPTIONS = enumToOptions(AreaName, AreaNameLabel);

@@ -22,7 +22,7 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import {
   NewsletterStatus,
   NewsletterStatusLabel,
-} from '../../../../packages/shared/src/enums/newsletter-status.enum';
+} from '@shared/enums/newsletter-status.enum';
 import { ModalDelete } from '../ModalDelete';
 import { TableSortLabel } from '@mui/material';
 import Tooltip from "@mui/material/Tooltip";

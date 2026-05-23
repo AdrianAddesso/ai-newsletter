@@ -1,5 +1,5 @@
 import { Card, CardActions, Button } from "@mui/material";
-import type { BlockInstance } from "../../../../../../packages/shared/src/types/block.types";
+import type { BlockInstance } from "@shared/types/block.types";
 
 interface Props {
   block: BlockInstance;

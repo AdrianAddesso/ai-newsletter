@@ -3,7 +3,7 @@ import { Chip } from '@mui/material'
 import {
   NewsletterStatus,
   NewsletterStatusLabel,
-} from '../../../../../packages/shared/src/enums/newsletter-status.enum'
+} from '@shared/enums/newsletter-status.enum'
 
 type Props = {
   status: NewsletterStatus

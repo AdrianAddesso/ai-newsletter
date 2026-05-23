@@ -2,7 +2,7 @@ import axios from 'axios'
 import type {
   BlockDefinitionDTO,
   BlockInstance,
-} from '../../../packages/shared/src/types/block.types'
+} from '@shared/types/block.types'
 
 export type SaveBlocksRequest = {
   blocks: Omit<BlockInstance, 'localId'>[]
