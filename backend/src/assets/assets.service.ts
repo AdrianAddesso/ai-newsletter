@@ -22,6 +22,7 @@ type PersistedAsset = {
   id: string;
   name: string;
   created_at: Date;
+  updated_at: Date;
   type: asset_type;
   bucket: string;
   object_key: string;
@@ -96,6 +97,7 @@ export class AssetsService {
               id: true,
               name: true,
               created_at: true,
+              updated_at: true,
               type: true,
               bucket: true,
               object_key: true,
@@ -135,6 +137,7 @@ export class AssetsService {
           id: true,
           name: true,
           created_at: true,
+          updated_at: true,
           type: true,
           bucket: true,
           object_key: true,
@@ -197,6 +200,7 @@ export class AssetsService {
         id: true,
         name: true,
         created_at: true,
+        updated_at: true,
         type: true,
         bucket: true,
         object_key: true,
@@ -286,6 +290,7 @@ export class AssetsService {
         id: true,
         name: true,
         created_at: true,
+        updated_at: true,
         type: true,
         bucket: true,
         object_key: true,
@@ -313,6 +318,7 @@ export class AssetsService {
             id: true,
             name: true,
             created_at: true,
+            updated_at: true,
             type: true,
             bucket: true,
             object_key: true,
@@ -337,6 +343,7 @@ export class AssetsService {
             id: true,
             name: true,
             created_at: true,
+            updated_at: true,
             type: true,
             bucket: true,
             object_key: true,
@@ -374,6 +381,7 @@ export class AssetsService {
       id: asset.id,
       name: asset.name,
       created_at: asset.created_at.toISOString(),
+      updated_at: asset.updated_at.toISOString(),
       type: asset.type,
       url: await this.storageService.getSignedUrl(
         asset.bucket,

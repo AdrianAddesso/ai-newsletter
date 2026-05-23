@@ -13,6 +13,7 @@ export type UploadedAsset = {
   id: string
   name: string
   created_at: string
+  updated_at: string
   url: string
   type: AssetType
   svgTemplate?: string | null

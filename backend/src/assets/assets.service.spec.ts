@@ -8,6 +8,8 @@ import { KEYWORD_MAX_CHARS } from '../../../packages/shared/src/enums/assets-con
 
 const createdAt = new Date('2026-05-23T12:00:00.000Z');
 const createdAtIso = createdAt.toISOString();
+const updatedAt = new Date('2026-05-23T12:00:00.000Z');
+const updatedAtIso = updatedAt.toISOString();
 
 function createService() {
   const uploadObjectMock = jest.fn().mockResolvedValue(undefined);
@@ -22,6 +24,7 @@ function createService() {
         id: 'asset-id',
         name: 'banner.png',
         created_at: createdAt,
+        updated_at: updatedAt,
         type: 'IMAGE',
         bucket: 'nestle-ai-newsletter-assets',
         object_key: 'assets/uploads/image/banner-fake.png',
@@ -31,6 +34,7 @@ function createService() {
           id: 'seed-asset-id',
           name: 'dark-green.svg',
           created_at: createdAt,
+          updated_at: updatedAt,
           type: 'SHAPE',
           bucket: 'nestle-ai-newsletter-assets',
           object_key:
@@ -84,6 +88,7 @@ describe('AssetsService', () => {
           id: 'asset-id',
           name: 'banner.png',
           created_at: createdAtIso,
+          updated_at: updatedAtIso,
           type: 'IMAGE',
           url: 'http://localhost:9000/nestle-ai-newsletter-assets/fake',
           svgTemplate: null,
@@ -109,6 +114,7 @@ describe('AssetsService', () => {
           id: 'seed-asset-id',
           name: 'dark-green.svg',
           created_at: createdAtIso,
+          updated_at: updatedAtIso,
           type: 'SHAPE',
           url: 'http://localhost:9000/nestle-ai-newsletter-assets/fake',
           svgTemplate: null,
@@ -152,6 +158,7 @@ describe('AssetsService', () => {
       id: 'asset-id',
       name: 'Updated banner',
       created_at: createdAt,
+      updated_at: updatedAt,
       type: asset_type.LOGO,
       bucket: 'nestle-ai-newsletter-assets',
       object_key: 'assets/uploads/image/banner-fake.png',
@@ -166,6 +173,7 @@ describe('AssetsService', () => {
       id: 'asset-id',
       name: 'Updated banner',
       created_at: createdAtIso,
+      updated_at: updatedAtIso,
       type: asset_type.LOGO,
       url: 'http://localhost:9000/nestle-ai-newsletter-assets/fake',
       svgTemplate: null,
@@ -226,6 +234,7 @@ describe('AssetsService', () => {
         id: 'keyword-asset-id',
         name: 'keyword-template.svg',
         created_at: createdAt,
+        updated_at: updatedAt,
         type: 'KEYWORD',
         bucket: 'nestle-ai-newsletter-assets',
         object_key: 'assets/keywords/keyword-template.svg',
@@ -238,6 +247,7 @@ describe('AssetsService', () => {
           id: 'keyword-asset-id',
           name: 'keyword-template.svg',
           created_at: createdAtIso,
+          updated_at: updatedAtIso,
           type: 'KEYWORD',
           url: 'http://localhost:9000/nestle-ai-newsletter-assets/fake',
           svgTemplate: '<svg><g id="Text" /></svg>',

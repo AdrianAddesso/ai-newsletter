@@ -58,8 +58,8 @@ const TYPE_COLORS: Record<
   BLOCK: "default",
 };
 
-const formatCreatedAt = (createdAt: string): string => {
-  const date = new Date(createdAt);
+const formatAssetDate = (value: string): string => {
+  const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) {
     return "-";
@@ -123,16 +123,21 @@ const filtered = useMemo(() => {
     .filter((asset) => {
 
       const typeLabel = ASSET_TYPE_LABELS[asset.type] || asset.type;
-      const dateLabel = asset.created_at
-        ? formatCreatedAt(asset.created_at)
+      const createdAtLabel = asset.created_at
+        ? formatAssetDate(asset.created_at)
+        : "";
+      const updatedAtLabel = asset.updated_at
+        ? formatAssetDate(asset.updated_at)
         : "";
 
       return [
         asset.name,
         asset.url,
-        asset.created_at, 
+        asset.created_at,
+        asset.updated_at,
         typeLabel,
-        dateLabel,
+        createdAtLabel,
+        updatedAtLabel,
       ].some((value) => value?.toLowerCase().includes(lowerSearch));
     })
     .sort((left, right) => {
@@ -278,7 +283,7 @@ const filtered = useMemo(() => {
           variant="outlined"
           sx={{ borderRadius: 2 }}
         >
-          <Table sx={{ tableLayout: "fixed", minWidth: 700 }}>
+          <Table sx={{ tableLayout: "fixed", minWidth: 880 }}>
                 <TableHead sx={{ bgcolor: "action.hover" }}>
                 <TableRow>
                     {/* ADDED: Fixed width for image column */}
@@ -313,6 +318,16 @@ const filtered = useMemo(() => {
                         onClick={() => handleSort("created_at")}
                     >
                         Creado
+                    </TableSortLabel>
+                    </TableCell>
+
+                    <TableCell sx={{ width: 180 }}>
+                    <TableSortLabel
+                        active={orderBy === "updated_at"}
+                        direction={orderBy === "updated_at" ? order : "asc"}
+                        onClick={() => handleSort("updated_at")}
+                    >
+                        Actualizado
                     </TableSortLabel>
                     </TableCell>
 
@@ -352,7 +367,13 @@ const filtered = useMemo(() => {
 
                   <TableCell>
                     <Typography variant="body2">
-                      {formatCreatedAt(asset.created_at)}
+                      {formatAssetDate(asset.created_at)}
+                    </Typography>
+                  </TableCell>
+
+                  <TableCell>
+                    <Typography variant="body2">
+                      {formatAssetDate(asset.updated_at)}
                     </Typography>
                   </TableCell>
 
