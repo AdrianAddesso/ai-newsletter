@@ -6,15 +6,9 @@ const requiredStringSchema = z
   .trim()
   .min(1, 'Este campo es obligatorio.');
 
-const optionalStringSchema = z
-  .string()
-  .trim()
-  .optional();
+const optionalStringSchema = z.string().trim().optional();
 
-const stringListSchema = z
-  .array(requiredStringSchema)
-  .optional()
-  .default([]);
+const stringListSchema = z.array(requiredStringSchema).optional().default([]);
 
 export const generateNewsletterBodySchema = z
   .object({
