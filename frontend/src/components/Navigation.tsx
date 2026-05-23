@@ -11,7 +11,10 @@ import {
   useTheme,
   Avatar,
   Divider,
-} from '@mui/material'
+  ListItemIcon,
+} from "@mui/material";
+import PeopleIcon from "@mui/icons-material/People";
+import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { useAuth } from '../contexts/AuthContext'
@@ -210,7 +213,10 @@ export function Navigation() {
             >
               <MenuItem disabled>
                 <Stack spacing={0.5}>
-                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  <Typography
+                    variant="body2"
+                    sx={{ fontWeight: 600, alignSelf: "center" }}
+                  >
                     {user.name}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
@@ -226,6 +232,9 @@ export function Navigation() {
                     navigate("/users");
                   }}
                 >
+                  <ListItemIcon>
+                    <PeopleIcon fontSize="small" />
+                  </ListItemIcon>
                   Usuarios
                 </MenuItem>
               )}
@@ -236,11 +245,17 @@ export function Navigation() {
                     navigate("/admin");
                   }}
                 >
+                  <ListItemIcon>
+                    <AdminPanelSettingsIcon fontSize="small" />
+                  </ListItemIcon>
                   Admin Panel
                 </MenuItem>
               )}
               <Divider />
-              <MenuItem onClick={handleLogout} sx={{ color: "error.main" }}>
+              <MenuItem
+                onClick={handleLogout}
+                sx={{ color: "error.main", justifyContent: "center" }}
+              >
                 Cerrar sesión
               </MenuItem>
             </Menu>
