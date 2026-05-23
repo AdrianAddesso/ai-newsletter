@@ -1,10 +1,15 @@
 import {
+  BadRequestException,
   Injectable,
   Logger,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { area_name } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { JsonValue } from '@prisma/client/runtime/client';
+import { CreateTemplateBody } from './templates.schemas';
+import { BlockRegistry } from '../blocks/block.registry';
+import { validateTemplateBlocks } from './validations/validations';
 
 const validGenerationFields = [
   'relevantDates',
@@ -22,15 +27,19 @@ type TemplatePromptConfig = {
   optionalGenerationFields: TemplateGenerationField[];
 };
 
+const uuidPattern =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 export type TemplateListItem = {
   id: string;
   name: string;
   description: string | null;
   area: area_name;
-  layout: string | null;
+  layout: JsonValue | null;
   orientation: string | null;
-  stateCode: string;
   stateName: string;
+  state: string;
+  prompt_base?: string | null;
   createdAt: string;
   requiredGenerationFields: TemplateGenerationField[];
   optionalGenerationFields: TemplateGenerationField[];
@@ -39,8 +48,9 @@ export type TemplateListItem = {
 @Injectable()
 export class TemplatesService {
   private readonly logger = new Logger(TemplatesService.name);
+  private readonly blockRegistry = BlockRegistry.getInstance();
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   private isTemplateGenerationField(
     value: unknown,
@@ -71,16 +81,16 @@ export class TemplatesService {
         parsed.requiredGenerationFields,
       )
         ? parsed.requiredGenerationFields.filter((field) =>
-            this.isTemplateGenerationField(field),
-          )
+          this.isTemplateGenerationField(field),
+        )
         : [];
 
       const optionalGenerationFields = Array.isArray(
         parsed.optionalGenerationFields,
       )
         ? parsed.optionalGenerationFields.filter((field) =>
-            this.isTemplateGenerationField(field),
-          )
+          this.isTemplateGenerationField(field),
+        )
         : [];
 
       return {
@@ -99,6 +109,7 @@ export class TemplatesService {
     }
   }
 
+  // modificar aca para que devuelva los campos necesarios para el listado de templates
   async getAll(): Promise<TemplateListItem[]> {
     try {
       const templates = await this.prisma.templates.findMany({
@@ -145,9 +156,10 @@ export class TemplatesService {
             description: template.description,
             area: template.areas.name,
             layout: template.layout,
-              orientation: template.orientation ?? null,
-            stateCode: template.template_states.code,
+            orientation: template.orientation ?? null,
             stateName: template.template_states.name,
+            state: template.template_states.code,
+            prompt_base: template.prompt_base,
             createdAt: template.created_at.toISOString(),
             requiredGenerationFields: promptConfig.requiredGenerationFields,
             optionalGenerationFields: promptConfig.optionalGenerationFields,
@@ -184,11 +196,60 @@ export class TemplatesService {
     })
   }
 
-  async create() {
-    return 'Desde templates'
+  async create(template: CreateTemplateBody, userId: string) {
+
+    const validateBlocks = template.layout.map(block => validateTemplateBlocks(block, this.blockRegistry));
+
+    const [area, state, creator] = await Promise.all([
+      this.prisma.areas.findUnique({
+        where: { name: template.area },
+      }),
+      this.prisma.template_states.findUnique({
+        where: { code: template.state },
+      }),
+      uuidPattern.test(userId)
+        ? this.prisma.users.findUnique({
+          where: { id: userId },
+          select: { id: true },
+        })
+        : Promise.resolve(null),
+    ]);
+
+    if (!area) {
+      throw new BadRequestException({
+        message: `Área no encontrada: ${template.area}`,
+      });
+    }
+
+    if (!state) {
+      throw new BadRequestException({
+        message: `Estado no encontrado: ${template.state}`,
+      });
+    }
+
+    if (!creator) {
+      this.logger.warn('Template creator user was not found; saving template without creator reference.');
+    }
+
+    try {
+      const newTemplate = await this.prisma.templates.create({
+        data: {
+          name: template.name, description: template.description, area_id: area.id, layout: validateBlocks,
+          state_id: state.id, prompt_base: template.promptBase, created_by_user_id: creator?.id ?? null, orientation: template.orientation
+        },
+      });
+
+      return {
+        payload: newTemplate
+      }
+
+    } catch (error) {
+      this.logger.error('Error creando el template', error);
+      throw new BadRequestException('No se pudo crear el template en este momento.')
+    }
   }
 
-  async update(id: string) {
+  update(id: string) {
     return 'Desde update templates con ID' + id
   }
 
@@ -201,23 +262,23 @@ export class TemplatesService {
     })
   }
 
-  async updateStatus(id: string) {
+  updateStatus(id: string) {
     return 'Desde update status templates con ID' + id
   }
 
-  async defineBlocks(id: string) {
+  defineBlocks(id: string) {
     return 'Desde define blocks templates con ID' + id
   }
 
-  async getAssets(templateId: string) {
+  getAssets(templateId: string) {
     return `Desde assets templates con ID ${templateId}`
   }
 
-  async addAsset(templateId: string) {
+  addAsset(templateId: string) {
     return `Desde add asset templates con ID ${templateId}`
   }
 
-  async updateAsset(templateId: string, assetId: string) {
+  updateAsset(templateId: string, assetId: string) {
     return `Desde update asset templates con ID ${templateId} y asset ID ${assetId}`
   }
 }

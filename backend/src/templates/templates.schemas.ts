@@ -1,4 +1,4 @@
-import { area_name, asset_type, block_content_type } from '@prisma/client';
+import { area_name, asset_type, block_content_type, newsletter_format } from '@prisma/client';
 import { z } from 'zod';
 import {
   optionalBooleanFieldSchema,
@@ -24,12 +24,22 @@ const assetTypeSchema = z.nativeEnum(asset_type, {
 export const createTemplateBodySchema = z
   .object({
     name: requiredStringFieldSchema,
-    description: optionalStringFieldSchema,
-    areaId: uuidFieldSchema.optional(),
-    layout: optionalStringFieldSchema,
-    stateId: uuidFieldSchema,
+    description: requiredStringFieldSchema,
+    area: areaNameSchema,
+    layout:
+      z.array(
+        z.object({
+          block_type: z.string().nullable(),
+          content: z.string().nullable(),
+          row: z.number(),
+          grid_column: z.number(),
+          display_order: z.number(),
+          mustFill: z.boolean().optional()
+        })
+      ).min(1, 'El layout debe contener al menos un bloque.'),
+    state: requiredStringFieldSchema,
     promptBase: optionalStringFieldSchema,
-    createdByUserId: uuidFieldSchema.optional(),
+    orientation: z.enum([newsletter_format.PORTRAIT, newsletter_format.LANDSCAPE])
   })
   .strict();
 

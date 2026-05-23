@@ -12,6 +12,7 @@ import {
 } from '@mui/material'
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
 import { useTemplateStore } from '../../stores/templates.store'
+import { useNotification } from '../../hooks/useNotification'
 import { TemplateCanvas } from '../../components/canvas/TemplateCanvas'
 import { StructureControl } from '../../components/canvas/StructureControl'
 import { EditorControl } from '../../components/canvas/EditorControl'
@@ -19,9 +20,10 @@ import { TAB_LABELS} from '@shared/enums/tab-enum'
 
 export function CreateTemplate() {
   const navigate = useNavigate()
+  const { success, error } = useNotification()
   const [activeTab, setActiveTab] = useState(0)
 
-  const { isSkeletonView, setIsSkeletonView, saveTemplate, resetStore, title } = useTemplateStore()
+  const { isSkeletonView, setIsSkeletonView, saveTemplate, resetStore, rows } = useTemplateStore()
 
   useEffect(() => {
     // For now, we just reset the store.
@@ -33,6 +35,20 @@ export function CreateTemplate() {
     setActiveTab(1)
   }
 
+  const handleSaveTemplate = async () => {
+    try {
+      const res = await saveTemplate()
+      success(res?.message || 'Template creado exitosamente')
+      navigate('/dashboard')
+    } catch (err:unknown) {
+      if(err instanceof Error) {
+        error(err.message || 'Error al guardar el template')
+      }
+    }
+  }
+
+  const isSaveDisabled = !rows.some(row => row.columns.some(col => col.type))
+  
   return (
     <Box sx={{ bgcolor: 'grey.50', minHeight: 'calc(100vh - 64px)' }}>
       <Box
@@ -52,7 +68,7 @@ export function CreateTemplate() {
         </IconButton>
         <Box sx={{ flex: 1 }}>
           <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
-            {title}
+            Nuevo Template
           </Typography>
         </Box>
         <Chip
@@ -155,7 +171,7 @@ export function CreateTemplate() {
           >
             {
               !isSkeletonView && activeTab === 1 && (
-                <Button variant="contained" fullWidth onClick={saveTemplate}>
+                <Button variant="contained" fullWidth onClick={handleSaveTemplate} disabled={isSaveDisabled}>
                   Guardar Template
                 </Button>
               )

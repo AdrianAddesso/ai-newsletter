@@ -294,7 +294,7 @@ CREATE TABLE public.templates (
     name text NOT NULL,
     description text,
     area_id uuid,
-    layout text,
+    layout JSON,
     orientation public.template_orientation NOT NULL,
     state_id uuid NOT NULL,
     prompt_base text,
