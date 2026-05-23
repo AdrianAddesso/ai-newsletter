@@ -7,72 +7,94 @@ import { ReviewDetailPage } from '../../pages/ReviewDetailPage'
 import TemplatesPage from '../../pages/TemplatesPage'
 import { UsersPage } from '../../pages/UsersPage'
 import { CreateTemplate } from '../../pages/templates/CreateTemplate'
+import { BackofficePage } from "../../pages/admin/AdminPanelPage";
+import { BrandkitPage } from "../../pages/admin/BrandkitPage";
 
 export const adminRoutes = (
-    <>
-        <Route
-            path="/templates"
-            element={
-                <ProtectedRoute allowedRoles={['ADMIN', 'FUNCTIONAL']}>
-                    <ProtectedLayout>
-                        <TemplatesPage />
-                    </ProtectedLayout>
-                </ProtectedRoute>
-            }
-        />
+  <>
+    <Route
+      path="/templates"
+      element={
+        <ProtectedRoute allowedRoles={["ADMIN", "FUNCTIONAL"]}>
+          <ProtectedLayout>
+            <TemplatesPage />
+          </ProtectedLayout>
+        </ProtectedRoute>
+      }
+    />
 
-        <Route
-            path="/analytics"
-            element={
-                <ProtectedRoute allowedRoles={['ADMIN', 'FUNCTIONAL']}>
-                    <ProtectedLayout>
-                        <AnalyticsPage />
-                    </ProtectedLayout>
-                </ProtectedRoute>
-            }
-        />
+    <Route
+      path="/analytics"
+      element={
+        <ProtectedRoute allowedRoles={["ADMIN", "FUNCTIONAL"]}>
+          <ProtectedLayout>
+            <AnalyticsPage />
+          </ProtectedLayout>
+        </ProtectedRoute>
+      }
+    />
 
-        <Route
-            path="/reviews"
-            element={
-                <ProtectedRoute allowedRoles={['ADMIN', 'FUNCTIONAL']}>
-                    <ProtectedLayout>
-                        <ReviewsPage />
-                    </ProtectedLayout>
-                </ProtectedRoute>
-            }
-        />
+    <Route
+      path="/reviews"
+      element={
+        <ProtectedRoute allowedRoles={["ADMIN", "FUNCTIONAL"]}>
+          <ProtectedLayout>
+            <ReviewsPage />
+          </ProtectedLayout>
+        </ProtectedRoute>
+      }
+    />
 
-        <Route
-            path="/reviews/:id"
-            element={
-                <ProtectedRoute allowedRoles={['ADMIN', 'FUNCTIONAL']}>
-                    <ProtectedLayout>
-                        <ReviewDetailPage />
-                    </ProtectedLayout>
-                </ProtectedRoute>
-            }
-        />
-        <Route
-            path="/templates/create"
-            element={
-                <ProtectedRoute allowedRoles={['ADMIN', 'FUNCTIONAL']}>
-                    <ProtectedLayout>
-                        <CreateTemplate />
-                    </ProtectedLayout>
-                </ProtectedRoute>
-            }
-        />
+    <Route
+      path="/reviews/:id"
+      element={
+        <ProtectedRoute allowedRoles={["ADMIN", "FUNCTIONAL"]}>
+          <ProtectedLayout>
+            <ReviewDetailPage />
+          </ProtectedLayout>
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/templates/create"
+      element={
+        <ProtectedRoute allowedRoles={["ADMIN", "FUNCTIONAL"]}>
+          <ProtectedLayout>
+            <CreateTemplate />
+          </ProtectedLayout>
+        </ProtectedRoute>
+      }
+    />
 
-        <Route
-            path="/users"
-            element={
-                <ProtectedRoute allowedRoles={['ADMIN']}>
-                    <ProtectedLayout>
-                        <UsersPage />
-                    </ProtectedLayout>
-                </ProtectedRoute>
-            }
-        />
-    </>
-)
+    <Route
+      path="/users"
+      element={
+        <ProtectedRoute allowedRoles={["ADMIN"]}>
+          <ProtectedLayout>
+            <UsersPage />
+          </ProtectedLayout>
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/admin"
+      element={
+        <ProtectedRoute allowedRoles={["ADMIN"]}>
+          <ProtectedLayout>
+            < BackofficePage/>
+          </ProtectedLayout>
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/admin/brandkit"
+      element={
+        <ProtectedRoute allowedRoles={["ADMIN"]}>
+          <ProtectedLayout>
+            < BrandkitPage/>
+          </ProtectedLayout>
+        </ProtectedRoute>
+      }
+    />
+  </>
+);
