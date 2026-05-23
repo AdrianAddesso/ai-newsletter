@@ -245,7 +245,7 @@ const theme = createTheme({
     borderRadius: 8,
   },
   palette: {
-    mode: 'light',
+    mode: "light",
     primary: {
       main: brandColors.red,
       contrastText: brandColors.white,
@@ -271,14 +271,14 @@ const theme = createTheme({
     },
     text: {
       primary: brandColors.darkOak,
-      secondary: 'rgba(48, 38, 29, 0.72)',
-      disabled: 'rgba(48, 38, 29, 0.48)',
+      secondary: "rgba(48, 38, 29, 0.72)",
+      disabled: "rgba(48, 38, 29, 0.48)",
     },
     background: {
       default: brandColors.white,
       paper: brandColors.white,
     },
-    divider: 'rgba(48, 38, 29, 0.14)',
+    divider: "rgba(48, 38, 29, 0.14)",
     brand: {
       ...brandColors,
       backgroundsWithText: {
@@ -318,95 +318,95 @@ const theme = createTheme({
     h1: {
       fontFamily: titleFontStack,
       fontWeight: 700,
-      fontSize: '3.5rem',
+      fontSize: "3.5rem",
       lineHeight: 0.98,
       letterSpacing: 0,
     },
     h2: {
       fontFamily: titleFontStack,
       fontWeight: 700,
-      fontSize: '2.5rem',
+      fontSize: "2.5rem",
       lineHeight: 1.05,
       letterSpacing: 0,
     },
     h3: {
       fontFamily: titleFontStack,
       fontWeight: 700,
-      fontSize: '2rem',
+      fontSize: "2rem",
       lineHeight: 1.08,
       letterSpacing: 0,
     },
     h4: {
       fontFamily: titleFontStack,
       fontWeight: 700,
-      fontSize: '1.75rem',
+      fontSize: "1.75rem",
       lineHeight: 1.12,
       letterSpacing: 0,
     },
     h5: {
       fontFamily: titleFontStack,
       fontWeight: 700,
-      fontSize: '1.5rem',
+      fontSize: "1.5rem",
       lineHeight: 1.15,
       letterSpacing: 0,
     },
     h6: {
       fontFamily: titleFontStack,
       fontWeight: 700,
-      fontSize: '1.25rem',
+      fontSize: "1.25rem",
       lineHeight: 1.2,
       letterSpacing: 0,
     },
     subtitle1: {
       fontFamily: emphasisFontStack,
       fontWeight: 700,
-      fontSize: '1.125rem',
+      fontSize: "1.125rem",
       lineHeight: 1.35,
       letterSpacing: 0,
     },
     subtitle2: {
       fontFamily: titleFontStack,
       fontWeight: 700,
-      fontSize: '1rem',
+      fontSize: "1rem",
       lineHeight: 1.35,
       letterSpacing: 0,
     },
     body1: {
       fontFamily: bodyFontStack,
       fontWeight: 400,
-      fontSize: '1.0625rem',
+      fontSize: "1.0625rem",
       lineHeight: 1.55,
       letterSpacing: 0,
     },
     body2: {
       fontFamily: bodyFontStack,
       fontWeight: 400,
-      fontSize: '0.9375rem',
+      fontSize: "0.9375rem",
       lineHeight: 1.5,
       letterSpacing: 0,
     },
     button: {
       fontFamily: titleFontStack,
       fontWeight: 700,
-      fontSize: '0.95rem',
+      fontSize: "0.95rem",
       lineHeight: 1.2,
       letterSpacing: 0,
-      textTransform: 'none',
+      textTransform: "none",
     },
     caption: {
       fontFamily: bodyFontStack,
       fontWeight: 400,
-      fontSize: '0.75rem',
+      fontSize: "0.75rem",
       lineHeight: 1.35,
       letterSpacing: 0,
     },
     overline: {
       fontFamily: titleFontStack,
       fontWeight: 700,
-      fontSize: '0.75rem',
+      fontSize: "0.75rem",
       lineHeight: 1.35,
       letterSpacing: 0,
-      textTransform: 'uppercase',
+      textTransform: "uppercase",
     },
   },
   components: {
@@ -489,6 +489,7 @@ const theme = createTheme({
           min-width: 320px;
           background: ${brandColors.white};
           color: ${brandColors.darkOak};
+          scrollbar-gutter: stable;
         }
 
         img {
@@ -507,31 +508,31 @@ const theme = createTheme({
       },
       variants: [
         {
-          props: { variant: 'contained', color: 'primary' },
+          props: { variant: "contained", color: "primary" },
           style: {
             backgroundColor: brandColors.red,
             color: brandColors.white,
-            '&:hover': {
-              backgroundColor: '#E94B4C',
+            "&:hover": {
+              backgroundColor: "#E94B4C",
             },
           },
         },
         {
-          props: { variant: 'contained', color: 'secondary' },
+          props: { variant: "contained", color: "secondary" },
           style: {
             backgroundColor: brandColors.blueDark,
             color: brandColors.white,
-            '&:hover': {
-              backgroundColor: '#008ECA',
+            "&:hover": {
+              backgroundColor: "#008ECA",
             },
           },
         },
         {
-          props: { variant: 'outlined' },
+          props: { variant: "outlined" },
           style: {
-            borderColor: 'currentColor',
+            borderColor: "currentColor",
             borderWidth: 2,
-            '&:hover': {
+            "&:hover": {
               borderWidth: 2,
             },
           },
@@ -561,21 +562,21 @@ const theme = createTheme({
     },
     MuiContainer: {
       defaultProps: {
-        maxWidth: 'lg',
+        maxWidth: "lg",
       },
       styleOverrides: {
         root: {
-          width: '100%',
+          width: "100%",
         },
       },
     },
     MuiLink: {
       styleOverrides: {
         root: {
-          color: 'inherit',
+          color: "inherit",
           fontFamily: emphasisFontStack,
           fontWeight: 700,
-          textDecorationColor: 'currentColor',
+          textDecorationColor: "currentColor",
           textUnderlineOffset: 3,
         },
       },

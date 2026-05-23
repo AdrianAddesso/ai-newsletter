@@ -78,7 +78,7 @@ export function BrandkitPage() {
             : "Brandkit creado correctamente.",
             severity: "success",
         });
-        setTimeout(() => navigate("/backoffice"), 1200);
+        setTimeout(() => navigate("/admin"), 1200);
         } catch {
         setSnackbar({
             open: true,
@@ -94,75 +94,79 @@ export function BrandkitPage() {
     // Render
     // -------------------------------------------------------------------------
     return (
-        <Box
+      <Box
         sx={{
-            py: theme.nestle?.page?.sectionPaddingY || 4,
-            px: theme.nestle?.page?.sectionPaddingX || 2,
-            bgcolor: "background.default",
-            minHeight: "100vh",
+          py: 0,
+          px: 3,
+          bgcolor: "background.default",
+          height: "100vh",
+          overflowY: "auto",
+          scrollbarGutter: "stable",
         }}
-        >
+      >
         <Container maxWidth="lg" disableGutters>
-            <Stack spacing={4}>
+          <Stack spacing={3}>
             {/* ----------------------------------------------------------------
                 Page header
             ---------------------------------------------------------------- */}
             <Stack
-                direction={{ xs: "column", sm: "row" }}
-                spacing={2}
-                sx={{
+              direction={{ xs: "column", sm: "row" }}
+              spacing={2}
+              sx={{
                 justifyContent: "space-between",
                 alignItems: { xs: "flex-start", sm: "center" },
-                }}
+              }}
             >
-                <Stack spacing={1}>
-                <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-                    <Button
+              <Stack spacing={0}>
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  sx={{ alignItems: "center" }}
+                >
+                  <Button
                     size="small"
                     startIcon={<BackIcon />}
-                    onClick={() => navigate("/backoffice")}
+                    onClick={() => navigate("/admin")}
                     sx={{ color: "text.secondary" }}
-                    >
-                    Backoffice
-                    </Button>
+                  >
+                    Volver al panel de administración
+                  </Button>
                 </Stack>
                 <Typography variant="h2">
-                    {isEditing ? "Editar Brandkit" : "Nuevo Brandkit"}
+                  {isEditing ? "Editar Brandkit" : "Nuevo Brandkit"}
                 </Typography>
                 <Typography variant="body1" color="text.secondary">
-                    {isEditing
+                  {isEditing
                     ? "Modificá la información, colores, fuentes y assets del brandkit."
                     : "Configurá un nuevo brandkit para tus newsletters."}
                 </Typography>
-                </Stack>
+              </Stack>
 
-                <Button
+              <Button
                 variant="contained"
                 startIcon={<SaveIcon />}
                 onClick={handleSave}
                 disabled={saving}
                 sx={{
-                    whiteSpace: "nowrap",
-                    alignSelf: { xs: "flex-start", sm: "center" },
+                  whiteSpace: "nowrap",
+                  alignSelf: { xs: "flex-start", sm: "center" },
                 }}
-                >
+              >
                 {saving
-                    ? "Guardando..."
-                    : isEditing
+                  ? "Guardando..."
+                  : isEditing
                     ? "Guardar cambios"
                     : "Crear brandkit"}
-                </Button>
+              </Button>
             </Stack>
-
-            <Divider />
 
             {/* ----------------------------------------------------------------
                 Section 1 — Brand info
             ---------------------------------------------------------------- */}
             <BrandInfo
-                values={brandInfo}
-                onChange={setBrandInfo}
-                errors={errors}
+              values={brandInfo}
+              onChange={setBrandInfo}
+              errors={errors}
             />
 
             {/* ----------------------------------------------------------------
@@ -179,68 +183,66 @@ export function BrandkitPage() {
                 Section 4 — Assets (reused component, brand-scoped)
             ---------------------------------------------------------------- */}
             <Box>
-                <Stack spacing={1} sx={{ mb: 2 }}>
-                <Typography variant="subtitle1">
-                    Assets del brandkit
-                </Typography>
+              <Stack spacing={1} sx={{ mb: 2 }}>
+                <Typography variant="subtitle1">Assets del brandkit</Typography>
                 <Typography variant="body2" color="text.secondary">
-                    Imágenes y archivos asociados a este brandkit.
+                  Imágenes y archivos asociados a este brandkit.
                 </Typography>
-                </Stack>
-                <AssetsList compact />
+              </Stack>
+              <AssetsList compact />
             </Box>
 
             {/* ----------------------------------------------------------------
                 Bottom save bar
             ---------------------------------------------------------------- */}
             <Box
-                sx={{
+              sx={{
                 position: "sticky",
                 bottom: 16,
                 display: "flex",
                 justifyContent: "flex-end",
                 pt: 2,
-                }}
+              }}
             >
-                <Stack direction="row" spacing={2}>
+              <Stack direction="row" spacing={2}>
                 <Button
-                    variant="outlined"
-                    onClick={() => navigate("/backoffice")}
+                  variant="outlined"
+                  onClick={() => navigate("/backoffice")}
                 >
-                    Cancelar
+                  Cancelar
                 </Button>
                 <Button
-                    variant="contained"
-                    startIcon={<SaveIcon />}
-                    onClick={handleSave}
-                    disabled={saving}
+                  variant="contained"
+                  startIcon={<SaveIcon />}
+                  onClick={handleSave}
+                  disabled={saving}
                 >
-                    {saving
+                  {saving
                     ? "Guardando..."
                     : isEditing
-                        ? "Guardar cambios"
-                        : "Crear brandkit"}
+                      ? "Guardar cambios"
+                      : "Crear brandkit"}
                 </Button>
-                </Stack>
+              </Stack>
             </Box>
-            </Stack>
+          </Stack>
         </Container>
 
         {/* Feedback snackbar */}
         <Snackbar
-            open={snackbar.open}
-            autoHideDuration={4000}
-            onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
-            anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+          open={snackbar.open}
+          autoHideDuration={4000}
+          onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
         >
-            <Alert
+          <Alert
             severity={snackbar.severity}
             onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
             sx={{ width: "100%" }}
-            >
+          >
             {snackbar.message}
-            </Alert>
+          </Alert>
         </Snackbar>
-        </Box>
+      </Box>
     );
     }

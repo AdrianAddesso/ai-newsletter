@@ -52,70 +52,73 @@ function TabPanel({ children, value, index }: TabPanelProps) {
     const [tab, setTab] = useState(0);
 
     return (
-        <Box
+      <Box
         sx={{
-            py: theme.nestle?.page?.sectionPaddingY || 4,
-            px: theme.nestle?.page?.sectionPaddingX || 2,
-            bgcolor: "background.default",
-            minHeight: "100vh",
+          py: 4,
+          px: 3,
+          bgcolor: "background.default",
+          height: "100vh",
+          overflowY: "auto",
+          scrollbarGutter: "stable",
         }}
-        >
+      >
         <Container maxWidth="lg" disableGutters>
-            <Stack spacing={4}>
+          <Stack>
             {/* Page header */}
             <Stack spacing={1}>
-                <Typography variant="h2">Admin Panel</Typography>
-                <Typography variant="body1" color="text.secondary">
-                Configuración global de IA, assets y branding de la plataforma.
-                </Typography>
+              <Typography variant="h2">Admin Panel</Typography>
+              <Typography variant="body1" color="text.secondary">
+                Configuración global de IA, materiales y branding de la
+                plataforma.
+              </Typography>
             </Stack>
 
             {/* Tabs */}
             <Box>
-                <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+              <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
                 <Tabs
-                    value={tab}
-                    onChange={(_, newValue: number) => setTab(newValue)}
-                    aria-label="secciones del backoffice"
+                  value={tab}
+                  onChange={(_, newValue: number) => setTab(newValue)}
+                  aria-label="secciones del backoffice"
                 >
-                    <Tab
+                  <Tab
                     icon={<AiIcon fontSize="small" />}
                     iconPosition="start"
                     label="Configuración de IA"
                     {...a11yProps(0)}
-                    />
-                    <Tab
+                  />
+                  <Tab
                     icon={<AssetsIcon fontSize="small" />}
                     iconPosition="start"
-                    label="Assets"
+                    label="Materiales"
                     {...a11yProps(1)}
-                    />
-                    <Tab
+                  />
+                  <Tab
                     icon={<BrandingIcon fontSize="small" />}
                     iconPosition="start"
                     label="Branding"
                     {...a11yProps(2)}
-                    />
+                  />
                 </Tabs>
-                </Box>
+              </Box>
 
-                {/* AI section */}
-                <TabPanel value={tab} index={0}>
+              {/* AI section */}
+              <TabPanel value={tab} index={0}>
                 <AiConfig />
-                </TabPanel>
+              </TabPanel>
 
-                {/* Assets section */}
-                <TabPanel value={tab} index={1}>
+              {/* Assets section */}
+              <TabPanel value={tab} index={1}>
                 <AssetsList />
-                </TabPanel>
+              </TabPanel>
 
-                {/* Branding section */}
-                <TabPanel value={tab} index={2}>
+              {/* Branding section */}
+              <TabPanel value={tab} index={2}>
                 <BrandkitList />
-                </TabPanel>
+              </TabPanel>
             </Box>
-            </Stack>
+          </Stack>
         </Container>
-        </Box>
+      </Box>
     );
 }

@@ -137,7 +137,7 @@ export function BrandkitList() {
                 variant="contained"
                 size="small"
                 startIcon={<AddIcon />}
-                onClick={() => navigate("/backoffice/brandkit")}
+                onClick={() => navigate("/admin/brandkit")}
                 sx={{ whiteSpace: "nowrap" }}
             >
                 Nuevo Brandkit
