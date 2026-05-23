@@ -1,6 +1,6 @@
 import { Card, CardMedia, Box } from "@mui/material";
 import { useBlockPreviewUrls } from "../../../../hooks/useBlockPreviewUrls";
-import type { BlockInstance } from "../../../../../../packages/shared/src/types/block.types";
+import type { BlockInstance } from "@shared/types/block.types";
 
 const nestleIsotypeStorageKey = "assets/logos/nestle/nestle_isotype.png";
 

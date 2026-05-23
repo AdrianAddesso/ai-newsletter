@@ -34,7 +34,7 @@ import { AssetImageCard } from "./AssetImageCard";
 import {
   ASSETS_PER_PAGE,
   KEYWORD_MAX_CHARS,
-} from "../../../../../packages/shared/src/enums/assets-config";
+} from "@shared/enums/assets-config";
 
 type FormValues = {
   topic: string;

@@ -16,7 +16,11 @@
     "moduleDetection": "force",
     "allowImportingTsExtensions": true,
 
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "paths": {
+      "@shared/*": ["../packages/shared/src/*"]
+    }
+    
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx"],
   "references": [{ "path": "../packages/shared/tsconfig.json" }]

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { listBlockDefinitions } from '../api/blocks'
-import type { BlockDefinitionDTO } from '../../../packages/shared/src/types/block.types'
+import type { BlockDefinitionDTO } from '@shared/types/block.types'
 
 type UseBlockDefinitionsResult = {
   data: BlockDefinitionDTO[] | undefined

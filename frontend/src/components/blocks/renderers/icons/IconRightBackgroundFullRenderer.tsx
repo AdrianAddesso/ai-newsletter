@@ -1,6 +1,6 @@
 import { Card, Typography, Box, CardMedia } from "@mui/material";
 import DescriptionIcon from "@mui/icons-material/Description";
-import type { BlockInstance } from "../../../../../../packages/shared/src/types/block.types";
+import type { BlockInstance } from "@shared/types/block.types";
 
 interface Props {
   block: BlockInstance;

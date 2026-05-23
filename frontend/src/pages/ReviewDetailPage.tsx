@@ -18,10 +18,10 @@ import { useNavigate, useParams, useLocation } from 'react-router'
 import {
   NewsletterStatus,
   NewsletterStatusLabel,
-} from '../../../packages/shared/src/enums/newsletter-status.enum'
+} from '@shared/enums/newsletter-status.enum'
 import {
   AreaNameLabel,
-} from '../../../packages/shared/src/enums/area-name.enum'
+} from '@shared/enums/area-name.enum'
 import { updateNewsletterStatus } from '../api/newsletters'
 import { useNotification } from '../hooks/useNotification'
 import { useAuth } from '../contexts/AuthContext'

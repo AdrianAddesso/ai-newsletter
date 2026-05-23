@@ -25,10 +25,10 @@ import { Add, DeleteOutlined, Search as SearchIcon } from '@mui/icons-material';
 import { ModalDelete } from '../components/ModalDelete';
 import { useState, useMemo } from 'react';
 import { ModalEdit } from '../components/ModalEdit'
-import { AreaName, AreaNameLabel } from '../../../packages/shared/src/enums/area-name.enum';
-import { UserRole, UserRoleLabel } from '../../../packages/shared/src/enums/user-role.enum';
-import { UserStatus, UserStatusLabel } from '../../../packages/shared/src/enums/user-status.enum';
-import { enumToOptions } from '../../../packages/shared/src/utils/enum-to-options';
+import { AreaName, AreaNameLabel } from '@shared/enums/area-name.enum';
+import { UserRole, UserRoleLabel } from '@shared/enums/user-role.enum';
+import { UserStatus, UserStatusLabel } from '@shared/enums/user-status.enum';
+import { enumToOptions } from '@shared/utils/enum-to-options';
 import type { User } from '../contexts/AuthContext';
 import DownloadIcon from "@mui/icons-material/FileDownloadOutlined";
 

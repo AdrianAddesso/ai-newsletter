@@ -25,12 +25,12 @@ import {
   NewsletterStatus,
   NewsletterStatusLabel,
   type NewsletterStatus as NewsletterStatusValue,
-} from '../../../packages/shared/src/enums/newsletter-status.enum'
+} from '@shared/enums/newsletter-status.enum'
 import {
   AreaName,
   AreaNameLabel,
   type AreaName as AreaNameValue,
-} from '../../../packages/shared/src/enums/area-name.enum'
+} from '@shared/enums/area-name.enum'
 import { useAuth, type User } from '../contexts/AuthContext'
 import SearchBar from '../components/SearchBar'
 import { useLocation } from 'react-router'
