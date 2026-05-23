@@ -38,7 +38,7 @@ export const createTemplateBodySchema = z
         })
       ).min(1, 'El layout debe contener al menos un bloque.'),
     state: requiredStringFieldSchema,
-    promptBase: requiredStringFieldSchema,
+    promptBase: optionalStringFieldSchema,
     orientation: z.enum([newsletter_format.PORTRAIT, newsletter_format.LANDSCAPE])
   })
   .strict();

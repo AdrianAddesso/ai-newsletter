@@ -57,8 +57,8 @@ export const StructureControl: React.FC<{ onConfirm: () => void }> = ({ onConfir
             fullWidth
             size="small"
             required
-            error={name.length > 0 && (name.length < 3 || name.length > 50)}
-            helperText={(name.length > 0 && (name.length < 3 || name.length > 50)) ? "Debe tener entre 3 y 50 caracteres" : ""}
+            error={name.length > 0 && (name.length < 3 || name.length > 140)}
+            helperText={(name.length > 0 && (name.length < 3 || name.length > 140)) ? "Debe tener entre 3 y 140 caracteres" : ""}
             value={name}
             onChange={(e) => setTemplateDetails(e.target.value)}
           />
@@ -76,7 +76,6 @@ export const StructureControl: React.FC<{ onConfirm: () => void }> = ({ onConfir
             label="Prompt Base"
             fullWidth
             size="small"
-            required
             multiline
             rows={3}
             error={promptBase.length > 0 && (promptBase.length < 10 || promptBase.length > 500)}
@@ -171,7 +170,6 @@ export const StructureControl: React.FC<{ onConfirm: () => void }> = ({ onConfir
         disabled={
           name.length < 3 || name.length > 50 ||
           description.length < 5 || description.length > 200 ||
-          promptBase.length < 10 || promptBase.length > 500 ||
           area.length === 0
         }
         sx={{ mt: 2, bgcolor: 'brand.red', '&:hover': { bgcolor: '#e04040' } }}

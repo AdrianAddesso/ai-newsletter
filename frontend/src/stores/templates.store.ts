@@ -165,7 +165,7 @@ export const useTemplateStore = create<TemplateStore>((set, get) => ({
 
     saveTemplate: async () => {
       const templateData = get().buildTemplateToSave();
-      const res = await axios.post('http://localhost:3000/templates', templateData);
+      const res = await axios.post('/templates', templateData);
 
       return res.data;
     },

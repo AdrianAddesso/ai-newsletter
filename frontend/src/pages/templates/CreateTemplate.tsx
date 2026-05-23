@@ -48,6 +48,7 @@ export function CreateTemplate() {
   }
 
   const isSaveDisabled = !rows.some(row => row.columns.some(col => col.type))
+  
   return (
     <Box sx={{ bgcolor: 'grey.50', minHeight: 'calc(100vh - 64px)' }}>
       <Box
