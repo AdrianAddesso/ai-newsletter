@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Injectable,
   Logger,
+  NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { asset_type } from '@prisma/client';
@@ -20,6 +21,7 @@ import { KEYWORD_MAX_CHARS } from '../../../packages/shared/src/enums/assets-con
 type PersistedAsset = {
   id: string;
   name: string;
+  created_at: Date;
   type: asset_type;
   bucket: string;
   object_key: string;
@@ -93,6 +95,7 @@ export class AssetsService {
             select: {
               id: true,
               name: true,
+              created_at: true,
               type: true,
               bucket: true,
               object_key: true,
@@ -124,11 +127,14 @@ export class AssetsService {
       }
 
       const assets = await this.prisma.assets.findMany({
-        where: type ? { type } : { type: { not: asset_type.BLOCK as asset_type} },
+        where: type
+          ? { type, deleted_at: null }
+          : { type: { not: asset_type.BLOCK as asset_type }, deleted_at: null },
         orderBy: [{ type: 'asc' }, { name: 'asc' }],
         select: {
           id: true,
           name: true,
+          created_at: true,
           type: true,
           bucket: true,
           object_key: true,
@@ -147,6 +153,94 @@ export class AssetsService {
         'No se pudieron obtener los assets en este momento.',
       );
     }
+  }
+
+  async updateAsset(
+    id: string,
+    input: { name: string; type: Exclude<asset_type, 'BLOCK'> },
+  ): Promise<UploadedAssetDto> {
+    const existingAsset = await this.prisma.assets.findFirst({
+      where: {
+        id,
+        deleted_at: null,
+      },
+      select: {
+        id: true,
+        type: true,
+        bucket: true,
+        object_key: true,
+      },
+    });
+
+    if (!existingAsset) {
+      throw new NotFoundException('No se encontro el asset solicitado.');
+    }
+
+    if (existingAsset.type === asset_type.KEYWORD || input.type === asset_type.KEYWORD) {
+      this.keywordSvgTemplateCache.delete(
+        this.getKeywordSvgTemplateCacheKey(
+          existingAsset.bucket,
+          existingAsset.object_key,
+        ),
+      );
+    }
+
+    const asset = await this.prisma.assets.update({
+      where: {
+        id,
+      },
+      data: {
+        name: input.name.trim(),
+        type: input.type,
+      },
+      select: {
+        id: true,
+        name: true,
+        created_at: true,
+        type: true,
+        bucket: true,
+        object_key: true,
+      },
+    });
+
+    return this.toUploadedAssetDto(asset);
+  }
+
+  async deleteAsset(id: string): Promise<void> {
+    const existingAsset = await this.prisma.assets.findFirst({
+      where: {
+        id,
+        deleted_at: null,
+      },
+      select: {
+        id: true,
+        type: true,
+        bucket: true,
+        object_key: true,
+      },
+    });
+
+    if (!existingAsset) {
+      throw new NotFoundException('No se encontro el asset solicitado.');
+    }
+
+    if (existingAsset.type === asset_type.KEYWORD) {
+      this.keywordSvgTemplateCache.delete(
+        this.getKeywordSvgTemplateCacheKey(
+          existingAsset.bucket,
+          existingAsset.object_key,
+        ),
+      );
+    }
+
+    await this.prisma.assets.update({
+      where: {
+        id,
+      },
+      data: {
+        deleted_at: new Date(),
+      },
+    });
   }
 
   async getBlockPreviewAsset(previewKey: string): Promise<UploadedAssetDto> {
@@ -191,6 +285,7 @@ export class AssetsService {
       select: {
         id: true,
         name: true,
+        created_at: true,
         type: true,
         bucket: true,
         object_key: true,
@@ -217,6 +312,7 @@ export class AssetsService {
           select: {
             id: true,
             name: true,
+            created_at: true,
             type: true,
             bucket: true,
             object_key: true,
@@ -240,6 +336,7 @@ export class AssetsService {
           select: {
             id: true,
             name: true,
+            created_at: true,
             type: true,
             bucket: true,
             object_key: true,
@@ -276,6 +373,7 @@ export class AssetsService {
     return {
       id: asset.id,
       name: asset.name,
+      created_at: asset.created_at.toISOString(),
       type: asset.type,
       url: await this.storageService.getSignedUrl(
         asset.bucket,

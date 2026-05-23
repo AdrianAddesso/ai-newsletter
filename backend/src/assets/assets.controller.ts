@@ -2,8 +2,11 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
+  HttpCode,
   Param,
+  Patch,
   Post,
   Query,
   UploadedFiles,
@@ -22,6 +25,7 @@ import type {
   UploadedAssetDto,
   UploadedAssetFile,
   UploadAssetsResponseDto,
+  UpdateAssetDto,
 } from './dto/upload-asset.dto';
 
 const maxUploadFiles = 5;
@@ -113,7 +117,40 @@ export class AssetsController {
     return this.assetsService.uploadAssets(files, type);
   }
 
+  @Patch(':id')
+  @RequirePermission(Action.CONTENT_UPLOAD, Resource.ASSETS)
+  updateAsset(
+    @Param('id') id: string,
+    @Body() body: Partial<UpdateAssetDto>,
+  ): Promise<UploadedAssetDto> {
+    if (!body.name?.trim()) {
+      throw new BadRequestException('Debe indicar un nombre de asset valido.');
+    }
+
+    if (!this.isEditableAssetType(body.type)) {
+      throw new BadRequestException('Debe indicar un tipo de asset valido.');
+    }
+
+    return this.assetsService.updateAsset(id, {
+      name: body.name,
+      type: body.type,
+    });
+  }
+
+  @Delete(':id')
+  @HttpCode(204)
+  @RequirePermission(Action.CONTENT_UPLOAD, Resource.ASSETS)
+  async deleteAsset(@Param('id') id: string): Promise<void> {
+    await this.assetsService.deleteAsset(id);
+  }
+
   private isAssetType(value: string | undefined): value is asset_type {
     return !!value && Object.values(asset_type).includes(value as asset_type);
+  }
+
+  private isEditableAssetType(
+    value: asset_type | undefined,
+  ): value is Exclude<asset_type, 'BLOCK'> {
+    return this.isAssetType(value) && value !== asset_type.BLOCK;
   }
 }

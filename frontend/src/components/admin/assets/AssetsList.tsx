@@ -1,10 +1,11 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Box,
   Button,
   Card,
   Chip,
+  CircularProgress,
   IconButton,
   Stack,
   Table,
@@ -21,23 +22,27 @@ import {
   Add as AddIcon,
   DeleteOutlined as DeleteIcon,
   EditOutlined as EditIcon,
-  Image as ImageIcon,
   Refresh as RefreshIcon,
 } from "@mui/icons-material";
 import { ModalDelete } from "../../ModalDelete";
 import SearchBar from "../../SearchBar";
-import { AssetsAddModal } from "./AssetsAddModal";
-import type { Asset, AssetType } from "./AssetsAddModal";
+import {
+  deleteAsset,
+  listAssets,
+  updateAsset,
+  uploadAssets,
+} from "../../../api/assets";
+import type { AssetType, UploadedAsset } from "../../../api/assets";
+import { AssetsAddModal, type AssetModalPayload } from "./AssetsAddModal";
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
 const ASSET_TYPE_LABELS: Record<AssetType, string> = {
-    IMAGE: "Imagen",
-    DOCUMENT: "Documento",
-    VIDEO: "Video",
-    FONT: "Fuente",
-    OTHER: "Otro",
+  IMAGE: "Imagen",
+  ICON: "Icono",
+  LOGO: "Logo",
+  SHAPE: "Forma",
+  LOCKUP: "Lockup",
+  KEYWORD: "Keyword",
+  BLOCK: "Bloque",
 };
 
 const TYPE_COLORS: Record<
@@ -45,152 +50,174 @@ const TYPE_COLORS: Record<
   "default" | "primary" | "secondary" | "info" | "warning"
 > = {
   IMAGE: "primary",
-  DOCUMENT: "info",
-  VIDEO: "secondary",
-  FONT: "warning",
-  OTHER: "default",
+  ICON: "secondary",
+  LOGO: "info",
+  SHAPE: "warning",
+  LOCKUP: "default",
+  KEYWORD: "default",
+  BLOCK: "default",
 };
 
-const formatBytes = (bytes?: number) => {
-  if (!bytes) return "—";
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+const formatCreatedAt = (createdAt: string): string => {
+  const date = new Date(createdAt);
+
+  if (Number.isNaN(date.getTime())) {
+    return "-";
+  }
+
+  return new Intl.DateTimeFormat("es-UY", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(date);
 };
 
-// ---------------------------------------------------------------------------
-// Mock data
-// ---------------------------------------------------------------------------
-const INITIAL_ASSETS: Asset[] = [
-  {
-    id: "1",
-    name: "Logo Nestle Principal",
-    description: "Logo principal en fondo blanco",
-    created_at: "2024-02-01",
-    type: "IMAGE",
-    bucket: "brand-assets",
-    file_name: "nestle_logo_white.png",
-    extension: "png",
-    size_bytes: 45200,
-    from_brand: true,
-  },
-  {
-    id: "2",
-    name: "Fuente NestleBrush",
-    created_at: "2024-02-03",
-    type: "FONT",
-    bucket: "brand-assets",
-    file_name: "NestleBrush.woff2",
-    extension: "woff2",
-    size_bytes: 120000,
-    from_brand: true,
-  },
-  {
-    id: "3",
-    name: "Banner Q1 2024",
-    description: "Banner campaña primer trimestre",
-    created_at: "2024-03-10",
-    type: "IMAGE",
-    bucket: "campaign-assets",
-    file_name: "banner_q1_2024.jpg",
-    extension: "jpg",
-    size_bytes: 980000,
-    from_brand: false,
-  },
-  {
-    id: "4",
-    name: "Guia de Marca 2024",
-    description: "Brand guidelines completas",
-    created_at: "2024-01-20",
-    type: "DOCUMENT",
-    bucket: "brand-assets",
-    file_name: "brand_guide_2024.pdf",
-    extension: "pdf",
-    size_bytes: 5200000,
-    from_brand: true,
-  },
-];
-
-// ---------------------------------------------------------------------------
-// Component — accepts optional brandId to scope assets to a brandkit
-// ---------------------------------------------------------------------------
 interface AssetsListProps {
-  /** When provided, the component acts as an asset selector inside BrandkitPage */
   brandId?: string;
-  /** If true, hides the section header (useful when embedded in BrandkitPage) */
   compact?: boolean;
 }
 
 export function AssetsList({ compact = false }: AssetsListProps) {
-  const [assets, setAssets] = useState<Asset[]>(INITIAL_ASSETS);
+  const [assets, setAssets] = useState<UploadedAsset[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [search, setSearch] = useState("");
-  const [orderBy, setOrderBy] = useState<keyof Asset>("name");
+  const [orderBy, setOrderBy] = useState<keyof UploadedAsset>("name");
   const [order, setOrder] = useState<"asc" | "desc">("asc");
   const [limit, setLimit] = useState(5);
   const [modalOpen, setModalOpen] = useState(false);
-  const [editTarget, setEditTarget] = useState<Asset | null>(null);
+  const [editTarget, setEditTarget] = useState<UploadedAsset | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-
-  const filtered = useMemo(() => {
-    return [...assets]
-      .filter((a) =>
-        [a.name, a.description ?? "", a.type, a.file_name, a.bucket].some((v) =>
-          v.toLowerCase().includes(search.toLowerCase()),
-        ),
-      )
-      .sort((a, b) => {
-        const av = String(a[orderBy] ?? "");
-        const bv = String(b[orderBy] ?? "");
-        if (av === bv) return 0;
-        return (av < bv ? -1 : 1) * (order === "asc" ? 1 : -1);
-      });
-  }, [assets, search, order, orderBy]);
-
-  const handleSort = (property: keyof Asset) => {
+  const [error, setError] = useState<string | null>(null);
+  const handleSort = (property: keyof UploadedAsset): void => {
     const isAsc = orderBy === property && order === "asc";
     setOrder(isAsc ? "desc" : "asc");
     setOrderBy(property);
   };
 
-  const openAdd = () => {
+  const fetchAssets = useCallback(async (): Promise<void> => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await listAssets();
+      setAssets(response.assets);
+    } catch (unknownError) {
+      console.error("Error fetching assets:", unknownError);
+      setError("No se pudieron obtener los assets.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      void fetchAssets();
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [fetchAssets]);
+
+const filtered = useMemo(() => {
+  const lowerSearch = search.toLowerCase();
+
+  return [...assets]
+    .filter((asset) => {
+
+      const typeLabel = ASSET_TYPE_LABELS[asset.type] || asset.type;
+      const dateLabel = asset.created_at
+        ? formatCreatedAt(asset.created_at)
+        : "";
+
+      return [
+        asset.name,
+        asset.url,
+        asset.created_at, 
+        typeLabel,
+        dateLabel,
+      ].some((value) => value?.toLowerCase().includes(lowerSearch));
+    })
+    .sort((left, right) => {
+      let leftValue = left[orderBy];
+      let rightValue = right[orderBy];
+
+      if (orderBy === "type") {
+        leftValue = ASSET_TYPE_LABELS[left.type] || left.type;
+        rightValue = ASSET_TYPE_LABELS[right.type] || right.type;
+      }
+
+
+      const strLeft = String(leftValue ?? "").toLowerCase();
+      const strRight = String(rightValue ?? "").toLowerCase();
+
+      if (strLeft === strRight) return 0;
+      return (strLeft < strRight ? -1 : 1) * (order === "asc" ? 1 : -1);
+    });
+}, [assets, search, order, orderBy]);
+
+  const openAdd = (): void => {
     setEditTarget(null);
     setModalOpen(true);
   };
 
-  const openEdit = (asset: Asset) => {
+  const openEdit = (asset: UploadedAsset): void => {
     setEditTarget(asset);
     setModalOpen(true);
   };
 
-  const handleModalClose = () => {
+  const handleModalClose = (): void => {
     setModalOpen(false);
     setEditTarget(null);
   };
 
-  const handleConfirm = (data: Omit<Asset, "id" | "created_at">) => {
-    if (editTarget) {
-      setAssets((prev) =>
-        prev.map((a) => (a.id === editTarget.id ? { ...a, ...data } : a)),
-      );
-    } else {
-      const newAsset: Asset = {
-        ...data,
-        id: String(Date.now()),
-        created_at: new Date().toISOString().split("T")[0],
-      };
-      setAssets((prev) => [newAsset, ...prev]);
+  const handleConfirm = async (data: AssetModalPayload): Promise<void> => {
+    setError(null);
+
+    try {
+      if (data.mode === "update" && editTarget) {
+        await updateAsset(editTarget.id, {
+          name: data.name,
+          type: data.type,
+        });
+      }
+
+      if (data.mode === "create") {
+        const response = await uploadAssets(data.files, data.type);
+        const uploadedAsset = response.assets[0];
+
+        if (uploadedAsset && uploadedAsset.name !== data.name) {
+          await updateAsset(uploadedAsset.id, {
+            name: data.name,
+            type: data.type,
+          });
+        }
+      }
+
+      await fetchAssets();
+      handleModalClose();
+    } catch (unknownError) {
+      console.error("Error saving asset:", unknownError);
+      setError("No se pudo guardar el asset.");
     }
-    handleModalClose();
   };
 
-  const handleDelete = () => {
-    setAssets((prev) => prev.filter((a) => a.id !== deleteId));
-    setDeleteId(null);
+  const handleDelete = async (): Promise<void> => {
+    if (!deleteId) return;
+
+    setError(null);
+
+    try {
+      await deleteAsset(deleteId);
+      setAssets((currentAssets) =>
+        currentAssets.filter((asset) => asset.id !== deleteId),
+      );
+      setDeleteId(null);
+    } catch (unknownError) {
+      console.error("Error deleting asset:", unknownError);
+      setError("No se pudo eliminar el asset.");
+    }
   };
 
   return (
     <Stack spacing={3}>
-      {/* Header */}
       <Stack
         direction={{ xs: "column", sm: "row" }}
         spacing={2}
@@ -201,11 +228,9 @@ export function AssetsList({ compact = false }: AssetsListProps) {
       >
         {!compact && (
           <Stack spacing={0.5}>
-            <Typography variant="h6">
-              Assets
-            </Typography>
+            <Typography variant="h6">Assets</Typography>
             <Typography variant="body2" color="text.secondary">
-              Gestioná las imágenes y archivos disponibles para los newsletters.
+              Gestiona las imagenes y archivos disponibles.
             </Typography>
           </Stack>
         )}
@@ -217,7 +242,11 @@ export function AssetsList({ compact = false }: AssetsListProps) {
         >
           <SearchBar value={search} onChange={setSearch} />
           <Tooltip title="Actualizar lista">
-            <IconButton size="small" onClick={() => setAssets(INITIAL_ASSETS)}>
+            <IconButton
+              size="small"
+              onClick={() => void fetchAssets()}
+              disabled={isLoading}
+            >
               <RefreshIcon fontSize="small" />
             </IconButton>
           </Tooltip>
@@ -228,15 +257,20 @@ export function AssetsList({ compact = false }: AssetsListProps) {
             onClick={openAdd}
             sx={{ whiteSpace: "nowrap" }}
           >
-            Nuevo Asset
+            Nuevo asset
           </Button>
         </Stack>
       </Stack>
 
-      {/* Table */}
-      {filtered.length === 0 ? (
+      {error && <Alert severity="error">{error}</Alert>}
+
+      {isLoading ? (
+        <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
+          <CircularProgress />
+        </Box>
+      ) : filtered.length === 0 ? (
         <Alert severity="info">
-          No se encontraron assets con esa búsqueda.
+          No se encontraron assets con esa busqueda.
         </Alert>
       ) : (
         <TableContainer
@@ -244,99 +278,83 @@ export function AssetsList({ compact = false }: AssetsListProps) {
           variant="outlined"
           sx={{ borderRadius: 2 }}
         >
-          <Table>
-            <TableHead sx={{ bgcolor: "action.hover" }}>
-              <TableRow>
-                <TableCell sx={{ width: 48 }} />
-                <TableCell>
-                  <TableSortLabel
-                    active={orderBy === "name"}
-                    direction={orderBy === "name" ? order : "asc"}
-                    onClick={() => handleSort("name")}
-                  >
-                    Nombre
-                  </TableSortLabel>
-                </TableCell>
-                <TableCell>Tipo</TableCell>
-                <TableCell>Archivo</TableCell>
-                <TableCell>Tamaño</TableCell>
-                <TableCell>Brandkit</TableCell>
-                <TableCell>
-                  <TableSortLabel
-                    active={orderBy === "created_at"}
-                    direction={orderBy === "created_at" ? order : "asc"}
-                    onClick={() => handleSort("created_at")}
-                  >
-                    Creado
-                  </TableSortLabel>
-                </TableCell>
-                <TableCell align="right">Acciones</TableCell>
-              </TableRow>
-            </TableHead>
+          <Table sx={{ tableLayout: "fixed", minWidth: 700 }}>
+                <TableHead sx={{ bgcolor: "action.hover" }}>
+                <TableRow>
+                    {/* ADDED: Fixed width for image column */}
+                    <TableCell sx={{ width: 200 }}>Vista Previa</TableCell>
+
+                    {/* Nombre column takes remaining space automatically */}
+                    <TableCell>
+                    <TableSortLabel
+                        active={orderBy === "name"}
+                        direction={orderBy === "name" ? order : "asc"}
+                        onClick={() => handleSort("name")}
+                    >
+                        Nombre
+                    </TableSortLabel>
+                    </TableCell>
+
+                    {/* ADDED: Sort para la columna Tipo */}
+                    <TableCell sx={{ width: 120 }}>
+                    <TableSortLabel
+                        active={orderBy === "type"}
+                        direction={orderBy === "type" ? order : "asc"}
+                        onClick={() => handleSort("type")}
+                    >
+                        Tipo
+                    </TableSortLabel>
+                    </TableCell>
+
+                    <TableCell sx={{ width: 180 }}>
+                    <TableSortLabel
+                        active={orderBy === "created_at"}
+                        direction={orderBy === "created_at" ? order : "asc"}
+                        onClick={() => handleSort("created_at")}
+                    >
+                        Creado
+                    </TableSortLabel>
+                    </TableCell>
+
+                    <TableCell align="right" sx={{ width: 100 }}>
+                    Acciones
+                    </TableCell>
+                </TableRow>
+                </TableHead>
             <TableBody>
               {filtered.slice(0, limit).map((asset) => (
                 <TableRow key={asset.id} hover>
-                  {/* Icon column */}
                   <TableCell>
                     <Box
+                      component="img"
+                      src={asset.url}
+                      alt={asset.name}
                       sx={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: 1,
-                        bgcolor: "action.hover",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
+                        maxHeight: 170,
+                        maxWidth: 170,
+                        objectFit: "contain",
+                        display: "block",
                       }}
-                    >
-                      <ImageIcon fontSize="small" color="action" />
-                    </Box>
+                    />
                   </TableCell>
 
-                  <TableCell>
+                  <TableCell sx={{ wordBreak: "break-word" }}>
                     <Typography variant="subtitle2">{asset.name}</Typography>
-                    {asset.description && (
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
-                        noWrap
-                        sx={{ maxWidth: 200, display: "block" }}
-                      >
-                        {asset.description}
-                      </Typography>
-                    )}
                   </TableCell>
 
                   <TableCell>
                     <Chip
-                      label={ASSET_TYPE_LABELS[asset.type]}
+                      label={ASSET_TYPE_LABELS[asset.type] || asset.type}
                       size="small"
-                      color={TYPE_COLORS[asset.type]}
+                      color={TYPE_COLORS[asset.type] || "default"}
                     />
                   </TableCell>
 
                   <TableCell>
-                    <Typography
-                      variant="caption"
-                      sx={{ fontFamily: "monospace" }}
-                    >
-                      {asset.file_name}
+                    <Typography variant="body2">
+                      {formatCreatedAt(asset.created_at)}
                     </Typography>
                   </TableCell>
-
-                  <TableCell>{formatBytes(asset.size_bytes)}</TableCell>
-
-                  <TableCell>
-                    {asset.from_brand ? (
-                      <Chip label="Sí" size="small" color="success" />
-                    ) : (
-                      <Typography variant="caption" color="text.secondary">
-                        No
-                      </Typography>
-                    )}
-                  </TableCell>
-
-                  <TableCell>{asset.created_at}</TableCell>
 
                   <TableCell align="right">
                     <Stack
@@ -377,25 +395,29 @@ export function AssetsList({ compact = false }: AssetsListProps) {
                 borderColor: "divider",
               }}
             >
-              <Button onClick={() => setLimit((c) => c + 5)}>
-                Cargar más resultados
+              <Button
+                onClick={() => setLimit((currentLimit) => currentLimit + 5)}
+              >
+                Cargar mas resultados
               </Button>
             </Box>
           )}
         </TableContainer>
       )}
 
-      {/* Modals */}
-      <AssetsAddModal
-        open={modalOpen}
-        asset={editTarget}
-        onClose={handleModalClose}
-        onConfirm={handleConfirm}
-      />
+      {modalOpen && (
+        <AssetsAddModal
+          key={editTarget?.id ?? "new-asset"}
+          open={modalOpen}
+          asset={editTarget}
+          onClose={handleModalClose}
+          onConfirm={handleConfirm}
+        />
+      )}
 
       <ModalDelete
         open={Boolean(deleteId)}
-        description="Esta acción eliminará el asset de forma permanente."
+        description="Esta accion eliminara el asset de la lista."
         onClose={() => setDeleteId(null)}
         onConfirm={handleDelete}
       />
