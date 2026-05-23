@@ -7,8 +7,8 @@ import { ReviewDetailPage } from '../../pages/ReviewDetailPage'
 import TemplatesPage from '../../pages/TemplatesPage'
 import { UsersPage } from '../../pages/UsersPage'
 import { CreateTemplate } from '../../pages/templates/CreateTemplate'
-import {  } from '../../pages/backoffice/BackofficePage'
-import {  } from "../../pages/backoffice/BrandkitPage";
+import { BackofficePage } from "../../pages/backoffice/BackofficePage";
+import { BrandkitPage } from "../../pages/backoffice/BrandkitPage";
 
 export const adminRoutes = (
   <>
