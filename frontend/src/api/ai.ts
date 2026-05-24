@@ -69,6 +69,29 @@ export type UpdateAiConfigRequest = {
     max_output_tokens: number;
 };
 
+export type PromptCommand = {
+    id: string;
+    name: string;
+    type: AiConfigType;
+    display_order: number;
+    instruction: string | null;
+    created_at: string;
+    updated_at: string;
+};
+
+export type CreatePromptCommandRequest = {
+    name: string;
+    type: AiConfigType;
+    display_order: number;
+    instruction?: string;
+};
+
+export type UpdatePromptCommandRequest = {
+    name?: string;
+    display_order?: number;
+    instruction?: string;
+};
+
 export async function improveText(
     request: ImproveTextRequest,
     ): Promise<ImproveTextResponse> {
@@ -110,4 +133,38 @@ export async function updateAiConfig(
 
 export async function deleteAiConfig(id: string): Promise<void> {
     await axios.delete(`/ai/ai-config/${id}`);
+}
+
+export async function getPromptCommands(
+    type?: AiConfigType,
+    ): Promise<PromptCommand[]> {
+    const response = await axios.get<PromptCommand[]>("/ai/prompt-commands", {
+        params: type ? { type } : undefined,
+    });
+    return response.data;
+}
+
+export async function createPromptCommand(
+    request: CreatePromptCommandRequest,
+    ): Promise<PromptCommand> {
+    const response = await axios.post<PromptCommand>(
+        "/ai/prompt-commands",
+        request,
+    );
+    return response.data;
+}
+
+export async function updatePromptCommand(
+    id: string,
+    request: UpdatePromptCommandRequest,
+    ): Promise<PromptCommand> {
+    const response = await axios.patch<PromptCommand>(
+        `/ai/prompt-commands/${id}`,
+        request,
+    );
+    return response.data;
+}
+
+export async function deletePromptCommand(id: string): Promise<void> {
+    await axios.delete(`/ai/prompt-commands/${id}`);
 }

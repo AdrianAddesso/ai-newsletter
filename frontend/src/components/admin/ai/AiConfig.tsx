@@ -6,6 +6,7 @@ import {
     Card,
     Chip,
     CircularProgress,
+    Divider,
     IconButton,
     Stack,
     Table,
@@ -24,57 +25,208 @@ import {
     EditOutlined as EditIcon,
     Refresh as RefreshIcon,
 } from "@mui/icons-material";
+import { AiConfigTypeLabel } from "@shared/enums/ai-config-type.enum";
 import { ModalDelete } from "../../ModalDelete";
 import SearchBar from "../../SearchBar";
-import { AiConfigModal } from "./AiConfigAddModal";
+import { AiConfigEditModal } from "./AiConfigEditModal";
+import { PromptCommandModal } from "./PromptCommandModal";
 import {
-  getAiConfigs,
-  deleteAiConfig,
-  type AiConfig,
-  type CreateAiConfigRequest,
-  type UpdateAiConfigRequest,
+    getAiConfigs,
+    getPromptCommands,
+    deletePromptCommand,
+    type AiConfig,
+    type PromptCommand,
 } from "../../../api/ai";
 
-type SortKey = keyof Pick<AiConfig, "name" | "type" | "created_at">;
+type PromptSortKey = keyof Pick<
+    PromptCommand,
+    "name" | "type" | "display_order" | "created_at"
+>;
 
-const TYPE_LABEL: Record<string, string> = {
-    CREATE: "Generación",
-    REGENERATE: "Mejora de texto",
-};
+// ─── Section 1: AI Config ─────────────────────────────────────────────────────
 
-export function AiConfig() {
+function AiConfigSection() {
     const [configs, setConfigs] = useState<AiConfig[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [loadingAll, setLoadingAll] = useState(true);
+    const [refreshingId, setRefreshingId] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
-    const [search, setSearch] = useState("");
-    const [orderBy, setOrderBy] = useState<SortKey>("name");
-    const [order, setOrder] = useState<"asc" | "desc">("asc");
-    const [limit, setLimit] = useState(5);
-    const [modalOpen, setModalOpen] = useState(false);
     const [editTarget, setEditTarget] = useState<AiConfig | null>(null);
-    const [deleteId, setDeleteId] = useState<string | null>(null);
-    const [deleting, setDeleting] = useState(false);
 
-    const fetchConfigs = useCallback(async () => {
-        setLoading(true);
+    const fetchAll = useCallback(async () => {
+        setLoadingAll(true);
         setError(null);
         try {
         setConfigs(await getAiConfigs());
         } catch {
         setError("No se pudieron cargar las configuraciones de IA.");
         } finally {
+        setLoadingAll(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        void fetchAll();
+    }, [fetchAll]);
+
+    const handleRowRefresh = async (id: string) => {
+        setRefreshingId(id);
+        try {
+        const updated = await getAiConfigs();
+        setConfigs((prev) =>
+            prev.map((c) => updated.find((u) => u.id === c.id) ?? c),
+        );
+        } catch {
+        setError("No se pudo actualizar la fila.");
+        } finally {
+        setRefreshingId(null);
+        }
+    };
+
+    const handleEditConfirm = (saved: AiConfig) => {
+        setConfigs((prev) => prev.map((c) => (c.id === saved.id ? saved : c)));
+        setEditTarget(null);
+    };
+
+    return (
+      <Stack spacing={2}>
+        <Stack spacing={0.5}>
+          <Typography variant="h6">Configuración de IA</Typography>
+          <Typography variant="body2" color="text.secondary">
+            Parámetros de generación por tipo de operación.
+          </Typography>
+        </Stack>
+
+        {error && (
+          <Alert severity="error" onClose={() => setError(null)}>
+            {error}
+          </Alert>
+        )}
+
+        {loadingAll ? (
+          <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+            <CircularProgress size={28} />
+          </Box>
+        ) : (
+          <TableContainer
+            component={Card}
+            variant="outlined"
+            sx={{ borderRadius: 2 }}
+          >
+            <Table>
+              <TableHead sx={{ bgcolor: "action.hover" }}>
+                <TableRow>
+                  <TableCell>Nombre</TableCell>
+                  <TableCell>Uso</TableCell>
+                  <TableCell align="right">Temperatura</TableCell>
+                  <TableCell align="right">Top P</TableCell>
+                  <TableCell align="right">Top K</TableCell>
+                  <TableCell align="right">Máx. tokens</TableCell>
+                  <TableCell align="right">Acciones</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {configs.map((config) => (
+                  <TableRow key={config.id} hover>
+                    <TableCell>
+                      <Typography variant="body2">{config.name}</Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={AiConfigTypeLabel[config.type]}
+                        size="small"
+                        variant="outlined"
+                        color={
+                          config.type === "CREATE" ? "primary" : "secondary"
+                        }
+                      />
+                    </TableCell>
+                    <TableCell align="right">{config.temperature}</TableCell>
+                    <TableCell align="right">{config.top_p}</TableCell>
+                    <TableCell align="right">{config.top_k}</TableCell>
+                    <TableCell align="right">
+                      {config.max_output_tokens}
+                    </TableCell>
+                    <TableCell align="right">
+                        <Stack
+                            direction="row"
+                            spacing={0.5}
+                            sx={{ alignItems: "center" }}
+                        >
+                        <Tooltip title="Editar">
+                          <IconButton
+                            size="small"
+                            onClick={() => setEditTarget(config)}
+                          >
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Actualizar">
+                          <IconButton
+                            size="small"
+                            onClick={() => handleRowRefresh(config.id)}
+                            disabled={refreshingId === config.id}
+                          >
+                            {refreshingId === config.id ? (
+                              <CircularProgress size={14} />
+                            ) : (
+                              <RefreshIcon fontSize="small" />
+                            )}
+                          </IconButton>
+                        </Tooltip>
+                      </Stack>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
+
+        <AiConfigEditModal
+          open={Boolean(editTarget)}
+          config={editTarget}
+          onClose={() => setEditTarget(null)}
+          onConfirm={handleEditConfirm}
+        />
+      </Stack>
+    );
+}
+
+// ─── Section 2: Prompt Commands ───────────────────────────────────────────────
+
+function PromptCommandsSection() {
+    const [commands, setCommands] = useState<PromptCommand[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [search, setSearch] = useState("");
+    const [orderBy, setOrderBy] = useState<PromptSortKey>("display_order");
+    const [order, setOrder] = useState<"asc" | "desc">("asc");
+    const [limit, setLimit] = useState(10);
+    const [modalOpen, setModalOpen] = useState(false);
+    const [editTarget, setEditTarget] = useState<PromptCommand | null>(null);
+    const [deleteId, setDeleteId] = useState<string | null>(null);
+    const [deleting, setDeleting] = useState(false);
+
+    const fetchCommands = useCallback(async () => {
+        setLoading(true);
+        setError(null);
+        try {
+        setCommands(await getPromptCommands());
+        } catch {
+        setError("No se pudieron cargar las instrucciones de prompt.");
+        } finally {
         setLoading(false);
         }
     }, []);
 
     useEffect(() => {
-        void fetchConfigs();
-    }, [fetchConfigs]);
+        void fetchCommands();
+    }, [fetchCommands]);
 
     const filtered = useMemo(() => {
-        return [...configs]
+        return [...commands]
         .filter((c) =>
-            [c.name, c.type, TYPE_LABEL[c.type] ?? ""].some((v) =>
+            [c.name, c.type, c.instruction ?? ""].some((v) =>
             v.toLowerCase().includes(search.toLowerCase()),
             ),
         )
@@ -84,9 +236,9 @@ export function AiConfig() {
             if (av === bv) return 0;
             return (av < bv ? -1 : 1) * (order === "asc" ? 1 : -1);
         });
-    }, [configs, search, order, orderBy]);
+    }, [commands, search, order, orderBy]);
 
-    const handleSort = (property: SortKey) => {
+    const handleSort = (property: PromptSortKey) => {
         setOrder(orderBy === property && order === "asc" ? "desc" : "asc");
         setOrderBy(property);
     };
@@ -96,8 +248,8 @@ export function AiConfig() {
         setEditTarget(null);
     };
 
-    const handleConfirm = (saved: AiConfig) => {
-        setConfigs((prev) => {
+    const handleConfirm = (saved: PromptCommand) => {
+        setCommands((prev) => {
         const exists = prev.find((c) => c.id === saved.id);
         return exists
             ? prev.map((c) => (c.id === saved.id ? saved : c))
@@ -110,10 +262,10 @@ export function AiConfig() {
         if (!deleteId) return;
         setDeleting(true);
         try {
-        await deleteAiConfig(deleteId);
-        setConfigs((prev) => prev.filter((c) => c.id !== deleteId));
+        await deletePromptCommand(deleteId);
+        setCommands((prev) => prev.filter((c) => c.id !== deleteId));
         } catch {
-        setError("No se pudo eliminar la configuración.");
+        setError("No se pudo eliminar la instrucción.");
         } finally {
         setDeleting(false);
         setDeleteId(null);
@@ -121,194 +273,214 @@ export function AiConfig() {
     };
 
     return (
-        <Stack spacing={3}>
-        {/* Header */}
+      <Stack spacing={2}>
         <Stack
-            direction={{ xs: "column", sm: "row" }}
-            spacing={2}
-            sx={{
+          direction={{ xs: "column", sm: "row" }}
+          spacing={2}
+          sx={{
             justifyContent: "space-between",
             alignItems: { xs: "flex-start", sm: "center" },
-            }}
+          }}
         >
-            <Stack spacing={0.5}>
-            <Typography variant="h6">Configuración de IA</Typography>
+          <Stack spacing={0.5}>
+            <Typography variant="h6">Configuración de Prompts</Typography>
             <Typography variant="body2" color="text.secondary">
-                Gestioná los parámetros de generación utilizados por el modelo.
+              Instrucciones enviadas al modelo para cada tipo de operación.
             </Typography>
-            </Stack>
+          </Stack>
 
-            <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+          <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
             <SearchBar value={search} onChange={setSearch} />
             <Tooltip title="Actualizar lista">
-                <IconButton size="small" onClick={fetchConfigs} disabled={loading}>
+              <IconButton
+                size="small"
+                onClick={fetchCommands}
+                disabled={loading}
+              >
                 <RefreshIcon fontSize="small" />
-                </IconButton>
+              </IconButton>
             </Tooltip>
             <Button
-                variant="contained"
-                size="small"
-                startIcon={<AddIcon />}
-                onClick={() => {
+              variant="contained"
+              size="small"
+              startIcon={<AddIcon />}
+              onClick={() => {
                 setEditTarget(null);
                 setModalOpen(true);
-                }}
-                sx={{ whiteSpace: "nowrap" }}
+              }}
+              sx={{ whiteSpace: "nowrap" }}
             >
-                Nueva configuración
+              Nueva instrucción
             </Button>
-            </Stack>
+          </Stack>
         </Stack>
 
-        {/* Error */}
         {error && (
-            <Alert severity="error" onClose={() => setError(null)}>
+          <Alert severity="error" onClose={() => setError(null)}>
             {error}
-            </Alert>
+          </Alert>
         )}
 
-        {/* Loading */}
         {loading ? (
-            <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
-            <CircularProgress size={32} />
-            </Box>
+          <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+            <CircularProgress size={28} />
+          </Box>
         ) : filtered.length === 0 ? (
-            <Alert severity="info">
-            No hay configuraciones que coincidan con la búsqueda.
-            </Alert>
+          <Alert severity="info">
+            No hay instrucciones que coincidan con la búsqueda.
+          </Alert>
         ) : (
-            <TableContainer
+          <TableContainer
             component={Card}
             variant="outlined"
             sx={{ borderRadius: 2 }}
-            >
+          >
             <Table>
-                <TableHead sx={{ bgcolor: "action.hover" }}>
+              <TableHead sx={{ bgcolor: "action.hover" }}>
                 <TableRow>
-                    <TableCell>
+                  <TableCell>
                     <TableSortLabel
-                        active={orderBy === "name"}
-                        direction={orderBy === "name" ? order : "asc"}
-                        onClick={() => handleSort("name")}
+                      active={orderBy === "name"}
+                      direction={orderBy === "name" ? order : "asc"}
+                      onClick={() => handleSort("name")}
                     >
-                        Nombre
+                      Nombre
                     </TableSortLabel>
-                    </TableCell>
-                    <TableCell>
+                  </TableCell>
+                  <TableCell>
                     <TableSortLabel
-                        active={orderBy === "type"}
-                        direction={orderBy === "type" ? order : "asc"}
-                        onClick={() => handleSort("type")}
+                      active={orderBy === "type"}
+                      direction={orderBy === "type" ? order : "asc"}
+                      onClick={() => handleSort("type")}
                     >
-                        Tipo
+                      Uso
                     </TableSortLabel>
-                    </TableCell>
-                    <TableCell align="right">Temperatura</TableCell>
-                    <TableCell align="right">Top P</TableCell>
-                    <TableCell align="right">Top K</TableCell>
-                    <TableCell align="right">Máx. tokens</TableCell>
-                    <TableCell>
+                  </TableCell>
+                  <TableCell>
                     <TableSortLabel
-                        active={orderBy === "created_at"}
-                        direction={orderBy === "created_at" ? order : "asc"}
-                        onClick={() => handleSort("created_at")}
+                      active={orderBy === "display_order"}
+                      direction={orderBy === "display_order" ? order : "asc"}
+                      onClick={() => handleSort("display_order")}
                     >
-                        Creado
+                      Orden
                     </TableSortLabel>
-                    </TableCell>
-                    <TableCell align="right">Acciones</TableCell>
+                  </TableCell>
+                  <TableCell>Instrucción</TableCell>
+                  <TableCell>
+                    <TableSortLabel
+                      active={orderBy === "created_at"}
+                      direction={orderBy === "created_at" ? order : "asc"}
+                      onClick={() => handleSort("created_at")}
+                    >
+                      Creado
+                    </TableSortLabel>
+                  </TableCell>
+                  <TableCell align="right">Acciones</TableCell>
                 </TableRow>
-                </TableHead>
-                <TableBody>
-                {filtered.slice(0, limit).map((config) => (
-                    <TableRow key={config.id} hover>
+              </TableHead>
+              <TableBody>
+                {filtered.slice(0, limit).map((cmd) => (
+                  <TableRow key={cmd.id} hover>
                     <TableCell>
-                        <Typography variant="body2">
-                        {config.name}
-                        </Typography>
+                      <Typography variant="body2">{cmd.name}</Typography>
                     </TableCell>
                     <TableCell>
-                        <Chip
-                        label={TYPE_LABEL[config.type] ?? config.type}
+                      <Chip
+                        label={AiConfigTypeLabel[cmd.type]}
                         size="small"
                         variant="outlined"
-                        color={config.type === "CREATE" ? "primary" : "secondary"}
-                        />
+                        color={cmd.type === "CREATE" ? "primary" : "secondary"}
+                      />
                     </TableCell>
-                    <TableCell align="right">{config.temperature}</TableCell>
-                    <TableCell align="right">{config.top_p}</TableCell>
-                    <TableCell align="right">{config.top_k}</TableCell>
-                    <TableCell align="right">
-                        {config.max_output_tokens}
+                    <TableCell>{cmd.display_order}</TableCell>
+                    <TableCell>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        noWrap
+                        sx={{ maxWidth: 320, display: "block" }}
+                      >
+                        {cmd.instruction ?? "—"}
+                      </Typography>
                     </TableCell>
                     <TableCell>
-                        {new Date(config.created_at).toLocaleDateString("es-AR")}
+                      {new Date(cmd.created_at).toLocaleDateString("es-AR")}
                     </TableCell>
                     <TableCell align="right">
-                        <Stack
+                      <Stack
                         direction="row"
                         spacing={0.5}
-                        sx={{ justifyContent: "flex-end" }}
-                        >
+                        sx={{ alignItems: "center" }}
+                      >
                         <Tooltip title="Editar">
-                            <IconButton
+                          <IconButton
                             size="small"
                             onClick={() => {
-                                setEditTarget(config);
-                                setModalOpen(true);
+                              setEditTarget(cmd);
+                              setModalOpen(true);
                             }}
-                            >
+                          >
                             <EditIcon fontSize="small" />
-                            </IconButton>
+                          </IconButton>
                         </Tooltip>
                         <Tooltip title="Borrar">
-                            <IconButton
+                          <IconButton
                             size="small"
                             color="error"
-                            onClick={() => setDeleteId(config.id)}
-                            >
+                            onClick={() => setDeleteId(cmd.id)}
+                          >
                             <DeleteIcon fontSize="small" />
-                            </IconButton>
+                          </IconButton>
                         </Tooltip>
-                        </Stack>
+                      </Stack>
                     </TableCell>
-                    </TableRow>
+                  </TableRow>
                 ))}
-                </TableBody>
+              </TableBody>
             </Table>
 
             {limit < filtered.length && (
-                <Box
+              <Box
                 sx={{
-                    p: 2,
-                    textAlign: "center",
-                    borderTop: "1px solid",
-                    borderColor: "divider",
+                  p: 2,
+                  textAlign: "center",
+                  borderTop: "1px solid",
+                  borderColor: "divider",
                 }}
-                >
-                <Button onClick={() => setLimit((c) => c + 5)}>
-                    Cargar más resultados
+              >
+                <Button onClick={() => setLimit((c) => c + 10)}>
+                  Cargar más resultados
                 </Button>
-                </Box>
+              </Box>
             )}
-            </TableContainer>
+          </TableContainer>
         )}
 
-        {/* Modals */}
-        <AiConfigModal
-            open={modalOpen}
-            config={editTarget}
-            onClose={handleModalClose}
-            onConfirm={handleConfirm}
+        <PromptCommandModal
+          open={modalOpen}
+          command={editTarget}
+          onClose={handleModalClose}
+          onConfirm={handleConfirm}
         />
 
         <ModalDelete
-            open={Boolean(deleteId)}
-            description="Esta acción eliminará la configuración de IA de forma permanente."
-            onClose={() => setDeleteId(null)}
-            onConfirm={handleDelete}
-            loading={deleting}
+          open={Boolean(deleteId)}
+          description="Esta acción eliminará la instrucción de prompt de forma permanente."
+          onClose={() => setDeleteId(null)}
+          onConfirm={handleDelete}
+          loading={deleting}
         />
+      </Stack>
+    );
+}
+
+
+export function AiConfig() {
+    return (
+        <Stack spacing={4}>
+        <AiConfigSection />
+        <Divider />
+        <PromptCommandsSection />
         </Stack>
     );
 }
