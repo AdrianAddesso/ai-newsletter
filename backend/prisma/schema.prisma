@@ -282,6 +282,7 @@ model newsletters {
   state                                        newsletter_state       @default(DRAFT)
   language                                     newsletter_language    @default(SPA)
   format                                       newsletter_format      @default(PORTRAIT)
+  generation_content                           Json?
   newsletter_blocks                            newsletter_blocks[]
   newsletter_exports                           newsletter_exports[]
   newsletter_state_log                         newsletter_state_log[]

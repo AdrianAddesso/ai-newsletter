@@ -14,20 +14,33 @@ describe('request body schemas', () => {
       language: 'SPA',
       format: 'PORTRAIT',
       areaId: '550e8400-e29b-41d4-a716-446655440000',
-      assetSelection: {
-        selectedAssets: [
-          {
-            id: '550e8400-e29b-41d4-a716-446655440001',
-            keywordText: 'Hola',
-          },
-        ],
-      },
+      blocks: [
+        {
+          id: 'header-0-0-0',
+          type: 'headerLeft',
+          name: 'Header Left',
+          row: 0,
+          gridColumn: 0,
+          displayOrder: 0,
+          mustFill: false,
+          comment: null,
+          fields: [
+            {
+              id: 'header-asset-0',
+              kind: 'asset',
+              label: 'Asset principal',
+              assetId: '550e8400-e29b-41d4-a716-446655440001',
+              keywordText: 'Hola',
+            },
+          ],
+        },
+      ],
     });
 
     expect(result.success).toBe(true);
   });
 
-  it('rejects newsletter asset payloads with non-persisted fields', () => {
+  it('rejects newsletter-level asset selections', () => {
     const result = createNewsletterBodySchema.safeParse({
       title: 'Newsletter de abril',
       assetSelection: {

@@ -17,7 +17,9 @@ export function TextLabelCenterBackgroundFullRenderer({
   const bgSx = backgroundImage
     ? {
         backgroundImage: `url("${backgroundImage}")`,
-        backgroundSize: "cover",
+        backgroundSize: "contain",
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "center",
         backgroundPosition: "center",
       }
     : {};

@@ -43,7 +43,7 @@ describe('AssetsController', () => {
   });
 
   it('rejects asset uploads with invalid asset type', () => {
-    expect(() => controller.uploadAssets('NOT_VALID', [])).toThrow(
+    expect(() => controller.uploadAssets('NOT_VALID', 'Asset', undefined, [])).toThrow(
       BadRequestException,
     );
   });
@@ -53,7 +53,7 @@ describe('AssetsController', () => {
   });
 
   it('rejects asset uploads without files', () => {
-    expect(() => controller.uploadAssets('IMAGE', [])).toThrow(
+    expect(() => controller.uploadAssets('IMAGE', 'Asset', undefined, [])).toThrow(
       BadRequestException,
     );
   });

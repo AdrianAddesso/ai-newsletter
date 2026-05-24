@@ -21,6 +21,7 @@ import { KEYWORD_MAX_CHARS } from '../../../packages/shared/src/enums/assets-con
 type PersistedAsset = {
   id: string;
   name: string;
+  description: string | null;
   created_at: Date;
   updated_at: Date;
   type: asset_type;
@@ -62,6 +63,7 @@ export class AssetsService {
   async uploadAssets(
     files: UploadedAssetFile[],
     type: asset_type,
+    metadata: { name?: string; description?: string | null } = {},
   ): Promise<UploadAssetsResponseDto> {
     try {
       const assets = await Promise.all(
@@ -79,9 +81,18 @@ export class AssetsService {
             file.mimetype,
           );
 
+          const assetName =
+            files.length === 1 && metadata.name?.trim()
+              ? metadata.name.trim()
+              : file.originalname;
+
           const asset = await this.prisma.assets.create({
             data: {
-              name: file.originalname,
+              name: assetName,
+              description:
+                files.length === 1 && metadata.description?.trim()
+                  ? metadata.description.trim()
+                  : null,
               type,
               bucket: this.getAssetBucketName(),
               object_key: storageKey,
@@ -96,6 +107,7 @@ export class AssetsService {
             select: {
               id: true,
               name: true,
+              description: true,
               created_at: true,
               updated_at: true,
               type: true,
@@ -136,6 +148,7 @@ export class AssetsService {
         select: {
           id: true,
           name: true,
+          description: true,
           created_at: true,
           updated_at: true,
           type: true,
@@ -160,7 +173,11 @@ export class AssetsService {
 
   async updateAsset(
     id: string,
-    input: { name: string; type: Exclude<asset_type, 'BLOCK'> },
+    input: {
+      name: string;
+      description?: string | null;
+      type: Exclude<asset_type, 'BLOCK'>;
+    },
   ): Promise<UploadedAssetDto> {
     const existingAsset = await this.prisma.assets.findFirst({
       where: {
@@ -194,11 +211,13 @@ export class AssetsService {
       },
       data: {
         name: input.name.trim(),
+        description: input.description?.trim() || null,
         type: input.type,
       },
       select: {
         id: true,
         name: true,
+        description: true,
         created_at: true,
         updated_at: true,
         type: true,
@@ -289,6 +308,7 @@ export class AssetsService {
       select: {
         id: true,
         name: true,
+        description: true,
         created_at: true,
         updated_at: true,
         type: true,
@@ -317,6 +337,7 @@ export class AssetsService {
           select: {
             id: true,
             name: true,
+            description: true,
             created_at: true,
             updated_at: true,
             type: true,
@@ -342,6 +363,7 @@ export class AssetsService {
           select: {
             id: true,
             name: true,
+            description: true,
             created_at: true,
             updated_at: true,
             type: true,
@@ -380,6 +402,7 @@ export class AssetsService {
     return {
       id: asset.id,
       name: asset.name,
+      description: asset.description,
       created_at: asset.created_at.toISOString(),
       updated_at: asset.updated_at.toISOString(),
       type: asset.type,

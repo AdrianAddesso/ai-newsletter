@@ -1,5 +1,9 @@
 import axios from 'axios'
-import type { NewsletterTemplate, TemplateGenerationField } from '../types/newsletter'
+import type {
+  NewsletterTemplate,
+  TemplateGenerationField,
+  TemplateLayoutBlock,
+} from '../types/newsletter'
 import { defaultOptionalGenerationFields } from '../utils/newsletterTemplates'
 
 type TemplateApiResponse = {
@@ -7,7 +11,7 @@ type TemplateApiResponse = {
   name: string
   description: string | null
   area: NewsletterTemplate['area']
-  layout: string | null
+  layout: TemplateLayoutBlock[] | null
   orientation: 'PORTRAIT' | 'LANDSCAPE'
   stateCode: string
   stateName: string

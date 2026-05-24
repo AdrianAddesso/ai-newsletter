@@ -1,5 +1,4 @@
 import type { GenerateNewsletterRequest } from '../api/ai'
-import type { UploadedAsset } from '../api/assets'
 import type { UUID } from '../interfaces/interfaces.templates'
 
 export type NewsletterState =
@@ -20,14 +19,27 @@ export type TemplateGenerationField =
 
 export type NewsletterBlock = {
   id: string
+  type: string
+  category?: string
   name: string
-  text: string
-  backgroundColor: string
+  content: string | null
+  row: number
+  gridColumn: number
+  displayOrder: number
+  mustFill: boolean
   comment: string | null
+  fields: NewsletterBlockField[]
 }
 
-export type NewsletterAssetSelection = {
-  selectedAssets: UploadedAsset[]
+export type NewsletterBlockField = {
+  id: string
+  kind: 'text' | 'label' | 'asset'
+  label: string
+  value?: string | null
+  assetId?: string | null
+  assetName?: string | null
+  assetUrl?: string | null
+  keywordText?: string | null
 }
 
 export type NewsletterTemplate = {
@@ -35,13 +47,23 @@ export type NewsletterTemplate = {
   name: string
   description: string | null
   area: AreaName
-  layout: string | null
+  layout: TemplateLayoutBlock[] | null
   orientation: 'PORTRAIT' | 'LANDSCAPE'
   stateCode: string
   stateName: string
   createdAt: string
   requiredGenerationFields: TemplateGenerationField[]
   optionalGenerationFields: TemplateGenerationField[]
+}
+
+export type TemplateLayoutBlock = {
+  type?: string | null
+  block_type: string | null
+  content: string | null
+  row: number
+  grid_column: number
+  display_order: number
+  mustFill?: boolean
 }
 
 export type ExportFormat =
@@ -65,10 +87,15 @@ export type Newsletter = {
   blocks: NewsletterBlock[]
   comment: string | null
   generationRequest: GenerateNewsletterRequest | null
-  assetSelection: NewsletterAssetSelection | null
+  generationContent?: NewsletterGenerationContent | null
   renderedHtml: string | null
   createdAt: string
   updatedAt: string
+}
+
+export type NewsletterGenerationContent = {
+  aiContent: unknown
+  originalContent: GenerateNewsletterRequest
 }
 
 // Para crear un nuevo newsletter
@@ -79,18 +106,19 @@ export type CreateNewsletterPayload = {
   brandKitId: string
   blocks: NewsletterBlock[]
   generationRequest: GenerateNewsletterRequest
-  assetSelection: NewsletterAssetSelection | null
+  generationContent: NewsletterGenerationContent
 }
 
 // Para actualizar
 export type UpdateNewsletterPayload = {
+  title?: string
   templateId?: string
   brandKitId?: string
   blocks?: NewsletterBlock[]
   comment?: string | null
   state?: NewsletterState
   generationRequest?: GenerateNewsletterRequest | null
-  assetSelection?: NewsletterAssetSelection | null
+  generationContent?: NewsletterGenerationContent | null
   renderedHtml?: string | null
 }
 

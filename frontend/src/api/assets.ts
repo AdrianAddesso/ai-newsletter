@@ -12,6 +12,7 @@ export type AssetType =
 export type UploadedAsset = {
   id: string
   name: string
+  description?: string | null
   created_at: string
   updated_at: string
   url: string
@@ -27,7 +28,17 @@ export type UploadAssetsResponse = {
 
 export type UpdateAssetRequest = {
   name: string
+  description?: string | null
   type: Exclude<AssetType, 'BLOCK'>
+}
+
+export type UploadAssetRequest = {
+  file: File
+  type: Exclude<AssetType, 'BLOCK'>
+  name: string
+  description?: string | null
+  signal?: AbortSignal
+  onUploadProgress?: (progress: number) => void
 }
 
 export async function listAssets(
@@ -38,6 +49,38 @@ export async function listAssets(
   })
 
   return response.data
+}
+
+export async function uploadAsset({
+  file,
+  type,
+  name,
+  description,
+  signal,
+  onUploadProgress,
+}: UploadAssetRequest): Promise<UploadedAsset> {
+  const formData = new FormData()
+
+  formData.append('files', file)
+  formData.append('type', type)
+  formData.append('name', name)
+  if (description?.trim()) {
+    formData.append('description', description.trim())
+  }
+
+  const response = await axios.post<UploadAssetsResponse>(
+    '/assets',
+    formData,
+    {
+      signal,
+      onUploadProgress: (event) => {
+        if (!onUploadProgress || !event.total) return
+        onUploadProgress(Math.round((event.loaded / event.total) * 100))
+      },
+    },
+  )
+
+  return response.data.assets[0]
 }
 
 export async function uploadAssets(
@@ -51,11 +94,7 @@ export async function uploadAssets(
   })
   formData.append('type', type)
 
-  const response = await axios.post<UploadAssetsResponse>(
-    '/assets',
-    formData,
-  )
-
+  const response = await axios.post<UploadAssetsResponse>('/assets', formData)
   return response.data
 }
 

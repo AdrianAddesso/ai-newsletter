@@ -4,25 +4,57 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NewsLettersService } from './newsletters.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { BadRequestException } from '@nestjs/common';
+import { StorageService } from '../storage/storage.service';
 
 describe('NewsLettersService', () => {
   let service: NewsLettersService;
   let prisma: any;
 
   beforeEach(async () => {
-    const mockPrisma = {
+    const transactionClient = {
       newsletters: {
-        findUnique: jest.fn(),
+        update: jest.fn(),
+      },
+      newsletter_blocks: {
+        deleteMany: jest.fn(),
+        create: jest.fn(),
+      },
+      block_content: {
+        create: jest.fn().mockResolvedValue({ id: 'block-content-id' }),
+      },
+      assets_block: {
+        create: jest.fn(),
       },
       newsletter_state_log: {
         create: jest.fn(),
       },
+    };
+    const runTransaction = (
+      callback: (tx: typeof transactionClient) => Promise<unknown>,
+    ) => callback(transactionClient);
+    const mockPrisma = {
+      $transaction: jest.fn(runTransaction),
+      newsletters: {
+        findUnique: jest.fn(),
+        findFirst: jest.fn(),
+        update: jest.fn(),
+      },
+      newsletter_state_log: {
+        create: jest.fn(),
+      },
+      __tx: transactionClient,
     };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         NewsLettersService,
         { provide: PrismaService, useValue: mockPrisma },
+        {
+          provide: StorageService,
+          useValue: {
+            getSignedUrl: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
@@ -32,6 +64,56 @@ describe('NewsLettersService', () => {
 
   it('should be defined', () => {
     expect(service).toBeDefined();
+  });
+
+  it('persists block asset relations when saving newsletter blocks', async () => {
+    prisma.newsletters.findFirst
+      .mockResolvedValueOnce({ id: 'newsletter-id', state: 'DRAFT' })
+      .mockResolvedValueOnce({
+        id: 'newsletter-id',
+        created_by_user_id: null,
+        state: 'DRAFT',
+        template_id: null,
+        brand_kit_id: null,
+        generation_content: null,
+        created_at: new Date('2026-05-24T12:00:00.000Z'),
+        updated_at: new Date('2026-05-24T12:00:00.000Z'),
+        newsletter_blocks: [],
+      });
+
+    await service.update('newsletter-id', {
+      blocks: [
+        {
+          id: 'headerLeft-0-0-0',
+          type: 'headerLeft',
+          name: 'Header Left',
+          content: null,
+          row: 0,
+          gridColumn: 0,
+          displayOrder: 0,
+          mustFill: false,
+          comment: null,
+          fields: [
+            {
+              id: 'headerLeft-asset-0',
+              kind: 'asset',
+              label: 'Asset principal',
+              assetId: '550e8400-e29b-41d4-a716-446655440001',
+              assetName: 'Banner',
+              keywordText: 'Hola',
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(prisma.__tx.assets_block.create).toHaveBeenCalledWith({
+      data: {
+        block_id: 'block-content-id',
+        asset_id: '550e8400-e29b-41d4-a716-446655440001',
+        keyword_text: 'Hola',
+      },
+    });
   });
 
   describe('addLog', () => {

@@ -145,6 +145,7 @@ CREATE TABLE public.newsletters (
   state USER-DEFINED NOT NULL DEFAULT 'DRAFT'::newsletter_state,
   language USER-DEFINED NOT NULL DEFAULT 'SPA'::newsletter_language,
   format USER-DEFINED NOT NULL DEFAULT 'PORTRAIT'::newsletter_format,
+  generation_content jsonb,
   CONSTRAINT newsletters_pkey PRIMARY KEY (id),
   CONSTRAINT newsletters_area_id_fkey FOREIGN KEY (area_id) REFERENCES public.areas(id),
   CONSTRAINT newsletters_brand_kit_id_fkey FOREIGN KEY (brand_kit_id) REFERENCES public.brand_kit(id),

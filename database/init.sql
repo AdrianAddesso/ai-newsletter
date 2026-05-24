@@ -371,6 +371,7 @@ CREATE TABLE public.newsletters (
     state public.newsletter_state NOT NULL DEFAULT 'DRAFT'::public.newsletter_state,
     language public.newsletter_language NOT NULL DEFAULT 'SPA'::public.newsletter_language,
     format public.newsletter_format NOT NULL DEFAULT 'PORTRAIT'::public.newsletter_format,
+    generation_content jsonb,
     CONSTRAINT newsletters_pkey PRIMARY KEY (id)
 );
 

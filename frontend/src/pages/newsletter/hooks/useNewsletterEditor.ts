@@ -4,7 +4,11 @@ import { useNavigate,useParams } from 'react-router'
 import { useAuth } from '../../../contexts/AuthContext'
 import { useNotification } from '../../../hooks/useNotification'
 
-import { getNewsletter,updateNewsletter } from '../../../api/newsletters'
+import {
+  getNewsletter,
+  updateNewsletter,
+  updateNewsletterStatus,
+} from '../../../api/newsletters'
 import { listTemplates } from '../../../api/templates'
 import { listBrandKits,getBrandKitResources } from '../../../api/brand-kits'
 import { improveText,generateNewsletter } from '../../../api/ai'
@@ -14,7 +18,6 @@ import type {
   NewsletterBlock,
   NewsletterState,
   NewsletterTemplate,
-  NewsletterAssetSelection,
   ExportFormat,
   ExportOption,
 } from '../../../types/newsletter'
@@ -27,6 +30,10 @@ import type {
 import type {
   GenerateNewsletterRequest,
 } from '../../../api/ai'
+import {
+  buildNewsletterBlocksFromTemplate,
+  updateBlockField,
+} from '../../../utils/newsletterBlocks'
 
 export function useNewsletterEditor() {
   const navigate = useNavigate()
@@ -37,8 +44,9 @@ export function useNewsletterEditor() {
   const [newsletter,setNewsletter] = useState<Newsletter | null>(null)
   const [isLoading,setIsLoading] = useState(true)
   const [error,setError] = useState<string | null>(null)
-  const [selectedBlockId,setSelectedBlockId] = useState('')
+  const [selectedBlockId,setSelectedBlockIdState] = useState('')
   const [showRegenerationForm,setShowRegenerationForm] = useState(false)
+  const [isSavingDraft,setIsSavingDraft] = useState(false)
 
   const [templates,setTemplates] = useState<NewsletterTemplate[]>([])
   const [brandKits,setBrandKits] = useState<BrandKit[]>([])
@@ -74,7 +82,7 @@ export function useNewsletterEditor() {
         const data = await getNewsletter(id)
 
         setNewsletter(data)
-        setSelectedBlockId(data.blocks?.[0]?.id ?? '')
+        setSelectedBlockIdState(data.blocks?.[0]?.id ?? '')
 
         const [templateData,brandKitData] = await Promise.all([
           listTemplates(),
@@ -106,6 +114,12 @@ export function useNewsletterEditor() {
     )
   }, [newsletter,selectedBlockId])
 
+  const selectedTemplate = useMemo(() => {
+    if (!newsletter) return undefined
+
+    return templates.find(template => template.id === newsletter.templateId)
+  }, [newsletter,templates])
+
   const renderHtml = useCallback(() => {
     if (!newsletter) return ''
 
@@ -114,9 +128,12 @@ export function useNewsletterEditor() {
       <html>
         <body style="font-family:Arial,sans-serif">
           ${newsletter.blocks.map(block => `
-            <section style="padding:24px;background:${block.backgroundColor}">
+            <section style="padding:24px;background:#ffffff">
               <h2>${block.name}</h2>
-              <p>${block.text}</p>
+              ${block.fields
+                .filter(field => field.kind !== 'asset')
+                .map(field => `<p>${field.value ?? ''}</p>`)
+                .join('')}
             </section>
           `).join('')}
         </body>
@@ -133,13 +150,34 @@ export function useNewsletterEditor() {
     })
   }, [newsletter])
 
+  const saveDraft = useCallback(async () => {
+    if (!id || !newsletter) return
+
+    setIsSavingDraft(true)
+
+    try {
+      const updated = await updateNewsletter(id,{
+        blocks: newsletter.blocks,
+        state:'DRAFT',
+      })
+
+      setNewsletter(updated)
+      setSelectedBlockIdState((current) =>
+        updated.blocks.some((block) => block.id === current)
+          ? current
+          : (updated.blocks[0]?.id ?? ''),
+      )
+      success('Borrador guardado')
+    } finally {
+      setIsSavingDraft(false)
+    }
+  }, [id,newsletter,success])
+
   const transitionState = useCallback(async (state: NewsletterState) => {
     if (!id || !newsletter) return
 
-    const updated = await updateNewsletter(id,{
-      blocks: newsletter.blocks,
-      state,
-    })
+    await updateNewsletter(id,{ blocks: newsletter.blocks })
+    const updated = await updateNewsletterStatus(id,state)
 
     setNewsletter(updated)
   }, [id,newsletter])
@@ -279,51 +317,46 @@ export function useNewsletterEditor() {
     if (!target) return
 
     const response = await improveText({
-      text: target.text,
+      text: target.fields.find(field => field.kind === 'text')?.value ?? '',
     })
 
     updateBlocks(
       newsletter.blocks.map(b =>
         b.id === blockId
-          ? {
-              ...b,
-              text: response.improvedText,
-            }
+          ? updateFirstTextField(b,response.improvedText)
           : b,
       ),
     )
   }, [newsletter,updateBlocks])
 
   const handleGenerateAll = useCallback(
-    async (
-      request: GenerateNewsletterRequest,
-      assetSelection: NewsletterAssetSelection,
-    ) => {
+    async (request: GenerateNewsletterRequest) => {
       if (!id) return
 
       const response = await generateNewsletter(request)
 
-      const blocks = response.blocks.map(block => ({
-        id:block.id,
-        name:block.name,
-        text:block.text,
-        backgroundColor:block.backgroundColor,
-        comment:null,
-      }))
+      const template = templates.find(item => item.id === request.templateId)
+      const blocks = buildNewsletterBlocksFromTemplate(
+        template?.layout ?? null,
+        response.blocks,
+      )
 
       const updated = await updateNewsletter(id,{
         blocks,
         generationRequest:request,
-        assetSelection,
+        generationContent:{
+          aiContent:response,
+          originalContent:request,
+        },
       })
 
       setNewsletter(updated)
 
-      setSelectedBlockId(blocks[0]?.id ?? '')
+      setSelectedBlockIdState(updated.blocks[0]?.id ?? '')
 
       setShowRegenerationForm(false)
     },
-    [id],
+    [id,templates],
   )
 
   const handleSubmit = useCallback(async () => {
@@ -341,10 +374,11 @@ export function useNewsletterEditor() {
     error,
     selectedBlock,
     selectedBlockId,
-    setSelectedBlockId,
+    setSelectedBlockId:setSelectedBlockIdState,
     showRegenerationForm,
     setShowRegenerationForm,
     templates,
+    selectedTemplate,
     brandKits,
     brandKitResources,
     exportOptions,
@@ -357,10 +391,20 @@ export function useNewsletterEditor() {
     handleGenerateAll,
     currentUserRole:user?.role ?? 'USER',
     currentUserId:user?.id ?? '',
+    isSavingDraft,
+    saveDraft,
     navigate,
     isApproved:newsletter?.state === 'APPROVED',
     isReviewState:
       newsletter?.state === 'IN_REVIEW' ||
       newsletter?.state === 'RESUBMITTED',
   }
+}
+
+function updateFirstTextField(block: NewsletterBlock, value: string): NewsletterBlock {
+  const field = block.fields.find(item => item.kind === 'text')
+
+  if (!field) return block
+
+  return updateBlockField(block,field.id,{ value })
 }

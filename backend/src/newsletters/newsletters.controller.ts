@@ -7,6 +7,7 @@ import {
   Patch,
   Post,
   Query,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import { NewsLettersService } from './newsletters.service';
@@ -45,6 +46,12 @@ import { RequirePermission } from '../modules/auth/decorators/permissions.decora
 import { Action } from '../modules/auth/enum/actions';
 import { Resource } from '../modules/auth/enum/resources';
 
+type AuthenticatedRequest = {
+  user?: {
+    id?: string;
+  };
+};
+
 @Controller(Resource.NEWSLETTERS)
 @UseGuards(MockAuthGuard, PermissionsGuard)
 export class NewslettersController {
@@ -62,11 +69,11 @@ export class NewslettersController {
   @Post()
   @RequirePermission(Action.CONTENT_UPLOAD, Resource.NEWSLETTERS)
   create(
+    @Req() request: AuthenticatedRequest,
     @Body(new ZodValidationPipe(createNewsletterBodySchema))
     body: CreateNewsletterBody,
   ) {
-    void body;
-    return this.newslettersService.create();
+    return this.newslettersService.create(body, request.user?.id);
   }
 
   @Get(':id')
@@ -80,8 +87,7 @@ export class NewslettersController {
     @Body(new ZodValidationPipe(updateNewsletterBodySchema))
     body: UpdateNewsletterBody,
   ) {
-    void body;
-    return this.newslettersService.update(params.id);
+    return this.newslettersService.update(params.id, body);
   }
 
   @Delete(':id')

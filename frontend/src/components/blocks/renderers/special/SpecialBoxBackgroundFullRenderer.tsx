@@ -118,7 +118,7 @@ export function SpecialBoxBackgroundFullRenderer({
               component="img"
               image={imageUrl}
               alt="Image"
-              sx={{ width: "80%", borderRadius: 1, objectFit: "cover" }}
+              sx={{ width: "80%", borderRadius: 1, objectFit: "contain" }}
             />
           </Grid>
         </Grid>
