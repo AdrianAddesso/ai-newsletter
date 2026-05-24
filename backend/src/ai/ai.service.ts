@@ -10,8 +10,8 @@ import { ConfigService } from '@nestjs/config';
 import { ai_config_type } from '@prisma/client';
 import { z } from 'zod';
 import {
-  ImproveTextRequestDto,
-  ImproveTextResponseDto,
+    ImproveTextRequestDto,
+    ImproveTextResponseDto,
 } from './dto/improve-text.dto';
 import {
   GenerateNewsletterRequestDto,
