@@ -386,8 +386,7 @@ function PromptCommandsSection() {
                     </TableCell>
                     <TableCell>
                       <Chip
-                        label={
-                          TypeLabel[cmd.type]}
+                        label={AiConfigTypeLabel[cmd.type]}
                         size="small"
                         variant="outlined"
                         color={cmd.type === "CREATE" ? "primary" : "secondary"}
