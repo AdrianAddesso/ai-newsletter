@@ -1,13 +1,15 @@
 import { NotFoundException, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ai_config_type } from '@prisma/client';
-import { Decimal } from '@prisma/client/runtime/library';
 import { AiService } from './ai.service';
 import { PrismaService } from '../prisma/prisma.service';
 
 // ─── Test helpers ─────────────────────────────────────────────────────────────
 
 type ConfigValues = Record<string, string | undefined>;
+function dec(value: number) {
+    return { toNumber: () => value };
+}
 
 function createConfigService(values: ConfigValues): ConfigService {
     return { get: (key: string) => values[key] } as ConfigService;
@@ -40,12 +42,12 @@ function createConfigService(values: ConfigValues): ConfigService {
     return {
         id: `config-${type}`,
         name:
-        type === ai_config_type.CREATE
+            type === ai_config_type.CREATE
             ? 'Newsletter Generation'
             : 'Text Improvement',
         type,
-        temperature: new Decimal(type === ai_config_type.CREATE ? '0.5' : '0.1'),
-        top_p: new Decimal('0.8'),
+        temperature: dec(type === ai_config_type.CREATE ? 0.5 : 0.1),
+        top_p: dec(0.8),
         top_k: 20,
         max_output_tokens: 4000,
         created_at: new Date('2026-01-01'),
@@ -391,7 +393,7 @@ function createConfigService(values: ConfigValues): ConfigService {
         const existing = makeAiConfigRow(ai_config_type.CREATE);
         const updatedRow = {
             ...existing,
-            temperature: new Decimal('0.7'),
+            temperature: dec(0.7),
             updated_at: new Date(),
         };
 

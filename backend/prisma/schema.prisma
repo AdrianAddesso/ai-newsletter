@@ -389,6 +389,30 @@ model role_permissions {
   @@index([role], map: "idx_role_permissions_role")
 }
 
+model prompt_commands {
+  id            String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name          String
+  type          ai_config_type
+  display_order Int            @default(0)
+  instruction   String?
+  created_at    DateTime       @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime       @default(now()) @updatedAt @db.Timestamptz(6)
+  deleted_at    DateTime?      @db.Timestamptz(6)
+}
+
+model ai_config {
+  id                String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name              String
+  type              ai_config_type @unique
+  temperature       Decimal        @db.Decimal(3, 2)
+  top_p             Decimal        @db.Decimal(3, 2)
+  top_k             Int
+  max_output_tokens Int
+  created_at        DateTime       @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime       @default(now()) @updatedAt @db.Timestamptz(6)
+  deleted_at        DateTime?      @db.Timestamptz(6)
+}
+
 enum area_name {
   COMUNICACION_INTERNA
   COMUNICACION_CORPORATIVA
@@ -452,4 +476,9 @@ enum user_state {
   ACTIVE
   INACTIVE
   REMOVED
+}
+
+enum ai_config_type {
+  CREATE
+  REGENERATE
 }

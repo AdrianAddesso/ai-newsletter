@@ -31,7 +31,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
-export class AiService {
+    export class AiService {
     private readonly logger = new Logger(AiService.name);
 
     private readonly textImprovementPublicErrorMessage =
