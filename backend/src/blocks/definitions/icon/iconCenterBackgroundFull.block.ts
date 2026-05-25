@@ -12,5 +12,7 @@ export class IconCenterBackgroundFullBlock extends BlockDefinition {
   readonly editFields = [
     { key: 'iconName', label: 'Nombre del ícono (Material)', type: 'text' as const, placeholder: 'star', required: true },
     { key: 'label', label: 'Etiqueta', type: 'text' as const },
+    { key: 'fontSize', label: 'Tamaño de texto', type: 'font-size' as const },
+    { key: 'typographyStyle', label: 'Estilo', type: 'font-style' as const },
   ];
 }

@@ -13,5 +13,7 @@ export class LabelTextLabelCenterFullBlock extends BlockDefinition {
     { key: 'topLabel', label: 'Etiqueta superior', type: 'text' as const },
     { key: 'bodyText', label: 'Texto principal', type: 'textarea' as const, required: true },
     { key: 'bottomLabel', label: 'Etiqueta inferior', type: 'text' as const },
+    { key: 'fontSize', label: 'Tamaño de texto', type: 'font-size' as const },
+    { key: 'typographyStyle', label: 'Estilo', type: 'font-style' as const },
   ];
 }

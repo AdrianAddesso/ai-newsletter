@@ -13,5 +13,7 @@ export class IconBoxBackgroundFullBlock extends BlockDefinition {
     { key: 'iconName', label: 'Nombre del ícono (Material)', type: 'text' as const, placeholder: 'star', required: true },
     { key: 'label', label: 'Etiqueta', type: 'text' as const },
     { key: 'bgColor', label: 'Color de fondo', type: 'color' as const },
+    { key: 'fontSize', label: 'Tamaño de texto', type: 'font-size' as const },
+    { key: 'typographyStyle', label: 'Estilo', type: 'font-style' as const },
   ];
 }

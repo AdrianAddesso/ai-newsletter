@@ -13,5 +13,7 @@ export class SpecialBoxBackgroundFullBlock extends BlockDefinition {
     { key: 'title', label: 'Título', type: 'text' as const, required: true },
     { key: 'text', label: 'Texto', type: 'textarea' as const },
     { key: 'bgColor', label: 'Color de fondo', type: 'color' as const },
+    { key: 'fontSize', label: 'Tamaño de texto', type: 'font-size' as const },
+    { key: 'typographyStyle', label: 'Estilo', type: 'font-style' as const },
   ];
 }

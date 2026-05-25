@@ -13,5 +13,7 @@ export class HeaderRightBlock extends BlockDefinition {
     { key: 'title', label: 'Título', type: 'text' as const, required: true },
     { key: 'subtitle', label: 'Subtítulo', type: 'text' as const },
     { key: 'logoUrl', label: 'URL del logo', type: 'image-url' as const },
+    { key: 'fontSize', label: 'Tamaño de texto', type: 'font-size' as const },
+    { key: 'typographyStyle', label: 'Estilo', type: 'font-style' as const },
   ];
 }
