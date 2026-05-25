@@ -1,5 +1,9 @@
 import { Card, Typography, Chip, CardMedia, Box, Grid } from "@mui/material";
 import type { BlockInstance } from "@shared/types/block.types";
+import {
+  parseContent,
+  resolveTypographySx,
+} from "../../../../utils/blockContent";
 
 interface Props {
   block: BlockInstance;
@@ -14,7 +18,6 @@ interface Props {
 
 export function SpecialBoxBackgroundFullRenderer({
   block,
-  editMode = false,
   backgroundImage = null,
   imageUrl = "https://placehold.co/120x160/e0e0e0/9e9e9e?text=Image",
   labelContent = null,
@@ -22,6 +25,14 @@ export function SpecialBoxBackgroundFullRenderer({
   text2Content = null,
   text3Content = null,
 }: Props) {
+  const {
+    title = labelContent ?? "Lorem ipsum sit",
+    text = text2Content ?? "Provident blanditiis omnis natus ratione necessitatibus.",
+    bgColor,
+    fontSize,
+    typographyStyle,
+  } = parseContent(block.content);
+  const typographySx = resolveTypographySx(fontSize, typographyStyle);
   const bgSx = backgroundImage
     ? {
         backgroundImage: `url("${backgroundImage}")`,
@@ -51,6 +62,7 @@ export function SpecialBoxBackgroundFullRenderer({
           flexGrow: 1,
           display: "flex",
           alignItems: "stretch",
+          backgroundColor: bgColor,
           py: 4,
           ...bgSx,
         }}
@@ -68,7 +80,7 @@ export function SpecialBoxBackgroundFullRenderer({
             }}
           >
             <Chip
-              label={labelContent ?? "Lorem ipsum sit"}
+              label={title}
               sx={{
                 alignSelf: "flex-start",
                 maxWidth: "100%",
@@ -82,7 +94,7 @@ export function SpecialBoxBackgroundFullRenderer({
             <Typography
               variant="body2"
               color="text.secondary"
-              sx={{ textAlign: "center" }}
+              sx={{ textAlign: "center", ...typographySx }}
             >
               {text1Content ??
                 "Lorem ipsum dolor sit amet, consectetur adipiscing elit."}
@@ -90,16 +102,14 @@ export function SpecialBoxBackgroundFullRenderer({
             <Typography
               variant="body2"
               color="text.secondary"
-              sx={{ textAlign: "center" }}
+              sx={{ textAlign: "center", ...typographySx }}
             >
-              {text2Content ??
-                block.content ??
-                "Provident blanditiis omnis natus ratione necessitatibus."}
+              {text}
             </Typography>
             <Typography
               variant="body2"
               color="text.secondary"
-              sx={{ textAlign: "center" }}
+              sx={{ textAlign: "center", ...typographySx }}
             >
               {text3Content ??
                 "Consequuntur eum voluptas iure repellat voluptate nisi."}

@@ -1,5 +1,9 @@
 import { Card, Typography, Box } from "@mui/material";
 import type { BlockInstance } from "@shared/types/block.types";
+import {
+  parseContent,
+  resolveTypographySx,
+} from "../../../../utils/blockContent";
 
 interface Props {
   block: BlockInstance;
@@ -10,10 +14,17 @@ interface Props {
 
 export function TextDoubleCenterBackgroundFullRenderer({
   block,
-  editMode = false,
   backgroundImage = "https://placehold.net/400x400.png",
   secondaryContent = null,
 }: Props) {
+  const {
+    primaryText = "Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat.",
+    secondaryText = secondaryContent ?? "Consequuntur eum voluptas iure repellat voluptate, nisi ipsam explicabo fugit architecto sint adipisci.",
+    bgColor,
+    fontSize,
+    typographyStyle,
+  } = parseContent(block.content);
+  const typographySx = resolveTypographySx(fontSize, typographyStyle);
   const bgSx = backgroundImage
     ? {
         backgroundImage: `url("${backgroundImage}")`,
@@ -48,6 +59,7 @@ export function TextDoubleCenterBackgroundFullRenderer({
           alignItems: "center",
           justifyContent: "center",
           gap: 1.5,
+          backgroundColor: bgColor,
           py: 4,
           ...bgSx,
         }}
@@ -55,18 +67,16 @@ export function TextDoubleCenterBackgroundFullRenderer({
         <Typography
           variant="body2"
           color="text.secondary"
-          sx={{ width: "90%", textAlign: "center" }}
+          sx={{ width: "90%", textAlign: "center", ...typographySx }}
         >
-          {block.content ??
-            "Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat."}
+          {primaryText}
         </Typography>
         <Typography
           variant="body2"
           color="text.secondary"
-          sx={{ width: "90%", textAlign: "center" }}
+          sx={{ width: "90%", textAlign: "center", ...typographySx }}
         >
-          {secondaryContent ??
-            "Consequuntur eum voluptas iure repellat voluptate, nisi ipsam explicabo fugit architecto sint adipisci."}
+          {secondaryText}
         </Typography>
       </Box>
     </Card>

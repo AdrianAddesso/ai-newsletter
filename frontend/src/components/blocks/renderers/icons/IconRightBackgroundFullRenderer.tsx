@@ -1,6 +1,9 @@
-import { Card, Typography, Box, CardMedia } from "@mui/material";
-import DescriptionIcon from "@mui/icons-material/Description";
+import { Card, Typography, Box, CardMedia, Icon } from "@mui/material";
 import type { BlockInstance } from "@shared/types/block.types";
+import {
+  parseContent,
+  resolveTypographySx,
+} from "../../../../utils/blockContent";
 
 interface Props {
   block: BlockInstance;
@@ -11,10 +14,16 @@ interface Props {
 
 export function IconRightBackgroundFullRenderer({
   block,
-  editMode = false,
   backgroundImage = "https://placehold.net/400x400.png",
   iconUrl = null,
 }: Props) {
+  const {
+    iconName = "description",
+    label = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+    fontSize,
+    typographyStyle,
+  } = parseContent(block.content);
+  const typographySx = resolveTypographySx(fontSize, typographyStyle);
   const bgSx = backgroundImage
     ? {
         backgroundImage: `url("${backgroundImage}")`,
@@ -63,10 +72,9 @@ export function IconRightBackgroundFullRenderer({
           <Typography
             variant="body2"
             color="text.secondary"
-            sx={{ textAlign: "right" }}
+            sx={{ textAlign: "right", ...typographySx }}
           >
-            {block.content ??
-              "Lorem ipsum dolor sit amet, consectetur adipiscing elit."}
+            {label}
           </Typography>
           {iconUrl ? (
             <CardMedia
@@ -81,11 +89,13 @@ export function IconRightBackgroundFullRenderer({
               }}
             />
           ) : (
-            <DescriptionIcon
+            <Icon
               fontSize="large"
               color="action"
               sx={{ flexShrink: 0 }}
-            />
+            >
+              {iconName}
+            </Icon>
           )}
         </Box>
       </Box>

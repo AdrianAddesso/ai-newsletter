@@ -1,9 +1,13 @@
-import { Card, Typography, Box, CardMedia, Grid } from "@mui/material";
-import DescriptionIcon from "@mui/icons-material/Description";
+import { Card, Typography, Box, CardMedia, Grid, Icon } from "@mui/material";
 import type { BlockInstance } from "@shared/types/block.types";
+import {
+  parseContent,
+  resolveTypographySx,
+} from "../../../../utils/blockContent";
 
 interface IconItem {
     iconUrl?: string | null;
+    iconName?: string;
     text?: string;
 }
 
@@ -24,11 +28,18 @@ const DEFAULT_ICON_ITEMS: IconItem[] = [
 
 export function IconBoxBackgroundFullRenderer({
   block,
-  editMode = false,
   backgroundImage = "https://placehold.net/400x400.png",
   titleContent = null,
   iconItems = DEFAULT_ICON_ITEMS,
 }: Props) {
+  const {
+    iconName = "description",
+    label = titleContent ?? "Lorem ipsum dolor sit amet consectetur.",
+    bgColor,
+    fontSize,
+    typographyStyle,
+  } = parseContent(block.content);
+  const typographySx = resolveTypographySx(fontSize, typographyStyle);
   const bgSx = backgroundImage
     ? {
         backgroundImage: `url("${backgroundImage}")`,
@@ -62,6 +73,7 @@ export function IconBoxBackgroundFullRenderer({
           flexDirection: "column",
           alignItems: "center",
           gap: 2,
+          backgroundColor: bgColor,
           py: 4,
           ...bgSx,
         }}
@@ -69,11 +81,9 @@ export function IconBoxBackgroundFullRenderer({
         <Typography
           variant="body1"
           color="text.secondary"
-          sx={{ width: "90%", textAlign: "center", fontWeight: 500 }}
+          sx={{ width: "90%", textAlign: "center", fontWeight: 500, ...typographySx }}
         >
-          {titleContent ??
-            block.content ??
-            "Lorem ipsum dolor sit amet consectetur."}
+          {label}
         </Typography>
         <Grid container sx={{ width: "90%" }}>
           {iconItems.slice(0, 4).map((item, index) => (
@@ -101,18 +111,20 @@ export function IconBoxBackgroundFullRenderer({
                   }}
                 />
               ) : (
-                <DescriptionIcon
+                <Icon
                   fontSize="medium"
                   color="action"
                   sx={{ flexShrink: 0 }}
-                />
+                >
+                  {item.iconName ?? iconName}
+                </Icon>
               )}
               <Typography
                 variant="body2"
                 color="text.secondary"
-                sx={{ textAlign: "left" }}
+                sx={{ textAlign: "left", ...typographySx }}
               >
-                {item.text ?? "Lorem ipsum dolor."}
+                {item.text ?? label}
               </Typography>
             </Grid>
           ))}

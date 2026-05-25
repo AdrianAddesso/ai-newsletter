@@ -1,6 +1,10 @@
-import { Card, CardMedia, Box } from "@mui/material";
+import { Card, CardMedia, Box, Typography } from "@mui/material";
 import { useBlockPreviewUrls } from "../../../../hooks/useBlockPreviewUrls";
 import type { BlockInstance } from "@shared/types/block.types";
+import {
+  parseContent,
+  resolveTypographySx,
+} from "../../../../utils/blockContent";
 
 const nestleIsotypeStorageKey = "assets/logos/nestle/nestle_isotype.png";
 
@@ -12,9 +16,18 @@ interface Props {
 }
 
 export function HeaderFullRenderer({
+  block,
   leftImageUrl,
   rightImageUrl,
 }: Props) {
+  const {
+    title = "",
+    subtitle = "",
+    logoUrl = "",
+    fontSize,
+    typographyStyle,
+  } = parseContent(block.content);
+  const typographySx = resolveTypographySx(fontSize, typographyStyle);
   const previewUrls = useBlockPreviewUrls([nestleIsotypeStorageKey], "LOGO");
   const defaultImageUrl = previewUrls[nestleIsotypeStorageKey] ?? "";
   const backgroundColor = "#FF595A";
@@ -47,7 +60,7 @@ export function HeaderFullRenderer({
       >
         <CardMedia
           component="img"
-          image={leftImageUrl ?? defaultImageUrl}
+          image={(leftImageUrl ?? logoUrl) || defaultImageUrl}
           alt="Left logo"
           sx={{
             height: 60,
@@ -56,9 +69,33 @@ export function HeaderFullRenderer({
             objectFit: "contain",
           }}
         />
+        {(title || subtitle) && (
+          <Box sx={{ flex: 1, minWidth: 0, px: 1, textAlign: "center" }}>
+            {title && (
+              <Typography
+                variant="subtitle2"
+                color="common.white"
+                noWrap
+                sx={{ ...typographySx }}
+              >
+                {title}
+              </Typography>
+            )}
+            {subtitle && (
+              <Typography
+                variant="caption"
+                color="common.white"
+                noWrap
+                sx={{ ...typographySx }}
+              >
+                {subtitle}
+              </Typography>
+            )}
+          </Box>
+        )}
         <CardMedia
           component="img"
-          image={rightImageUrl ?? defaultImageUrl}
+          image={(rightImageUrl ?? logoUrl) || defaultImageUrl}
           alt="Right logo"
           sx={{
             height: 60,

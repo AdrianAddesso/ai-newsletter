@@ -1,6 +1,9 @@
-import { Card, Typography, Box, CardMedia } from "@mui/material";
-import DescriptionIcon from "@mui/icons-material/Description";
+import { Card, Typography, Box, CardMedia, Icon } from "@mui/material";
 import type { BlockInstance } from "@shared/types/block.types";
+import {
+  parseContent,
+  resolveTypographySx,
+} from "../../../../utils/blockContent";
 
 interface Props {
   block: BlockInstance;
@@ -11,10 +14,16 @@ interface Props {
 
 export function IconCenterBackgroundFullRenderer({
   block,
-  editMode = false,
   backgroundImage = "https://placehold.net/400x400.png",
   iconUrl = null,
 }: Props) {
+  const {
+    iconName = "description",
+    label = "Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat.",
+    fontSize,
+    typographyStyle,
+  } = parseContent(block.content);
+  const typographySx = resolveTypographySx(fontSize, typographyStyle);
   const bgSx = backgroundImage
     ? {
         backgroundImage: `url("${backgroundImage}")`,
@@ -61,15 +70,16 @@ export function IconCenterBackgroundFullRenderer({
             sx={{ width: 48, height: 48, objectFit: "contain" }}
           />
         ) : (
-          <DescriptionIcon sx={{ fontSize: 48 }} color="action" />
+          <Icon sx={{ fontSize: 48 }} color="action">
+            {iconName}
+          </Icon>
         )}
         <Typography
           variant="body2"
           color="text.secondary"
-          sx={{ width: "90%", textAlign: "center" }}
+          sx={{ width: "90%", textAlign: "center", ...typographySx }}
         >
-          {block.content ??
-            "Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat."}
+          {label}
         </Typography>
       </Box>
     </Card>

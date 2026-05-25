@@ -1,12 +1,15 @@
 import { Card, CardActions, Button } from "@mui/material";
 import type { BlockInstance } from "@shared/types/block.types";
+import { parseContent } from "../../../../utils/blockContent";
 
 interface Props {
   block: BlockInstance;
   editMode?: boolean;
 }
 
-export function CTAAlternativeRenderer({ block, editMode = false }: Props) {
+export function CTAAlternativeRenderer({ block }: Props) {
+  const { buttonLabel = "Click here", href = "" } = parseContent(block.content);
+
   return (
     <Card sx={{
   width: "100%",
@@ -21,9 +24,9 @@ export function CTAAlternativeRenderer({ block, editMode = false }: Props) {
   },
     }}>
       <CardActions sx={{ flexGrow: 1, p: 1.5 }}>
-        <Button variant="outlined" size="small" disableElevation fullWidth
+        <Button variant="outlined" size="small" disableElevation fullWidth href={href || undefined}
           sx={{ borderRadius: 1.5, textTransform: "none" }}>
-          {block.content ?? "Click here"}
+          {buttonLabel}
         </Button>
       </CardActions>
     </Card>
