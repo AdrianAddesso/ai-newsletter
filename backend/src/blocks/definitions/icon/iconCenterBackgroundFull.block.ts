@@ -9,4 +9,8 @@ export class IconCenterBackgroundFullBlock extends BlockDefinition {
   readonly previewKey = 'IconCenterBackgroundFullRenderer.svg';
   readonly mustFill = true;
   readonly layout = { minCols: 1, minRows: 1, resizable: true };
+  readonly editFields = [
+    { key: 'iconName', label: 'Nombre del ícono (Material)', type: 'text' as const, placeholder: 'star', required: true },
+    { key: 'label', label: 'Etiqueta', type: 'text' as const },
+  ];
 }

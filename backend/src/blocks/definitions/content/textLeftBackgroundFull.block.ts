@@ -9,4 +9,8 @@ export class TextLeftBackgroundFullBlock extends BlockDefinition {
   readonly previewKey = 'TextLeftBackgroundFullRenderer.svg';
   readonly mustFill = true;
   readonly layout = { minCols: 1, minRows: 1, resizable: true };
+  readonly editFields = [
+    { key: 'text', label: 'Texto', type: 'textarea' as const, required: true },
+    { key: 'bgColor', label: 'Color de fondo', type: 'color' as const },
+  ];
 }

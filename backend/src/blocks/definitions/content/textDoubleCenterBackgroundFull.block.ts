@@ -9,4 +9,9 @@ export class TextDoubleCenterBackgroundFullBlock extends BlockDefinition {
   readonly previewKey = 'TextDoubleCenterBackgroundFullRenderer.svg';
   readonly mustFill = true;
   readonly layout = { minCols: 1, minRows: 1, resizable: true };
+  readonly editFields = [
+    { key: 'primaryText', label: 'Texto principal', type: 'textarea' as const, required: true },
+    { key: 'secondaryText', label: 'Texto secundario', type: 'textarea' as const },
+    { key: 'bgColor', label: 'Color de fondo', type: 'color' as const },
+  ];
 }

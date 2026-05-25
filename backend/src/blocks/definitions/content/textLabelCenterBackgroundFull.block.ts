@@ -10,4 +10,9 @@ export class TextLabelCenterBackgroundFullBlock extends BlockDefinition {
   readonly previewKey = 'TextLabelCenterBackgroundFullRenderer.svg';
   readonly mustFill = true;
   readonly layout = { minCols: 1, minRows: 1, resizable: true };
+  readonly editFields = [
+    { key: 'label', label: 'Etiqueta', type: 'text' as const },
+    { key: 'text', label: 'Texto', type: 'textarea' as const, required: true },
+    { key: 'bgColor', label: 'Color de fondo', type: 'color' as const },
+  ];
 }

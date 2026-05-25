@@ -1,4 +1,8 @@
-import type {  BlockContentType,  BlockDefinitionDTO,} from '@shared/types/block.types';
+import type {
+  BlockContentType,
+  BlockDefinitionDTO,
+  BlockEditField,
+} from '@shared/types/block.types';
 
 export abstract class BlockDefinition {
   abstract readonly type: string;
@@ -9,7 +13,22 @@ export abstract class BlockDefinition {
   abstract readonly previewKey: string;
   abstract readonly mustFill: boolean;
   abstract readonly layout: BlockDefinitionDTO['layout'];
-  defaultContent: string | null = null;
+  /** Editable fields exposed to the newsletter editor. Override per block. */
+  readonly editFields: BlockEditField[] = [];
+
+  /**
+   * Serialized default content derived from editFields.
+   * Returns null when the block has no editable fields.
+   */
+  get defaultContent(): string | null {
+    if (this.editFields.length === 0) {
+      return null;
+    }
+
+    return JSON.stringify(
+      Object.fromEntries(this.editFields.map((field) => [field.key, ''])),
+    );
+  }
 
   toDTO(): BlockDefinitionDTO {
     return {
@@ -22,6 +41,7 @@ export abstract class BlockDefinition {
       defaultContent: this.defaultContent,
       mustFill: this.mustFill,
       layout: this.layout,
+      editFields: this.editFields,
     };
   }
 }

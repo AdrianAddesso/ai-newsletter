@@ -9,4 +9,9 @@ export class SpecialBoxBackgroundFullBlock extends BlockDefinition {
   readonly previewKey = 'SpecialBoxBackgroundFullRenderer.svg';
   readonly mustFill = true;
   readonly layout = { minCols: 1, minRows: 1, resizable: true };
+  readonly editFields = [
+    { key: 'title', label: 'Título', type: 'text' as const, required: true },
+    { key: 'text', label: 'Texto', type: 'textarea' as const },
+    { key: 'bgColor', label: 'Color de fondo', type: 'color' as const },
+  ];
 }

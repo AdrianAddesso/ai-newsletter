@@ -9,4 +9,9 @@ export class ImageBackgroundFullBlock extends BlockDefinition {
   readonly previewKey = 'ImageBackgroundFullRenderer.svg';
   readonly mustFill = true;
   readonly layout = { minCols: 1, minRows: 1, resizable: true };
+  readonly editFields = [
+    { key: 'imageUrl', label: 'URL de imagen', type: 'image-url' as const, required: true },
+    { key: 'altText', label: 'Texto alternativo', type: 'text' as const },
+    { key: 'overlayColor', label: 'Color de overlay', type: 'color' as const },
+  ];
 }
