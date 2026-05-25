@@ -1,6 +1,10 @@
-import { Card, CardMedia, Box } from "@mui/material";
+import { Card, CardMedia, Box, Typography } from "@mui/material";
 import { useBlockPreviewUrls } from "../../../../hooks/useBlockPreviewUrls";
 import type { BlockInstance } from "@shared/types/block.types";
+import {
+  parseContent,
+  resolveTypographySx,
+} from "../../../../utils/blockContent";
 
 const nestleIsotypeStorageKey = "assets/logos/nestle/nestle_isotype.png";
 
@@ -11,8 +15,17 @@ interface Props {
 }
 
 export function HeaderRightRenderer({
+  block,
   imageUrl,
 }: Props) {
+  const {
+    title = "",
+    subtitle = "",
+    logoUrl = "",
+    fontSize,
+    typographyStyle,
+  } = parseContent(block.content);
+  const typographySx = resolveTypographySx(fontSize, typographyStyle);
   const previewUrls = useBlockPreviewUrls([nestleIsotypeStorageKey], "LOGO");
   const defaultImageUrl = previewUrls[nestleIsotypeStorageKey] ?? "";
   const backgroundColor = "#FF595A"; // Light gray background for better contrast
@@ -43,9 +56,33 @@ export function HeaderRightRenderer({
           px: 1.5,
         }}
       >
+        {(title || subtitle) && (
+          <Box sx={{ minWidth: 0, mr: 1.5, textAlign: "right" }}>
+            {title && (
+              <Typography
+                variant="subtitle2"
+                color="common.white"
+                noWrap
+                sx={{ ...typographySx }}
+              >
+                {title}
+              </Typography>
+            )}
+            {subtitle && (
+              <Typography
+                variant="caption"
+                color="common.white"
+                noWrap
+                sx={{ ...typographySx }}
+              >
+                {subtitle}
+              </Typography>
+            )}
+          </Box>
+        )}
         <CardMedia
           component="img"
-          image={imageUrl ?? defaultImageUrl}
+          image={(imageUrl ?? logoUrl) || defaultImageUrl}
           alt="Logo"
           sx={{
             height: 60,
