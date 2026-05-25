@@ -142,8 +142,24 @@ export class AssetsService {
 
       const assets = await this.prisma.assets.findMany({
         where: type
-          ? { type, deleted_at: null }
-          : { type: { not: asset_type.BLOCK as asset_type }, deleted_at: null },
+          ? {
+              type,
+              deleted_at: null,
+              brandkit_assets: {
+                none: {
+                  deleted_at: null,
+                },
+              },
+            }
+          : {
+              type: { not: asset_type.BLOCK as asset_type },
+              deleted_at: null,
+              brandkit_assets: {
+                none: {
+                  deleted_at: null,
+                },
+              },
+            },
         orderBy: [{ type: 'asc' }, { name: 'asc' }],
         select: {
           id: true,

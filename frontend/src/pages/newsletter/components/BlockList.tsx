@@ -1,6 +1,9 @@
-import { Alert, Box, Chip, Paper, Stack, Typography } from "@mui/material";
-import { BlockRenderer } from "../../../components/blocks/BlockRenderer";
-import type { NewsletterBlock } from "../../../types/newsletter";
+import { Alert, Box, Chip, Paper, Stack, Typography } from '@mui/material'
+import { BlockRenderer } from '../../../components/blocks/BlockRenderer'
+import type {
+  NewsletterBlock,
+  NewsletterBlockAssetBinding,
+} from '../../../types/newsletter'
 
 type Props = {
   blocks: NewsletterBlock[];
@@ -15,14 +18,14 @@ export function BlockList({
   onSelectBlock,
   readOnly = false,
 }: Props) {
-  const rows = groupBlocksByRow(blocks);
+  const rows = groupBlocksByRow(blocks)
 
   return (
     <Stack spacing={2}>
       <Stack
         direction="row"
         spacing={1}
-        sx={{ alignItems: "center", justifyContent: "space-between" }}
+        sx={{ alignItems: 'center', justifyContent: 'space-between' }}
       >
         <Typography variant="h5">Bloques de la plantilla</Typography>
         {readOnly && <Chip label="Solo lectura" />}
@@ -32,17 +35,17 @@ export function BlockList({
           <Box
             key={row.row}
             sx={{
-              display: "grid",
+              display: 'grid',
               gridTemplateColumns: {
-                xs: "1fr",
+                xs: '1fr',
                 md: `repeat(${row.blocks.length}, minmax(0, 1fr))`,
               },
               gap: 1.5,
-              alignItems: "stretch",
+              alignItems: 'stretch',
             }}
           >
             {row.blocks.map((block) => {
-              const isSelected = block.id === selectedBlockId;
+              const isSelected = block.id === selectedBlockId
 
               return (
                 <Paper
@@ -52,16 +55,16 @@ export function BlockList({
                   disabled={readOnly}
                   onClick={() => onSelectBlock(block.id)}
                   sx={{
-                    width: "100%",
-                    textAlign: "left",
-                    border: "2px solid",
-                    borderColor: isSelected ? "primary.main" : "divider",
-                    bgcolor: "background.paper",
-                    color: "text.primary",
-                    cursor: readOnly ? "default" : "pointer",
+                    width: '100%',
+                    textAlign: 'left',
+                    border: '2px solid',
+                    borderColor: isSelected ? 'primary.main' : 'divider',
+                    bgcolor: 'background.paper',
+                    color: 'text.primary',
+                    cursor: readOnly ? 'default' : 'pointer',
                   }}
                 >
-                  <Box sx={{pointerEvents: "none" }}>
+                  <Box sx={{ pointerEvents: 'none' }}>
                     <BlockRenderer
                       block={{
                         id: block.id,
@@ -81,23 +84,23 @@ export function BlockList({
                     </Alert>
                   )}
                 </Paper>
-              );
+              )
             })}
           </Box>
         ))}
       </Stack>
     </Stack>
-  );
+  )
 }
 
 function groupBlocksByRow(
   blocks: NewsletterBlock[],
 ): Array<{ row: number; blocks: NewsletterBlock[] }> {
-  const rows = new Map<number, NewsletterBlock[]>();
+  const rows = new Map<number, NewsletterBlock[]>()
 
   blocks.forEach((block) => {
-    rows.set(block.row, [...(rows.get(block.row) ?? []), block]);
-  });
+    rows.set(block.row, [...(rows.get(block.row) ?? []), block])
+  })
 
   return Array.from(rows.entries())
     .sort(([leftRow], [rightRow]) => leftRow - rightRow)
@@ -106,26 +109,29 @@ function groupBlocksByRow(
       blocks: rowBlocks.sort(
         (left, right) => left.gridColumn - right.gridColumn,
       ),
-    }));
+    }))
 }
 
 function buildRendererProps(
   block: NewsletterBlock,
 ): Record<string, string | null | undefined> {
-  const textFields = block.fields.filter((field) => field.kind === "text");
-  const labelFields = block.fields.filter((field) => field.kind === "label");
-  const assetFields = block.fields.filter((field) => field.kind === "asset");
-  const firstAssetUrl = assetFields[0]?.assetUrl;
-  const secondAssetUrl = assetFields[1]?.assetUrl;
+  const assetByFieldKey = new Map<string, NewsletterBlockAssetBinding>(
+    block.assetBindings.map((binding) => [binding.fieldKey, binding]),
+  )
+  const logoAsset = assetByFieldKey.get('logoAsset')?.assetUrl
+  const imageAsset = assetByFieldKey.get('imageAsset')?.assetUrl
+  const backgroundAsset = assetByFieldKey.get('backgroundAsset')?.assetUrl
+  const leftImageAsset =
+    assetByFieldKey.get('leftLogoAsset')?.assetUrl ??
+    assetByFieldKey.get('leftImageAsset')?.assetUrl
+  const rightImageAsset =
+    assetByFieldKey.get('rightLogoAsset')?.assetUrl ??
+    assetByFieldKey.get('rightImageAsset')?.assetUrl
 
   return {
-    secondaryContent: textFields[1]?.value,
-    labelContent: labelFields[0]?.value,
-    topLabelContent: labelFields[0]?.value,
-    bottomLabelContent: labelFields[1]?.value,
-    imageUrl: firstAssetUrl,
-    backgroundImage: firstAssetUrl,
-    leftImageUrl: firstAssetUrl,
-    rightImageUrl: secondAssetUrl ?? firstAssetUrl,
-  };
+    imageUrl: imageAsset ?? logoAsset,
+    backgroundImage: backgroundAsset,
+    leftImageUrl: leftImageAsset,
+    rightImageUrl: rightImageAsset,
+  }
 }

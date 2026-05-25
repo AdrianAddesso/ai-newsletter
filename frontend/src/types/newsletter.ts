@@ -1,5 +1,6 @@
 import type { GenerateNewsletterRequest } from '../api/ai'
 import type { UUID } from '../interfaces/interfaces.templates'
+import type { BlockEditField, BlockAssetType } from '@shared/types/block.types'
 
 export type NewsletterState =
   | 'DRAFT'
@@ -28,18 +29,19 @@ export type NewsletterBlock = {
   displayOrder: number
   mustFill: boolean
   comment: string | null
-  fields: NewsletterBlockField[]
+  editFields: BlockEditField[]
+  assetBindings: NewsletterBlockAssetBinding[]
 }
 
-export type NewsletterBlockField = {
-  id: string
-  kind: 'text' | 'label' | 'asset'
-  label: string
-  value?: string | null
-  assetId?: string | null
-  assetName?: string | null
-  assetUrl?: string | null
+export type NewsletterBlockAssetBinding = {
+  fieldKey: string
+  assetId: string
+  assetName: string | null
+  assetUrl: string | null
+  assetType: BlockAssetType
   keywordText?: string | null
+  svgTemplate?: string | null
+  maxChars?: number | null
 }
 
 export type NewsletterTemplate = {

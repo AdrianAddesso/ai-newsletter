@@ -18,21 +18,12 @@ import type {
   UpdateNewsletterStatusBody,
 } from './newsletters.schemas';
 import { validateNewsletterStateLogTransition } from './validators/newsletter.validator';
-
-type StoredBlockField = {
-  id: string;
-  kind: 'text' | 'label' | 'asset';
-  label: string;
-  value?: string | null;
-  assetId?: string | null;
-  assetName?: string | null;
-  assetUrl?: string | null;
-  keywordText?: string | null;
-};
-
-type StoredNewsletterBlock = NewsletterEditableBlock & {
-  fields: StoredBlockField[];
-};
+import {
+  getBlockDefinition,
+  getBlockEditFields,
+  type NewsletterBlockDto,
+  parseBlockValues,
+} from '../blocks/newsletter-blocks';
 
 const uuidPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{12}$/i;
@@ -307,11 +298,12 @@ export class NewsLettersService {
       const persistedBlock = this.toPersistedBlock(block);
       const contentRecord = await tx.block_content.create({
         data: {
-          content: JSON.stringify(persistedBlock),
+          block_type: block.type,
+          content: persistedBlock.content ?? null,
           display_order: block.displayOrder ?? null,
           must_fill: block.mustFill ?? false,
           type: this.toBlockContentType(block),
-        },
+        } as any,
         select: { id: true },
       });
 
@@ -325,17 +317,14 @@ export class NewsLettersService {
         },
       });
 
-      const assetFields = block.fields.filter(
-        (field) => field.kind === 'asset' && field.assetId,
-      );
-
-      for (const field of assetFields) {
+      for (const assetBinding of block.assetBindings ?? []) {
         await tx.assets_block.create({
           data: {
             block_id: contentRecord.id,
-            asset_id: field.assetId as string,
-            keyword_text: field.keywordText ?? null,
-          },
+            asset_id: assetBinding.assetId,
+            field_key: assetBinding.fieldKey,
+            keyword_text: assetBinding.keywordText ?? null,
+          } as any,
         });
       }
     }
@@ -343,122 +332,66 @@ export class NewsLettersService {
 
   private toPersistedBlock(block: NewsletterEditableBlock): NewsletterEditableBlock {
     return {
-      ...block,
-      fields: block.fields.map((field) => {
-        if (field.kind !== 'asset') {
-          return field;
-        }
-
-        return {
-          id: field.id,
-          kind: field.kind,
-          label: field.label,
-          assetId: field.assetId ?? null,
-          assetName: field.assetName ?? null,
-          keywordText: field.keywordText ?? null,
-        };
-      }),
+      id: block.id,
+      type: block.type,
+      category: block.category,
+      name: block.name,
+      content: block.content ?? null,
+      row: block.row,
+      gridColumn: block.gridColumn,
+      displayOrder: block.displayOrder,
+      mustFill: block.mustFill,
+      comment: block.comment,
+      assetBindings: (block.assetBindings ?? []).map((binding) => ({
+        fieldKey: binding.fieldKey,
+        assetId: binding.assetId,
+        keywordText: binding.keywordText ?? null,
+      })),
     };
   }
 
-  private async toBlockDto(block: {
-    display_order: number | null;
-    row: number | null;
-    grid_column: number | null;
-    block_content: {
-      id: string;
-      content: string | null;
-      display_order: number | null;
-      must_fill: boolean;
-      type: block_content_type;
-      assets_block: {
-        keyword_text: string | null;
-        assets: {
-          id: string;
-          name: string;
-          type: asset_type;
-          bucket: string;
-          object_key: string;
-        };
-      }[];
-    };
-  }): Promise<StoredNewsletterBlock> {
-    const parsed = this.parseStoredBlock(block.block_content.content);
-    const assetUrls = new Map<
-      string,
-      { name: string; url: string; keywordText: string | null }
-    >();
+  private async toBlockDto(block: any): Promise<NewsletterBlockDto> {
+    const editFields = getBlockEditFields(block.block_content.block_type);
+    const values = parseBlockValues(block.block_content.content);
+    const assetBindings = await Promise.all(
+      block.block_content.assets_block.map(async (assetBlock) => ({
+        fieldKey: assetBlock.field_key,
+        assetId: assetBlock.assets.id,
+        assetName: assetBlock.assets.name,
+        assetUrl: await this.getAssetPreviewUrl(
+          {
+            type: assetBlock.assets.type,
+            bucket: assetBlock.assets.bucket,
+            objectKey: assetBlock.assets.object_key,
+          },
+          assetBlock.keyword_text,
+        ),
+        assetType: assetBlock.assets.type as NewsletterBlockDto['assetBindings'][number]['assetType'],
+        keywordText: assetBlock.keyword_text,
+      })),
+    );
 
-    await Promise.all(
-      block.block_content.assets_block.map(async (assetBlock) => {
-        assetUrls.set(assetBlock.assets.id, {
-          name: assetBlock.assets.name,
-          url: await this.getAssetPreviewUrl(
-            {
-              type: assetBlock.assets.type,
-              bucket: assetBlock.assets.bucket,
-              objectKey: assetBlock.assets.object_key,
-            },
-            assetBlock.keyword_text,
-          ),
-          keywordText: assetBlock.keyword_text,
-        });
-      }),
+    const definitionFields = editFields.map((field) => field.key);
+    const filteredValues = Object.fromEntries(
+      Object.entries(values).filter(([key]) => definitionFields.includes(key) || key === 'fontId'),
     );
 
     return {
-      ...parsed,
-      id: parsed.id || block.block_content.id,
-      row: block.row ?? parsed.row,
-      gridColumn: block.grid_column ?? parsed.gridColumn,
-      displayOrder: block.display_order ?? parsed.displayOrder,
-      fields: parsed.fields.map((field) => {
-        if (field.kind !== 'asset' || !field.assetId) {
-          return field;
-        }
-
-        const storedAsset = assetUrls.get(field.assetId);
-
-        return {
-          ...field,
-          assetName: storedAsset?.name ?? field.assetName ?? null,
-          assetUrl: storedAsset?.url ?? null,
-          keywordText: storedAsset?.keywordText ?? field.keywordText ?? null,
-        };
-      }),
-    };
-  }
-
-  private parseStoredBlock(content: string | null): StoredNewsletterBlock {
-    if (!content) {
-      return this.emptyStoredBlock();
-    }
-
-    try {
-      const parsed = JSON.parse(content) as StoredNewsletterBlock;
-
-      if (!parsed.type || !Array.isArray(parsed.fields)) {
-        return this.emptyStoredBlock();
-      }
-
-      return parsed;
-    } catch {
-      return this.emptyStoredBlock();
-    }
-  }
-
-  private emptyStoredBlock(): StoredNewsletterBlock {
-    return {
-      id: '',
-      type: 'textCenterBackgroundFull',
-      name: 'Bloque',
-      content: null,
-      row: 0,
-      gridColumn: 0,
-      displayOrder: 0,
-      mustFill: false,
+      id: block.block_content.id,
+      type: block.block_content.block_type,
+      category: block.block_content.type,
+      name: getBlockDefinition(block.block_content.block_type).label,
+      content:
+        Object.keys(filteredValues).length > 0
+          ? JSON.stringify(filteredValues)
+          : null,
+      row: block.row ?? 0,
+      gridColumn: block.grid_column ?? 0,
+      displayOrder: block.display_order ?? block.block_content.display_order ?? 0,
+      mustFill: block.block_content.must_fill,
       comment: null,
-      fields: [],
+      editFields,
+      assetBindings,
     };
   }
 

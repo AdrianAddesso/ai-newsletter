@@ -93,13 +93,10 @@ describe('NewsLettersService', () => {
           displayOrder: 0,
           mustFill: false,
           comment: null,
-          fields: [
+          assetBindings: [
             {
-              id: 'headerLeft-asset-0',
-              kind: 'asset',
-              label: 'Asset principal',
+              fieldKey: 'logoAsset',
               assetId: '550e8400-e29b-41d4-a716-446655440001',
-              assetName: 'Banner',
               keywordText: 'Hola',
             },
           ],
@@ -111,6 +108,7 @@ describe('NewsLettersService', () => {
       data: {
         block_id: 'block-content-id',
         asset_id: '550e8400-e29b-41d4-a716-446655440001',
+        field_key: 'logoAsset',
         keyword_text: 'Hola',
       },
     });

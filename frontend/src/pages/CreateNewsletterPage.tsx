@@ -10,7 +10,6 @@ import { generateNewsletter, type GenerateNewsletterRequest } from "../api/ai";
 import type { NewsletterTemplate } from "../types/newsletter";
 import { createNewsletter, updateNewsletter } from "../api/newsletters";
 import { listTemplates } from "../api/templates";
-import { buildNewsletterBlocksFromTemplate } from "../utils/newsletterBlocks";
 
 type BackState = {
   newsletterId?: string;
@@ -128,10 +127,6 @@ function CreateNewsletterPage() {
         // 1. Generar bloques con IA
         const response = await generateNewsletter(request);
 
-        const blocks = buildNewsletterBlocksFromTemplate(
-          selectedTemplate?.layout ?? null,
-          response.blocks,
-        );
         const generationContent = {
           aiContent: response,
           originalContent: request,
@@ -144,7 +139,7 @@ function CreateNewsletterPage() {
             title: request.topic,
             templateId: request.templateId,
             brandKitId: request.brandKitId,
-            blocks,
+            blocks: response.blocks,
             generationRequest: request,
             generationContent,
           });
@@ -155,7 +150,7 @@ function CreateNewsletterPage() {
             creatorUserId: currentUserId,
             templateId: request.templateId,
             brandKitId: request.brandKitId,
-            blocks,
+            blocks: response.blocks,
             generationRequest: request,
             generationContent,
           });

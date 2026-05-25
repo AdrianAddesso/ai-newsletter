@@ -36,16 +36,16 @@ export function IconBoxBackgroundFullRenderer({
     iconName = "description",
     label = titleContent ?? "Lorem ipsum dolor sit amet consectetur.",
     bgColor,
+    fontFamily,
     fontSize,
     typographyStyle,
   } = parseContent(block.content);
-  const typographySx = resolveTypographySx(fontSize, typographyStyle);
+  const typographySx = resolveTypographySx(fontSize, typographyStyle, fontFamily);
   const bgSx = backgroundImage
     ? {
         backgroundImage: `url("${backgroundImage}")`,
         backgroundSize: "contain",
         backgroundRepeat: "no-repeat",
-        backgroundPosition: "center",
         backgroundPosition: "center",
       }
     : {};

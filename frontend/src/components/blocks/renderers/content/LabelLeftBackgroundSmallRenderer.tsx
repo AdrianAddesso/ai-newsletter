@@ -19,7 +19,6 @@ export function LabelLeftBackgroundSmallRenderer({
         backgroundSize: "contain",
         backgroundRepeat: "no-repeat",
         backgroundPosition: "center",
-        backgroundPosition: "center",
       }
     : {};
 

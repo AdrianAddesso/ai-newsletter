@@ -19,7 +19,6 @@ export function LabelCenterBackgroundFullRenderer({
         backgroundSize: "contain",
         backgroundRepeat: "no-repeat",
         backgroundPosition: "center",
-        backgroundPosition: "center",
       }
     : {};
 

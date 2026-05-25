@@ -48,6 +48,7 @@ model assets_block {
   id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   block_id      String        @db.Uuid
   asset_id      String        @db.Uuid
+  field_key     String
   keyword_text  String?
   created_at    DateTime      @default(now()) @db.Timestamptz(6)
   updated_at    DateTime      @default(now()) @updatedAt @db.Timestamptz(6)
@@ -61,6 +62,7 @@ model assets_block {
 
 model block_content {
   id                String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  block_type        String
   content           String?
   display_order     Int?
   must_fill         Boolean             @default(false)

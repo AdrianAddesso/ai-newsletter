@@ -26,14 +26,10 @@ const newsletterFormatSchema = z.nativeEnum(newsletter_format, {
   error: 'Formato de newsletter invalido.',
 });
 
-const newsletterBlockFieldSchema = z
+const newsletterAssetBindingSchema = z
   .object({
-    id: requiredStringFieldSchema,
-    kind: z.enum(['text', 'label', 'asset']),
-    label: requiredStringFieldSchema,
-    value: optionalStringFieldSchema.nullable().optional(),
-    assetId: uuidFieldSchema.nullable().optional(),
-    assetName: optionalStringFieldSchema.nullable().optional(),
+    fieldKey: requiredStringFieldSchema,
+    assetId: uuidFieldSchema,
     keywordText: optionalStringFieldSchema.nullable().optional(),
   })
   .strict();
@@ -43,14 +39,14 @@ const newsletterEditableBlockSchema = z
     id: requiredStringFieldSchema,
     type: requiredStringFieldSchema,
     category: z.string().optional(),
-    name: requiredStringFieldSchema,
+    name: optionalStringFieldSchema.optional(),
     content: optionalStringFieldSchema.nullable().optional(),
     row: optionalIntegerFieldSchema,
     gridColumn: optionalIntegerFieldSchema,
     displayOrder: optionalIntegerFieldSchema,
     mustFill: optionalBooleanFieldSchema,
     comment: optionalStringFieldSchema.nullable().optional(),
-    fields: z.array(newsletterBlockFieldSchema),
+    assetBindings: z.array(newsletterAssetBindingSchema).optional(),
   })
   .strict();
 
@@ -147,4 +143,7 @@ export type UpdateNewsletterExportBody = z.infer<
 export type DefineNewsletterBlock = z.infer<typeof defineNewsletterBlockSchema>;
 export type NewsletterEditableBlock = z.infer<
   typeof newsletterEditableBlockSchema
+>;
+export type NewsletterAssetBinding = z.infer<
+  typeof newsletterAssetBindingSchema
 >;

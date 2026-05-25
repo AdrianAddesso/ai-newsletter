@@ -46,23 +46,23 @@ function updateBody(payload: UpdateNewsletterPayload) {
   }
 }
 
-function toPersistedBlocks(blocks: NewsletterBlock[]): NewsletterBlock[] {
+function toPersistedBlocks(blocks: NewsletterBlock[]) {
   return blocks.map((block) => ({
-    ...block,
-    fields: block.fields.map((field) => {
-      if (field.kind !== 'asset') {
-        return field
-      }
-
-      return {
-        id: field.id,
-        kind: field.kind,
-        label: field.label,
-        assetId: field.assetId ?? null,
-        assetName: field.assetName ?? null,
-        keywordText: field.keywordText ?? null,
-      }
-    }),
+    id: block.id,
+    type: block.type,
+    category: block.category,
+    name: block.name,
+    content: block.content,
+    row: block.row,
+    gridColumn: block.gridColumn,
+    displayOrder: block.displayOrder,
+    mustFill: block.mustFill,
+    comment: block.comment,
+    assetBindings: block.assetBindings.map((binding) => ({
+      fieldKey: binding.fieldKey,
+      assetId: binding.assetId,
+      keywordText: binding.keywordText ?? null,
+    })),
   }))
 }
 

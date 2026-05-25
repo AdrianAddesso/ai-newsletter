@@ -7,7 +7,6 @@ import { NewsletterEditTabs } from '../editor/NewsletterEditTabs'
 
 import { EditPanel } from '../components/EditPanel'
 import { GenerationForm } from '../components/GenerationForm'
-import { updateBlockField } from '../../../utils/newsletterBlocks'
 import type { GenerateNewsletterRequest } from '../../../api/ai'
 
 type Props = {
@@ -53,6 +52,7 @@ export function DraftNewsletterPage({ vm }: Props) {
             vm.selectedBlock && (
               <EditPanel
                 selectedBlock={vm.selectedBlock}
+                brandKitResources={vm.brandKitResources}
                 newsletterComment={vm.newsletter.comment}
                 newsletterState={vm.newsletter.state}
                 submitLabel="Enviar a revisión"
@@ -60,14 +60,12 @@ export function DraftNewsletterPage({ vm }: Props) {
                 isSavingDraft={vm.isSavingDraft}
                 isRegeneratingBlock={false}
                 aiError={null}
-                onUpdateField={(blockId,fieldId,value) => {
+                onUpdateBlock={(updatedBlock) => {
                   if (!vm.newsletter) return
 
                   vm.updateBlocks(
-                    vm.newsletter.blocks.map(block =>
-                      block.id === blockId
-                        ? updateBlockField(block,fieldId,value)
-                        : block,
+                    vm.newsletter.blocks.map((block) =>
+                      block.id === updatedBlock.id ? updatedBlock : block,
                     ),
                   )
                 }}

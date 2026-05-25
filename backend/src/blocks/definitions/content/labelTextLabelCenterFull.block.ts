@@ -15,5 +15,6 @@ export class LabelTextLabelCenterFullBlock extends BlockDefinition {
     { key: 'bottomLabel', label: 'Etiqueta inferior', type: 'text' as const, defaultValue: 'Consectetur adipiscing elit' },
     { key: 'fontSize', label: 'Tamaño de texto', type: 'font-size' as const },
     { key: 'typographyStyle', label: 'Estilo', type: 'font-style' as const },
+    { key: 'fontFamily', label: 'Tipografía', type: 'font-family' as const },
   ];
 }

@@ -33,12 +33,14 @@ export function serializeContent(values: Record<string, string>): string {
 export function resolveTypographySx(
   fontSize?: string,
   typographyStyle?: string,
-): { fontSize?: string; fontWeight?: number; fontStyle?: string } {
+  fontFamily?: string,
+): { fontSize?: string; fontWeight?: number; fontStyle?: string; fontFamily?: string } {
   const styles = typographyStyle ? typographyStyle.split(",") : [];
 
   return {
     ...(fontSize && { fontSize }),
     ...(styles.includes("bold") && { fontWeight: 700 }),
     ...(styles.includes("italic") && { fontStyle: "italic" }),
+    ...(fontFamily && { fontFamily }),
   };
 }

@@ -18,12 +18,14 @@ CREATE TABLE public.assets (
 CREATE TABLE public.assets_block (
   block_id uuid NOT NULL,
   asset_id uuid NOT NULL,
+  field_key text NOT NULL,
   CONSTRAINT assets_block_pkey PRIMARY KEY (block_id, asset_id),
   CONSTRAINT assets_block_block_id_fkey FOREIGN KEY (block_id) REFERENCES public.block_content(id),
   CONSTRAINT assets_block_asset_id_fkey FOREIGN KEY (asset_id) REFERENCES public.assets(id)
 );
 CREATE TABLE public.block_content (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
+  block_type text NOT NULL,
   content text,
   display_order integer,
   must_fill boolean NOT NULL DEFAULT false,

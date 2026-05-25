@@ -1,5 +1,5 @@
-import { useCallback,useEffect,useMemo,useState } from 'react'
-import { useNavigate,useParams } from 'react-router'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useNavigate, useParams } from 'react-router'
 
 import { useAuth } from '../../../contexts/AuthContext'
 import { useNotification } from '../../../hooks/useNotification'
@@ -10,8 +10,8 @@ import {
   updateNewsletterStatus,
 } from '../../../api/newsletters'
 import { listTemplates } from '../../../api/templates'
-import { listBrandKits,getBrandKitResources } from '../../../api/brand-kits'
-import { improveText,generateNewsletter } from '../../../api/ai'
+import { getBrandKitResources, listBrandKits } from '../../../api/brand-kits'
+import { generateNewsletter, improveText } from '../../../api/ai'
 
 import type {
   Newsletter,
@@ -22,18 +22,11 @@ import type {
   ExportOption,
 } from '../../../types/newsletter'
 
-import type {
-  BrandKit,
-  BrandKitResources,
-} from '../../../api/brand-kits'
+import type { BrandKit, BrandKitResources } from '../../../api/brand-kits'
 
-import type {
-  GenerateNewsletterRequest,
-} from '../../../api/ai'
-import {
-  buildNewsletterBlocksFromTemplate,
-  updateBlockField,
-} from '../../../utils/newsletterBlocks'
+import type { GenerateNewsletterRequest } from '../../../api/ai'
+import { updateBlockValue } from '../../../utils/newsletterBlocks'
+import { parseContent } from '../../../utils/blockContent'
 
 export function useNewsletterEditor() {
   const navigate = useNavigate()
@@ -41,36 +34,36 @@ export function useNewsletterEditor() {
   const { user } = useAuth()
   const { success } = useNotification()
 
-  const [newsletter,setNewsletter] = useState<Newsletter | null>(null)
-  const [isLoading,setIsLoading] = useState(true)
-  const [error,setError] = useState<string | null>(null)
-  const [selectedBlockId,setSelectedBlockIdState] = useState('')
-  const [showRegenerationForm,setShowRegenerationForm] = useState(false)
-  const [isSavingDraft,setIsSavingDraft] = useState(false)
+  const [newsletter, setNewsletter] = useState<Newsletter | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [selectedBlockId, setSelectedBlockIdState] = useState('')
+  const [showRegenerationForm, setShowRegenerationForm] = useState(false)
+  const [isSavingDraft, setIsSavingDraft] = useState(false)
 
-  const [templates,setTemplates] = useState<NewsletterTemplate[]>([])
-  const [brandKits,setBrandKits] = useState<BrandKit[]>([])
-  const [brandKitResources,setBrandKitResources] =
+  const [templates, setTemplates] = useState<NewsletterTemplate[]>([])
+  const [brandKits, setBrandKits] = useState<BrandKit[]>([])
+  const [brandKitResources, setBrandKitResources] =
     useState<BrandKitResources | null>(null)
 
-  const [exportingFormat,setExportingFormat] =
+  const [exportingFormat, setExportingFormat] =
     useState<ExportFormat | null>(null)
 
   const exportOptions: ExportOption[] = [
     {
-      id:'png',
-      label:'Exportar PNG',
-      format:'PNG',
+      id: 'png',
+      label: 'Exportar PNG',
+      format: 'PNG',
     },
     {
-      id:'pdf',
-      label:'Exportar PDF',
+      id: 'pdf',
+      label: 'Exportar PDF',
       format:'PDF' as ExportFormat,
     },
     {
-      id:'eml',
-      label:'Exportar EML',
-      format:'EML',
+      id: 'eml',
+      label: 'Exportar EML',
+      format: 'EML',
     },
   ]
 
@@ -84,7 +77,7 @@ export function useNewsletterEditor() {
         setNewsletter(data)
         setSelectedBlockIdState(data.blocks?.[0]?.id ?? '')
 
-        const [templateData,brandKitData] = await Promise.all([
+        const [templateData, brandKitData] = await Promise.all([
           listTemplates(),
           listBrandKits(),
         ])
@@ -93,8 +86,7 @@ export function useNewsletterEditor() {
         setBrandKits(brandKitData)
 
         if (data.brandKitId) {
-          const resources =
-            await getBrandKitResources(data.brandKitId)
+          const resources = await getBrandKitResources(data.brandKitId)
 
           setBrandKitResources(resources)
         }
@@ -110,15 +102,15 @@ export function useNewsletterEditor() {
 
   const selectedBlock = useMemo(() => {
     return newsletter?.blocks.find(
-      b => b.id === selectedBlockId,
+      (block) => block.id === selectedBlockId,
     )
-  }, [newsletter,selectedBlockId])
+  }, [newsletter, selectedBlockId])
 
   const selectedTemplate = useMemo(() => {
     if (!newsletter) return undefined
 
-    return templates.find(template => template.id === newsletter.templateId)
-  }, [newsletter,templates])
+    return templates.find((template) => template.id === newsletter.templateId)
+  }, [newsletter, templates])
 
   const renderHtml = useCallback(() => {
     if (!newsletter) return ''
@@ -130,9 +122,9 @@ export function useNewsletterEditor() {
           ${newsletter.blocks.map(block => `
             <section style="padding:24px;background:#ffffff">
               <h2>${block.name}</h2>
-              ${block.fields
-                .filter(field => field.kind !== 'asset')
-                .map(field => `<p>${field.value ?? ''}</p>`)
+              ${Object.values(parseContent<Record<string, string>>(block.content))
+                .filter((value) => typeof value === 'string' && value.trim().length > 0)
+                .map((value) => `<p>${value}</p>`)
                 .join('')}
             </section>
           `).join('')}
@@ -156,9 +148,9 @@ export function useNewsletterEditor() {
     setIsSavingDraft(true)
 
     try {
-      const updated = await updateNewsletter(id,{
+      const updated = await updateNewsletter(id, {
         blocks: newsletter.blocks,
-        state:'DRAFT',
+        state: 'DRAFT',
       })
 
       setNewsletter(updated)
@@ -173,161 +165,158 @@ export function useNewsletterEditor() {
     }
   }, [id,newsletter,success])
 
-  const transitionState = useCallback(async (state: NewsletterState) => {
-    if (!id || !newsletter) return
+  const transitionState = useCallback(
+    async (state: NewsletterState) => {
+      if (!id || !newsletter) return
 
-    await updateNewsletter(id,{ blocks: newsletter.blocks })
-    const updated = await updateNewsletterStatus(id,state)
+      await updateNewsletter(id, { blocks: newsletter.blocks })
+      const updated = await updateNewsletterStatus(id, state)
 
-    setNewsletter(updated)
-  }, [id,newsletter])
+      setNewsletter(updated)
+    },
+    [id, newsletter],
+  )
 
-  const handleExport = useCallback(async (format: ExportFormat) => {
-    if (!newsletter) return
+  const handleExport = useCallback(
+    async (format: ExportFormat) => {
+      if (!newsletter) return
 
-    setExportingFormat(format)
+      setExportingFormat(format)
 
-    try {
-      const html =
-        newsletter.renderedHtml ??
-        renderHtml()
+      try {
+        const html = newsletter.renderedHtml ?? renderHtml()
 
-      switch (format) {
-        case 'EML': {
-          const emlContent = [
-            'X-Unsent: 1',
-            'To: ',
-            'Subject: Newsletter Nestlé',
-            'MIME-Version: 1.0',
-            'Content-Type: text/html; charset=UTF-8',
-            'Content-Transfer-Encoding: 8bit',
-            '',
-            html,
-          ].join('\r\n')
+        switch (format) {
+          case 'EML': {
+            const emlContent = [
+              'X-Unsent: 1',
+              'To: ',
+              'Subject: Newsletter Nestlé',
+              'MIME-Version: 1.0',
+              'Content-Type: text/html; charset=UTF-8',
+              'Content-Transfer-Encoding: 8bit',
+              '',
+              html,
+            ].join('\r\n')
 
-          const blob = new Blob(
-            [emlContent],
-            {
-              type:'message/rfc822',
-            },
-          )
-
-          const url = URL.createObjectURL(blob)
-
-          const a = document.createElement('a')
-
-          a.href = url
-          a.download = 'newsletter.eml'
-
-          document.body.appendChild(a)
-
-          a.click()
-
-          document.body.removeChild(a)
-
-          URL.revokeObjectURL(url)
-
-          break
-        }
-
-        case 'PNG':
-        case 'PDF': {
-          const container =
-            document.createElement('div')
-
-          container.innerHTML = html
-
-          container.style.position = 'fixed'
-          container.style.left = '-99999px'
-          container.style.top = '0'
-          container.style.width = '1200px'
-          container.style.background = '#fff'
-
-          document.body.appendChild(container)
-
-          const html2canvas =
-            (await import('html2canvas')).default
-
-          const canvas =
-            await html2canvas(container,{
-              scale:2,
-              useCORS:true,
-              backgroundColor:'#ffffff',
+            const blob = new Blob([emlContent], {
+              type: 'message/rfc822',
             })
 
-          document.body.removeChild(container)
+            const url = URL.createObjectURL(blob)
 
-          if (format === 'PNG') {
-            const image =
-              canvas.toDataURL('image/png')
+            const a = document.createElement('a')
 
-            const link =
-              document.createElement('a')
+            a.href = url
+            a.download = 'newsletter.eml'
 
-            link.href = image
-            link.download = 'newsletter.png'
+            document.body.appendChild(a)
 
-            link.click()
+            a.click()
+
+            document.body.removeChild(a)
+
+            URL.revokeObjectURL(url)
 
             break
           }
 
-          const { jsPDF } =
-            await import('jspdf')
+          case 'PNG':
+          case 'PDF': {
+            const container = document.createElement('div')
 
-          const pdf =
-            new jsPDF({
-              orientation:'portrait',
-              unit:'px',
-              format:[
-                canvas.width,
-                canvas.height,
-              ],
+            container.innerHTML = html
+
+            container.style.position = 'fixed'
+            container.style.left = '-99999px'
+            container.style.top = '0'
+            container.style.width = '1200px'
+            container.style.background = '#fff'
+
+            document.body.appendChild(container)
+
+            const html2canvas = (await import('html2canvas')).default
+
+            const canvas = await html2canvas(container, {
+              scale: 2,
+              useCORS: true,
+              backgroundColor: '#ffffff',
             })
 
-          const image =
-            canvas.toDataURL('image/png')
+            document.body.removeChild(container)
 
-          pdf.addImage(
-            image,
-            'PNG',
-            0,
-            0,
-            canvas.width,
-            canvas.height,
-          )
+            if (format === 'PNG') {
+              const image = canvas.toDataURL('image/png')
 
-          pdf.save('newsletter.pdf')
+              const link = document.createElement('a')
 
-          break
+              link.href = image
+              link.download = 'newsletter.png'
+
+              link.click()
+
+              break
+            }
+
+            const { jsPDF } = await import('jspdf')
+
+            const pdf = new jsPDF({
+              orientation: 'portrait',
+              unit: 'px',
+              format: [canvas.width, canvas.height],
+            })
+
+            const image = canvas.toDataURL('image/png')
+
+            pdf.addImage(image, 'PNG', 0, 0, canvas.width, canvas.height)
+
+            pdf.save('newsletter.pdf')
+
+            break
+          }
         }
+      } finally {
+        setExportingFormat(null)
       }
-    } finally {
-      setExportingFormat(null)
-    }
-  }, [newsletter,renderHtml])
+    },
+    [newsletter, renderHtml],
+  )
 
-  const handleRegenerateBlock = useCallback(async (blockId: string) => {
-    if (!newsletter) return
+  const handleRegenerateBlock = useCallback(
+    async (blockId: string) => {
+      if (!newsletter) return
 
-    const target = newsletter.blocks.find(
-      b => b.id === blockId,
-    )
+      const target = newsletter.blocks.find((block) => block.id === blockId)
 
-    if (!target) return
+      if (!target) return
 
-    const response = await improveText({
-      text: target.fields.find(field => field.kind === 'text')?.value ?? '',
-    })
+      const editableTextField = target.editFields.find(
+        (field) => field.type === 'text' || field.type === 'textarea',
+      )
 
-    updateBlocks(
-      newsletter.blocks.map(b =>
-        b.id === blockId
-          ? updateFirstTextField(b,response.improvedText)
-          : b,
-      ),
-    )
-  }, [newsletter,updateBlocks])
+      if (!editableTextField) return
+
+      const contentValues = parseContent<Record<string, string>>(target.content)
+      const currentText = contentValues[editableTextField.key]?.trim()
+
+      if (!currentText) {
+        return
+      }
+
+      const response = await improveText({
+        text: currentText,
+      })
+
+      updateBlocks(
+        newsletter.blocks.map((block) =>
+          block.id === blockId
+            ? updateBlockValue(block, editableTextField.key, response.improvedText)
+            : block,
+        ),
+      )
+    },
+    [newsletter, updateBlocks],
+  )
 
   const handleGenerateAll = useCallback(
     async (request: GenerateNewsletterRequest) => {
@@ -335,18 +324,12 @@ export function useNewsletterEditor() {
 
       const response = await generateNewsletter(request)
 
-      const template = templates.find(item => item.id === request.templateId)
-      const blocks = buildNewsletterBlocksFromTemplate(
-        template?.layout ?? null,
-        response.blocks,
-      )
-
-      const updated = await updateNewsletter(id,{
-        blocks,
-        generationRequest:request,
-        generationContent:{
-          aiContent:response,
-          originalContent:request,
+      const updated = await updateNewsletter(id, {
+        blocks: response.blocks,
+        generationRequest: request,
+        generationContent: {
+          aiContent: response,
+          originalContent: request,
         },
       })
 
@@ -356,7 +339,7 @@ export function useNewsletterEditor() {
 
       setShowRegenerationForm(false)
     },
-    [id,templates],
+    [id],
   )
 
   const handleSubmit = useCallback(async () => {
@@ -374,7 +357,7 @@ export function useNewsletterEditor() {
     error,
     selectedBlock,
     selectedBlockId,
-    setSelectedBlockId:setSelectedBlockIdState,
+    setSelectedBlockId: setSelectedBlockIdState,
     showRegenerationForm,
     setShowRegenerationForm,
     templates,
@@ -389,22 +372,14 @@ export function useNewsletterEditor() {
     handleSubmit,
     handleRegenerateBlock,
     handleGenerateAll,
-    currentUserRole:user?.role ?? 'USER',
-    currentUserId:user?.id ?? '',
+    currentUserRole: user?.role ?? 'USER',
+    currentUserId: user?.id ?? '',
     isSavingDraft,
     saveDraft,
     navigate,
-    isApproved:newsletter?.state === 'APPROVED',
+    isApproved: newsletter?.state === 'APPROVED',
     isReviewState:
       newsletter?.state === 'IN_REVIEW' ||
       newsletter?.state === 'RESUBMITTED',
   }
-}
-
-function updateFirstTextField(block: NewsletterBlock, value: string): NewsletterBlock {
-  const field = block.fields.find(item => item.kind === 'text')
-
-  if (!field) return block
-
-  return updateBlockField(block,field.id,{ value })
 }

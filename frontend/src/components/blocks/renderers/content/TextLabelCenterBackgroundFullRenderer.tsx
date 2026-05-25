@@ -21,16 +21,16 @@ export function TextLabelCenterBackgroundFullRenderer({
     label = labelContent ?? "Lorem ipsum dolor sit amet",
     text = "Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat.",
     bgColor,
+    fontFamily,
     fontSize,
     typographyStyle,
   } = parseContent(block.content);
-  const typographySx = resolveTypographySx(fontSize, typographyStyle);
+  const typographySx = resolveTypographySx(fontSize, typographyStyle, fontFamily);
   const bgSx = backgroundImage
     ? {
         backgroundImage: `url("${backgroundImage}")`,
         backgroundSize: "contain",
         backgroundRepeat: "no-repeat",
-        backgroundPosition: "center",
         backgroundPosition: "center",
       }
     : {};

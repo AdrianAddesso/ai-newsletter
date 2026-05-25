@@ -21,10 +21,11 @@ export function LabelTextLabelCenterFullRenderer({
     topLabel = topLabelContent ?? "Lorem ipsum dolor sit amet",
     bodyText = "Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat.",
     bottomLabel = bottomLabelContent ?? "Consectetur adipiscing elit",
+    fontFamily,
     fontSize,
     typographyStyle,
   } = parseContent(block.content);
-  const typographySx = resolveTypographySx(fontSize, typographyStyle);
+  const typographySx = resolveTypographySx(fontSize, typographyStyle, fontFamily);
 
   return (
     <Card sx={{

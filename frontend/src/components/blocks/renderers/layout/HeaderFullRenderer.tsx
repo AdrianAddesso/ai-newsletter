@@ -23,11 +23,11 @@ export function HeaderFullRenderer({
   const {
     title = "",
     subtitle = "",
-    logoUrl = "",
+    fontFamily,
     fontSize,
     typographyStyle,
   } = parseContent(block.content);
-  const typographySx = resolveTypographySx(fontSize, typographyStyle);
+  const typographySx = resolveTypographySx(fontSize, typographyStyle, fontFamily);
   const previewUrls = useBlockPreviewUrls([nestleIsotypeStorageKey], "LOGO");
   const defaultImageUrl = previewUrls[nestleIsotypeStorageKey] ?? "";
   const backgroundColor = "#FF595A";
@@ -60,7 +60,7 @@ export function HeaderFullRenderer({
       >
         <CardMedia
           component="img"
-          image={(leftImageUrl ?? logoUrl) || defaultImageUrl}
+          image={leftImageUrl || defaultImageUrl}
           alt="Left logo"
           sx={{
             height: 60,
@@ -95,7 +95,7 @@ export function HeaderFullRenderer({
         )}
         <CardMedia
           component="img"
-          image={(rightImageUrl ?? logoUrl) || defaultImageUrl}
+          image={rightImageUrl || defaultImageUrl}
           alt="Right logo"
           sx={{
             height: 60,
