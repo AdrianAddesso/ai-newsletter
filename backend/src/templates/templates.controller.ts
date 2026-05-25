@@ -45,7 +45,7 @@ import { GetUser } from '../modules/auth/decorators/user.decorator';
 @Controller(Resource.TEMPLATES)
 @UseGuards(MockAuthGuard, PermissionsGuard)
 export class TemplatesController {
-  constructor(private readonly templatesService: TemplatesService) {}
+  constructor(private readonly templatesService: TemplatesService) { }
 
   @Get()
   async getAll() {
@@ -78,7 +78,28 @@ export class TemplatesController {
 
   @Get(':id')
   async getById(@Param(new ZodValidationPipe(idParamSchema)) params: IdParam) {
-    return this.templatesService.getById(params.id);
+    try {
+      const template = await this.templatesService.getById(params.id);
+
+      if (!template) {
+        throw new BadRequestException({
+          message: `Template no encontrado con ID: ${params.id}`,
+          status: 404
+        });
+      }
+
+      return {
+        payload: template,
+        status: 200
+      };
+
+    } catch (error) {
+      throw new BadRequestException({
+        message: 'No se pudo obtener el template en este momento.',
+        error: error instanceof Error ? error.message : 'Error desconocido',
+        status: 400
+      });
+    }
   }
 
   @RequirePermission(Action.TEMPLATE_EDIT, Resource.TEMPLATES)
