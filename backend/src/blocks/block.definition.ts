@@ -26,7 +26,9 @@ export abstract class BlockDefinition {
     }
 
     return JSON.stringify(
-      Object.fromEntries(this.editFields.map((field) => [field.key, ''])),
+      Object.fromEntries(
+        this.editFields.map((field) => [field.key, field.defaultValue ?? '']),
+      ),
     );
   }
 
