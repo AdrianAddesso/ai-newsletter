@@ -1,5 +1,6 @@
 import { Card, Chip, Box } from "@mui/material";
 import type { BlockInstance } from "@shared/types/block.types";
+import { parseContent } from "../../../../utils/blockContent";
 
 interface Props {
   block: BlockInstance;
@@ -9,9 +10,9 @@ interface Props {
 
 export function LabelCenterBackgroundFullRenderer({
   block,
-  editMode = false,
   backgroundImage = "https://placehold.net/400x400.png",
 }: Props) {
+  const { label = "Lorem ipsum dolor sit amet", bgColor } = parseContent(block.content);
   const bgSx = backgroundImage
     ? {
         backgroundImage: `url("${backgroundImage}")`,
@@ -42,12 +43,13 @@ export function LabelCenterBackgroundFullRenderer({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
+          backgroundColor: bgColor,
           py: 4,
           ...bgSx,
         }}
       >
         <Chip
-          label={block.content ?? "Lorem ipsum dolor sit amet"}
+          label={label}
           sx={{
             maxWidth: "90%",
             "& .MuiChip-label": {
