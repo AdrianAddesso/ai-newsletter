@@ -22,7 +22,15 @@ export async function listTemplates(): Promise<NewsletterTemplate[]> {
   return response.data.map((template) => {
     let parsedLayout = null;
     try {
-      parsedLayout = typeof template.layout === 'string' ? JSON.parse(template.layout) : template.layout;
+      const rawLayout = typeof template.layout === 'string' ? JSON.parse(template.layout) : template.layout;
+      if (Array.isArray(rawLayout)) {
+        parsedLayout = rawLayout.map((item: any) => ({
+          ...item,
+          block_type: item.block_type || item.type,
+        }));
+      } else {
+        parsedLayout = rawLayout;
+      }
     } catch (e) {
       console.error('Error parsing layout for template', template.id, e);
     }
@@ -42,7 +50,15 @@ export async function getTemplateById(id: string): Promise<NewsletterTemplate> {
 
   let parsedLayout = null;
   try {
-    parsedLayout = typeof response.data.layout === 'string' ? JSON.parse(response.data.layout) : response.data.layout;
+    const rawLayout = typeof response.data.layout === 'string' ? JSON.parse(response.data.layout) : response.data.layout;
+    if (Array.isArray(rawLayout)) {
+      parsedLayout = rawLayout.map((item: any) => ({
+        ...item,
+        block_type: item.block_type || item.type,
+      }));
+    } else {
+      parsedLayout = rawLayout;
+    }
   } catch (e) {
     console.error('Error parsing layout for template', id, e);
   }

@@ -6,7 +6,7 @@ import { CONSTANTS_CANVAS } from '@shared/enums/templates-canvas'
 import { useBlockDefinitions } from '../../hooks/useBlockDefinitions';
 import type { RowObject, ColumnObject } from '../../interfaces/interfaces.templates';
 
-export interface NewsletterCanvasProps {
+export interface TemplateCreatorProps {
   mode: 'readonly' | 'edit';
   rows: RowObject[];
   isSkeletonView?: boolean;
@@ -15,7 +15,7 @@ export interface NewsletterCanvasProps {
   onBlockDelete?: (rowId: string, columnId: string) => void;
 }
 
-export const NewsletterCanvas: React.FC<NewsletterCanvasProps> = ({
+export const TemplateCreator: React.FC<TemplateCreatorProps> = ({
   mode,
   rows,
   isSkeletonView = false,
@@ -37,15 +37,17 @@ export const NewsletterCanvas: React.FC<NewsletterCanvasProps> = ({
       width: '100%',
       margin: "0 auto",
       bgcolor: 'white',
+      border: '1px solid',
+      borderColor: 'divider',
       boxShadow: 'none',
       overflow: 'hidden',
       '& *': { boxSizing: 'border-box' }
     }}>
       {rows.map((row) => (
-        <Box 
-          key={row.id} 
-          sx={{ 
-            display: 'flex', 
+        <Box
+          key={row.id}
+          sx={{
+            display: 'flex',
             width: '100%',
           }}
         >
@@ -140,7 +142,7 @@ export const NewsletterCanvas: React.FC<NewsletterCanvasProps> = ({
                           p: 0.5
                         }}
                       >
-                        <DeleteIcon sx={{ fontSize: 16}} />
+                        <DeleteIcon sx={{ fontSize: 16 }} />
                       </IconButton>
                     )}
                   </>

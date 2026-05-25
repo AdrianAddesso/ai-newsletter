@@ -1,8 +1,8 @@
 import React from 'react';
 import { useTemplateStore } from '../../stores/templates.store';
-import { NewsletterCanvas } from './NewsletterCanvas';
+import { TemplateCreator } from './TemplateCreator';
 
-export const TemplateCanvas: React.FC = () => {
+export const Template: React.FC = () => {
   const { 
     rows, 
     isSkeletonView, 
@@ -12,7 +12,7 @@ export const TemplateCanvas: React.FC = () => {
   } = useTemplateStore();
 
   return (
-    <NewsletterCanvas
+    <TemplateCreator
       mode="edit"
       rows={rows}
       isSkeletonView={isSkeletonView}

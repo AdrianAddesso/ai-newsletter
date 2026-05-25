@@ -2,16 +2,14 @@ import { v4 as uuidv4 } from 'uuid';
 import type { TemplateLayoutItem } from '../types/newsletter';
 import type { RowObject, ColumnObject } from '../interfaces/interfaces.templates';
 
-/**
- * Maps a flat array of TemplateLayoutItem to a structured array of RowObject 
- * suitable for the canvas renderers.
- */
 export const mapLayoutItemsToRows = (layoutItems: TemplateLayoutItem[]): RowObject[] => {
-  if (!layoutItems || layoutItems.length === 0) return [];
+  if (!Array.isArray(layoutItems) || layoutItems.length === 0) return [];
 
   const rowMap = new Map<number, TemplateLayoutItem[]>();
   
   layoutItems.forEach(item => {
+    if (!item || typeof item.row !== 'number') return;
+    
     if (!rowMap.has(item.row)) {
       rowMap.set(item.row, []);
     }
@@ -27,7 +25,6 @@ export const mapLayoutItemsToRows = (layoutItems: TemplateLayoutItem[]): RowObje
     const maxDisplayOrder = Math.max(...itemsInRow.map(i => i.display_order), 0);
     const columns: ColumnObject[] = [];
 
-    // Fill the columns array up to the max display_order found
     for (let colIndex = 0; colIndex <= maxDisplayOrder; colIndex++) {
       const item = itemsInRow.find(i => i.display_order === colIndex || i.grid_column === colIndex);
 
@@ -47,7 +44,6 @@ export const mapLayoutItemsToRows = (layoutItems: TemplateLayoutItem[]): RowObje
           displayOrder: colIndex,
         });
       } else {
-        // Insert empty column to preserve the layout structure
         columns.push({
           id: uuidv4(),
           type: null,
@@ -60,7 +56,7 @@ export const mapLayoutItemsToRows = (layoutItems: TemplateLayoutItem[]): RowObje
 
     return {
       id: uuidv4(),
-      rowIndex: index, // Normalize rowIndex to be 0-indexed sequentially
+      rowIndex: index, 
       columns
     };
   });
