@@ -1,11 +1,6 @@
-import { Alert,Box,CircularProgress } from '@mui/material'
-
+import { Alert, Box, Button,Stack, CircularProgress } from '@mui/material'
 import { useNewsletterEditor } from './newsletter/hooks/useNewsletterEditor'
-
-import { ApprovedNewsletterPage } from './newsletter/approved/ApprovedNewsletterPage'
-
 import { DraftNewsletterPage } from './newsletter/draft/DraftNewsletterPage'
-
 import { ReviewNewsletterPage } from './newsletter/review/ReviewNewsletterPage'
 
 export default function EditNewsletterPage() {
@@ -13,7 +8,7 @@ export default function EditNewsletterPage() {
 
   if (vm.isLoading) {
     return (
-      <Box sx={{ display:'flex',justifyContent:'center',alignItems:'center',minHeight:'60vh' }}>
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
         <CircularProgress />
       </Box>
     )
@@ -24,15 +19,36 @@ export default function EditNewsletterPage() {
   }
 
   if (!vm.newsletter) return null
+  const newsletter = vm.newsletter
 
   if (vm.isApproved) {
     return (
-      <ApprovedNewsletterPage
-        newsletter={vm.newsletter}
-        exportOptions={vm.exportOptions}
-        exportingFormat={vm.exportingFormat}
-        onExport={vm.handleExport}
-      />
+      <Alert
+        severity="info"
+        action={
+          <Stack direction="row" spacing={1}>
+            <Button
+              color="inherit"
+              size="small"
+              onClick={() =>
+                vm.navigate(`/exportarNewsletter/${newsletter.id}`)
+              }
+            >
+              Exportar
+            </Button>
+
+            <Button
+              color="inherit"
+              size="small"
+              onClick={() => vm.navigate('/dashboard')}
+            >
+              Ir al inicio
+            </Button>
+          </Stack>
+        }
+      >
+        Este newsletter ya fue aprobado.
+      </Alert>
     )
   }
 

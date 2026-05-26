@@ -293,7 +293,7 @@ export function NewslettersTable({ search, filter, userRole, }: Props) {
                         <Tooltip title="Exportar" arrow>
                           <IconButton
                             size="small"
-                            onClick={() => navigate(`/editarNewsletter/${n.id}`)}
+                            onClick={() => navigate(`/exportarNewsletter/${n.id}`)}
                           >
                             <IosShareIcon />
                           </IconButton>

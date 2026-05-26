@@ -21,6 +21,8 @@
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
+    "useDefineForClassFields": false,
+    "strictPropertyInitialization": false,
     "paths": {
         "@shared/*": ["../packages/shared/src/*"]
     }
