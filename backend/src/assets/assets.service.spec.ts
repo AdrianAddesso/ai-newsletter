@@ -274,6 +274,52 @@ describe('AssetsService', () => {
     ).rejects.toBeInstanceOf(NotFoundException);
   });
 
+  it('returns seeded assets without mutating persisted metadata', async () => {
+    const { service, prisma, createAssetMock, updateAssetMock } = createService();
+
+    (prisma.assets.findFirst as jest.Mock).mockResolvedValue({
+      id: 'block-asset-id',
+      name: 'HeaderFullRenderer.svg',
+      description: 'Seeded asset: assets/blocks/HeaderFullRenderer.svg',
+      created_at: createdAt,
+      updated_at: updatedAt,
+      type: asset_type.BLOCK,
+      bucket: 'nestle-ai-newsletter-assets',
+      object_key: 'assets/blocks/HeaderFullRenderer.svg',
+    });
+
+    await expect(
+      service.getSeededAsset(
+        'assets/blocks/HeaderFullRenderer.svg',
+        asset_type.BLOCK,
+      ),
+    ).resolves.toEqual({
+      id: 'block-asset-id',
+      name: 'HeaderFullRenderer.svg',
+      description: 'Seeded asset: assets/blocks/HeaderFullRenderer.svg',
+      created_at: createdAtIso,
+      updated_at: updatedAtIso,
+      type: asset_type.BLOCK,
+      url: 'http://localhost:9000/nestle-ai-newsletter-assets/fake',
+      svgTemplate: null,
+      maxChars: null,
+    });
+
+    expect(createAssetMock).not.toHaveBeenCalled();
+    expect(updateAssetMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects missing seeded assets', async () => {
+    const { service } = createService();
+
+    await expect(
+      service.getSeededAsset(
+        'assets/blocks/MissingRenderer.svg',
+        asset_type.BLOCK,
+      ),
+    ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
   it('caches keyword svg templates across repeated reads', async () => {
     const { service, prisma, getObjectTextMock } = createService();
 

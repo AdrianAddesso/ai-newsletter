@@ -272,7 +272,7 @@ export class AssetsService {
   async getBlockPreviewAsset(previewKey: string): Promise<UploadedAssetDto> {
     return this.getSeededAsset(
       `assets/blocks/${this.normalizePreviewKey(previewKey)}`,
-      asset_type.IMAGE,
+      asset_type.BLOCK,
     );
   }
 
@@ -281,16 +281,30 @@ export class AssetsService {
     type: asset_type,
   ): Promise<UploadedAssetDto> {
     const normalizedStorageKey = this.normalizeSeededStorageKey(storageKey);
-    const fileName = this.getFileName(normalizedStorageKey);
-
-    return this.upsertSeededAsset({
-      name: fileName,
-      type,
-      storageKey: normalizedStorageKey,
-      description: `Seeded asset: ${normalizedStorageKey}`,
-      mimeType: this.inferMimeType(fileName),
-      fromBrand: true,
+    const asset = await this.prisma.assets.findFirst({
+      where: {
+        bucket: this.getAssetBucketName(),
+        object_key: normalizedStorageKey,
+        type,
+        deleted_at: null,
+      },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        created_at: true,
+        updated_at: true,
+        type: true,
+        bucket: true,
+        object_key: true,
+      },
     });
+
+    if (!asset) {
+      throw new NotFoundException('No se encontro el asset solicitado.');
+    }
+
+    return this.toUploadedAssetDto(asset);
   }
 
   async upsertSeededAsset(input: SeededAssetInput): Promise<UploadedAssetDto> {
