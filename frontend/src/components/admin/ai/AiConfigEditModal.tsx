@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import {
+    import { useState } from "react";
+    import {
     Alert,
     Button,
     Dialog,
@@ -10,39 +10,43 @@ import {
     Stack,
     TextField,
     Typography,
-} from "@mui/material";
-import { AiConfigTypeLabel } from "@shared/enums/ai-config-type.enum";
-import { updateAiConfig, type AiConfig } from "../../../api/ai";
+    } from "@mui/material";
+    import { AiConfigTypeLabel } from "@shared/enums/ai-config-type.enum";
+    import { updateAiConfig, type AiConfig } from "../../../api/ai";
 
-interface AiConfigEditModalProps {
+    interface AiConfigEditModalProps {
     open: boolean;
     config: AiConfig | null;
     onClose: () => void;
     onConfirm: (saved: AiConfig) => void;
-}
+    }
 
-export function AiConfigEditModal({
+    interface FormState {
+    temperature: number;
+    topP: number;
+    topK: number;
+    maxOutputTokens: number;
+    }
+
+    export function AiConfigEditModal({
     open,
     config,
     onClose,
     onConfirm,
     }: AiConfigEditModalProps) {
-    const [temperature, setTemperature] = useState(0);
-    const [topP, setTopP] = useState(0);
-    const [topK, setTopK] = useState(1);
-    const [maxOutputTokens, setMaxOutputTokens] = useState(1);
+    // Initialized directly from props — no useEffect needed.
+    // The parent passes key={editTarget?.id} so React remounts this
+    // component whenever the selected config changes, resetting state cleanly.
+    const [form, setForm] = useState<FormState>({
+        temperature: config?.temperature ?? 0,
+        topP: config?.top_p ?? 0,
+        topK: config?.top_k ?? 1,
+        maxOutputTokens: config?.max_output_tokens ?? 1,
+    });
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
-        if (open && config) {
-        setTemperature(config.temperature);
-        setTopP(config.top_p);
-        setTopK(config.top_k);
-        setMaxOutputTokens(config.max_output_tokens);
-        setError(null);
-        }
-    }, [config, open]);
+    const { temperature, topP, topK, maxOutputTokens } = form;
 
     const isValid =
         temperature >= 0 &&
@@ -92,7 +96,9 @@ export function AiConfigEditModal({
                 label="Temperatura"
                 type="number"
                 value={temperature}
-                onChange={(e) => setTemperature(Number(e.target.value))}
+                onChange={(e) =>
+                    setForm((f) => ({ ...f, temperature: Number(e.target.value) }))
+                }
                 fullWidth
                 size="small"
                 required
@@ -103,7 +109,9 @@ export function AiConfigEditModal({
                 label="Top P"
                 type="number"
                 value={topP}
-                onChange={(e) => setTopP(Number(e.target.value))}
+                onChange={(e) =>
+                    setForm((f) => ({ ...f, topP: Number(e.target.value) }))
+                }
                 fullWidth
                 size="small"
                 required
@@ -117,7 +125,9 @@ export function AiConfigEditModal({
                 label="Top K"
                 type="number"
                 value={topK}
-                onChange={(e) => setTopK(Number(e.target.value))}
+                onChange={(e) =>
+                    setForm((f) => ({ ...f, topK: Number(e.target.value) }))
+                }
                 fullWidth
                 size="small"
                 required
@@ -128,7 +138,12 @@ export function AiConfigEditModal({
                 label="Máx. tokens"
                 type="number"
                 value={maxOutputTokens}
-                onChange={(e) => setMaxOutputTokens(Number(e.target.value))}
+                onChange={(e) =>
+                    setForm((f) => ({
+                    ...f,
+                    maxOutputTokens: Number(e.target.value),
+                    }))
+                }
                 fullWidth
                 size="small"
                 required
