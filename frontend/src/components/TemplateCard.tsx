@@ -1,11 +1,12 @@
+import { useState } from 'react'
 import {
-  Card, CardContent, CardActions, CardMedia,
-  Typography, Chip, Button, Stack
+  Typography, Chip, Button, Stack, Box
 } from '@mui/material'
 import {
-  VisibilityOutlined as ViewIcon,
   CheckCircleOutlined as UseIcon
 } from '@mui/icons-material'
+import { PreviewCanvas } from './canvas/PreviewCanvas'
+import type { TemplateLayoutItem } from '../types/newsletter'
 
 type StatusChipColor = 'default' | 'success' | 'warning'
 
@@ -22,81 +23,111 @@ interface TemplateCardProps {
   state_name: string
   description: string | null
   orientation: 'Portrait' | 'Landscape'
+  layout: TemplateLayoutItem[] | null
   onPreview: (id: string) => void
   onSelect: (id: string) => void
 }
 
-export function TemplateCard({
-  id, name, area_id, state_code, state_name, description, orientation, onPreview, onSelect
-}: TemplateCardProps) {
+export function TemplateCard({ id, name, area_id, state_code, state_name, description, layout, onSelect }: TemplateCardProps) {
+
+  const [isHovered, setIsHovered] = useState(false);
+  const isUsable = state_name === 'Activa';
+  const layoutExist = layout && layout.length > 0
+
   return (
-    <Card variant="outlined" sx={{ borderRadius: 2, display: 'flex', flexDirection: 'column', height: '100%' }}>
-      
-      {/* Thumbnail placeholder */}
-      <CardMedia sx={{
-        height: orientation === 'Portrait' ? 280 : 160,
-        bgcolor: 'action.hover',
+    <Box
+      sx={{
+        position: 'relative',
+        width: '100%',
+        overflow: 'hidden',
+        bgcolor: 'background.paper',
+        transition: 'box-shadow 0.2s',
+        '&:hover': layoutExist ? { boxShadow: 5 } : {}
+      }}
+      onMouseEnter={() => layoutExist && setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <Box sx={{
+        width: '100%',
         display: 'flex',
+        flexDirection: 'column',
         alignItems: 'center',
-        justifyContent: 'center'
+        pointerEvents: 'none',
       }}>
-        <Typography variant="caption" color="text.secondary">
-          Vista previa no disponible
-        </Typography>
-      </CardMedia>
-
-      <CardContent sx={{ flexGrow: 1 }}>
-        <Stack spacing={1}>
-
-          {/* Nombre y estado */}
-          <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-              {name}
+        {layoutExist ? (
+          <Box sx={{ width: '100%' }}>
+            <PreviewCanvas layout={layout} />
+          </Box>
+        ) : (
+          <Box sx={{
+            p: 4, textAlign: 'center', border: '1px solid',
+            borderColor: 'divider', width: '100%'
+          }}>
+            <Typography variant="caption" color="text.secondary">
+              Vista previa no disponible
             </Typography>
+          </Box>
+        )}
+      </Box>
+      <Box sx={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        bgcolor: 'rgba(0, 0, 0, 0.75)',
+        color: 'white',
+        zIndex: 2,
+        opacity: isHovered ? 1 : 0,
+        transition: 'opacity 0.25s ease-in-out',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        p: 5,
+        textAlign: 'center'
+      }}>
+        <Stack spacing={2} sx={{ width: '100%', alignItems: 'center' }}>
+          <Stack spacing={2} sx={{ alignItems: 'center' }}>
             <Chip
               size="small"
               label={STATE_MAP[state_code]?.label ?? state_name}
               color={STATE_MAP[state_code]?.color ?? 'default'}
+              sx={{ mb: 1 }}
             />
-          </Stack>
-
-          {/* Area */}
-          <Typography variant="caption" color="text.secondary">
-            Área: {area_id}
-          </Typography>
-
-          {/* Descripción */}
-          {description && (
-            <Typography variant="body2" color="text.secondary">
-              {description}
+            <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+              {name}
             </Typography>
-          )}
-
+            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+              Área: {area_id}
+            </Typography>
+            {description && (
+              <Typography variant="body2" sx={{
+                color: 'rgba(255,255,255,0.9)',
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden'
+              }}>
+                {description}
+              </Typography>
+            )}
+          </Stack>
+          <Stack spacing={1} sx={{ direction: 'row' }}>
+            <Button
+              size="small"
+              variant="contained"
+              color="primary"
+              startIcon={<UseIcon />}
+              onClick={() => onSelect(id)}
+              disabled={!isUsable}
+              title={!isUsable ? 'Plantilla inactiva o no utilizable' : ''}
+            >
+              Usar
+            </Button>
+          </Stack>
         </Stack>
-      </CardContent>
-
-      {/* Botones */}
-      <CardActions sx={{ px: 2, pb: 2, gap: 1 }}>
-        <Button
-          size="small"
-          variant="outlined"
-          startIcon={<ViewIcon />}
-          onClick={() => onPreview(id)}
-          fullWidth
-        >
-          Vista previa
-        </Button>
-        <Button
-          size="small"
-          variant="contained"
-          startIcon={<UseIcon />}
-          onClick={() => onSelect(id)}
-          fullWidth
-        >
-          Usar
-        </Button>
-      </CardActions>
-
-    </Card>
+      </Box>
+    </Box>
   )
 }

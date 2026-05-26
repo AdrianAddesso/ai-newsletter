@@ -175,63 +175,76 @@ export class TemplatesService {
   }
 
   async getById(id: string) {
-    return this.prisma.templates.findFirst({
-      where: {
-        id,
-        deleted_at: null,
-      },
-      include: {
-        areas: {
-          select: {
-            name: true,
+    try {
+      const template = await this.prisma.templates.findFirst({
+        where: {
+          id,
+          deleted_at: null,
+        },
+        include: {
+          areas: {
+            select: {
+              name: true,
+            },
+          },
+          template_states: {
+            select: {
+              code: true,
+              name: true,
+            },
           },
         },
-        template_states: {
-          select: {
-            code: true,
-            name: true,
-          },
-        },
-      },
-    })
+      });
+
+      return {
+        payload: template
+      }
+
+    } catch (error) {
+      this.logger.error(error);
+      throw new BadRequestException({
+        message: 'No se pudo obtener el template en este momento.',
+      });
+    }
   }
 
   async create(template: CreateTemplateBody, userId: string) {
 
     const validateBlocks = template.layout.map(block => validateTemplateBlocks(block, this.blockRegistry));
 
-    const [area, state, creator] = await Promise.all([
-      this.prisma.areas.findUnique({
-        where: { name: template.area },
-      }),
-      this.prisma.template_states.findUnique({
-        where: { code: template.state },
-      }),
-      uuidPattern.test(userId)
-        ? this.prisma.users.findUnique({
-          where: { id: userId },
-          select: { id: true },
-        })
-        : Promise.resolve(null),
-    ]);
-
-    if (!area) {
-      throw new BadRequestException({
-        message: `Área no encontrada: ${template.area}`,
-      });
-    }
-
-    if (!state) {
-      throw new BadRequestException({
-        message: `Estado no encontrado: ${template.state}`,
-      });
-    }
-
-    if (!creator) {
-      this.logger.warn('Template creator user was not found; saving template without creator reference.');
-    }
-
     try {
+
+      const [area, state, creator] = await Promise.all([
+        this.prisma.areas.findUnique({
+          where: { name: template.area },
+        }),
+        this.prisma.template_states.findUnique({
+          where: { code: template.state },
+        }),
+        uuidPattern.test(userId)
+          ? this.prisma.users.findUnique({
+            where: { id: userId },
+            select: { id: true },
+          })
+          : Promise.resolve(null),
+      ]);
+
+      if (!area) {
+        throw new BadRequestException({
+          message: `Área no encontrada: ${template.area}`,
+        });
+      }
+
+      if (!state) {
+        throw new BadRequestException({
+          message: `Estado no encontrado: ${template.state}`,
+        });
+      }
+
+      if (!creator) {
+        this.logger.warn('Template creator user was not found; saving template without creator reference.');
+      }
+
       const newTemplate = await this.prisma.templates.create({
         data: {
           name: template.name, description: template.description, area_id: area.id, layout: validateBlocks,
