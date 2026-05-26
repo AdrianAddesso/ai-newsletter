@@ -79,6 +79,7 @@ export function TextLabelCenterBackgroundFullRenderer({
               whiteSpace: "nowrap",
               overflow: "hidden",
               textOverflow: "ellipsis",
+              ...typographySx,
             },
           }}
         />

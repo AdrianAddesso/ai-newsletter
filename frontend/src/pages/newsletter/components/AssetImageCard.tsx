@@ -26,7 +26,7 @@ type AssetImageCardProps = {
   isSelected?: boolean
   onClick?: () => void
   onRemove?: () => void
-  width?: number
+  width?: number | string
   height?: number
 }
 
@@ -52,8 +52,9 @@ export function AssetImageCard({
 }: AssetImageCardProps) {
   const isKeywordAsset = assetType === 'KEYWORD' && !!svgTemplate
   const keywordPreviewText = getKeywordPreviewText(keywordText)
+  const isFluidWidth = typeof width === 'string'
   const effectiveKeywordWidth = Math.max(
-    width,
+    isFluidWidth ? 0 : width,
     Math.min(420, 148 + keywordPreviewText.length * 10),
   )
   const keywordSvgMarkup = useMemo(() => {
@@ -117,7 +118,11 @@ export function AssetImageCard({
     <Card
       variant="outlined"
       sx={{
-        width: isKeywordAsset ? effectiveKeywordWidth : width,
+        width: isFluidWidth
+          ? width
+          : isKeywordAsset
+            ? effectiveKeywordWidth
+            : width,
         position: 'relative',
         overflow: 'hidden',
         borderColor: isSelected ? 'primary.main' : 'divider',

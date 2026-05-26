@@ -4,23 +4,24 @@ import {
   Alert,
   Box,
   Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Divider,
   FormControl,
   InputLabel,
   LinearProgress,
   MenuItem,
+  Pagination,
   Select,
   Stack,
   Tab,
   Tabs,
   TextField,
-  ToggleButton,
-  ToggleButtonGroup,
   Typography,
   type SelectChangeEvent,
 } from '@mui/material'
-import FormatBoldIcon from '@mui/icons-material/FormatBold'
-import FormatItalicIcon from '@mui/icons-material/FormatItalic'
 import type { BlockAssetType, BlockEditField } from '@shared/types/block.types'
 import {
   listAssets,
@@ -41,6 +42,7 @@ import {
   updateBlockValue,
   updateBlockValues,
 } from '../../../utils/newsletterBlocks'
+import { buildKeywordSvgMarkup } from '../utils/keywordSvg'
 import { AssetImageCard } from './AssetImageCard'
 
 type SelectableAssetType = Exclude<AssetType, 'BLOCK'>
@@ -98,6 +100,7 @@ const fontSizeOptions = [
   { label: 'XL', value: '1.5rem' },
   { label: 'XXL', value: '2rem' },
 ]
+const assetsPerPage = 6
 
 const emptyComment = (value: string | null): boolean =>
   !value || value.trim().length === 0
@@ -148,17 +151,62 @@ export function EditPanel({
 
       {aiError && <Alert severity="error">{aiError}</Alert>}
 
-      {selectedBlock.editFields.map((field) => (
-        <FieldEditor
-          key={field.key}
-          block={selectedBlock}
-          field={field}
-          value={values[field.key] ?? ''}
-          brandKitResources={brandKitResources}
-          canEdit={canEdit}
-          onUpdateBlock={onUpdateBlock}
-        />
-      ))}
+      {selectedBlock.editFields.map((field) => {
+        const hasFontFamilyField = selectedBlock.editFields.some(
+          (candidate) => candidate.type === 'font-family',
+        )
+
+        if (field.type === 'font-style') {
+          return null
+        }
+
+        if (field.type === 'font-size' && hasFontFamilyField) {
+          return null
+        }
+
+        if (field.type === 'font-family') {
+          const fontSizeField = selectedBlock.editFields.find(
+            (candidate) => candidate.type === 'font-size',
+          )
+
+          return (
+            <Stack key={field.key} direction="row" spacing={1.5}>
+              <FieldEditor
+                block={selectedBlock}
+                field={field}
+                value={values[field.key] ?? ''}
+                brandKitResources={brandKitResources}
+                canEdit={canEdit}
+                onUpdateBlock={onUpdateBlock}
+              />
+              {fontSizeField ? (
+                <FieldEditor
+                  block={selectedBlock}
+                  field={fontSizeField}
+                  value={values[fontSizeField.key] ?? ''}
+                  brandKitResources={brandKitResources}
+                  canEdit={canEdit}
+                  onUpdateBlock={onUpdateBlock}
+                  hideLabel
+                  compact
+                />
+              ) : null}
+            </Stack>
+          )
+        }
+
+        return (
+          <FieldEditor
+            key={field.key}
+            block={selectedBlock}
+            field={field}
+            value={values[field.key] ?? ''}
+            brandKitResources={brandKitResources}
+            canEdit={canEdit}
+            onUpdateBlock={onUpdateBlock}
+          />
+        )
+      })}
 
       {selectedBlock.editFields.length === 0 && (
         <Alert severity="info">Este bloque no tiene campos editables.</Alert>
@@ -209,6 +257,8 @@ function FieldEditor({
   brandKitResources,
   canEdit,
   onUpdateBlock,
+  hideLabel = false,
+  compact = false,
 }: {
   block: NewsletterBlock
   field: BlockEditField
@@ -216,6 +266,8 @@ function FieldEditor({
   brandKitResources: BrandKitResources | null
   canEdit: boolean
   onUpdateBlock: (block: NewsletterBlock) => void
+  hideLabel?: boolean
+  compact?: boolean
 }) {
   const values = parseContent<Record<string, string>>(block.content)
 
@@ -241,33 +293,24 @@ function FieldEditor({
   if (field.type === 'color') {
     return (
       <Stack spacing={1}>
-        <Typography variant="subtitle2">{field.label}</Typography>
-        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-          <TextField
-            value={value}
-            onChange={(event) => setValue(event.target.value)}
-            placeholder={field.placeholder}
-            fullWidth
-            disabled={!canEdit}
-          />
-          <Box
-            component="input"
-            type="color"
-            value={value || '#ffffff'}
-            onChange={(event: ChangeEvent<HTMLInputElement>) =>
-              setValue(event.target.value)
-            }
-            disabled={!canEdit}
-            sx={{
-              width: 44,
-              height: 44,
-              p: 0,
-              border: 'none',
-              background: 'transparent',
-              cursor: canEdit ? 'pointer' : 'default',
-            }}
-          />
-        </Box>
+        {!hideLabel && <Typography variant="subtitle2">{field.label}</Typography>}
+        <Box
+          component="input"
+          type="color"
+          value={value || '#ffffff'}
+          onChange={(event: ChangeEvent<HTMLInputElement>) =>
+            setValue(event.target.value)
+          }
+          disabled={!canEdit}
+          sx={{
+            width: '100%',
+            height: 48,
+            p: 0,
+            border: 'none',
+            background: 'transparent',
+            cursor: canEdit ? 'pointer' : 'default',
+          }}
+        />
       </Stack>
     )
   }
@@ -276,11 +319,12 @@ function FieldEditor({
     return (
       <TextField
         select
-        label={field.label}
+        label={hideLabel ? undefined : field.label}
         value={value}
         onChange={(event) => setValue(event.target.value)}
         fullWidth
         disabled={!canEdit}
+        sx={compact ? { minWidth: 180, maxWidth: 180 } : undefined}
       >
         <MenuItem value="">
           <em>Usar default</em>
@@ -295,26 +339,7 @@ function FieldEditor({
   }
 
   if (field.type === 'font-style') {
-    const active = value ? value.split(',').filter(Boolean) : []
-
-    return (
-      <Stack spacing={1}>
-        <Typography variant="subtitle2">{field.label}</Typography>
-        <ToggleButtonGroup
-          value={active}
-          onChange={(_event, next: string[]) => setValue(next.join(','))}
-          size="small"
-          disabled={!canEdit}
-        >
-          <ToggleButton value="bold" aria-label="bold">
-            <FormatBoldIcon fontSize="small" />
-          </ToggleButton>
-          <ToggleButton value="italic" aria-label="italic">
-            <FormatItalicIcon fontSize="small" />
-          </ToggleButton>
-        </ToggleButtonGroup>
-      </Stack>
-    )
+    return null
   }
 
   if (field.type === 'font-family') {
@@ -334,6 +359,7 @@ function FieldEditor({
               ...values,
               [field.key]: event.target.value,
               fontId: selectedFont?.id ?? '',
+              typographyStyle: '',
             }),
           )
         }}
@@ -397,17 +423,13 @@ function ImageAssetFieldEditor({
   brandKitResources: BrandKitResources | null
   onUpdateBlock: (block: NewsletterBlock) => void
 }) {
-  const allowedTypes = useMemo(
-    () =>
-      (field.assetTypes?.length ? field.assetTypes : selectableAssetTypes).filter(
-        (type): type is SelectableAssetType => type !== 'BLOCK',
-      ),
-    [field.assetTypes],
-  )
+  const allowedTypes = selectableAssetTypes
   const allowedTypesKey = allowedTypes.join('|')
   const [sourceTab, setSourceTab] = useState<AssetSourceTab>('global')
   const [globalAssetType, setGlobalAssetType] = useState<SelectableAssetType>(
-    allowedTypes[0] ?? 'IMAGE',
+    (getBlockAssetBinding(block, field.key)?.assetType as SelectableAssetType | undefined) ??
+      allowedTypes[0] ??
+      'IMAGE',
   )
   const [globalAssets, setGlobalAssets] = useState<UploadedAsset[]>([])
   const [isLoadingAssets, setIsLoadingAssets] = useState(false)
@@ -418,16 +440,14 @@ function ImageAssetFieldEditor({
   const [uploadStatus, setUploadStatus] = useState<UploadStatus>('idle')
   const [uploadProgress, setUploadProgress] = useState(0)
   const [uploadError, setUploadError] = useState<string | null>(null)
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false)
   const abortControllerRef = useRef<AbortController | null>(null)
+  const [assetCatalogById, setAssetCatalogById] = useState<
+    Record<string, UploadedAsset | BrandKitResourceAsset>
+  >({})
 
   const selectedBinding = getBlockAssetBinding(block, field.key)
-  const brandKitAssets = useMemo(
-    () =>
-      (brandKitResources?.assets ?? []).filter((asset) =>
-        allowedTypes.includes(asset.type as SelectableAssetType),
-      ),
-    [allowedTypesKey, brandKitResources],
-  )
+  const brandKitAssets = brandKitResources?.assets ?? []
 
   useEffect(() => {
     if (!allowedTypes.length) {
@@ -455,11 +475,7 @@ function ImageAssetFieldEditor({
         const response = await listAssets(globalAssetType)
         if (!mounted) return
 
-        setGlobalAssets(
-          response.assets.filter((asset) =>
-            allowedTypes.includes(asset.type as SelectableAssetType),
-          ),
-        )
+        setGlobalAssets(response.assets)
       } catch (error) {
         if (!mounted) return
 
@@ -484,53 +500,52 @@ function ImageAssetFieldEditor({
   }, [allowedTypesKey, globalAssetType])
 
   useEffect(() => {
+    if (globalAssets.length === 0) {
+      return
+    }
+
+    setAssetCatalogById((current) => ({
+      ...current,
+      ...Object.fromEntries(globalAssets.map((asset) => [asset.id, asset])),
+    }))
+  }, [globalAssets])
+
+  useEffect(() => {
+    if (brandKitAssets.length === 0) {
+      return
+    }
+
+    setAssetCatalogById((current) => ({
+      ...current,
+      ...Object.fromEntries(brandKitAssets.map((asset) => [asset.id, asset])),
+    }))
+  }, [brandKitAssets])
+
+  useEffect(() => {
     return () => {
       abortControllerRef.current?.abort()
     }
   }, [])
-
-  const globalOptions = useMemo(() => {
-    if (
-      !selectedBinding ||
-      globalAssets.some((asset) => asset.id === selectedBinding.assetId)
-    ) {
-      return globalAssets
-    }
-
-    if (!selectedBinding.assetType) {
-      return globalAssets
-    }
-
-    return [
-      {
-        id: selectedBinding.assetId,
-        name: selectedBinding.assetName ?? field.label,
-        description: null,
-        created_at: '',
-        updated_at: '',
-        url: selectedBinding.assetUrl ?? '',
-        type: selectedBinding.assetType,
-        svgTemplate: selectedBinding.svgTemplate ?? null,
-        maxChars: selectedBinding.maxChars ?? null,
-        keywordText: selectedBinding.keywordText ?? null,
-      },
-      ...globalAssets,
-    ]
-  }, [field.label, globalAssets, selectedBinding])
+  const currentSelectedAsset = selectedBinding
+    ? assetCatalogById[selectedBinding.assetId]
+    : undefined
 
   const handleSelectUploadedAsset = (
     asset: UploadedAsset | BrandKitResourceAsset,
   ): void => {
+    setAssetCatalogById((current) => ({
+      ...current,
+      [asset.id]: asset,
+    }))
+
     onUpdateBlock(
       setBlockAssetBinding(block, {
         fieldKey: field.key,
         assetId: asset.id,
         assetName: asset.name,
-        assetUrl: asset.url,
+        assetUrl: resolveAssetPreviewUrl(asset),
         assetType: asset.type as BlockAssetType,
         keywordText: asset.keywordText ?? null,
-        svgTemplate: asset.svgTemplate ?? null,
-        maxChars: asset.maxChars ?? null,
       }),
     )
   }
@@ -548,6 +563,10 @@ function ImageAssetFieldEditor({
       setBlockAssetBinding(block, {
         ...selectedBinding,
         keywordText,
+        assetUrl: resolveAssetPreviewUrl(
+          currentSelectedAsset ?? selectedBinding,
+          keywordText,
+        ),
       }),
     )
   }
@@ -603,6 +622,7 @@ function ImageAssetFieldEditor({
         ...current.filter((asset) => asset.id !== uploadedAsset.id),
       ])
       handleSelectUploadedAsset(uploadedAsset)
+      setIsUploadDialogOpen(false)
       setUploadStatus('success')
       setUploadProgress(100)
       setSelectedFile(null)
@@ -634,9 +654,9 @@ function ImageAssetFieldEditor({
       alt={selectedBinding.assetName ?? field.label}
       imageUrl={selectedBinding.assetUrl ?? undefined}
       assetType={selectedBinding.assetType as AssetType}
-      svgTemplate={selectedBinding.svgTemplate}
+      svgTemplate={currentSelectedAsset?.svgTemplate ?? null}
       keywordText={selectedBinding.keywordText}
-      maxChars={selectedBinding.maxChars}
+      maxChars={currentSelectedAsset?.maxChars ?? null}
       isKeywordEditing={selectedBinding.assetType === 'KEYWORD' && canEdit}
       readOnlyKeyword={!canEdit}
       onKeywordTextChange={canEdit ? handleKeywordTextChange : undefined}
@@ -698,107 +718,27 @@ function ImageAssetFieldEditor({
               )}
 
               <AssetGrid
-                assets={globalOptions}
+                assets={globalAssets}
                 selectedAssetId={selectedBinding?.assetId ?? null}
                 selectedKeywordText={selectedBinding?.keywordText ?? null}
                 canEdit={canEdit}
                 onSelect={handleSelectUploadedAsset}
+                gridKey={`global-${field.key}-${globalAssetType}`}
               />
 
               <Divider />
 
               <Stack spacing={1.5}>
-                <Typography variant="subtitle2">Subir imagen</Typography>
-                <TextField
-                  label="Nombre"
-                  value={assetName}
-                  onChange={(event) => setAssetName(event.target.value)}
-                  fullWidth
-                  size="small"
-                  disabled={!canEdit || uploadStatus === 'uploading' || uploadStatus === 'compressing'}
-                />
-                <TextField
-                  label="Descripción"
-                  value={assetDescription}
-                  onChange={(event) => setAssetDescription(event.target.value)}
-                  fullWidth
-                  size="small"
-                  multiline
-                  minRows={2}
-                  disabled={!canEdit || uploadStatus === 'uploading' || uploadStatus === 'compressing'}
-                />
                 <Button
                   variant="outlined"
-                  component="label"
-                  disabled={!canEdit || uploadStatus === 'uploading' || uploadStatus === 'compressing'}
+                  disabled={!canEdit}
+                  onClick={() => setIsUploadDialogOpen(true)}
                 >
-                  Seleccionar archivo
-                  <input
-                    hidden
-                    type="file"
-                    accept=".jpg,.jpeg,.png,.webp,.gif,.svg"
-                    onChange={(event: ChangeEvent<HTMLInputElement>) => {
-                      const file = event.target.files?.[0] ?? null
-                      setSelectedFile(file)
-                      setUploadStatus('idle')
-                      setUploadError(null)
-                      if (file && !assetName.trim()) {
-                        setAssetName(file.name.replace(/\.[^.]+$/, ''))
-                      }
-                      event.target.value = ''
-                    }}
-                  />
+                  Subir asset nuevo
                 </Button>
-                {selectedFile && (
-                  <Alert severity="info">
-                    Archivo seleccionado: {selectedFile.name} ({formatBytes(selectedFile.size)})
-                  </Alert>
-                )}
-                {(uploadStatus === 'compressing' || uploadStatus === 'uploading') && (
-                  <Stack spacing={1}>
-                    <Typography variant="caption">
-                      {uploadStatus === 'compressing'
-                        ? 'Comprimiendo imagen...'
-                        : `Subiendo asset ${uploadProgress}%`}
-                    </Typography>
-                    <LinearProgress
-                      variant={uploadStatus === 'uploading' ? 'determinate' : 'indeterminate'}
-                      value={uploadProgress}
-                    />
-                    {uploadStatus === 'uploading' && (
-                      <Button
-                        variant="text"
-                        color="error"
-                        onClick={() => {
-                          abortControllerRef.current?.abort()
-                          setUploadStatus('cancelled')
-                          setUploadError('Carga cancelada.')
-                        }}
-                      >
-                        Cancelar carga
-                      </Button>
-                    )}
-                  </Stack>
-                )}
                 {uploadStatus === 'success' && (
                   <Alert severity="success">Asset subido y asignado al bloque.</Alert>
                 )}
-                {uploadStatus === 'cancelled' && (
-                  <Alert severity="warning">Carga cancelada.</Alert>
-                )}
-                {uploadError && <Alert severity="error">{uploadError}</Alert>}
-                <Button
-                  variant="contained"
-                  disabled={
-                    !canEdit ||
-                    !selectedFile ||
-                    uploadStatus === 'uploading' ||
-                    uploadStatus === 'compressing'
-                  }
-                  onClick={() => void handleUpload()}
-                >
-                  Subir y usar asset
-                </Button>
               </Stack>
             </Stack>
           ) : (
@@ -814,6 +754,7 @@ function ImageAssetFieldEditor({
                     selectedKeywordText={selectedBinding?.keywordText ?? null}
                     canEdit={canEdit}
                     onSelect={handleSelectUploadedAsset}
+                    gridKey={`brandkit-${field.key}`}
                   />
                 </>
               ) : (
@@ -825,6 +766,111 @@ function ImageAssetFieldEditor({
           )}
         </Box>
       </Box>
+
+      <Dialog
+        open={isUploadDialogOpen}
+        onClose={() => setIsUploadDialogOpen(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Subir asset de tipo {assetTypeLabels[globalAssetType]}</DialogTitle>
+        <DialogContent>
+          <Stack spacing={1.5} sx={{ pt: 1 }}>
+            <Alert severity="info">
+              El asset se subirá como {assetTypeLabels[globalAssetType]}.
+            </Alert>
+            <TextField
+              label="Nombre"
+              value={assetName}
+              onChange={(event) => setAssetName(event.target.value)}
+              fullWidth
+              size="small"
+              disabled={!canEdit || uploadStatus === 'uploading' || uploadStatus === 'compressing'}
+            />
+            <TextField
+              label="Descripción"
+              value={assetDescription}
+              onChange={(event) => setAssetDescription(event.target.value)}
+              fullWidth
+              size="small"
+              multiline
+              minRows={2}
+              disabled={!canEdit || uploadStatus === 'uploading' || uploadStatus === 'compressing'}
+            />
+            <Button
+              variant="outlined"
+              component="label"
+              disabled={!canEdit || uploadStatus === 'uploading' || uploadStatus === 'compressing'}
+            >
+              Seleccionar archivo
+              <input
+                hidden
+                type="file"
+                accept=".jpg,.jpeg,.png,.webp,.gif,.svg"
+                onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                  const file = event.target.files?.[0] ?? null
+                  setSelectedFile(file)
+                  setUploadStatus('idle')
+                  setUploadError(null)
+                  if (file && !assetName.trim()) {
+                    setAssetName(file.name.replace(/\.[^.]+$/, ''))
+                  }
+                  event.target.value = ''
+                }}
+              />
+            </Button>
+            {selectedFile && (
+              <Alert severity="info">
+                Archivo seleccionado: {selectedFile.name} ({formatBytes(selectedFile.size)})
+              </Alert>
+            )}
+            {(uploadStatus === 'compressing' || uploadStatus === 'uploading') && (
+              <Stack spacing={1}>
+                <Typography variant="caption">
+                  {uploadStatus === 'compressing'
+                    ? 'Comprimiendo imagen...'
+                    : `Subiendo asset ${uploadProgress}%`}
+                </Typography>
+                <LinearProgress
+                  variant={uploadStatus === 'uploading' ? 'determinate' : 'indeterminate'}
+                  value={uploadProgress}
+                />
+              </Stack>
+            )}
+            {uploadStatus === 'cancelled' && (
+              <Alert severity="warning">Carga cancelada.</Alert>
+            )}
+            {uploadError && <Alert severity="error">{uploadError}</Alert>}
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            color="inherit"
+            onClick={() => {
+              if (uploadStatus === 'uploading') {
+                abortControllerRef.current?.abort()
+                setUploadStatus('cancelled')
+                setUploadError('Carga cancelada.')
+              }
+              setIsUploadDialogOpen(false)
+            }}
+          >
+            Cancelar
+          </Button>
+          <Button
+            variant="contained"
+            disabled={
+              !canEdit ||
+              !selectedFile ||
+              uploadStatus === 'uploading' ||
+              uploadStatus === 'compressing'
+            }
+            onClick={() => void handleUpload()}
+          >
+            Subir y usar asset
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Stack>
   )
 }
@@ -835,47 +881,119 @@ function AssetGrid({
   selectedKeywordText,
   canEdit,
   onSelect,
+  gridKey,
 }: {
   assets: Array<UploadedAsset | BrandKitResourceAsset>
   selectedAssetId: string | null
   selectedKeywordText: string | null
   canEdit: boolean
   onSelect: (asset: UploadedAsset | BrandKitResourceAsset) => void
+  gridKey: string
 }) {
+  const [page, setPage] = useState(0)
+  const pageCount = Math.max(1, Math.ceil(assets.length / assetsPerPage))
+  const paginatedAssets = assets.slice(
+    page * assetsPerPage,
+    page * assetsPerPage + assetsPerPage,
+  )
+
+  useEffect(() => {
+    setPage(0)
+  }, [gridKey])
+
+  useEffect(() => {
+    if (page <= pageCount - 1) {
+      return
+    }
+
+    setPage(Math.max(0, pageCount - 1))
+  }, [page, pageCount])
+
   if (assets.length === 0) {
     return <Alert severity="info">No hay assets disponibles para este tipo.</Alert>
   }
 
   return (
-    <Box
-      sx={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-        gap: 1.5,
-      }}
-    >
-      {assets.map((asset) => (
-        <AssetImageCard
-          key={asset.id}
-          alt={asset.name}
-          imageUrl={asset.url}
-          assetType={asset.type}
-          svgTemplate={asset.svgTemplate}
-          keywordText={
-            asset.id === selectedAssetId
-              ? selectedKeywordText ?? asset.keywordText
-              : asset.keywordText
-          }
-          maxChars={asset.maxChars}
-          isSelected={asset.id === selectedAssetId}
-          readOnlyKeyword
-          onClick={canEdit ? () => onSelect(asset) : undefined}
-          width={180}
-          height={120}
-        />
-      ))}
-    </Box>
+    <Stack spacing={1.5}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+          gap: 1.5,
+        }}
+      >
+        {paginatedAssets.map((asset) => (
+          <AssetImageCard
+            key={asset.id}
+            alt={asset.name}
+            imageUrl={asset.url}
+            assetType={asset.type}
+            svgTemplate={asset.svgTemplate}
+            keywordText={
+              asset.id === selectedAssetId
+                ? selectedKeywordText ?? asset.keywordText
+                : asset.keywordText
+            }
+            maxChars={asset.maxChars}
+            isSelected={asset.id === selectedAssetId}
+            readOnlyKeyword
+            onClick={canEdit ? () => onSelect(asset) : undefined}
+            width="100%"
+            height={120}
+          />
+        ))}
+      </Box>
+      {pageCount > 1 && (
+        <Stack sx={{ alignItems: 'flex-end' }}>
+          <Pagination
+            count={pageCount}
+            page={page + 1}
+            onChange={(_event, nextPage) => setPage(nextPage - 1)}
+            color="primary"
+            size="small"
+          />
+        </Stack>
+      )}
+    </Stack>
   )
+}
+
+function resolveAssetPreviewUrl(
+  asset:
+    | Pick<
+        UploadedAsset,
+        'id' | 'url' | 'type' | 'svgTemplate' | 'keywordText'
+      >
+    | Pick<
+        BrandKitResourceAsset,
+        'id' | 'url' | 'type' | 'svgTemplate' | 'keywordText'
+      >
+    | Pick<
+        NewsletterBlock['assetBindings'][number],
+        'assetId' | 'assetUrl' | 'assetType' | 'keywordText'
+      >,
+  keywordTextOverride?: string | null,
+): string | null {
+  const assetType =
+    'assetType' in asset ? asset.assetType : asset.type
+  const assetId = 'assetId' in asset ? asset.assetId : asset.id
+  const assetUrl = 'assetUrl' in asset ? asset.assetUrl : asset.url
+
+  if (
+    assetType !== 'KEYWORD' ||
+    !('svgTemplate' in asset) ||
+    !asset.svgTemplate
+  ) {
+    return assetUrl
+  }
+
+  const markup = buildKeywordSvgMarkup(
+    asset.svgTemplate,
+    keywordTextOverride ?? asset.keywordText ?? 'Editar',
+    assetId,
+  )
+
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(markup)}`
 }
 
 async function prepareUploadFile(file: File): Promise<File> {

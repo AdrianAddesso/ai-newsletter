@@ -1,6 +1,7 @@
 import {
   BadGatewayException,
   BadRequestException,
+  HttpException,
   Injectable,
   Logger,
   NotFoundException,
@@ -175,11 +176,28 @@ export class AiService {
         })),
       },
     );
-    const generatedText = await this.generateNewsletterWithAi(prompt);
-    const generatedValues = this.parseGeneratedNewsletterBlocks(
-      generatedText,
-      templateBlocks,
-    );
+    let generatedValues: Map<string, Record<string, string | null | undefined>>;
+
+    try {
+      const generatedText = await this.generateNewsletterWithAi(prompt);
+      generatedValues = this.parseGeneratedNewsletterBlocks(
+        generatedText,
+        templateBlocks,
+      );
+    } catch (error) {
+      if (!this.shouldFallbackToUserContent(error)) {
+        throw error;
+      }
+
+      this.logger.warn(
+        `AI generateNewsletter fallback activated for template=${request.templateId} brandKit=${request.brandKitId}`,
+      );
+      generatedValues = this.buildUserContentFallbackValues(
+        request,
+        templateBlocks,
+        (brandKit.font_groups?.fonts ?? []).map((font) => font.name),
+      );
+    }
 
     return {
       blocks: buildNewsletterBlocksFromLayout(template.layout, generatedValues),
@@ -470,6 +488,153 @@ export class AiService {
 
     return value?.trim() || defaultValue;
   }
+
+  private buildUserContentFallbackValues(
+    request: GenerateNewsletterRequestDto,
+    templateBlocks: GenerateNewsletterResponseDto['blocks'],
+    availableFontNames: string[],
+  ): Map<string, Record<string, string | null | undefined>> {
+    const firstKeyMessage = request.keyMessages[0]?.trim() ?? '';
+    const allKeyMessages = request.keyMessages
+      .map((message) => message.trim())
+      .filter(Boolean)
+      .join(' ');
+    const firstValidLink =
+      request.linksOrSources.find((link) => this.isValidHttpUrl(link))?.trim() ??
+      '';
+    const fallbackByFieldKey: Record<string, string> = {
+      title: request.topic.trim(),
+      subtitle: request.objective.trim() || request.audience.trim(),
+      text: allKeyMessages || request.objective.trim(),
+      bodyText: allKeyMessages || request.additionalContext?.trim() || '',
+      introText: request.objective.trim() || firstKeyMessage,
+      closingText:
+        request.additionalContext?.trim() ||
+        request.contact?.trim() ||
+        request.tone.trim(),
+      primaryText: allKeyMessages || request.objective.trim(),
+      secondaryText:
+        request.additionalContext?.trim() ||
+        request.audience.trim() ||
+        request.tone.trim(),
+      label: firstKeyMessage || request.topic.trim(),
+      topLabel: request.topic.trim(),
+      bottomLabel: request.tone.trim() || request.audience.trim(),
+      buttonLabel: request.cta?.trim() || request.topic.trim(),
+      href: firstValidLink,
+      altText: request.topic.trim(),
+      iconName: request.topic.trim(),
+      fontFamily: availableFontNames[0] ?? '',
+    };
+    const fallbackTextQueue = [
+      request.topic.trim(),
+      request.objective.trim(),
+      request.audience.trim(),
+      allKeyMessages,
+      request.additionalContext?.trim() ?? '',
+      request.relevantDates?.trim() ?? '',
+      request.contact?.trim() ?? '',
+      request.tone.trim(),
+    ].filter(Boolean);
+
+    return new Map(
+      templateBlocks.map((block) => {
+        const defaultValues = parseBlockValues(block.content);
+        let queueIndex = 0;
+        const values = Object.fromEntries(
+          block.editFields.map((field) => {
+            const fieldKey = field.key.trim();
+            const normalizedKey = fieldKey.toLowerCase();
+            const defaultValue = defaultValues[field.key] ?? '';
+            let value = defaultValue;
+
+            if (field.type === 'image-asset') {
+              value = '';
+            } else if (field.type === 'url') {
+              value = firstValidLink || defaultValue;
+            } else if (field.type === 'font-family') {
+              value = fallbackByFieldKey.fontFamily || defaultValue;
+            } else if (field.type === 'font-size' || field.type === 'font-style') {
+              value = defaultValue;
+            } else if (field.type === 'color') {
+              value = defaultValue;
+            } else {
+              value =
+                fallbackByFieldKey[fieldKey] ||
+                fallbackByFieldKey[normalizedKey] ||
+                this.pickFallbackTextForField(
+                  normalizedKey,
+                  fallbackTextQueue,
+                  queueIndex,
+                ) ||
+                defaultValue;
+
+              if (
+                !fallbackByFieldKey[fieldKey] &&
+                !fallbackByFieldKey[normalizedKey] &&
+                value
+              ) {
+                queueIndex += 1;
+              }
+            }
+
+            return [field.key, value];
+          }),
+        );
+
+        return [block.id, values];
+      }),
+    );
+  }
+
+  private pickFallbackTextForField(
+    fieldKey: string,
+    fallbackTextQueue: string[],
+    queueIndex: number,
+  ): string {
+    if (fieldKey.includes('title')) {
+      return fallbackTextQueue[0] ?? '';
+    }
+
+    if (fieldKey.includes('subtitle')) {
+      return fallbackTextQueue[1] ?? fallbackTextQueue[0] ?? '';
+    }
+
+    if (
+      fieldKey.includes('text') ||
+      fieldKey.includes('label') ||
+      fieldKey.includes('copy')
+    ) {
+      return (
+        fallbackTextQueue[queueIndex] ??
+        fallbackTextQueue[fallbackTextQueue.length - 1] ??
+        ''
+      );
+    }
+
+    return fallbackTextQueue[queueIndex] ?? '';
+  }
+
+  private shouldFallbackToUserContent(error: unknown): boolean {
+    if (error instanceof BadGatewayException) {
+      return true;
+    }
+
+    if (error instanceof ServiceUnavailableException) {
+      return true;
+    }
+
+    if (error instanceof TypeError) {
+      return true;
+    }
+
+    if (error instanceof HttpException) {
+      return false;
+    }
+
+    return true;
+  }
+
   private isValidHttpUrl(value: string | null | undefined): boolean {
     if (!value?.trim()) {
       return false;

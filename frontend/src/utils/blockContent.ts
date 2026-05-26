@@ -35,12 +35,14 @@ export function resolveTypographySx(
   typographyStyle?: string,
   fontFamily?: string,
 ): { fontSize?: string; fontWeight?: number; fontStyle?: string; fontFamily?: string } {
-  const styles = typographyStyle ? typographyStyle.split(",") : [];
+  const styles = typographyStyle ? typographyStyle.split(',') : []
+  const hasCustomFontFamily = !!fontFamily?.trim()
 
   return {
     ...(fontSize && { fontSize }),
-    ...(styles.includes("bold") && { fontWeight: 700 }),
-    ...(styles.includes("italic") && { fontStyle: "italic" }),
-    ...(fontFamily && { fontFamily }),
-  };
+    ...(!hasCustomFontFamily && styles.includes('bold') && { fontWeight: 700 }),
+    ...(!hasCustomFontFamily &&
+      styles.includes('italic') && { fontStyle: 'italic' }),
+    ...(hasCustomFontFamily && { fontFamily: `"${fontFamily!.trim()}"` }),
+  }
 }

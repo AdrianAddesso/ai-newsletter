@@ -100,6 +100,37 @@ export function useNewsletterEditor() {
     void load()
   }, [id])
 
+  useEffect(() => {
+    if (!brandKitResources?.fonts.length || typeof FontFace === 'undefined') {
+      return
+    }
+
+    let cancelled = false
+
+    const loadFonts = async (): Promise<void> => {
+      await Promise.all(
+        brandKitResources.fonts.map(async (font) => {
+          try {
+            const fontFace = new FontFace(font.name, `url(${font.url})`)
+            const loadedFontFace = await fontFace.load()
+
+            if (!cancelled) {
+              document.fonts.add(loadedFontFace)
+            }
+          } catch {
+            return
+          }
+        }),
+      )
+    }
+
+    void loadFonts()
+
+    return () => {
+      cancelled = true
+    }
+  }, [brandKitResources])
+
   const selectedBlock = useMemo(() => {
     return newsletter?.blocks.find(
       (block) => block.id === selectedBlockId,

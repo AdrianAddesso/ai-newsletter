@@ -354,21 +354,24 @@ export class NewsLettersService {
     const editFields = getBlockEditFields(block.block_content.block_type);
     const values = parseBlockValues(block.block_content.content);
     const assetBindings = await Promise.all(
-      block.block_content.assets_block.map(async (assetBlock) => ({
-        fieldKey: assetBlock.field_key,
-        assetId: assetBlock.assets.id,
-        assetName: assetBlock.assets.name,
-        assetUrl: await this.getAssetPreviewUrl(
-          {
-            type: assetBlock.assets.type,
-            bucket: assetBlock.assets.bucket,
-            objectKey: assetBlock.assets.object_key,
-          },
-          assetBlock.keyword_text,
-        ),
-        assetType: assetBlock.assets.type as NewsletterBlockDto['assetBindings'][number]['assetType'],
-        keywordText: assetBlock.keyword_text,
-      })),
+      block.block_content.assets_block.map(async (assetBlock) => {
+        return {
+          fieldKey: assetBlock.field_key,
+          assetId: assetBlock.assets.id,
+          assetName: assetBlock.assets.name,
+          assetUrl: await this.getAssetPreviewUrl(
+            {
+              type: assetBlock.assets.type,
+              bucket: assetBlock.assets.bucket,
+              objectKey: assetBlock.assets.object_key,
+            },
+            assetBlock.keyword_text,
+          ),
+          assetType:
+            assetBlock.assets.type as NewsletterBlockDto['assetBindings'][number]['assetType'],
+          keywordText: assetBlock.keyword_text,
+        };
+      }),
     );
 
     const definitionFields = editFields.map((field) => field.key);

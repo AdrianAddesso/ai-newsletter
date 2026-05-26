@@ -1,6 +1,9 @@
 import { Card, Chip, Box } from "@mui/material";
 import type { BlockInstance } from "@shared/types/block.types";
-import { parseContent } from "../../../../utils/blockContent";
+import {
+  parseContent,
+  resolveTypographySx,
+} from "../../../../utils/blockContent";
 
 interface Props {
   block: BlockInstance;
@@ -12,7 +15,14 @@ export function LabelCenterBackgroundFullRenderer({
   block,
   backgroundImage = "https://placehold.net/400x400.png",
 }: Props) {
-  const { label = "Lorem ipsum dolor sit amet", bgColor } = parseContent(block.content);
+  const {
+    label = "Lorem ipsum dolor sit amet",
+    bgColor,
+    fontFamily,
+    fontSize,
+    typographyStyle,
+  } = parseContent(block.content);
+  const typographySx = resolveTypographySx(fontSize, typographyStyle, fontFamily);
   const bgSx = backgroundImage
     ? {
         backgroundImage: `url("${backgroundImage}")`,
@@ -57,6 +67,7 @@ export function LabelCenterBackgroundFullRenderer({
               whiteSpace: "nowrap",
               overflow: "hidden",
               textOverflow: "ellipsis",
+              ...typographySx,
             },
           }}
         />

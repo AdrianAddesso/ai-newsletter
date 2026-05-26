@@ -66,8 +66,6 @@ export interface GeneratedNewsletterAssetBindingDto {
   assetUrl: string | null;
   assetType: BlockAssetType;
   keywordText?: string | null;
-  svgTemplate?: string | null;
-  maxChars?: number | null;
 }
 
 export interface GenerateNewsletterResponseDto {

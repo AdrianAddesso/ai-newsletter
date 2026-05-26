@@ -40,8 +40,6 @@ export type NewsletterBlockAssetBinding = {
   assetUrl: string | null
   assetType: BlockAssetType
   keywordText?: string | null
-  svgTemplate?: string | null
-  maxChars?: number | null
 }
 
 export type NewsletterTemplate = {

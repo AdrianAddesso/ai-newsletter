@@ -87,6 +87,7 @@ export function SpecialBoxBackgroundFullRenderer({
                   whiteSpace: "nowrap",
                   overflow: "hidden",
                   textOverflow: "ellipsis",
+                  ...typographySx,
                 },
               }}
             />

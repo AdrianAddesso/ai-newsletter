@@ -43,14 +43,30 @@ export function LabelTextLabelCenterFullRenderer({
       <Box sx={{ width: "100%", flexGrow: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 1.5, py: 2 }}>
         <Chip
           label={topLabel}
-          sx={{ maxWidth: "90%", "& .MuiChip-label": { whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }}
+          sx={{
+            maxWidth: "90%",
+            "& .MuiChip-label": {
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              ...typographySx,
+            },
+          }}
         />
         <Typography variant="body2" color="text.secondary" sx={{ width: "90%", textAlign: "center", ...typographySx }}>
           {bodyText}
         </Typography>
         <Chip
           label={bottomLabel}
-          sx={{ maxWidth: "90%", "& .MuiChip-label": { whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }}
+          sx={{
+            maxWidth: "90%",
+            "& .MuiChip-label": {
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              ...typographySx,
+            },
+          }}
         />
       </Box>
     </Card>
