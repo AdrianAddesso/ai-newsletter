@@ -8,6 +8,7 @@ import EditNewsletterPage from '../../pages/EditNewsletterPage'
 import { EditTemplatePage } from '../../pages/EditTemplatePage'
 import { SettingsPage } from '../../pages/SettingsPage'
 import { TemplateLibraryPage } from '../../pages/TemplateLibraryPage'
+import { ApprovedNewsletterRoute } from '../../pages/newsletter/approved/ApprovedNewsletterRoute'
 
 export const protectedRoutes = (
     <>
@@ -58,6 +59,17 @@ export const protectedRoutes = (
                 <ProtectedRoute>
                     <ProtectedLayout>
                         <EditNewsletterPage />
+                    </ProtectedLayout>
+                </ProtectedRoute>
+            }
+        />
+
+         <Route
+            path="/exportarNewsletter/:id"
+            element={
+                <ProtectedRoute>
+                    <ProtectedLayout>
+                        <ApprovedNewsletterRoute />
                     </ProtectedLayout>
                 </ProtectedRoute>
             }
