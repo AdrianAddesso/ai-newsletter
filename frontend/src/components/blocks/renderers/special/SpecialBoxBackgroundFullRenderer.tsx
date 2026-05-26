@@ -2,7 +2,7 @@ import { Card, Typography, Chip, CardMedia, Box, Grid } from "@mui/material";
 import type { BlockInstance } from "@shared/types/block.types";
 import {
   parseContent,
-  resolveTypographySx,
+  resolveContentTypographySx,
 } from "../../../../utils/blockContent";
 
 interface Props {
@@ -21,17 +21,18 @@ export function SpecialBoxBackgroundFullRenderer({
   backgroundImage = null,
   imageUrl = "https://placehold.co/120x160/e0e0e0/9e9e9e?text=Image",
 }: Props) {
+  const values = parseContent(block.content);
   const {
     title = "Lorem ipsum sit",
     introText = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
     bodyText = "Provident blanditiis omnis natus ratione necessitatibus.",
     closingText = "Consequuntur eum voluptas iure repellat voluptate nisi.",
     bgColor,
-    fontFamily,
-    fontSize,
-    typographyStyle,
-  } = parseContent(block.content);
-  const typographySx = resolveTypographySx(fontSize, typographyStyle, fontFamily);
+  } = values;
+  const titleTypographySx = resolveContentTypographySx(values, "title");
+  const introTypographySx = resolveContentTypographySx(values, "introText");
+  const bodyTypographySx = resolveContentTypographySx(values, "bodyText");
+  const closingTypographySx = resolveContentTypographySx(values, "closingText");
   const bgSx = backgroundImage
     ? {
         backgroundImage: `url("${backgroundImage}")`,
@@ -87,28 +88,28 @@ export function SpecialBoxBackgroundFullRenderer({
                   whiteSpace: "nowrap",
                   overflow: "hidden",
                   textOverflow: "ellipsis",
-                  ...typographySx,
+                  ...titleTypographySx,
                 },
               }}
             />
             <Typography
               variant="body2"
               color="text.secondary"
-              sx={{ textAlign: "center", ...typographySx }}
+              sx={{ textAlign: "center", ...introTypographySx }}
             >
               {introText}
             </Typography>
             <Typography
               variant="body2"
               color="text.secondary"
-              sx={{ textAlign: "center", ...typographySx }}
+              sx={{ textAlign: "center", ...bodyTypographySx }}
             >
               {bodyText}
             </Typography>
             <Typography
               variant="body2"
               color="text.secondary"
-              sx={{ textAlign: "center", ...typographySx }}
+              sx={{ textAlign: "center", ...closingTypographySx }}
             >
               {closingText}
             </Typography>

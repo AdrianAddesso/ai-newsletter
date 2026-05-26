@@ -2,7 +2,7 @@ import { Card, Typography, Chip, Box } from "@mui/material";
 import type { BlockInstance } from "@shared/types/block.types";
 import {
   parseContent,
-  resolveTypographySx,
+  resolveContentTypographySx,
 } from "../../../../utils/blockContent";
 
 interface Props {
@@ -17,15 +17,15 @@ export function LabelTextLabelCenterFullRenderer({
   topLabelContent = null,
   bottomLabelContent = null,
 }: Props) {
+  const values = parseContent(block.content);
   const {
     topLabel = topLabelContent ?? "Lorem ipsum dolor sit amet",
     bodyText = "Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat.",
     bottomLabel = bottomLabelContent ?? "Consectetur adipiscing elit",
-    fontFamily,
-    fontSize,
-    typographyStyle,
-  } = parseContent(block.content);
-  const typographySx = resolveTypographySx(fontSize, typographyStyle, fontFamily);
+  } = values;
+  const topLabelTypographySx = resolveContentTypographySx(values, "topLabel");
+  const bodyTypographySx = resolveContentTypographySx(values, "bodyText");
+  const bottomLabelTypographySx = resolveContentTypographySx(values, "bottomLabel");
 
   return (
     <Card sx={{
@@ -49,11 +49,11 @@ export function LabelTextLabelCenterFullRenderer({
               whiteSpace: "nowrap",
               overflow: "hidden",
               textOverflow: "ellipsis",
-              ...typographySx,
+              ...topLabelTypographySx,
             },
           }}
         />
-        <Typography variant="body2" color="text.secondary" sx={{ width: "90%", textAlign: "center", ...typographySx }}>
+        <Typography variant="body2" color="text.secondary" sx={{ width: "90%", textAlign: "center", ...bodyTypographySx }}>
           {bodyText}
         </Typography>
         <Chip
@@ -64,7 +64,7 @@ export function LabelTextLabelCenterFullRenderer({
               whiteSpace: "nowrap",
               overflow: "hidden",
               textOverflow: "ellipsis",
-              ...typographySx,
+              ...bottomLabelTypographySx,
             },
           }}
         />

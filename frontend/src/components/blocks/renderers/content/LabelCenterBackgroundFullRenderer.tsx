@@ -2,7 +2,7 @@ import { Card, Chip, Box } from "@mui/material";
 import type { BlockInstance } from "@shared/types/block.types";
 import {
   parseContent,
-  resolveTypographySx,
+  resolveContentTypographySx,
 } from "../../../../utils/blockContent";
 
 interface Props {
@@ -15,14 +15,9 @@ export function LabelCenterBackgroundFullRenderer({
   block,
   backgroundImage = "https://placehold.net/400x400.png",
 }: Props) {
-  const {
-    label = "Lorem ipsum dolor sit amet",
-    bgColor,
-    fontFamily,
-    fontSize,
-    typographyStyle,
-  } = parseContent(block.content);
-  const typographySx = resolveTypographySx(fontSize, typographyStyle, fontFamily);
+  const values = parseContent(block.content);
+  const { label = "Lorem ipsum dolor sit amet", bgColor } = values;
+  const typographySx = resolveContentTypographySx(values, "label");
   const bgSx = backgroundImage
     ? {
         backgroundImage: `url("${backgroundImage}")`,

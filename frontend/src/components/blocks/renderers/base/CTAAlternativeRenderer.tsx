@@ -2,7 +2,7 @@ import { Card, CardActions, Button } from "@mui/material";
 import type { BlockInstance } from "@shared/types/block.types";
 import {
   parseContent,
-  resolveTypographySx,
+  resolveContentTypographySx,
 } from "../../../../utils/blockContent";
 
 interface Props {
@@ -11,14 +11,12 @@ interface Props {
 }
 
 export function CTAAlternativeRenderer({ block }: Props) {
+  const values = parseContent(block.content);
   const {
     buttonLabel = "Click here",
     href = "",
-    fontFamily,
-    fontSize,
-    typographyStyle,
-  } = parseContent(block.content);
-  const typographySx = resolveTypographySx(fontSize, typographyStyle, fontFamily);
+  } = values;
+  const typographySx = resolveContentTypographySx(values, "buttonLabel");
 
   return (
     <Card sx={{

@@ -46,3 +46,14 @@ export function resolveTypographySx(
     ...(hasCustomFontFamily && { fontFamily: `"${fontFamily!.trim()}"` }),
   }
 }
+
+export function resolveContentTypographySx(
+  values: Partial<Record<string, string>>,
+  fieldKey: string,
+): { fontSize?: string; fontWeight?: number; fontStyle?: string; fontFamily?: string } {
+  return resolveTypographySx(
+    values[`${fieldKey}FontSize`] ?? values.fontSize,
+    values.typographyStyle,
+    values[`${fieldKey}FontFamily`] ?? values.fontFamily,
+  )
+}

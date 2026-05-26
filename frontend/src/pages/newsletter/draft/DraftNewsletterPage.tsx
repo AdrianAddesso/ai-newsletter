@@ -75,9 +75,12 @@ export function DraftNewsletterPage({ vm }: Props) {
                   vm.setShowRegenerationForm(true)
                 }
                 onSubmit={vm.handleSubmit}
-                onCancel={() =>
-                  void vm.transitionState('DISCARDED')
-                }
+                onCancel={() => {
+                  void (async () => {
+                    await vm.transitionState('DISCARDED')
+                    vm.navigate('/dashboard')
+                  })()
+                }}
               />
             )
           )}

@@ -376,7 +376,14 @@ export class NewsLettersService {
 
     const definitionFields = editFields.map((field) => field.key);
     const filteredValues = Object.fromEntries(
-      Object.entries(values).filter(([key]) => definitionFields.includes(key) || key === 'fontId'),
+      Object.entries(values).filter(
+        ([key]) =>
+          definitionFields.includes(key) ||
+          key === 'fontId' ||
+          key.endsWith('FontSize') ||
+          key.endsWith('FontFamily') ||
+          key.endsWith('FontId'),
+      ),
     );
 
     return {

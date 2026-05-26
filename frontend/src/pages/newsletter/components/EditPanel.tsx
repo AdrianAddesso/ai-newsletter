@@ -1,5 +1,5 @@
-import axios from 'axios'
-import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
+import axios from "axios";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import {
   Alert,
   Box,
@@ -21,89 +21,114 @@ import {
   TextField,
   Typography,
   type SelectChangeEvent,
-} from '@mui/material'
-import type { BlockAssetType, BlockEditField } from '@shared/types/block.types'
+} from "@mui/material";
+import type { BlockAssetType, BlockEditField } from "@shared/types/block.types";
 import {
   listAssets,
   uploadAsset,
   type AssetType,
   type UploadedAsset,
-} from '../../../api/assets'
+} from "../../../api/assets";
 import type {
   BrandKitResourceAsset,
   BrandKitResources,
-} from '../../../api/brand-kits'
-import type { NewsletterBlock, NewsletterState } from '../../../types/newsletter'
-import { parseContent } from '../../../utils/blockContent'
+} from "../../../api/brand-kits";
+import type {
+  NewsletterBlock,
+  NewsletterState,
+} from "../../../types/newsletter";
+import { parseContent } from "../../../utils/blockContent";
 import {
   getBlockAssetBinding,
   removeBlockAssetBinding,
   setBlockAssetBinding,
   updateBlockValue,
   updateBlockValues,
-} from '../../../utils/newsletterBlocks'
-import { buildKeywordSvgMarkup } from '../utils/keywordSvg'
-import { AssetImageCard } from './AssetImageCard'
+} from "../../../utils/newsletterBlocks";
+import { buildKeywordSvgMarkup } from "../utils/keywordSvg";
+import { AssetImageCard } from "./AssetImageCard";
 
-type SelectableAssetType = Exclude<AssetType, 'BLOCK'>
+type SelectableAssetType = Exclude<AssetType, "BLOCK">;
 type UploadStatus =
-  | 'idle'
-  | 'compressing'
-  | 'uploading'
-  | 'success'
-  | 'error'
-  | 'cancelled'
-type AssetSourceTab = 'global' | 'brandkit'
+  | "idle"
+  | "compressing"
+  | "uploading"
+  | "success"
+  | "error"
+  | "cancelled";
+type AssetSourceTab = "global" | "brandkit";
 
 type Props = {
-  selectedBlock: NewsletterBlock
-  brandKitResources: BrandKitResources | null
-  newsletterComment: string | null
-  newsletterState: NewsletterState
-  submitLabel: string
-  isSubmitting: boolean
-  isSavingDraft: boolean
-  isRegeneratingBlock: boolean
-  aiError: string | null
-  onUpdateBlock: (block: NewsletterBlock) => void
-  onSaveDraft: () => Promise<void>
-  onRegenerateBlock: (blockId: string) => Promise<void>
-  onRegenerateAll: () => void
-  onSubmit: () => void
-  onCancel: () => void
-}
+  selectedBlock: NewsletterBlock;
+  brandKitResources: BrandKitResources | null;
+  newsletterComment: string | null;
+  newsletterState: NewsletterState;
+  submitLabel: string;
+  isSubmitting: boolean;
+  isSavingDraft: boolean;
+  isRegeneratingBlock: boolean;
+  aiError: string | null;
+  onUpdateBlock: (block: NewsletterBlock) => void;
+  onSaveDraft: () => Promise<void>;
+  onRegenerateBlock: (blockId: string) => Promise<void>;
+  onRegenerateAll: () => void;
+  onSubmit: () => void;
+  onCancel: () => void;
+};
 
 const assetTypeLabels: Record<SelectableAssetType, string> = {
-  IMAGE: 'Imagen',
-  ICON: 'Icono',
-  LOGO: 'Logo',
-  SHAPE: 'Forma',
-  LOCKUP: 'Lockup',
-  KEYWORD: 'Keyword',
-}
+  IMAGE: "Imagen",
+  ICON: "Icono",
+  LOGO: "Logo",
+  SHAPE: "Forma",
+  LOCKUP: "Lockup",
+  KEYWORD: "Keyword",
+};
 
-const selectableAssetTypes = Object.keys(assetTypeLabels) as SelectableAssetType[]
-const maxUploadBytes = 5 * 1024 * 1024
+const selectableAssetTypes = Object.keys(
+  assetTypeLabels,
+) as SelectableAssetType[];
+const maxUploadBytes = 5 * 1024 * 1024;
 const uploadableMimeTypes = new Set([
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-  'image/gif',
-  'image/svg+xml',
-])
-const compressibleMimeTypes = new Set(['image/jpeg', 'image/png', 'image/webp'])
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "image/svg+xml",
+]);
+const compressibleMimeTypes = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+]);
 const fontSizeOptions = [
-  { label: 'XS', value: '0.75rem' },
-  { label: 'S', value: '0.875rem' },
-  { label: 'M', value: '1rem' },
-  { label: 'L', value: '1.25rem' },
-  { label: 'XL', value: '1.5rem' },
-  { label: 'XXL', value: '2rem' },
-]
-const assetsPerPage = 6
+  { label: "XS", value: "0.75rem" },
+  { label: "S", value: "0.875rem" },
+  { label: "M", value: "1rem" },
+  { label: "L", value: "1.25rem" },
+  { label: "XL", value: "1.5rem" },
+  { label: "XXL", value: "2rem" },
+];
+const assetsPerPage = 6;
 
 const emptyComment = (value: string | null): boolean =>
-  !value || value.trim().length === 0
+  !value || value.trim().length === 0;
+
+function isTextualField(field: BlockEditField): boolean {
+  return field.type === "text" || field.type === "textarea";
+}
+
+function supportsIndependentTextSize(field: BlockEditField): boolean {
+  if (!isTextualField(field)) {
+    return false;
+  }
+
+  return field.key !== "altText" && field.key !== "iconName";
+}
+
+function supportsIndependentTypography(field: BlockEditField): boolean {
+  return supportsIndependentTextSize(field);
+}
 
 export function EditPanel({
   selectedBlock,
@@ -123,131 +148,165 @@ export function EditPanel({
   onCancel,
 }: Props) {
   const canEdit =
-    newsletterState === 'DRAFT' || newsletterState === 'CHANGES_REQUESTED'
+    newsletterState === "DRAFT" || newsletterState === "CHANGES_REQUESTED";
   const values = useMemo(
     () => parseContent<Record<string, string>>(selectedBlock.content),
     [selectedBlock.content],
-  )
+  );
+  const hasTextFontSizeControl = selectedBlock.editFields.some(
+    (field) => field.type === "font-size",
+  );
+  const hasTextFontFamilyControl =
+    selectedBlock.editFields.some((field) => field.type === "font-family") &&
+    (brandKitResources?.fonts.length ?? 0) > 0;
 
   return (
-    <Stack spacing={2}>
-      <Stack
-        direction="row"
-        spacing={1}
-        sx={{ alignItems: 'center', justifyContent: 'space-between' }}
+    <Stack
+      sx={{
+        height: "calc(100vh - 180px)",
+        minHeight: 0,
+        border: "1px solid",
+        borderColor: "divider",
+        borderRadius: 2,
+        backgroundColor: "background.paper",
+      }}
+    >
+      <Box
+        sx={{
+          flex: 1,
+          minHeight: 0,
+          overflowY: "auto",
+          px: 2,
+          py: 2,
+        }}
       >
-        <Typography variant="subtitle1">{selectedBlock.name}</Typography>
-        {canEdit && (
-          <Button
-            variant="contained"
-            size="small"
-            disabled={isSavingDraft}
-            onClick={() => void onSaveDraft()}
-          >
-            {isSavingDraft ? 'Guardando...' : 'Guardar borrador'}
-          </Button>
-        )}
-      </Stack>
+        <Stack spacing={2}>
+          <Typography variant="subtitle1">{selectedBlock.name}</Typography>
 
-      {aiError && <Alert severity="error">{aiError}</Alert>}
+          {aiError && <Alert severity="error">{aiError}</Alert>}
 
-      {selectedBlock.editFields.map((field) => {
-        const hasFontFamilyField = selectedBlock.editFields.some(
-          (candidate) => candidate.type === 'font-family',
-        )
+          {selectedBlock.editFields.map((field) => {
+            if (field.type === "font-style" || field.type === "font-size") {
+              return null;
+            }
 
-        if (field.type === 'font-style') {
-          return null
-        }
+            if (field.type === "font-family") {
+              return null;
+            }
 
-        if (field.type === 'font-size' && hasFontFamilyField) {
-          return null
-        }
+            if (supportsIndependentTypography(field)) {
+              return (
+                <TextFieldGroupEditor
+                  key={field.key}
+                  block={selectedBlock}
+                  field={field}
+                  value={values[field.key] ?? ""}
+                  fontSizeValue={
+                    values[`${field.key}FontSize`] ?? values.fontSize ?? ""
+                  }
+                  fontFamilyValue={
+                    values[`${field.key}FontFamily`] ?? values.fontFamily ?? ""
+                  }
+                  brandKitResources={brandKitResources}
+                  canEdit={canEdit}
+                  hasTextFontSizeControl={hasTextFontSizeControl}
+                  hasTextFontFamilyControl={hasTextFontFamilyControl}
+                  onUpdateBlock={onUpdateBlock}
+                />
+              );
+            }
 
-        if (field.type === 'font-family') {
-          const fontSizeField = selectedBlock.editFields.find(
-            (candidate) => candidate.type === 'font-size',
-          )
-
-          return (
-            <Stack key={field.key} direction="row" spacing={1.5}>
+            return (
               <FieldEditor
+                key={field.key}
                 block={selectedBlock}
                 field={field}
-                value={values[field.key] ?? ''}
+                value={values[field.key] ?? ""}
                 brandKitResources={brandKitResources}
                 canEdit={canEdit}
                 onUpdateBlock={onUpdateBlock}
               />
-              {fontSizeField ? (
-                <FieldEditor
-                  block={selectedBlock}
-                  field={fontSizeField}
-                  value={values[fontSizeField.key] ?? ''}
-                  brandKitResources={brandKitResources}
-                  canEdit={canEdit}
-                  onUpdateBlock={onUpdateBlock}
-                  hideLabel
-                  compact
-                />
-              ) : null}
-            </Stack>
-          )
-        }
+            );
+          })}
 
-        return (
-          <FieldEditor
-            key={field.key}
-            block={selectedBlock}
-            field={field}
-            value={values[field.key] ?? ''}
-            brandKitResources={brandKitResources}
-            canEdit={canEdit}
-            onUpdateBlock={onUpdateBlock}
-          />
-        )
-      })}
-
-      {selectedBlock.editFields.length === 0 && (
-        <Alert severity="info">Este bloque no tiene campos editables.</Alert>
-      )}
-
-      {canEdit && (
-        <>
-          {selectedBlock.editFields.some(
-            (field) => field.type === 'text' || field.type === 'textarea',
-          ) && (
-            <Button
-              variant="outlined"
-              color="secondary"
-              disabled={isRegeneratingBlock}
-              onClick={() => void onRegenerateBlock(selectedBlock.id)}
-            >
-              {isRegeneratingBlock
-                ? 'Regenerando bloque...'
-                : 'Regenerar este bloque con IA'}
-            </Button>
+          {selectedBlock.editFields.length === 0 && (
+            <Alert severity="info">
+              Este bloque no tiene campos editables.
+            </Alert>
           )}
-          <Button variant="outlined" color="secondary" onClick={onRegenerateAll}>
-            Regenerar todo el contenido
-          </Button>
-        </>
-      )}
 
-      {!emptyComment(newsletterComment) && (
-        <Alert severity="info">{newsletterComment}</Alert>
-      )}
+          {canEdit && (
+            <>
+              {selectedBlock.editFields.some(
+                (field) => field.type === "text" || field.type === "textarea",
+              ) && (
+                <Button
+                  variant="outlined"
+                  color="secondary"
+                  disabled={isRegeneratingBlock}
+                  onClick={() => void onRegenerateBlock(selectedBlock.id)}
+                >
+                  {isRegeneratingBlock
+                    ? "Regenerando bloque..."
+                    : "Regenerar este bloque con IA"}
+                </Button>
+              )}
+              <Button
+                variant="outlined"
+                color="secondary"
+                onClick={onRegenerateAll}
+              >
+                Regenerar todo el contenido
+              </Button>
+            </>
+          )}
+
+          {!emptyComment(newsletterComment) && (
+            <Alert severity="info">{newsletterComment}</Alert>
+          )}
+        </Stack>
+      </Box>
 
       <Divider />
 
-      <Button variant="contained" onClick={onSubmit} disabled={isSubmitting || !canEdit}>
-        {isSubmitting ? 'Enviando...' : submitLabel}
-      </Button>
-      <Button variant="outlined" color="error" onClick={onCancel} disabled={isSubmitting}>
-        Cancelar
-      </Button>
+      <Box
+        sx={{
+          backgroundColor: "background.paper",
+          px: 2,
+          py: 2,
+        }}
+      >
+        <Stack direction={{ xs: "column", md: "row" }} sx={{justifyContent:"space-between"}}  spacing={1.5}>
+          <Button
+            variant="outlined"
+            color="error"
+            onClick={onCancel}
+            disabled={isSubmitting}
+          >
+            Cancelar
+          </Button>
+          {canEdit && (
+            <Button
+              variant="contained"
+              color="inherit"
+              disabled={isSavingDraft}
+              onClick={() => void onSaveDraft()}
+            >
+              {isSavingDraft ? "Guardando..." : "Guardar borrador"}
+            </Button>
+          )}
+          <Button
+            variant="contained"
+            onClick={onSubmit}
+            disabled={isSubmitting || !canEdit}
+            sx={{ ml: { md: "auto" } }}
+          >
+            {isSubmitting ? "Enviando..." : submitLabel}
+          </Button>
+        </Stack>
+      </Box>
     </Stack>
-  )
+  );
 }
 
 function FieldEditor({
@@ -260,22 +319,22 @@ function FieldEditor({
   hideLabel = false,
   compact = false,
 }: {
-  block: NewsletterBlock
-  field: BlockEditField
-  value: string
-  brandKitResources: BrandKitResources | null
-  canEdit: boolean
-  onUpdateBlock: (block: NewsletterBlock) => void
-  hideLabel?: boolean
-  compact?: boolean
+  block: NewsletterBlock;
+  field: BlockEditField;
+  value: string;
+  brandKitResources: BrandKitResources | null;
+  canEdit: boolean;
+  onUpdateBlock: (block: NewsletterBlock) => void;
+  hideLabel?: boolean;
+  compact?: boolean;
 }) {
-  const values = parseContent<Record<string, string>>(block.content)
+  const values = parseContent<Record<string, string>>(block.content);
 
   const setValue = (nextValue: string): void => {
-    onUpdateBlock(updateBlockValue(block, field.key, nextValue))
-  }
+    onUpdateBlock(updateBlockValue(block, field.key, nextValue));
+  };
 
-  if (field.type === 'textarea') {
+  if (field.type === "textarea") {
     return (
       <TextField
         label={field.label}
@@ -287,39 +346,40 @@ function FieldEditor({
         minRows={3}
         disabled={!canEdit}
       />
-    )
+    );
   }
 
-  if (field.type === 'color') {
+  if (field.type === "color") {
     return (
       <Stack spacing={1}>
-        {!hideLabel && <Typography variant="subtitle2">{field.label}</Typography>}
+        {!hideLabel && (
+          <Typography variant="subtitle2">{field.label}</Typography>
+        )}
         <Box
           component="input"
           type="color"
-          value={value || '#ffffff'}
+          value={value || "#ffffff"}
           onChange={(event: ChangeEvent<HTMLInputElement>) =>
             setValue(event.target.value)
           }
           disabled={!canEdit}
           sx={{
-            width: '100%',
+            width: "100%",
             height: 48,
             p: 0,
-            border: 'none',
-            background: 'transparent',
-            cursor: canEdit ? 'pointer' : 'default',
+            border: "none",
+            background: "transparent",
+            cursor: canEdit ? "pointer" : "default",
           }}
         />
       </Stack>
-    )
+    );
   }
 
-  if (field.type === 'font-size') {
+  if (field.type === "font-size") {
     return (
       <TextField
         select
-        label={hideLabel ? undefined : field.label}
         value={value}
         onChange={(event) => setValue(event.target.value)}
         fullWidth
@@ -335,15 +395,15 @@ function FieldEditor({
           </MenuItem>
         ))}
       </TextField>
-    )
+    );
   }
 
-  if (field.type === 'font-style') {
-    return null
+  if (field.type === "font-style") {
+    return null;
   }
 
-  if (field.type === 'font-family') {
-    const fontOptions = brandKitResources?.fonts ?? []
+  if (field.type === "font-family") {
+    const fontOptions = brandKitResources?.fonts ?? [];
 
     return (
       <TextField
@@ -353,21 +413,21 @@ function FieldEditor({
         onChange={(event) => {
           const selectedFont = fontOptions.find(
             (font) => font.name === event.target.value,
-          )
+          );
           onUpdateBlock(
             updateBlockValues(block, {
               ...values,
               [field.key]: event.target.value,
-              fontId: selectedFont?.id ?? '',
-              typographyStyle: '',
+              fontId: selectedFont?.id ?? "",
+              typographyStyle: "",
             }),
-          )
+          );
         }}
         fullWidth
         disabled={!canEdit}
         helperText={
           fontOptions.length === 0
-            ? 'El brandkit seleccionado no tiene tipografías disponibles.'
+            ? "El brandkit seleccionado no tiene tipografías disponibles."
             : undefined
         }
       >
@@ -380,10 +440,10 @@ function FieldEditor({
           </MenuItem>
         ))}
       </TextField>
-    )
+    );
   }
 
-  if (field.type === 'image-asset') {
+  if (field.type === "image-asset") {
     return (
       <ImageAssetFieldEditor
         block={block}
@@ -392,7 +452,7 @@ function FieldEditor({
         brandKitResources={brandKitResources}
         onUpdateBlock={onUpdateBlock}
       />
-    )
+    );
   }
 
   return (
@@ -401,13 +461,176 @@ function FieldEditor({
       value={value}
       onChange={(event) => setValue(event.target.value)}
       placeholder={field.placeholder}
-      type={field.type === 'url' ? 'url' : 'text'}
-      multiline={field.type === 'text'}
-      minRows={field.type === 'text' ? 2 : undefined}
+      type={field.type === "url" ? "url" : "text"}
+      multiline={field.type === "text"}
+      minRows={field.type === "text" ? 2 : undefined}
       fullWidth
       disabled={!canEdit}
     />
-  )
+  );
+}
+
+function TextFieldGroupEditor({
+  block,
+  field,
+  value,
+  fontSizeValue,
+  fontFamilyValue,
+  brandKitResources,
+  canEdit,
+  hasTextFontSizeControl,
+  hasTextFontFamilyControl,
+  onUpdateBlock,
+}: {
+  block: NewsletterBlock;
+  field: BlockEditField;
+  value: string;
+  fontSizeValue: string;
+  fontFamilyValue: string;
+  brandKitResources: BrandKitResources | null;
+  canEdit: boolean;
+  hasTextFontSizeControl: boolean;
+  hasTextFontFamilyControl: boolean;
+  onUpdateBlock: (block: NewsletterBlock) => void;
+}) {
+  return (
+    <Stack
+      spacing={1.5}
+      sx={{
+        border: "1px solid",
+        borderColor: "divider",
+        borderRadius: 1.5,
+        p: 1.5,
+        backgroundColor: "background.paper",
+      }}
+    >
+      <FieldEditor
+        block={block}
+        field={field}
+        value={value}
+        brandKitResources={brandKitResources}
+        canEdit={canEdit}
+        onUpdateBlock={onUpdateBlock}
+      />
+
+      {(hasTextFontFamilyControl || hasTextFontSizeControl) && (
+        <Stack
+          direction={{ xs: "column", md: "row" }}
+          spacing={1.5}
+          sx={{ alignItems: { md: "flex-start" } }}
+        >
+          {hasTextFontFamilyControl ? (
+            <TextFontFamilyFieldEditor
+              block={block}
+              fieldKey={field.key}
+              value={fontFamilyValue}
+              brandKitResources={brandKitResources}
+              canEdit={canEdit}
+              onUpdateBlock={onUpdateBlock}
+            />
+          ) : null}
+          {hasTextFontSizeControl ? (
+            <TextSizeFieldEditor
+              block={block}
+              sizeKey={`${field.key}FontSize`}
+              value={fontSizeValue}
+              canEdit={canEdit}
+              onUpdateBlock={onUpdateBlock}
+            />
+          ) : null}
+        </Stack>
+      )}
+    </Stack>
+  );
+}
+
+function TextFontFamilyFieldEditor({
+  block,
+  fieldKey,
+  value,
+  brandKitResources,
+  canEdit,
+  onUpdateBlock,
+}: {
+  block: NewsletterBlock;
+  fieldKey: string;
+  value: string;
+  brandKitResources: BrandKitResources | null;
+  canEdit: boolean;
+  onUpdateBlock: (block: NewsletterBlock) => void;
+}) {
+  const values = parseContent<Record<string, string>>(block.content);
+  const fontOptions = brandKitResources?.fonts ?? [];
+
+  return (
+    <TextField
+      select
+      label="Tipografía"
+      value={value}
+      onChange={(event) => {
+        const selectedFont = fontOptions.find(
+          (font) => font.name === event.target.value,
+        );
+
+        onUpdateBlock(
+          updateBlockValues(block, {
+            ...values,
+            [`${fieldKey}FontFamily`]: event.target.value,
+            [`${fieldKey}FontId`]: selectedFont?.id ?? "",
+          }),
+        );
+      }}
+      fullWidth
+      disabled={!canEdit}
+      sx={{ minWidth: 240 }}
+    >
+      <MenuItem value="">
+        <em>Usar default</em>
+      </MenuItem>
+      {fontOptions.map((font) => (
+        <MenuItem key={font.id} value={font.name}>
+          {font.name} · {font.style}
+        </MenuItem>
+      ))}
+    </TextField>
+  );
+}
+
+function TextSizeFieldEditor({
+  block,
+  sizeKey,
+  value,
+  canEdit,
+  onUpdateBlock,
+}: {
+  block: NewsletterBlock;
+  sizeKey: string;
+  value: string;
+  canEdit: boolean;
+  onUpdateBlock: (block: NewsletterBlock) => void;
+}) {
+  return (
+    <TextField
+      select
+      value={value}
+      onChange={(event) =>
+        onUpdateBlock(updateBlockValue(block, sizeKey, event.target.value))
+      }
+      label="Tamaño de texto"
+      fullWidth
+      disabled={!canEdit}
+      sx={{ minWidth: 180, maxWidth: 180 }}
+    >
+      <MenuItem value="">
+        <em>Usar default</em>
+      </MenuItem>
+      {fontSizeOptions.map((option) => (
+        <MenuItem key={option.value} value={option.value}>
+          {option.label} · {option.value}
+        </MenuItem>
+      ))}
+    </TextField>
+  );
 }
 
 function ImageAssetFieldEditor({
@@ -417,118 +640,130 @@ function ImageAssetFieldEditor({
   brandKitResources,
   onUpdateBlock,
 }: {
-  block: NewsletterBlock
-  field: BlockEditField
-  canEdit: boolean
-  brandKitResources: BrandKitResources | null
-  onUpdateBlock: (block: NewsletterBlock) => void
+  block: NewsletterBlock;
+  field: BlockEditField;
+  canEdit: boolean;
+  brandKitResources: BrandKitResources | null;
+  onUpdateBlock: (block: NewsletterBlock) => void;
 }) {
-  const allowedTypes = selectableAssetTypes
-  const allowedTypesKey = allowedTypes.join('|')
-  const [sourceTab, setSourceTab] = useState<AssetSourceTab>('global')
+  const allowedTypes = selectableAssetTypes;
+  const allowedTypesKey = allowedTypes.join("|");
+  const [sourceTab, setSourceTab] = useState<AssetSourceTab>("global");
   const [globalAssetType, setGlobalAssetType] = useState<SelectableAssetType>(
-    (getBlockAssetBinding(block, field.key)?.assetType as SelectableAssetType | undefined) ??
+    (getBlockAssetBinding(block, field.key)?.assetType as
+      | SelectableAssetType
+      | undefined) ??
       allowedTypes[0] ??
-      'IMAGE',
-  )
-  const [globalAssets, setGlobalAssets] = useState<UploadedAsset[]>([])
-  const [isLoadingAssets, setIsLoadingAssets] = useState(false)
-  const [assetListError, setAssetListError] = useState<string | null>(null)
-  const [assetName, setAssetName] = useState('')
-  const [assetDescription, setAssetDescription] = useState('')
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [uploadStatus, setUploadStatus] = useState<UploadStatus>('idle')
-  const [uploadProgress, setUploadProgress] = useState(0)
-  const [uploadError, setUploadError] = useState<string | null>(null)
-  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false)
-  const abortControllerRef = useRef<AbortController | null>(null)
+      "IMAGE",
+  );
+  const [globalAssets, setGlobalAssets] = useState<UploadedAsset[]>([]);
+  const [isLoadingAssets, setIsLoadingAssets] = useState(false);
+  const [assetListError, setAssetListError] = useState<string | null>(null);
+  const [assetName, setAssetName] = useState("");
+  const [assetDescription, setAssetDescription] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadStatus, setUploadStatus] = useState<UploadStatus>("idle");
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
   const [assetCatalogById, setAssetCatalogById] = useState<
     Record<string, UploadedAsset | BrandKitResourceAsset>
-  >({})
+  >({});
 
-  const selectedBinding = getBlockAssetBinding(block, field.key)
-  const brandKitAssets = brandKitResources?.assets ?? []
+  const selectedBinding = getBlockAssetBinding(block, field.key);
+  const brandKitAssets = brandKitResources?.assets ?? [];
+  const hasBrandKitAssets = brandKitAssets.length > 0;
 
   useEffect(() => {
     if (!allowedTypes.length) {
-      return
+      return;
     }
 
     if (!allowedTypes.includes(globalAssetType)) {
-      setGlobalAssetType(allowedTypes[0])
+      setGlobalAssetType(allowedTypes[0]);
     }
-  }, [allowedTypesKey, allowedTypes, globalAssetType])
+  }, [allowedTypesKey, allowedTypes, globalAssetType]);
 
   useEffect(() => {
-    let mounted = true
+    if (hasBrandKitAssets || sourceTab !== "brandkit") {
+      return;
+    }
+
+    setSourceTab("global");
+  }, [hasBrandKitAssets, sourceTab]);
+
+  useEffect(() => {
+    let mounted = true;
 
     const loadAssets = async (): Promise<void> => {
       if (!allowedTypes.length) {
-        setGlobalAssets([])
-        return
+        setGlobalAssets([]);
+        return;
       }
 
-      setIsLoadingAssets(true)
-      setAssetListError(null)
+      setIsLoadingAssets(true);
+      setAssetListError(null);
 
       try {
-        const response = await listAssets(globalAssetType)
-        if (!mounted) return
+        const response = await listAssets(globalAssetType);
+        if (!mounted) return;
 
-        setGlobalAssets(response.assets)
+        setGlobalAssets(response.assets);
       } catch (error) {
-        if (!mounted) return
+        if (!mounted) return;
 
         setAssetListError(
           axios.isAxiosError(error)
-            ? error.response?.data?.message ?? 'No se pudieron obtener los assets.'
-            : 'No se pudieron obtener los assets.',
-        )
-        setGlobalAssets([])
+            ? (error.response?.data?.message ??
+                "No se pudieron obtener los assets.")
+            : "No se pudieron obtener los assets.",
+        );
+        setGlobalAssets([]);
       } finally {
         if (mounted) {
-          setIsLoadingAssets(false)
+          setIsLoadingAssets(false);
         }
       }
-    }
+    };
 
-    void loadAssets()
+    void loadAssets();
 
     return () => {
-      mounted = false
-    }
-  }, [allowedTypesKey, globalAssetType])
+      mounted = false;
+    };
+  }, [allowedTypesKey, globalAssetType]);
 
   useEffect(() => {
     if (globalAssets.length === 0) {
-      return
+      return;
     }
 
     setAssetCatalogById((current) => ({
       ...current,
       ...Object.fromEntries(globalAssets.map((asset) => [asset.id, asset])),
-    }))
-  }, [globalAssets])
+    }));
+  }, [globalAssets]);
 
   useEffect(() => {
     if (brandKitAssets.length === 0) {
-      return
+      return;
     }
 
     setAssetCatalogById((current) => ({
       ...current,
       ...Object.fromEntries(brandKitAssets.map((asset) => [asset.id, asset])),
-    }))
-  }, [brandKitAssets])
+    }));
+  }, [brandKitAssets]);
 
   useEffect(() => {
     return () => {
-      abortControllerRef.current?.abort()
-    }
-  }, [])
+      abortControllerRef.current?.abort();
+    };
+  }, []);
   const currentSelectedAsset = selectedBinding
     ? assetCatalogById[selectedBinding.assetId]
-    : undefined
+    : undefined;
 
   const handleSelectUploadedAsset = (
     asset: UploadedAsset | BrandKitResourceAsset,
@@ -536,7 +771,7 @@ function ImageAssetFieldEditor({
     setAssetCatalogById((current) => ({
       ...current,
       [asset.id]: asset,
-    }))
+    }));
 
     onUpdateBlock(
       setBlockAssetBinding(block, {
@@ -547,16 +782,16 @@ function ImageAssetFieldEditor({
         assetType: asset.type as BlockAssetType,
         keywordText: asset.keywordText ?? null,
       }),
-    )
-  }
+    );
+  };
 
   const handleRemoveAsset = (): void => {
-    onUpdateBlock(removeBlockAssetBinding(block, field.key))
-  }
+    onUpdateBlock(removeBlockAssetBinding(block, field.key));
+  };
 
   const handleKeywordTextChange = (keywordText: string): void => {
     if (!selectedBinding) {
-      return
+      return;
     }
 
     onUpdateBlock(
@@ -568,45 +803,45 @@ function ImageAssetFieldEditor({
           keywordText,
         ),
       }),
-    )
-  }
+    );
+  };
 
   const handleUpload = async (): Promise<void> => {
-    setUploadError(null)
-    setUploadProgress(0)
+    setUploadError(null);
+    setUploadProgress(0);
 
     if (!assetName.trim()) {
-      setUploadError('El nombre del asset es obligatorio.')
-      setUploadStatus('error')
-      return
+      setUploadError("El nombre del asset es obligatorio.");
+      setUploadStatus("error");
+      return;
     }
 
     if (!selectedFile) {
-      setUploadError('Seleccioná un archivo para subir.')
-      setUploadStatus('error')
-      return
+      setUploadError("Seleccioná un archivo para subir.");
+      setUploadStatus("error");
+      return;
     }
 
     if (!uploadableMimeTypes.has(selectedFile.type)) {
-      setUploadError('Solo se permiten imágenes JPG, PNG, WebP, GIF o SVG.')
-      setUploadStatus('error')
-      return
+      setUploadError("Solo se permiten imágenes JPG, PNG, WebP, GIF o SVG.");
+      setUploadStatus("error");
+      return;
     }
 
     try {
-      setUploadStatus('compressing')
-      const fileToUpload = await prepareUploadFile(selectedFile)
+      setUploadStatus("compressing");
+      const fileToUpload = await prepareUploadFile(selectedFile);
 
       if (fileToUpload.size > maxUploadBytes) {
-        setUploadError('El archivo debe pesar 5 MB o menos.')
-        setUploadStatus('error')
-        return
+        setUploadError("El archivo debe pesar 5 MB o menos.");
+        setUploadStatus("error");
+        return;
       }
 
-      const abortController = new AbortController()
-      abortControllerRef.current = abortController
+      const abortController = new AbortController();
+      abortControllerRef.current = abortController;
 
-      setUploadStatus('uploading')
+      setUploadStatus("uploading");
 
       const uploadedAsset = await uploadAsset({
         file: fileToUpload,
@@ -615,39 +850,39 @@ function ImageAssetFieldEditor({
         description: assetDescription.trim() || null,
         signal: abortController.signal,
         onUploadProgress: setUploadProgress,
-      })
+      });
 
       setGlobalAssets((current) => [
         uploadedAsset,
         ...current.filter((asset) => asset.id !== uploadedAsset.id),
-      ])
-      handleSelectUploadedAsset(uploadedAsset)
-      setIsUploadDialogOpen(false)
-      setUploadStatus('success')
-      setUploadProgress(100)
-      setSelectedFile(null)
-      setAssetName('')
-      setAssetDescription('')
+      ]);
+      handleSelectUploadedAsset(uploadedAsset);
+      setIsUploadDialogOpen(false);
+      setUploadStatus("success");
+      setUploadProgress(100);
+      setSelectedFile(null);
+      setAssetName("");
+      setAssetDescription("");
     } catch (error) {
       if (
         axios.isCancel(error) ||
-        (error instanceof DOMException && error.name === 'AbortError')
+        (error instanceof DOMException && error.name === "AbortError")
       ) {
-        setUploadStatus('cancelled')
-        setUploadError('Carga cancelada.')
-        return
+        setUploadStatus("cancelled");
+        setUploadError("Carga cancelada.");
+        return;
       }
 
-      setUploadStatus('error')
+      setUploadStatus("error");
       setUploadError(
         axios.isAxiosError(error)
-          ? error.response?.data?.message ?? 'No se pudo subir el asset.'
-          : 'No se pudo subir el asset.',
-      )
+          ? (error.response?.data?.message ?? "No se pudo subir el asset.")
+          : "No se pudo subir el asset.",
+      );
     } finally {
-      abortControllerRef.current = null
+      abortControllerRef.current = null;
     }
-  }
+  };
 
   const currentAssetPreview = selectedBinding ? (
     <AssetImageCard
@@ -657,14 +892,14 @@ function ImageAssetFieldEditor({
       svgTemplate={currentSelectedAsset?.svgTemplate ?? null}
       keywordText={selectedBinding.keywordText}
       maxChars={currentSelectedAsset?.maxChars ?? null}
-      isKeywordEditing={selectedBinding.assetType === 'KEYWORD' && canEdit}
+      isKeywordEditing={selectedBinding.assetType === "KEYWORD" && canEdit}
       readOnlyKeyword={!canEdit}
       onKeywordTextChange={canEdit ? handleKeywordTextChange : undefined}
       onRemove={canEdit ? handleRemoveAsset : undefined}
       width={180}
       height={120}
     />
-  ) : null
+  ) : null;
 
   return (
     <Stack spacing={1.5}>
@@ -679,28 +914,42 @@ function ImageAssetFieldEditor({
 
       {currentAssetPreview}
 
-      <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
+      <Box
+        sx={{ border: "1px solid", borderColor: "divider", borderRadius: 1 }}
+      >
         <Tabs
           value={sourceTab}
-          onChange={(_event, nextValue: AssetSourceTab) => setSourceTab(nextValue)}
+          onChange={(_event, nextValue: AssetSourceTab) =>
+            setSourceTab(nextValue)
+          }
           variant="fullWidth"
         >
           <Tab value="global" label="Assets globales" />
-          <Tab value="brandkit" label="Assets de brandkit" />
+          {hasBrandKitAssets && (
+            <Tab value="brandkit" label="Assets de brandkit" />
+          )}
         </Tabs>
 
         <Box sx={{ p: 2 }}>
-          {sourceTab === 'global' ? (
+          {sourceTab === "global" ? (
             <Stack spacing={2}>
               <Stack direction="row" spacing={1}>
-                <FormControl fullWidth size="small" disabled={!canEdit || allowedTypes.length <= 1}>
-                  <InputLabel id={`${field.key}-global-type-label`}>Tipo</InputLabel>
+                <FormControl
+                  fullWidth
+                  size="small"
+                  disabled={!canEdit || allowedTypes.length <= 1}
+                >
+                  <InputLabel id={`${field.key}-global-type-label`}>
+                    Tipo
+                  </InputLabel>
                   <Select
                     labelId={`${field.key}-global-type-label`}
                     label="Tipo"
                     value={globalAssetType}
                     onChange={(event: SelectChangeEvent<SelectableAssetType>) =>
-                      setGlobalAssetType(event.target.value as SelectableAssetType)
+                      setGlobalAssetType(
+                        event.target.value as SelectableAssetType,
+                      )
                     }
                   >
                     {allowedTypes.map((type) => (
@@ -712,7 +961,9 @@ function ImageAssetFieldEditor({
                 </FormControl>
               </Stack>
 
-              {assetListError && <Alert severity="error">{assetListError}</Alert>}
+              {assetListError && (
+                <Alert severity="error">{assetListError}</Alert>
+              )}
               {isLoadingAssets && (
                 <Alert severity="info">Cargando assets globales...</Alert>
               )}
@@ -736,8 +987,10 @@ function ImageAssetFieldEditor({
                 >
                   Subir asset nuevo
                 </Button>
-                {uploadStatus === 'success' && (
-                  <Alert severity="success">Asset subido y asignado al bloque.</Alert>
+                {uploadStatus === "success" && (
+                  <Alert severity="success">
+                    Asset subido y asignado al bloque.
+                  </Alert>
                 )}
               </Stack>
             </Stack>
@@ -759,7 +1012,8 @@ function ImageAssetFieldEditor({
                 </>
               ) : (
                 <Alert severity="info">
-                  Este newsletter no tiene un brandkit cargado para seleccionar assets.
+                  Este newsletter no tiene un brandkit cargado para seleccionar
+                  assets.
                 </Alert>
               )}
             </Stack>
@@ -773,7 +1027,9 @@ function ImageAssetFieldEditor({
         fullWidth
         maxWidth="sm"
       >
-        <DialogTitle>Subir asset de tipo {assetTypeLabels[globalAssetType]}</DialogTitle>
+        <DialogTitle>
+          Subir asset de tipo {assetTypeLabels[globalAssetType]}
+        </DialogTitle>
         <DialogContent>
           <Stack spacing={1.5} sx={{ pt: 1 }}>
             <Alert severity="info">
@@ -785,7 +1041,11 @@ function ImageAssetFieldEditor({
               onChange={(event) => setAssetName(event.target.value)}
               fullWidth
               size="small"
-              disabled={!canEdit || uploadStatus === 'uploading' || uploadStatus === 'compressing'}
+              disabled={
+                !canEdit ||
+                uploadStatus === "uploading" ||
+                uploadStatus === "compressing"
+              }
             />
             <TextField
               label="Descripción"
@@ -795,12 +1055,20 @@ function ImageAssetFieldEditor({
               size="small"
               multiline
               minRows={2}
-              disabled={!canEdit || uploadStatus === 'uploading' || uploadStatus === 'compressing'}
+              disabled={
+                !canEdit ||
+                uploadStatus === "uploading" ||
+                uploadStatus === "compressing"
+              }
             />
             <Button
               variant="outlined"
               component="label"
-              disabled={!canEdit || uploadStatus === 'uploading' || uploadStatus === 'compressing'}
+              disabled={
+                !canEdit ||
+                uploadStatus === "uploading" ||
+                uploadStatus === "compressing"
+              }
             >
               Seleccionar archivo
               <input
@@ -808,36 +1076,42 @@ function ImageAssetFieldEditor({
                 type="file"
                 accept=".jpg,.jpeg,.png,.webp,.gif,.svg"
                 onChange={(event: ChangeEvent<HTMLInputElement>) => {
-                  const file = event.target.files?.[0] ?? null
-                  setSelectedFile(file)
-                  setUploadStatus('idle')
-                  setUploadError(null)
+                  const file = event.target.files?.[0] ?? null;
+                  setSelectedFile(file);
+                  setUploadStatus("idle");
+                  setUploadError(null);
                   if (file && !assetName.trim()) {
-                    setAssetName(file.name.replace(/\.[^.]+$/, ''))
+                    setAssetName(file.name.replace(/\.[^.]+$/, ""));
                   }
-                  event.target.value = ''
+                  event.target.value = "";
                 }}
               />
             </Button>
             {selectedFile && (
               <Alert severity="info">
-                Archivo seleccionado: {selectedFile.name} ({formatBytes(selectedFile.size)})
+                Archivo seleccionado: {selectedFile.name} (
+                {formatBytes(selectedFile.size)})
               </Alert>
             )}
-            {(uploadStatus === 'compressing' || uploadStatus === 'uploading') && (
+            {(uploadStatus === "compressing" ||
+              uploadStatus === "uploading") && (
               <Stack spacing={1}>
                 <Typography variant="caption">
-                  {uploadStatus === 'compressing'
-                    ? 'Comprimiendo imagen...'
+                  {uploadStatus === "compressing"
+                    ? "Comprimiendo imagen..."
                     : `Subiendo asset ${uploadProgress}%`}
                 </Typography>
                 <LinearProgress
-                  variant={uploadStatus === 'uploading' ? 'determinate' : 'indeterminate'}
+                  variant={
+                    uploadStatus === "uploading"
+                      ? "determinate"
+                      : "indeterminate"
+                  }
                   value={uploadProgress}
                 />
               </Stack>
             )}
-            {uploadStatus === 'cancelled' && (
+            {uploadStatus === "cancelled" && (
               <Alert severity="warning">Carga cancelada.</Alert>
             )}
             {uploadError && <Alert severity="error">{uploadError}</Alert>}
@@ -847,12 +1121,12 @@ function ImageAssetFieldEditor({
           <Button
             color="inherit"
             onClick={() => {
-              if (uploadStatus === 'uploading') {
-                abortControllerRef.current?.abort()
-                setUploadStatus('cancelled')
-                setUploadError('Carga cancelada.')
+              if (uploadStatus === "uploading") {
+                abortControllerRef.current?.abort();
+                setUploadStatus("cancelled");
+                setUploadError("Carga cancelada.");
               }
-              setIsUploadDialogOpen(false)
+              setIsUploadDialogOpen(false);
             }}
           >
             Cancelar
@@ -862,8 +1136,8 @@ function ImageAssetFieldEditor({
             disabled={
               !canEdit ||
               !selectedFile ||
-              uploadStatus === 'uploading' ||
-              uploadStatus === 'compressing'
+              uploadStatus === "uploading" ||
+              uploadStatus === "compressing"
             }
             onClick={() => void handleUpload()}
           >
@@ -872,7 +1146,7 @@ function ImageAssetFieldEditor({
         </DialogActions>
       </Dialog>
     </Stack>
-  )
+  );
 }
 
 function AssetGrid({
@@ -883,42 +1157,44 @@ function AssetGrid({
   onSelect,
   gridKey,
 }: {
-  assets: Array<UploadedAsset | BrandKitResourceAsset>
-  selectedAssetId: string | null
-  selectedKeywordText: string | null
-  canEdit: boolean
-  onSelect: (asset: UploadedAsset | BrandKitResourceAsset) => void
-  gridKey: string
+  assets: Array<UploadedAsset | BrandKitResourceAsset>;
+  selectedAssetId: string | null;
+  selectedKeywordText: string | null;
+  canEdit: boolean;
+  onSelect: (asset: UploadedAsset | BrandKitResourceAsset) => void;
+  gridKey: string;
 }) {
-  const [page, setPage] = useState(0)
-  const pageCount = Math.max(1, Math.ceil(assets.length / assetsPerPage))
+  const [page, setPage] = useState(0);
+  const pageCount = Math.max(1, Math.ceil(assets.length / assetsPerPage));
   const paginatedAssets = assets.slice(
     page * assetsPerPage,
     page * assetsPerPage + assetsPerPage,
-  )
+  );
 
   useEffect(() => {
-    setPage(0)
-  }, [gridKey])
+    setPage(0);
+  }, [gridKey]);
 
   useEffect(() => {
     if (page <= pageCount - 1) {
-      return
+      return;
     }
 
-    setPage(Math.max(0, pageCount - 1))
-  }, [page, pageCount])
+    setPage(Math.max(0, pageCount - 1));
+  }, [page, pageCount]);
 
   if (assets.length === 0) {
-    return <Alert severity="info">No hay assets disponibles para este tipo.</Alert>
+    return (
+      <Alert severity="info">No hay assets disponibles para este tipo.</Alert>
+    );
   }
 
   return (
     <Stack spacing={1.5}>
       <Box
         sx={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+          display: "grid",
+          gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
           gap: 1.5,
         }}
       >
@@ -931,7 +1207,7 @@ function AssetGrid({
             svgTemplate={asset.svgTemplate}
             keywordText={
               asset.id === selectedAssetId
-                ? selectedKeywordText ?? asset.keywordText
+                ? (selectedKeywordText ?? asset.keywordText)
                 : asset.keywordText
             }
             maxChars={asset.maxChars}
@@ -944,7 +1220,7 @@ function AssetGrid({
         ))}
       </Box>
       {pageCount > 1 && (
-        <Stack sx={{ alignItems: 'flex-end' }}>
+        <Stack sx={{ alignItems: "flex-end" }}>
           <Pagination
             count={pageCount}
             page={page + 1}
@@ -955,87 +1231,83 @@ function AssetGrid({
         </Stack>
       )}
     </Stack>
-  )
+  );
 }
 
 function resolveAssetPreviewUrl(
   asset:
-    | Pick<
-        UploadedAsset,
-        'id' | 'url' | 'type' | 'svgTemplate' | 'keywordText'
-      >
+    | Pick<UploadedAsset, "id" | "url" | "type" | "svgTemplate" | "keywordText">
     | Pick<
         BrandKitResourceAsset,
-        'id' | 'url' | 'type' | 'svgTemplate' | 'keywordText'
+        "id" | "url" | "type" | "svgTemplate" | "keywordText"
       >
     | Pick<
-        NewsletterBlock['assetBindings'][number],
-        'assetId' | 'assetUrl' | 'assetType' | 'keywordText'
+        NewsletterBlock["assetBindings"][number],
+        "assetId" | "assetUrl" | "assetType" | "keywordText"
       >,
   keywordTextOverride?: string | null,
 ): string | null {
-  const assetType =
-    'assetType' in asset ? asset.assetType : asset.type
-  const assetId = 'assetId' in asset ? asset.assetId : asset.id
-  const assetUrl = 'assetUrl' in asset ? asset.assetUrl : asset.url
+  const assetType = "assetType" in asset ? asset.assetType : asset.type;
+  const assetId = "assetId" in asset ? asset.assetId : asset.id;
+  const assetUrl = "assetUrl" in asset ? asset.assetUrl : asset.url;
 
   if (
-    assetType !== 'KEYWORD' ||
-    !('svgTemplate' in asset) ||
+    assetType !== "KEYWORD" ||
+    !("svgTemplate" in asset) ||
     !asset.svgTemplate
   ) {
-    return assetUrl
+    return assetUrl;
   }
 
   const markup = buildKeywordSvgMarkup(
     asset.svgTemplate,
-    keywordTextOverride ?? asset.keywordText ?? 'Editar',
+    keywordTextOverride ?? asset.keywordText ?? "Editar",
     assetId,
-  )
+  );
 
-  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(markup)}`
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(markup)}`;
 }
 
 async function prepareUploadFile(file: File): Promise<File> {
   if (!compressibleMimeTypes.has(file.type)) {
-    return file
+    return file;
   }
 
   if (file.size <= maxUploadBytes) {
-    return file
+    return file;
   }
 
-  return compressImage(file)
+  return compressImage(file);
 }
 
 async function compressImage(file: File): Promise<File> {
-  const bitmap = await createImageBitmap(file)
-  const canvas = document.createElement('canvas')
-  const scale = Math.min(1, Math.sqrt(maxUploadBytes / file.size))
+  const bitmap = await createImageBitmap(file);
+  const canvas = document.createElement("canvas");
+  const scale = Math.min(1, Math.sqrt(maxUploadBytes / file.size));
 
-  canvas.width = Math.max(1, Math.round(bitmap.width * scale))
-  canvas.height = Math.max(1, Math.round(bitmap.height * scale))
+  canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+  canvas.height = Math.max(1, Math.round(bitmap.height * scale));
 
-  const context = canvas.getContext('2d')
+  const context = canvas.getContext("2d");
   if (!context) {
-    bitmap.close()
-    throw new Error('No se pudo comprimir la imagen.')
+    bitmap.close();
+    throw new Error("No se pudo comprimir la imagen.");
   }
 
-  context.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
-  bitmap.close()
+  context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  bitmap.close();
 
   for (const quality of [0.86, 0.76, 0.66, 0.56, 0.46]) {
-    const blob = await canvasToBlob(canvas, 'image/webp', quality)
+    const blob = await canvasToBlob(canvas, "image/webp", quality);
     if (blob.size <= maxUploadBytes) {
-      return new File([blob], replaceExtension(file.name, 'webp'), {
-        type: 'image/webp',
+      return new File([blob], replaceExtension(file.name, "webp"), {
+        type: "image/webp",
         lastModified: Date.now(),
-      })
+      });
     }
   }
 
-  throw new Error('No se pudo comprimir la imagen por debajo de 5 MB.')
+  throw new Error("No se pudo comprimir la imagen por debajo de 5 MB.");
 }
 
 function canvasToBlob(
@@ -1047,22 +1319,22 @@ function canvasToBlob(
     canvas.toBlob(
       (blob) => {
         if (blob) {
-          resolve(blob)
-          return
+          resolve(blob);
+          return;
         }
 
-        reject(new Error('No se pudo comprimir la imagen.'))
+        reject(new Error("No se pudo comprimir la imagen."));
       },
       type,
       quality,
-    )
-  })
+    );
+  });
 }
 
 function replaceExtension(fileName: string, extension: string): string {
-  return `${fileName.replace(/\.[^.]+$/, '')}.${extension}`
+  return `${fileName.replace(/\.[^.]+$/, "")}.${extension}`;
 }
 
 function formatBytes(bytes: number): string {
-  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 }
