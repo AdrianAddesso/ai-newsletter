@@ -223,6 +223,7 @@ export function TemplateLibraryPage() {
                     state_name={template.state_name}
                     description={template.description}
                     orientation={template.orientation}
+                    layout={template.layout}
                     onPreview={() => handlePreview(template.id)}
                     onSelect={() => handleSelect(template.id)}
                   />

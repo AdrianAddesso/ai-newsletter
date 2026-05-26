@@ -42,6 +42,14 @@ export type NewsletterBlockAssetBinding = {
   keywordText?: string | null
 }
 
+export type TemplateLayoutItem = {
+  block_type: string
+  content: unknown
+  row: number
+  grid_column: number
+  display_order: number
+}
+
 export type NewsletterTemplate = {
   id: string
   name: string
