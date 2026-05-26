@@ -1,5 +1,9 @@
 import { Card, Typography, Chip, Box } from "@mui/material";
 import type { BlockInstance } from "@shared/types/block.types";
+import {
+  parseContent,
+  resolveTypographySx,
+} from "../../../../utils/blockContent";
 
 interface Props {
   block: BlockInstance;
@@ -10,10 +14,18 @@ interface Props {
 
 export function LabelTextLabelCenterFullRenderer({
   block,
-  editMode = false,
   topLabelContent = null,
   bottomLabelContent = null,
 }: Props) {
+  const {
+    topLabel = topLabelContent ?? "Lorem ipsum dolor sit amet",
+    bodyText = "Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat.",
+    bottomLabel = bottomLabelContent ?? "Consectetur adipiscing elit",
+    fontSize,
+    typographyStyle,
+  } = parseContent(block.content);
+  const typographySx = resolveTypographySx(fontSize, typographyStyle);
+
   return (
     <Card sx={{
   width: "100%",
@@ -29,14 +41,14 @@ export function LabelTextLabelCenterFullRenderer({
     }}>
       <Box sx={{ width: "100%", flexGrow: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 1.5, py: 2 }}>
         <Chip
-          label={topLabelContent ?? "Lorem ipsum dolor sit amet"}
+          label={topLabel}
           sx={{ maxWidth: "90%", "& .MuiChip-label": { whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }}
         />
-        <Typography variant="body2" color="text.secondary" sx={{ width: "90%", textAlign: "center" }}>
-          {block.content ?? "Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat."}
+        <Typography variant="body2" color="text.secondary" sx={{ width: "90%", textAlign: "center", ...typographySx }}>
+          {bodyText}
         </Typography>
         <Chip
-          label={bottomLabelContent ?? "Consectetur adipiscing elit"}
+          label={bottomLabel}
           sx={{ maxWidth: "90%", "& .MuiChip-label": { whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }}
         />
       </Box>

@@ -1,15 +1,31 @@
 import React from 'react';
 import { Box, Typography, IconButton } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { useTemplateStore } from '../../stores/templates.store';
 import { BlockRenderer } from '../blocks/BlockRenderer';
 import { CONSTANTS_CANVAS } from '@shared/enums/templates-canvas'
 import { useBlockDefinitions } from '../../hooks/useBlockDefinitions';
-import type { ColumnObject } from '../../interfaces/interfaces.templates';
+import type { RowObject, ColumnObject } from '../../interfaces/interfaces.templates';
 
-export const TemplateCanvas: React.FC = () => {
-  const { rows, isSkeletonView, selectedBlockId, setSelectedBlockId, updateColumnBlock } = useTemplateStore();
+export interface TemplateCreatorProps {
+  mode: 'readonly' | 'edit';
+  rows: RowObject[];
+  isSkeletonView?: boolean;
+  selectedBlockId?: string | null;
+  onBlockSelect?: (id: string | null) => void;
+  onBlockDelete?: (rowId: string, columnId: string) => void;
+}
+
+export const TemplateCreator: React.FC<TemplateCreatorProps> = ({
+  mode,
+  rows,
+  isSkeletonView = false,
+  selectedBlockId = null,
+  onBlockSelect,
+  onBlockDelete
+}) => {
   const { data: definitions } = useBlockDefinitions();
+
+  const isEditMode = mode === 'edit';
 
   const renderBlock = (col: ColumnObject, rowIndex: number) => {
     return <BlockRenderer block={col} rowIndex={rowIndex} />;
@@ -21,45 +37,51 @@ export const TemplateCanvas: React.FC = () => {
       width: '100%',
       margin: "0 auto",
       bgcolor: 'white',
+      border: '1px solid',
+      borderColor: 'divider',
       boxShadow: 'none',
       overflow: 'hidden',
       '& *': { boxSizing: 'border-box' }
     }}>
       {rows.map((row) => (
-        <Box 
-          key={row.id} 
-          sx={{ 
-            display: 'flex', 
+        <Box
+          key={row.id}
+          sx={{
+            display: 'flex',
             width: '100%',
           }}
         >
           {row.columns.map((col) => {
-            const isSelected = selectedBlockId === col.id;
+            const isSelected = isEditMode && selectedBlockId === col.id;
             const n_columns = row.columns.length;
             const blockDef = definitions?.find(d => d.type === col.type);
             return (
               <Box
                 key={col.id}
-                onClick={() => setSelectedBlockId(col.id)}
+                onClick={() => {
+                  if (isEditMode && onBlockSelect) {
+                    onBlockSelect(col.id);
+                  }
+                }}
                 sx={{
                   minHeight: '100px',
                   flex: `1 0 calc(100% / ${n_columns})`,
                   maxWidth: `calc(100% / ${n_columns})`,
                   position: 'relative',
-                  cursor: 'pointer',
-                  border: isSkeletonView ? '1px dashed #ccc' : 'none',
+                  cursor: isEditMode ? 'pointer' : 'default',
+                  border: isEditMode && isSkeletonView ? '1px dashed #ccc' : 'none',
                   outline: isSelected ? '2px solid #FF595A' : 'none',
                   outlineOffset: '-2px',
                   zIndex: isSelected ? 2 : 1,
                   display: 'flex',
                   flexDirection: 'column',
                   '&:hover': {
-                    bgcolor: isSkeletonView ? 'rgba(0,0,0,0.02)' : 'transparent'
+                    bgcolor: isEditMode && isSkeletonView ? 'rgba(0,0,0,0.02)' : 'transparent'
                   }
                 }}
               >
                 <Box sx={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-                  {isSkeletonView ? (
+                  {isEditMode && isSkeletonView ? (
                     <Box sx={{
                       flex: 1,
                       display: 'flex',
@@ -97,12 +119,12 @@ export const TemplateCanvas: React.FC = () => {
                     }}>
                       SELECCIONADO
                     </Box>
-                    {!isSkeletonView && col.type && (
+                    {!isSkeletonView && col.type && onBlockDelete && (
                       <IconButton
                         size="small"
                         onClick={(e) => {
                           e.stopPropagation();
-                          updateColumnBlock(row.id, col.id, null);
+                          onBlockDelete(row.id, col.id);
                         }}
                         sx={{
                           position: 'absolute',
@@ -120,7 +142,7 @@ export const TemplateCanvas: React.FC = () => {
                           p: 0.5
                         }}
                       >
-                        <DeleteIcon sx={{ fontSize: 16}} />
+                        <DeleteIcon sx={{ fontSize: 16 }} />
                       </IconButton>
                     )}
                   </>

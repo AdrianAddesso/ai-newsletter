@@ -30,12 +30,20 @@ export type NewsletterAssetSelection = {
   selectedAssets: UploadedAsset[]
 }
 
+export type TemplateLayoutItem = {
+  block_type: string
+  content: unknown
+  row: number
+  grid_column: number
+  display_order: number
+}
+
 export type NewsletterTemplate = {
   id: string
   name: string
   description: string | null
   area: AreaName
-  layout: string | null
+  layout: TemplateLayoutItem[] | null
   orientation: 'PORTRAIT' | 'LANDSCAPE'
   stateCode: string
   stateName: string

@@ -1,6 +1,9 @@
 import {
+  Alert,
   Box,
+  Button,
   Card,
+  CircularProgress,
   Container,
   IconButton,
   Stack,
@@ -10,369 +13,257 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  TextField,
   Tooltip,
   Typography,
-  useTheme,
-  TableSortLabel,
-  InputAdornment,
-  Button,
-  ToggleButton,
-  ToggleButtonGroup,
 } from '@mui/material'
-import EditIcon from '@mui/icons-material/Edit';
-import { Add, DeleteOutlined, Search as SearchIcon } from '@mui/icons-material';
-import { ModalDelete } from '../components/ModalDelete';
-import { useState, useMemo } from 'react';
-import { ModalEdit } from '../components/ModalEdit'
-import { AreaName, AreaNameLabel } from '@shared/enums/area-name.enum';
-import { UserRole, UserRoleLabel } from '@shared/enums/user-role.enum';
-import { UserStatus, UserStatusLabel } from '@shared/enums/user-status.enum';
-import { enumToOptions } from '@shared/utils/enum-to-options';
-import type { User } from '../contexts/AuthContext';
-import DownloadIcon from "@mui/icons-material/FileDownloadOutlined";
 
-const STATE_OPTIONS = enumToOptions(UserStatus, UserStatusLabel);
-const AREA_OPTIONS = enumToOptions(AreaName, AreaNameLabel);
-const ROLE_OPTIONS = enumToOptions(UserRole, UserRoleLabel);
+import {
+  Add,
+  DeleteOutlined,
+} from '@mui/icons-material'
+
+import EditIcon from '@mui/icons-material/Edit'
+
+import {
+  useMemo,
+  useState,
+} from 'react'
+
+import SearchBar from '../components/SearchBar'
+import { ModalDelete } from '../components/ModalDelete'
+
+import { useUsers } from '../users/hooks/useUsers'
+
+import { exportUsers } from '../users/utils/exportUsers'
+
+import { UserFormModal } from '../users/components/UserFormModal'
+
+import type { User } from '../users/types/users'
 
 export function UsersPage() {
-  const [userToEdit, setUserToEdit] = useState<User | null>(null)
-  const [deletedId, setDeletedId] = useState<string | null>(null)
-  const [search, setSearch] = useState('')
-  const [showActive, setShowActive] = useState(false)
-  const [showInactive, setShowInactive] = useState(false)
-  const [orderBy, setOrderBy] = useState('name')
-  const [order, setOrder] = useState<'asc' | 'desc'>('asc')
-  const [limit, setLimit] = useState(5)
+  const {
+    users,
+    loading,
+    error,
+    createUser,
+    updateUser,
+    deleteUser,
+  } = useUsers()
 
-  const handleConfirmDelete = () => {
-    setDeletedId(null)
+  const [search,setSearch] =
+    useState('')
+
+  const [deleteId,setDeleteId] =
+    useState<string | null>(null)
+
+  const [editingUser,setEditingUser] =
+    useState<User | null>(null)
+
+  const [creating,setCreating] =
+    useState(false)
+
+  const filteredUsers = useMemo(() => {
+    return users.filter(user =>
+      `${user.name} ${user.last_name} ${user.email}`
+        .toLowerCase()
+        .includes(search.toLowerCase()),
+    )
+  }, [users,search])
+
+  if (loading) {
+    return (
+      <Box
+        sx={{
+          display:'flex',
+          justifyContent:'center',
+          py:10,
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    )
   }
-
-  const handleRequestSort = (property: string) => {
-    const isAsc = orderBy === property && order === 'asc'
-    setOrder(isAsc ? 'desc' : 'asc')
-    setOrderBy(property)
-  }
-
-  const filteredAndSortedUsers = useMemo(() => {
-
-    const mockupUsers: User[] = [
-      {
-        id: '1',
-        email: 'superadmin@example.com',
-        name: 'Administrador',
-        role: 'ADMIN',
-        area: 'COMUNICACION_INTERNA',
-        state: 'ACTIVE'
-      },
-      {
-        id: '2',
-        email: 'funcional@example.com',
-        name: 'Funcional',
-        role: 'FUNCTIONAL',
-        state: 'ACTIVE',
-        area: 'COMUNICACION_CORPORATIVA'
-      },
-      {
-        id: '3',
-        email: 'user@example.com',
-        name: 'Usuario Normal',
-        role: 'USER',
-        state: 'INACTIVE',
-        area: 'COMUNICACION_INTERNA'
-      },
-      {
-        id: '4',
-        email: 'funcional@example.com',
-        name: 'Funcional',
-        role: 'FUNCTIONAL',
-        state: 'ACTIVE',
-        area: 'COMUNICACION_CORPORATIVA'
-      },
-      {
-        id: '5',
-        email: 'user@example.com',
-        name: 'Usuario Normal',
-        role: 'USER',
-        state: 'INACTIVE',
-        area: 'COMUNICACION_INTERNA'
-      },
-      {
-        id: '6',
-        email: 'funcional@example.com',
-        name: 'Funcional',
-        role: 'FUNCTIONAL',
-        state: 'ACTIVE',
-        area: 'COMUNICACION_CORPORATIVA'
-      },
-      {
-        id: '7',
-        email: 'user@example.com',
-        name: 'Usuario Normal',
-        role: 'USER',
-        state: 'REMOVED',
-        area: 'COMUNICACION_INTERNA'
-      },
-      {
-        id: '8',
-        email: 'funcional@example.com',
-        name: 'Funcional',
-        role: 'FUNCTIONAL',
-        state: 'ACTIVE',
-        area: 'COMUNICACION_CORPORATIVA'
-      },
-      {
-        id: '9',
-        email: 'user@example.com',
-        name: 'Usuario Normal',
-        role: 'USER',
-        state: 'ACTIVE',
-        area: 'COMUNICACION_INTERNA'
-      },
-    ]
-
-    return mockupUsers
-    .filter((user) => {
-      // Lógica de búsqueda por texto
-      const searchTerm = search.toLowerCase();
-      const matchesSearch = 
-        user.name.toLowerCase().includes(searchTerm) || 
-        user.email.toLowerCase().includes(searchTerm);
-
-      // Lógica de filtros por estado (Active/Inactive)
-      const noStatusFilter = !showActive && !showInactive;
-      let matchesStatus = false;
-
-      if (noStatusFilter) {
-        matchesStatus = true;
-      } else {
-        if (showActive && user.state === UserStatus.ACTIVE) matchesStatus = true;
-        if (
-          showInactive &&
-          (user.state === UserStatus.INACTIVE || user.state === UserStatus.REMOVED)
-        ) {
-          matchesStatus = true;
-        }
-      }
-
-      // El usuario debe cumplir AMBAS condiciones
-      return matchesSearch && matchesStatus;
-    })
-    .sort((a, b) => {
-      const isAsc = order === "asc";
-      let valueA = a[orderBy as keyof typeof a] ?? "";
-      let valueB = b[orderBy as keyof typeof b] ?? "";
-
-      if (typeof valueA === "string") valueA = valueA.toLowerCase();
-      if (typeof valueB === "string") valueB = valueB.toLowerCase();
-
-      if (valueA < valueB) return isAsc ? -1 : 1;
-      if (valueA > valueB) return isAsc ? 1 : -1;
-      return 0;
-    });
-}, [search, order, orderBy, showActive, showInactive]);
-
-  const theme = useTheme()
 
   return (
-    <Box sx={{ py: 4, px: 3, bgcolor: "background.default" }}>
-      <Container maxWidth="lg" disableGutters>
-        <Stack spacing={4}>
+    <Box sx={{ py:4 }}>
+      <Container maxWidth="lg">
+        <Stack spacing={3}>
+          {error && (
+            <Alert severity="error">
+              {error}
+            </Alert>
+          )}
+
           <Stack
             direction="row"
-            sx={{ justifyContent: "space-between", alignItems: "center" }}
+            sx={{
+              justifyContent:'space-between',
+              alignItems:'center',
+            }}
           >
-            <Stack spacing={1}>
-              <Typography variant="h2">Usuarios</Typography>
-              <Typography variant="body1" color="text.secondary">
-                Gestion de accesos y roles.
-              </Typography>
-            </Stack>
-            <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
-              <ToggleButtonGroup
-                size="small"
-                value={[
-                  ...(showActive ? ["active"] : []),
-                  ...(showInactive ? ["inactive"] : []),
-                ]}
-                onChange={(_, newValues) => {
-                  setShowActive(newValues.includes("active"));
-                  setShowInactive(newValues.includes("inactive"));
-                  if (limit > 5) setLimit(5);
-                }}
-              >
-                <ToggleButton value="active" sx={{ px: 2 }}>
-                  Activos
-                </ToggleButton>
-                <ToggleButton value="inactive" sx={{ px: 2 }}>
-                  Inactivos
-                </ToggleButton>
-              </ToggleButtonGroup>
-              <TextField
-                placeholder="Buscar ..."
-                size="small"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                sx={{ width: 250 }}
-                slotProps={{
-                  input: {
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <SearchIcon
-                          fontSize="small"
-                          sx={{ color: theme.palette.error.main }}
-                        />
-                      </InputAdornment>
-                    ),
-                  },
-                }}
-              />
+            <Typography variant="h4">
+              Usuarios
+            </Typography>
 
+            <Stack
+              direction="row"
+              spacing={2}
+            >
               <Button
                 variant="contained"
-                sx={{ whiteSpace: "nowrap" }}
-                startIcon={<DownloadIcon />}
+                onClick={() =>
+                  exportUsers(users)
+                }
               >
-                Exportar Lista
+                Exportar lista
               </Button>
+
               <Button
                 variant="contained"
                 startIcon={<Add />}
-                sx={{ whiteSpace: "nowrap" }}
+                onClick={() =>
+                  setCreating(true)
+                }
               >
-                Nuevo Usuario
+                Nuevo usuario
               </Button>
             </Stack>
           </Stack>
+
+          <SearchBar
+            value={search}
+            onChange={setSearch}
+            placeholder="Buscar usuario"
+          />
+
           <TableContainer
             component={Card}
-            variant="outlined"
-            sx={{ borderRadius: 2 }}
           >
             <Table>
-              <TableHead sx={{ bgcolor: "action.hover" }}>
+              <TableHead>
                 <TableRow>
                   <TableCell>
-                    <TableSortLabel
-                      active={orderBy === "name"}
-                      direction={orderBy === "name" ? order : "asc"}
-                      onClick={() => handleRequestSort("name")}
-                    >
-                      Nombre
-                    </TableSortLabel>
+                    Nombre
                   </TableCell>
+
                   <TableCell>
-                    <TableSortLabel
-                      active={orderBy === "email"}
-                      direction={orderBy === "email" ? order : "asc"}
-                      onClick={() => handleRequestSort("email")}
-                    >
-                      Email
-                    </TableSortLabel>
+                    Apellido
                   </TableCell>
-                  <TableCell>Rol</TableCell>
-                  <TableCell>Area</TableCell>
-                  <TableCell>Estado</TableCell>
-                  <TableCell>Acciones</TableCell>
+
+                  <TableCell>
+                    Email
+                  </TableCell>
+
+                  <TableCell>
+                    Rol
+                  </TableCell>
+
+                  <TableCell>
+                    Estado
+                  </TableCell>
+
+                  <TableCell>
+                    Acciones
+                  </TableCell>
                 </TableRow>
               </TableHead>
-              {filteredAndSortedUsers.length > 0 ? (
-                <TableBody>
-                  {filteredAndSortedUsers.slice(0, limit).map((user) => (
-                    <TableRow key={user.id} hover>
-                      <TableCell>{user.name}</TableCell>
-                      <TableCell>{user.email}</TableCell>
-                      <TableCell>
-                        {ROLE_OPTIONS.find(
-                          (option) => option.value === user.role,
-                        )?.label ?? ""}
-                      </TableCell>
-                      <TableCell>
-                        {AREA_OPTIONS.find(
-                          (option) => option.value === user.area,
-                        )?.label ?? ""}
-                      </TableCell>
-                      <TableCell
-                        sx={{
-                          color:
-                            user.state === UserStatus.ACTIVE
-                              ? "success.main"
-                              : "error.main",
-                          fontWeight: 600,
-                          fontSize: "0.75rem",
-                          textTransform: "uppercase",
-                        }}
-                      >
-                        {STATE_OPTIONS.find(
-                          (state) => state.value === user.state,
-                        )?.label ?? ""}
-                      </TableCell>
-                      <TableCell>
-                        <Stack direction="row" spacing={0.5}>
-                          <Tooltip title="Editar">
-                            <IconButton
-                              size="small"
-                              onClick={() => setUserToEdit(user)}
-                            >
-                              <EditIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="Borrar">
-                            <IconButton
-                              size="small"
-                              color="error"
-                              onClick={() => setDeletedId(user.id)}
-                            >
-                              <DeleteOutlined fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        </Stack>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              ) : (
-                <TableBody>
-                  <TableRow>
-                    <TableCell colSpan={5} align="center">
-                      No hay usuarios para mostrar
+
+              <TableBody>
+                {filteredUsers.map(user => (
+                  <TableRow
+                    key={user.id}
+                  >
+                    <TableCell>
+                      {user.name}
+                    </TableCell>
+
+                    <TableCell>
+                      {user.last_name}
+                    </TableCell>
+
+                    <TableCell>
+                      {user.email}
+                    </TableCell>
+
+                    <TableCell>
+                      {user.role}
+                    </TableCell>
+
+                    <TableCell>
+                      {user.state}
+                    </TableCell>
+
+                    <TableCell>
+                      <Stack direction="row">
+                        <Tooltip title="Editar">
+                          <IconButton
+                            onClick={() =>
+                              setEditingUser(user)
+                            }
+                          >
+                            <EditIcon />
+                          </IconButton>
+                        </Tooltip>
+
+                        <Tooltip title="Eliminar">
+                          <IconButton
+                            color="error"
+                            onClick={() =>
+                              setDeleteId(user.id)
+                            }
+                          >
+                            <DeleteOutlined />
+                          </IconButton>
+                        </Tooltip>
+                      </Stack>
                     </TableCell>
                   </TableRow>
-                </TableBody>
-              )}
+                ))}
+              </TableBody>
             </Table>
           </TableContainer>
-          {limit < filteredAndSortedUsers.length && (
-            <Box
-              sx={{
-                p: 2,
-                textAlign: "center",
-                borderTop: "1px solid",
-                borderColor: "divider",
-              }}
-            >
-              <Button onClick={() => setLimit(limit + 5)}>
-                Cargar más resultados
-              </Button>
-            </Box>
-          )}
         </Stack>
       </Container>
-      <ModalDelete
-        open={Boolean(deletedId)}
-        description={`Esta acción eliminará el usuario de forma permanente. No podrás recuperar la configuración.`}
-        onClose={() => setDeletedId(null)}
-        onConfirm={handleConfirmDelete}
+
+      <UserFormModal
+        open={creating}
+        user={null}
+        onClose={() =>
+          setCreating(false)
+        }
+        onSubmit={createUser}
       />
-      <ModalEdit
-        key={userToEdit?.id}
-        open={Boolean(userToEdit)}
-        description={`Esta acción modificará la información del usuario.`}
-        onClose={() => setUserToEdit(null)}
-        user={userToEdit}
+
+      <UserFormModal
+        key={editingUser?.id}
+        open={Boolean(editingUser)}
+        user={editingUser}
+        onClose={() =>
+          setEditingUser(null)
+        }
+        onSubmit={payload =>
+          editingUser
+            ? updateUser(
+                editingUser.id,
+                payload,
+              )
+            : Promise.resolve()
+        }
+      />
+
+      <ModalDelete
+        open={Boolean(deleteId)}
+        onClose={() =>
+          setDeleteId(null)
+        }
+        onConfirm={() => {
+          if (!deleteId) return
+
+          void deleteUser(deleteId)
+
+          setDeleteId(null)
+        }}
       />
     </Box>
-  );
+  )
 }

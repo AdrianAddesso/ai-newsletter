@@ -19,19 +19,53 @@ type TemplateApiResponse = {
 export async function listTemplates(): Promise<NewsletterTemplate[]> {
   const response = await axios.get<TemplateApiResponse[]>('/templates')
 
-  return response.data.map((template) => ({
-    ...template,
-    requiredGenerationFields: template.requiredGenerationFields ?? [],
-    optionalGenerationFields:
-      template.optionalGenerationFields ?? defaultOptionalGenerationFields,
-  }))
+  return response.data.map((template) => {
+    let parsedLayout = null;
+    try {
+      const rawLayout = typeof template.layout === 'string' ? JSON.parse(template.layout) : template.layout;
+      if (Array.isArray(rawLayout)) {
+        parsedLayout = rawLayout.map((item: any) => ({
+          ...item,
+          block_type: item.block_type || item.type,
+        }));
+      } else {
+        parsedLayout = rawLayout;
+      }
+    } catch (e) {
+      console.error('Error parsing layout for template', template.id, e);
+    }
+
+    return {
+      ...template,
+      layout: parsedLayout,
+      requiredGenerationFields: template.requiredGenerationFields ?? [],
+      optionalGenerationFields:
+        template.optionalGenerationFields ?? defaultOptionalGenerationFields,
+    };
+  })
 }
 
 export async function getTemplateById(id: string): Promise<NewsletterTemplate> {
   const response = await axios.get<TemplateApiResponse>(`/templates/${id}`)
 
+  let parsedLayout = null;
+  try {
+    const rawLayout = typeof response.data.layout === 'string' ? JSON.parse(response.data.layout) : response.data.layout;
+    if (Array.isArray(rawLayout)) {
+      parsedLayout = rawLayout.map((item: any) => ({
+        ...item,
+        block_type: item.block_type || item.type,
+      }));
+    } else {
+      parsedLayout = rawLayout;
+    }
+  } catch (e) {
+    console.error('Error parsing layout for template', id, e);
+  }
+
   return {
     ...response.data,
+    layout: parsedLayout,
     requiredGenerationFields: response.data.requiredGenerationFields ?? [],
     optionalGenerationFields:
       response.data.optionalGenerationFields ?? defaultOptionalGenerationFields,
