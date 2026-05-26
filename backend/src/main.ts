@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
+import { ValidationPipe } from '@nestjs/common';
 
 const allowedOrigins = new Set(['https://nestle-ai-newsletter.vercel.app']);
 const localhostOriginPattern = /^http:\/\/(localhost|127\.0\.0\.1):\d+$/;
@@ -26,6 +27,14 @@ async function bootstrap() {
     },
     credentials: true,
   });
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
 
   await app.listen(process.env.PORT ?? 3000);
 }

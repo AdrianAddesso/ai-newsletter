@@ -13,7 +13,7 @@ import {
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
 import { useTemplateStore } from '../../stores/templates.store'
 import { useNotification } from '../../hooks/useNotification'
-import { TemplateCanvas } from '../../components/canvas/TemplateCanvas'
+import { Template } from '../../components/canvas/Template'
 import { StructureControl } from '../../components/canvas/StructureControl'
 import { EditorControl } from '../../components/canvas/EditorControl'
 import { TAB_LABELS} from '@shared/enums/tab-enum'
@@ -119,7 +119,7 @@ export function CreateTemplate() {
             </Typography>
           </Box>
           <Box sx={{ flex: 1, overflow: 'auto', p: 4, bgcolor: '#E5E5E5' }}>
-            <TemplateCanvas />
+            <Template />
           </Box>
         </Paper>
         <Paper
