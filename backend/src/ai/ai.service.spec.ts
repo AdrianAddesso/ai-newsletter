@@ -39,7 +39,7 @@ describe('AiService', () => {
     jest.resetAllMocks();
   });
 
-  it('throws when Nestle GenIA credentials are not configured', async () => {
+  it('throws when GenIA credentials are not configured', async () => {
     const { service } = createService();
 
     await expect(
@@ -47,11 +47,11 @@ describe('AiService', () => {
     ).rejects.toBeInstanceOf(ServiceUnavailableException);
   });
 
-  it('improves text with Nestle GenIA', async () => {
+  it('improves text with GenIA', async () => {
     const { service, prisma } = createService({
       CLIENT_ID: 'client-id',
       CLIENT_SECRET: 'client-secret',
-      NESTLE_GENIA_URL:
+      GENIA_URL:
         'https://eur-sdr-int-pub.nestle.com/api/dv-exp-sandbox-openai-api/1/genai/GCP/gemini-2.0-flash-001/generateContent',
     });
 
@@ -67,8 +67,8 @@ describe('AiService', () => {
       ],
     });
     (prisma.brand_kit.findFirst as jest.Mock).mockResolvedValue({
-      id: 'nestle-corporate',
-      name: 'Nestle Corporate',
+      id: 'lumen-corporate',
+      name: 'Lumen Corporate',
       brandkit_assets: [],
       color_palette: [],
       font_groups: null,
@@ -81,7 +81,7 @@ describe('AiService', () => {
           candidates: [
             {
               content: {
-                parts: [{ text: 'Texto mejorado por Nestle' }],
+                parts: [{ text: 'Texto mejorado' }],
               },
             },
           ],
@@ -92,7 +92,7 @@ describe('AiService', () => {
       service.improveText({ text: 'Texto original' }),
     ).resolves.toEqual({
       originalText: 'Texto original',
-      improvedText: 'Texto mejorado por Nestle',
+      improvedText: 'Texto mejorado',
     });
 
     const fetchMock = global.fetch as jest.MockedFunction<typeof fetch>;
@@ -120,11 +120,11 @@ describe('AiService', () => {
     });
   });
 
-  it('generates newsletter blocks with structured context through Nestle GenIA', async () => {
+  it('generates newsletter blocks with structured context through GenIA', async () => {
     const { service } = createService({
       CLIENT_ID: 'client-id',
       CLIENT_SECRET: 'client-secret',
-      NESTLE_GENIA_URL:
+      GENIA_URL:
         'https://eur-sdr-int-pub.nestle.com/api/dv-exp-sandbox-openai-api/1/genai/GCP/gemini-2.0-flash-001/generateContent',
     });
 
@@ -164,7 +164,7 @@ describe('AiService', () => {
       service.generateNewsletter({
         area: 'COMUNICACION_INTERNA',
         templateId: 'weekly-brief',
-        brandKitId: 'nestle-corporate',
+        brandKitId: 'lumen-corporate',
         topic: 'Seguridad',
         objective: 'Informar avances',
         audience: 'Equipo interno',
@@ -194,7 +194,7 @@ describe('AiService', () => {
       '"templateId":"weekly-brief"',
     );
     expect(fetchBody.contents[0].parts[0].text).toContain(
-      '"brandKitId":"nestle-corporate"',
+      '"brandKitId":"lumen-corporate"',
     );
     expect(fetchBody.generationConfig).toEqual({
       temperature: 0.5,

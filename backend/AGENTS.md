@@ -4,7 +4,7 @@
 
 These instructions apply to `backend`, a NestJS + TypeScript API.
 
-The backend owns business workflows, validation, authentication and authorization, Prisma data access, newsletter export orchestration, optional external storage integration, and the Nestle GenIA/Cloudhub proxy.
+The backend owns business workflows, validation, authentication and authorization, Prisma data access, newsletter export orchestration, optional external storage integration, and the GenIA/Cloudhub proxy.
 
 Follow the root `AGENTS.md` first. This file adds backend-specific rules.
 
@@ -62,7 +62,7 @@ Follow the root `AGENTS.md` first. This file adds backend-specific rules.
 ## AI Provider Integration
 
 - Backend code is the only place that may use `CLIENT_ID` and `CLIENT_SECRET`.
-- `CLIENT_ID` and `CLIENT_SECRET` may be sent only as outbound headers to the approved Nestle GenIA/Cloudhub endpoint.
+- `CLIENT_ID` and `CLIENT_SECRET` may be sent only as outbound headers to the approved GenIA/Cloudhub endpoint.
 - AI calls must define timeout behavior.
 - Retries must be bounded and must not multiply user requests without clear limits.
 - Return a user-safe Spanish fallback message when AI generation fails and the error is shown in the UI.

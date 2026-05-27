@@ -18,7 +18,7 @@ import {
   GenerateNewsletterRequestDto,
   GenerateNewsletterResponseDto,
 } from './dto/generate-newsletter.dto';
-import { NestleGeniaGenerateContentSuccess } from './ai.types';
+import { GeniaGenerateContentSuccess } from './ai.types';
 import {
   buildNewsletterBlockId,
   buildNewsletterBlocksFromLayout,
@@ -36,8 +36,8 @@ export class AiService {
   private readonly newsletterGenerationPublicErrorMessage =
     'No se pudo generar el newsletter en este momento.';
   private readonly textImprovementInstruction =
-    'You are a Spanish copy editor for internal Nestle newsletters. Improve the text for clarity, fluency, tone, and readability while keeping the original meaning. Return only the improved text in Spanish, with no markdown, bullets, or explanations.';
-  private readonly defaultNestleGeniaUrl =
+    'You are a Spanish copy editor for internal corporate newsletters. Improve the text for clarity, fluency, tone, and readability while keeping the original meaning. Return only the improved text in Spanish, with no markdown, bullets, or explanations.';
+  private readonly defaultGeniaUrl =
     'https://eur-sdr-int-pub.nestle.com/api/dv-exp-sandbox-openai-api/1/genai/GCP/gemini-2.0-flash-001/generateContent';
 
   constructor(
@@ -220,9 +220,9 @@ export class AiService {
 
     return {
       originalText,
-      improvedText: this.extractNestleText(
+      improvedText: this.extractText(
         responseBody,
-        this.extractNestleModelName(),
+        this.extractModelName(),
         this.textImprovementPublicErrorMessage,
         'improveText',
       ),
@@ -236,9 +236,9 @@ export class AiService {
       'generateNewsletter',
     );
 
-    return this.extractNestleText(
+    return this.extractText(
       responseBody,
-      this.extractNestleModelName(),
+      this.extractModelName(),
       this.newsletterGenerationPublicErrorMessage,
       'generateNewsletter',
     );
@@ -248,14 +248,14 @@ export class AiService {
     payload: object,
     publicMessage: string,
     operation: 'improveText' | 'generateNewsletter',
-  ): Promise<NestleGeniaGenerateContentSuccess | null> {
+  ): Promise<GeniaGenerateContentSuccess | null> {
     const clientId = this.readEnv('CLIENT_ID');
     const clientSecret = this.readEnv('CLIENT_SECRET');
-    const url = this.readEnv('NESTLE_GENIA_URL') ?? this.defaultNestleGeniaUrl;
+    const url = this.readEnv('GENIA_URL') ?? this.defaultGeniaUrl;
 
     if (!clientId || !clientSecret) {
       throw new ServiceUnavailableException(
-        'Nestle GenIA is not configured on the server.',
+        'GenIA is not configured on the server.',
       );
     }
 
@@ -273,12 +273,12 @@ export class AiService {
 
     const responseBody = (await response
       .json()
-      .catch(() => null)) as NestleGeniaGenerateContentSuccess | null;
+      .catch(() => null)) as GeniaGenerateContentSuccess | null;
 
     if (!response.ok) {
       throw this.createProviderException(
         response.status,
-        this.extractNestleErrorMessage(responseBody, response.status),
+        this.extractErrorMessage(responseBody, response.status),
         publicMessage,
         operation,
       );
@@ -389,7 +389,7 @@ export class AiService {
     };
 
     return [
-      'You are a Spanish copywriter for internal Nestle newsletters.',
+      'You are a Spanish copywriter for internal corporate newsletters.',
       'Generate concise, brand-safe newsletter copy in Spanish for an internal communications team.',
       'Return only valid JSON with this exact shape:',
       '{"blocks":[{"blockId":"...","values":{"fieldKey":"value"}}]}',
@@ -655,18 +655,18 @@ export class AiService {
     return fencedJson?.[1]?.trim() ?? trimmedText;
   }
 
-  private extractNestleModelFromUrl(url: string): string {
+  private extractModelFromUrl(url: string): string {
     const match = url.match(/\/genai\/[^/]+\/([^/]+)\/generateContent$/);
     return match?.[1] ?? 'gemini-2.0-flash-001';
   }
 
-  private extractNestleModelName(): string {
-    const url = this.readEnv('NESTLE_GENIA_URL') ?? this.defaultNestleGeniaUrl;
-    return this.readEnv('NESTLE_GENIA_MODEL') ?? this.extractNestleModelFromUrl(url);
+  private extractModelName(): string {
+    const url = this.readEnv('GENIA_URL') ?? this.defaultGeniaUrl;
+    return this.readEnv('GENIA_MODEL') ?? this.extractModelFromUrl(url);
   }
 
-  private extractNestleErrorMessage(
-    responseBody: NestleGeniaGenerateContentSuccess | null,
+  private extractErrorMessage(
+    responseBody: GeniaGenerateContentSuccess | null,
     responseStatus: number,
   ): string {
     if (typeof responseBody?.error === 'string' && responseBody.error.trim()) {
@@ -680,11 +680,11 @@ export class AiService {
       return responseBody.error.message.trim();
     }
 
-    return `Nestle GenIA returned status ${responseStatus}.`;
+    return `GenIA returned status ${responseStatus}.`;
   }
 
-  private extractNestleText(
-    responseBody: NestleGeniaGenerateContentSuccess | null,
+  private extractText(
+    responseBody: GeniaGenerateContentSuccess | null,
     model: string,
     publicMessage: string,
     operation: 'improveText' | 'generateNewsletter',
@@ -700,7 +700,7 @@ export class AiService {
 
     throw this.createProviderException(
       502,
-      `Nestle GenIA model ${model} did not return any text content.`,
+      `GenIA model ${model} did not return any text content.`,
       publicMessage,
       operation,
     );
@@ -713,14 +713,14 @@ export class AiService {
     operation: 'improveText' | 'generateNewsletter',
   ): BadGatewayException {
     this.logger.error(
-      `AI ${operation} failed with provider=nestle status=${providerStatus} error=${providerError}`,
+      `AI ${operation} failed with provider=genia status=${providerStatus} error=${providerError}`,
     );
 
     return new BadGatewayException({
       message: publicMessage,
       providerError,
       providerStatus,
-      provider: 'nestle',
+      provider: 'genia',
     });
   }
 }

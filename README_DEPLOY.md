@@ -104,9 +104,9 @@ Validate MinIO:
 
 - sign in with `MINIO_ROOT_USER` and `MINIO_ROOT_PASSWORD`
 - confirm that these private buckets exist:
-- `nestle-ai-newsletter-assets`
-- `nestle-ai-newsletter-fonts`
-- `nestle-ai-newsletter-exports`
+- `ai-newsletter-assets`
+- `ai-newsletter-fonts`
+- `ai-newsletter-exports`
 
 MinIO bucket commands:
 

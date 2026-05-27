@@ -2,7 +2,7 @@
 
 ## Scope
 
-These instructions apply to `frontend`, a React + Vite + MUI application for Spanish-speaking Nestle internal users.
+These instructions apply to `frontend`, a React + Vite + MUI application for Spanish-speaking internal users.
 
 The frontend helps users generate, edit, preview, review, approve, and export newsletters. The UI language is Spanish. Source code remains English.
 
@@ -19,14 +19,14 @@ Follow the root `AGENTS.md` first. This file adds frontend-specific rules.
 
 ## Brand and Design
 
-- Use `src/styles/nestleMuiTheme.ts` as the source of truth for MUI theme tokens.
+- Use `src/styles/appMuiTheme.ts` as the source of truth for MUI theme tokens.
 - Use MUI components and theme tokens before custom CSS.
 - Reuse assets from `src/assets`.
 - Do not duplicate fonts, logos, brand shapes, or keyword graphics.
-- Follow the Nestle brand guideline PDF in `/ref` when designing new pages.
+- Follow the brand guideline PDF in `/ref` when designing new pages.
 - Keep layouts responsive for desktop, tablet, and mobile preview widths.
 - Do not add decorative assets that do not support the page task.
-- Do not create one-off visual systems outside the Nestle theme.
+- Do not create one-off visual systems outside the application theme.
 
 ## Implementation
 
@@ -59,7 +59,7 @@ Follow the root `AGENTS.md` first. This file adds frontend-specific rules.
 - Inputs must have visible labels or accessible names.
 - Buttons and interactive controls must be keyboard accessible.
 - Focus order must follow the visual workflow.
-- Color contrast must remain readable against the Nestle theme.
+- Color contrast must remain readable against the application theme.
 - Do not communicate state using color alone.
 - Error messages must identify the field or action that failed.
 

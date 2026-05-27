@@ -6,7 +6,7 @@ interface GenerateContentCandidate {
   };
 }
 
-export interface NestleGeniaGenerateContentSuccess {
+export interface GeniaGenerateContentSuccess {
   candidates?: GenerateContentCandidate[];
   error?: string | { message?: string };
 }

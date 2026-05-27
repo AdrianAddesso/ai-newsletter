@@ -2,7 +2,7 @@
 
 ## Scope
 
-This file defines the project-wide instructions for `nestle-ai-newsletter`.
+This file defines the project-wide instructions for `ai-newsletter`.
 
 These rules apply to all agents and contributors unless a more specific `AGENTS.md` in a subdirectory adds stricter rules for that area.
 
@@ -10,12 +10,12 @@ Subdirectory files must not contradict this file. If instructions conflict, foll
 
 ## Product Context
 
-`nestle-ai-newsletter` is a production platform for internal communications teams to create Nestle newsletters with AI assistance, predefined brand-aligned templates, review and approval workflows, traceable history, and export support.
+`ai-newsletter` is a production platform for internal communications teams to create internal newsletters with AI assistance, predefined brand-aligned templates, review and approval workflows, traceable history, and export support.
 
 Use `/ref` as reference material:
 
 - The development plan PDF describes intended scope, actors, requirements, and architecture.
-- The Nestle brand guideline PDF describes visual identity constraints.
+- The brand guideline PDF describes visual identity constraints.
 - Reference files are context. Do not implement features from them unless the task explicitly asks for that work.
 
 ## Product Scope
@@ -115,7 +115,7 @@ Approval state transitions must be validated server-side. A user must not approv
 
 ## AI Integration
 
-The current practical AI integration path is the Nestle GenIA/Cloudhub endpoint using `CLIENT_ID` and `CLIENT_SECRET`.
+The current practical AI integration path is the GenIA/Cloudhub endpoint using `CLIENT_ID` and `CLIENT_SECRET`.
 
 - Do not add LangChain only because the planning document mentions it.
 - Add LangChain only when a task explicitly requires chains, tools, agents, memory, RAG, or provider abstraction.
