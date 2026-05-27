@@ -66,7 +66,7 @@ export type NewsletterTemplate = {
 
 export type TemplateLayoutBlock = {
   type?: string | null
-  block_type: string | null
+  block_type: string
   content: string | null
   row: number
   grid_column: number
