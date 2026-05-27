@@ -21,68 +21,84 @@ export function BlockList({
   const rows = groupBlocksByRow(blocks)
 
   return (
-    <Stack spacing={2}>
+    <Stack
+      spacing={2}
+      sx={{
+        bgcolor: "grey.200", // distinctly grey background
+        p: 3, // padding around the whole component
+        borderRadius: 2, // slightly rounded outer corners
+        height: "100%", // take full height of the container
+
+      }}
+    >
       <Stack
         direction="row"
-        spacing={1}
-        sx={{ alignItems: 'center', justifyContent: 'space-between' }}
+        spacing={0}
+        sx={{
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
       >
         <Typography variant="h5">Bloques de la plantilla</Typography>
         {readOnly && <Chip label="Solo lectura" />}
       </Stack>
-      <Stack spacing={1.5}>
+      <Stack spacing={0}>
         {rows.map((row) => (
           <Box
             key={row.row}
             sx={{
-              display: 'grid',
+              display: "grid",
               gridTemplateColumns: {
-                xs: '1fr',
+                xs: "1fr",
                 md: `repeat(${row.blocks.length}, minmax(0, 1fr))`,
               },
-              gap: 1.5,
-              alignItems: 'stretch',
+              gap: 0,
+              alignItems: "stretch",
+              backgroundColor: "background.default",
             }}
           >
             {row.blocks.map((block) => {
-              const isSelected = block.id === selectedBlockId
+              const isSelected = block.id === selectedBlockId;
 
               return (
                 <Paper
                   key={block.id}
                   component="button"
+                  square
                   elevation={0}
                   disabled={readOnly}
                   onClick={() => onSelectBlock(block.id)}
                   sx={{
-                    width: '100%',
+                    py: 0,
+                    px: 0,
+                    width: "100%",
                     minWidth: 0,
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    textAlign: 'left',
+                    height: "100%",
+                    display: "flex",
+                    flexDirection: "column",
+                    textAlign: "left",
                     p: 0,
-                    border: '2px solid',
-                    borderColor: isSelected ? 'primary.main' : 'divider',
-                    bgcolor: 'background.paper',
-                    color: 'text.primary',
-                    cursor: readOnly ? 'default' : 'pointer',
-                    overflow: 'hidden',
-                    appearance: 'none',
-                    '&:disabled': {
+                        borderColor: isSelected ? "primary.main" : "transparent",
+                    borderWidth: 2,
+                    bgcolor: "background.paper",
+                    color: "text.primary",
+                    cursor: readOnly ? "default" : "pointer",
+                    overflow: "hidden",
+                    appearance: "none",
+                    "&:disabled": {
                       opacity: 1,
                     },
                   }}
                 >
                   <Box
                     sx={{
-                      pointerEvents: 'none',
-                      display: 'flex',
+                      pointerEvents: "none",
+                      display: "flex",
                       flex: 1,
                       minHeight: 0,
-                      '& > *': {
-                        width: '100%',
-                        height: '100%',
+                      "& > *": {
+                        width: "100%",
+                        height: "100%",
                       },
                     }}
                   >
@@ -105,13 +121,13 @@ export function BlockList({
                     </Alert>
                   )}
                 </Paper>
-              )
+              );
             })}
           </Box>
         ))}
       </Stack>
     </Stack>
-  )
+  );
 }
 
 function groupBlocksByRow(
