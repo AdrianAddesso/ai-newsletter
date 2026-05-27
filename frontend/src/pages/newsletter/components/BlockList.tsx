@@ -78,13 +78,19 @@ export function BlockList({
                     flexDirection: "column",
                     textAlign: "left",
                     p: 0,
-                        borderColor: isSelected ? "primary.main" : "transparent",
-                    borderWidth: 2,
+
+                    border: isSelected
+                      ? (theme) => `2px solid ${theme.palette.primary.main}`
+                      : "0px solid transparent",
+
+                    boxSizing: "border-box",
+
                     bgcolor: "background.paper",
                     color: "text.primary",
                     cursor: readOnly ? "default" : "pointer",
                     overflow: "hidden",
                     appearance: "none",
+
                     "&:disabled": {
                       opacity: 1,
                     },
