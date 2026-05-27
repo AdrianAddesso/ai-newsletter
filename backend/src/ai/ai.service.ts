@@ -18,7 +18,7 @@ import {
   GenerateNewsletterRequestDto,
   GenerateNewsletterResponseDto,
 } from './dto/generate-newsletter.dto';
-import { GeniaGenerateContentSuccess } from './ai.types';
+import { GenaiGenerateContentSuccess } from './ai.types';
 import {
   buildNewsletterBlockId,
   buildNewsletterBlocksFromLayout,
@@ -37,9 +37,6 @@ export class AiService {
     'No se pudo generar el newsletter en este momento.';
   private readonly textImprovementInstruction =
     'You are a Spanish copy editor for internal corporate newsletters. Improve the text for clarity, fluency, tone, and readability while keeping the original meaning. Return only the improved text in Spanish, with no markdown, bullets, or explanations.';
-  private readonly defaultGeniaUrl =
-    'https://eur-sdr-int-pub.nestle.com/api/dv-exp-sandbox-openai-api/1/genai/GCP/gemini-2.0-flash-001/generateContent';
-
   constructor(
     private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
@@ -248,14 +245,14 @@ export class AiService {
     payload: object,
     publicMessage: string,
     operation: 'improveText' | 'generateNewsletter',
-  ): Promise<GeniaGenerateContentSuccess | null> {
+  ): Promise<GenaiGenerateContentSuccess | null> {
     const clientId = this.readEnv('CLIENT_ID');
     const clientSecret = this.readEnv('CLIENT_SECRET');
-    const url = this.readEnv('GENIA_URL') ?? this.defaultGeniaUrl;
+    const url = this.readEnv('GENAI_URL');
 
-    if (!clientId || !clientSecret) {
+    if (!clientId || !clientSecret || !url) {
       throw new ServiceUnavailableException(
-        'GenIA is not configured on the server.',
+        'GenAI is not configured on the server.',
       );
     }
 
@@ -273,7 +270,7 @@ export class AiService {
 
     const responseBody = (await response
       .json()
-      .catch(() => null)) as GeniaGenerateContentSuccess | null;
+      .catch(() => null)) as GenaiGenerateContentSuccess | null;
 
     if (!response.ok) {
       throw this.createProviderException(
@@ -661,12 +658,12 @@ export class AiService {
   }
 
   private extractModelName(): string {
-    const url = this.readEnv('GENIA_URL') ?? this.defaultGeniaUrl;
-    return this.readEnv('GENIA_MODEL') ?? this.extractModelFromUrl(url);
+    const url = this.readEnv('GENAI_URL') ?? '';
+    return this.readEnv('GENAI_MODEL') ?? this.extractModelFromUrl(url);
   }
 
   private extractErrorMessage(
-    responseBody: GeniaGenerateContentSuccess | null,
+    responseBody: GenaiGenerateContentSuccess | null,
     responseStatus: number,
   ): string {
     if (typeof responseBody?.error === 'string' && responseBody.error.trim()) {
@@ -684,7 +681,7 @@ export class AiService {
   }
 
   private extractText(
-    responseBody: GeniaGenerateContentSuccess | null,
+    responseBody: GenaiGenerateContentSuccess | null,
     model: string,
     publicMessage: string,
     operation: 'improveText' | 'generateNewsletter',
@@ -713,14 +710,14 @@ export class AiService {
     operation: 'improveText' | 'generateNewsletter',
   ): BadGatewayException {
     this.logger.error(
-      `AI ${operation} failed with provider=genia status=${providerStatus} error=${providerError}`,
+      `AI ${operation} failed with provider=genai status=${providerStatus} error=${providerError}`,
     );
 
     return new BadGatewayException({
       message: publicMessage,
       providerError,
       providerStatus,
-      provider: 'genia',
+      provider: 'genai',
     });
   }
 }

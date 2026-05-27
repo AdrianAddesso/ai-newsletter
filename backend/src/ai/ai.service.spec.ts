@@ -51,7 +51,7 @@ describe('AiService', () => {
     const { service, prisma } = createService({
       CLIENT_ID: 'client-id',
       CLIENT_SECRET: 'client-secret',
-      GENIA_URL:
+      GENAI_URL:
         'https://eur-sdr-int-pub.nestle.com/api/dv-exp-sandbox-openai-api/1/genai/GCP/gemini-2.0-flash-001/generateContent',
     });
 
@@ -124,7 +124,7 @@ describe('AiService', () => {
     const { service } = createService({
       CLIENT_ID: 'client-id',
       CLIENT_SECRET: 'client-secret',
-      GENIA_URL:
+      GENAI_URL:
         'https://eur-sdr-int-pub.nestle.com/api/dv-exp-sandbox-openai-api/1/genai/GCP/gemini-2.0-flash-001/generateContent',
     });
 

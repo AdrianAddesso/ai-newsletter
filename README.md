@@ -48,9 +48,6 @@ The project uses PostgreSQL in Docker for local development. Supabase is not par
 
 - `postgres` service present
 - `postgres:16`
-- `POSTGRES_USER=lumen`
-- `POSTGRES_PASSWORD=lumen`
-- `POSTGRES_DB=ai_newsletter_db`
 - host/container port mapping `5433:5432`
 - persistent volume `postgres_data:/var/lib/postgresql/data`
 - `minio` service present
@@ -60,19 +57,6 @@ The project uses PostgreSQL in Docker for local development. Supabase is not par
 
 If you run the backend container, its internal database settings are:
 
-```env
-DATABASE_URL=postgresql://lumen:lumen@postgres:5432/ai_newsletter_db
-DIRECT_URL=postgresql://lumen:lumen@postgres:5432/ai_newsletter_db
-S3_ENDPOINT=http://minio:9000
-S3_REGION=us-east-1
-S3_ASSETS_BUCKET=ai-newsletter-assets
-S3_FONTS_BUCKET=ai-newsletter-fonts
-S3_EXPORTS_BUCKET=ai-newsletter-exports
-S3_ACCESS_KEY=${MINIO_ROOT_USER}
-S3_SECRET_KEY=${MINIO_ROOT_PASSWORD}
-S3_FORCE_PATH_STYLE=true
-```
-
 `docker-compose.deploy.yml` is the separate deployment compose. It uses published Docker Hub images, does not build source code locally, routes browser API calls through `/api` with nginx proxying to `backend:3000`, and includes MinIO as the object storage service.
 
 ### Environment Variables
@@ -81,37 +65,10 @@ Create `backend/.env` locally from [backend/.env.example](/C:/Users/Tadeo/Deskto
 
 Required local database values:
 
-```env
-DATABASE_URL="postgresql://..."
-DIRECT_URL="postgresql://..."
-PORT=3000
-S3_ENDPOINT="http://localhost:9000"
-S3_REGION="us-east-1"
-S3_ASSETS_BUCKET="ai-newsletter-assets"
-S3_FONTS_BUCKET="ai-newsletter-fonts"
-S3_EXPORTS_BUCKET="ai-newsletter-exports"
-S3_ACCESS_KEY="minioadmin"
-S3_SECRET_KEY="minioadmin123"
-S3_FORCE_PATH_STYLE="true"
-MINIO_ROOT_USER="minioadmin"
-MINIO_ROOT_PASSWORD="minioadmin123"
-GENIA_URL="https://eur-sdr-int-pub.nestle.com/api/dv-exp-sandbox-openai-api/1/genai/GCP/gemini-2.0-flash-001/generateContent"
-GENIA_MODEL="gemini-2.0-flash-001"
-CLIENT_ID="your-client-id"
-CLIENT_SECRET="your-client-secret"
-```
-
 Notes:
 
-- `DATABASE_URL` is the default runtime connection.
-- `DIRECT_URL` is used for direct Prisma tasks and is also accepted by `PrismaService`.
 - `backend/.env` is ignored by Git through the root `.gitignore`.
 - `backend/.env.example` must contain placeholders only, never real secrets.
-- `CLIENT_ID` and `CLIENT_SECRET` are required for `POST /ai/improve-text` and `POST /ai/generate-newsletter`.
-- `GENIA_URL` is an optional override for the GenIA endpoint if the sandbox route changes.
-- `GENIA_MODEL` is an optional override for the model name returned by the backend when the URL alone is not the desired source of truth.
-- `S3_ENDPOINT`, `S3_REGION`, `S3_FORCE_PATH_STYLE`, `S3_ASSETS_BUCKET`, `S3_FONTS_BUCKET`, `S3_EXPORTS_BUCKET`, `S3_ACCESS_KEY`, and `S3_SECRET_KEY` configure the S3-compatible storage client used for MinIO.
-- `MINIO_ROOT_USER` and `MINIO_ROOT_PASSWORD` are local Docker defaults for MinIO. Do not commit real secrets.
 - Binary content stays in MinIO, not PostgreSQL. PostgreSQL stores metadata such as bucket, object key, object prefix, and file name.
 
 ### Daily Development
@@ -196,9 +153,9 @@ ORDER BY role;
 
 Expected users:
 
-- `admin@local.test` with role `ADMIN`
-- `functional@local.test` with role `FUNCTIONAL`
-- `user@local.test` with role `USER`
+- `admin@local.test` with role 
+- `functional@local.test` with role 
+- `user@local.test` with role 
 
 8. Validate permissions per role:
 
@@ -345,7 +302,7 @@ The schema should not reintroduce old catalog models such as:
 Prisma 7 runtime note:
 
 - The backend uses the Prisma PostgreSQL adapter through [prisma.service.ts](/C:/Users/Tadeo/Desktop/ORT/4to/PF/Nestle/nestle-ai-newsletter/backend/src/prisma/prisma.service.ts).
-- `PrismaService` accepts `DIRECT_URL` first and falls back to `DATABASE_URL`.
+- `PrismaService` accepts  first and falls back to .
 - `backend/prisma.config.ts` uses the same fallback for Prisma CLI commands.
 
 ### Reset Local Database
@@ -398,8 +355,6 @@ Docker Hub setup:
 - Create the repositories `nestle-ai-newsletter-backend` and `nestle-ai-newsletter-frontend`.
 - Create a Docker Hub Personal Access Token with `Read & Write` permissions.
 - Save these GitHub Actions secrets in the repository:
-- `DOCKERHUB_USERNAME`
-- `DOCKERHUB_TOKEN`
 
 Workflow behavior:
 
@@ -431,11 +386,11 @@ Compose files:
 Deployment environment file:
 
 1. Copy `.env.deploy.example` to `.env.deploy`.
-2. Set `DOCKERHUB_USERNAME`.
-3. Set `APP_VERSION`.
-4. Set `MINIO_ROOT_USER` and `MINIO_ROOT_PASSWORD`.
+2. Set .
+3. Set .
+4. Set  and .
 
-`APP_VERSION` can be:
+ can be:
 
 - `latest`
 - a commit SHA tag
@@ -527,9 +482,6 @@ El proyecto usa PostgreSQL en Docker para desarrollo local. Supabase no forma pa
 
 - servicio `postgres`
 - imagen `postgres:16`
-- `POSTGRES_USER=lumen`
-- `POSTGRES_PASSWORD=lumen`
-- `POSTGRES_DB=ai_newsletter_db`
 - mapeo `5433:5432`
 - volumen persistente `postgres_data:/var/lib/postgresql/data`
 - servicio `minio`
@@ -539,19 +491,6 @@ El proyecto usa PostgreSQL en Docker para desarrollo local. Supabase no forma pa
 
 Si se corre el backend dentro de Docker, usa:
 
-```env
-DATABASE_URL=postgresql://lumen:lumen@postgres:5432/ai_newsletter_db
-DIRECT_URL=postgresql://lumen:lumen@postgres:5432/ai_newsletter_db
-S3_ENDPOINT=http://minio:9000
-S3_REGION=us-east-1
-S3_ASSETS_BUCKET=ai-newsletter-assets
-S3_FONTS_BUCKET=ai-newsletter-fonts
-S3_EXPORTS_BUCKET=ai-newsletter-exports
-S3_ACCESS_KEY=${MINIO_ROOT_USER}
-S3_SECRET_KEY=${MINIO_ROOT_PASSWORD}
-S3_FORCE_PATH_STYLE=true
-```
-
 `docker-compose.deploy.yml` es el compose separado de deployment. Usa imagenes publicadas en Docker Hub, no buildea el codigo fuente localmente, enruta las llamadas del navegador por `/api` con nginx apuntando a `backend:3000` e incluye MinIO como servicio de object storage.
 
 ### Variables De Entorno
@@ -560,37 +499,10 @@ Crear `backend/.env` a partir de [backend/.env.example](/C:/Users/Tadeo/Desktop/
 
 Valores locales requeridos:
 
-```env
-DATABASE_URL="postgresql://..."
-DIRECT_URL="postgresql://..."
-PORT=3000
-S3_ENDPOINT="http://localhost:9000"
-S3_REGION="us-east-1"
-S3_ASSETS_BUCKET="ai-newsletter-assets"
-S3_FONTS_BUCKET="ai-newsletter-fonts"
-S3_EXPORTS_BUCKET="ai-newsletter-exports"
-S3_ACCESS_KEY="minioadmin"
-S3_SECRET_KEY="minioadmin123"
-S3_FORCE_PATH_STYLE="true"
-MINIO_ROOT_USER="minioadmin"
-MINIO_ROOT_PASSWORD="minioadmin123"
-GENIA_URL="https://eur-sdr-int-pub.nestle.com/api/dv-exp-sandbox-openai-api/1/genai/GCP/gemini-2.0-flash-001/generateContent"
-GENIA_MODEL="gemini-2.0-flash-001"
-CLIENT_ID="your-client-id"
-CLIENT_SECRET="your-client-secret"
-```
-
 Notas:
 
-- `DATABASE_URL` es la conexion de runtime.
-- `DIRECT_URL` sirve para tareas directas de Prisma y tambien lo acepta `PrismaService`.
 - `backend/.env` esta ignorado por Git desde el `.gitignore` root.
 - `backend/.env.example` debe tener placeholders, nunca secretos reales.
-- `CLIENT_ID` y `CLIENT_SECRET` son obligatorias para `POST /ai/improve-text` y `POST /ai/generate-newsletter`.
-- `GENIA_URL` es un override opcional del endpoint GenIA si cambia la ruta del sandbox.
-- `GENIA_MODEL` es un override opcional del nombre de modelo que devuelve el backend cuando la URL no alcanza como fuente de verdad.
-- `S3_ENDPOINT`, `S3_REGION`, `S3_FORCE_PATH_STYLE`, `S3_ASSETS_BUCKET`, `S3_FONTS_BUCKET`, `S3_EXPORTS_BUCKET`, `S3_ACCESS_KEY` y `S3_SECRET_KEY` configuran el cliente S3-compatible usado para MinIO.
-- `MINIO_ROOT_USER` y `MINIO_ROOT_PASSWORD` son defaults locales de Docker para MinIO. No commitear secretos reales.
 - Los binarios quedan en MinIO, no en PostgreSQL. PostgreSQL guarda metadata como bucket, object key, object prefix y file name.
 
 ### Desarrollo Diario
@@ -669,9 +581,9 @@ ORDER BY role;
 
 Usuarios esperados:
 
-- `admin@local.test` con role `ADMIN`
-- `functional@local.test` con role `FUNCTIONAL`
-- `user@local.test` con role `USER`
+- `admin@local.test` con role 
+- `functional@local.test` con role 
+- `user@local.test` con role 
 
 7. Validar permisos por rol:
 
@@ -808,7 +720,7 @@ No deberian existir modelos viejos como:
 Nota de runtime Prisma 7:
 
 - El backend usa el adapter PostgreSQL de Prisma en [prisma.service.ts](/C:/Users/Tadeo/Desktop/ORT/4to/PF/Nestle/nestle-ai-newsletter/backend/src/prisma/prisma.service.ts).
-- `PrismaService` prioriza `DIRECT_URL` y si no existe usa `DATABASE_URL`.
+- `PrismaService` prioriza  y si no existe usa .
 - `backend/prisma.config.ts` usa la misma logica para comandos CLI.
 
 ### Reset De La Base Local
@@ -861,8 +773,6 @@ Configuracion de Docker Hub:
 - Crear los repositorios `nestle-ai-newsletter-backend` y `nestle-ai-newsletter-frontend`.
 - Crear un Personal Access Token de Docker Hub con permisos `Read & Write`.
 - Guardar estos secrets en GitHub Actions:
-- `DOCKERHUB_USERNAME`
-- `DOCKERHUB_TOKEN`
 
 Comportamiento del workflow:
 
@@ -894,11 +804,11 @@ Archivos compose:
 Archivo de entorno para deployment:
 
 1. Copiar `.env.deploy.example` a `.env.deploy`.
-2. Configurar `DOCKERHUB_USERNAME`.
-3. Configurar `APP_VERSION`.
-4. Configurar `MINIO_ROOT_USER` y `MINIO_ROOT_PASSWORD`.
+2. Configurar .
+3. Configurar .
+4. Configurar  y .
 
-`APP_VERSION` puede ser:
+ puede ser:
 
 - `latest`
 - un SHA de commit

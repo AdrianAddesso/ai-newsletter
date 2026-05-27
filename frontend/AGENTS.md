@@ -34,7 +34,7 @@ Follow the root `AGENTS.md` first. This file adds frontend-specific rules.
 - Keep component, hook, variable, and file names in English.
 - Keep user-facing text in Spanish.
 - Use Axios for backend calls when an HTTP client is needed.
-- Read the backend base URL from environment configuration such as `VITE_API_URL`.
+- Read the backend base URL from environment configuration such as .
 - Do not hardcode production secrets, backend credentials, storage provider keys, AI credentials, or tenant-specific values in frontend code.
 - Do not use `any`.
 - Define explicit prop, state, and API response types.

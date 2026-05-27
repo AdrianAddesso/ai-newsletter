@@ -61,8 +61,7 @@ Follow the root `AGENTS.md` first. This file adds backend-specific rules.
 
 ## AI Provider Integration
 
-- Backend code is the only place that may use `CLIENT_ID` and `CLIENT_SECRET`.
-- `CLIENT_ID` and `CLIENT_SECRET` may be sent only as outbound headers to the approved GenIA/Cloudhub endpoint.
+- Backend code is the only place that may use  and .
 - AI calls must define timeout behavior.
 - Retries must be bounded and must not multiply user requests without clear limits.
 - Return a user-safe Spanish fallback message when AI generation fails and the error is shown in the UI.

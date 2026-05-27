@@ -6,7 +6,7 @@ interface GenerateContentCandidate {
   };
 }
 
-export interface GeniaGenerateContentSuccess {
+export interface GenaiGenerateContentSuccess {
   candidates?: GenerateContentCandidate[];
   error?: string | { message?: string };
 }
