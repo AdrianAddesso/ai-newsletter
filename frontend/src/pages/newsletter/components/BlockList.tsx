@@ -56,15 +56,36 @@ export function BlockList({
                   onClick={() => onSelectBlock(block.id)}
                   sx={{
                     width: '100%',
+                    minWidth: 0,
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
                     textAlign: 'left',
+                    p: 0,
                     border: '2px solid',
                     borderColor: isSelected ? 'primary.main' : 'divider',
                     bgcolor: 'background.paper',
                     color: 'text.primary',
                     cursor: readOnly ? 'default' : 'pointer',
+                    overflow: 'hidden',
+                    appearance: 'none',
+                    '&:disabled': {
+                      opacity: 1,
+                    },
                   }}
                 >
-                  <Box sx={{ pointerEvents: 'none' }}>
+                  <Box
+                    sx={{
+                      pointerEvents: 'none',
+                      display: 'flex',
+                      flex: 1,
+                      minHeight: 0,
+                      '& > *': {
+                        width: '100%',
+                        height: '100%',
+                      },
+                    }}
+                  >
                     <BlockRenderer
                       block={{
                         id: block.id,
