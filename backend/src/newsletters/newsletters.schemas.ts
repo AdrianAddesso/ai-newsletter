@@ -122,3 +122,8 @@ export type UpdateNewsletterExportBody = z.infer<
   typeof updateNewsletterExportBodySchema
 >;
 export type DefineNewsletterBlock = z.infer<typeof defineNewsletterBlockSchema>;
+
+export const exportNewsletterBodySchema = z.object({
+  format: z.enum(['PDF', 'JPG', 'EML'], { error: 'Formato inválido. Usá PDF, JPG o EML.' }),
+}).strict();
+export type ExportNewsletterBody = z.infer<typeof exportNewsletterBodySchema>;
