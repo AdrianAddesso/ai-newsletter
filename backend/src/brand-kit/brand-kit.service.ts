@@ -51,7 +51,6 @@ export class BrandKitService {
   ) {}
 
   async getAll(): Promise<BrandKitListItem[]> {
-    try {
       return this.prisma.brand_kit.findMany({
         where: { deleted_at: null, active: true },
         orderBy: { name: 'asc' },
@@ -60,12 +59,6 @@ export class BrandKitService {
           name: true,
         },
       });
-    } catch {
-      this.logger.error('Brand kit list failed.');
-      throw new ServiceUnavailableException(
-        'No se pudieron obtener los brand kits en este momento.',
-      );
-    }
   }
 
   async getResources(brandKitId: string): Promise<BrandKitResources> {
