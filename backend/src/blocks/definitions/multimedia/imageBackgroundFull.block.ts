@@ -10,8 +10,8 @@ export class ImageBackgroundFullBlock extends BlockDefinition {
   readonly mustFill = true;
   readonly layout = { minCols: 1, minRows: 1, resizable: true };
   readonly editFields = [
-    { key: 'backgroundAsset', label: 'Fondo', type: 'image-asset' as const, assetTypes: ['IMAGE', 'SHAPE', 'KEYWORD'] },
-    { key: 'imageAsset', label: 'Imagen', type: 'image-asset' as const, required: true, assetTypes: ['IMAGE'] },
+    { key: 'backgroundAsset', label: 'Fondo', type: 'image-asset' as const, assetTypes: ['IMAGE', 'SHAPE', 'KEYWORD'] as const },
+    { key: 'imageAsset', label: 'Imagen', type: 'image-asset' as const, required: true, assetTypes: ['IMAGE'] as const },
     { key: 'altText', label: 'Texto alternativo', type: 'text' as const, defaultValue: 'Image' },
     { key: 'overlayColor', label: 'Color de overlay', type: 'color' as const },
   ];

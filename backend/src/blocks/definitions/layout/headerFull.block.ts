@@ -12,8 +12,8 @@ export class HeaderFullBlock extends BlockDefinition {
   readonly editFields = [
     { key: 'title', label: 'Título', type: 'text' as const, required: true },
     { key: 'subtitle', label: 'Subtítulo', type: 'text' as const },
-    { key: 'leftLogoAsset', label: 'Logo izquierdo', type: 'image-asset' as const, assetTypes: ['LOGO', 'LOCKUP'] },
-    { key: 'rightLogoAsset', label: 'Logo derecho', type: 'image-asset' as const, assetTypes: ['LOGO', 'LOCKUP'] },
+    { key: 'leftLogoAsset', label: 'Logo izquierdo', type: 'image-asset' as const, assetTypes: ['LOGO', 'LOCKUP'] as const },
+    { key: 'rightLogoAsset', label: 'Logo derecho', type: 'image-asset' as const, assetTypes: ['LOGO', 'LOCKUP'] as const },
     { key: 'fontSize', label: 'Tamaño de texto', type: 'font-size' as const },
     { key: 'typographyStyle', label: 'Estilo', type: 'font-style' as const },
     { key: 'fontFamily', label: 'Tipografía', type: 'font-family' as const },

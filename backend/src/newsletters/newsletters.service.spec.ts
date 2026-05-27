@@ -16,14 +16,17 @@ describe('NewsLettersService', () => {
         update: jest.fn(),
       },
       newsletter_blocks: {
-        deleteMany: jest.fn(),
+        findMany: jest.fn().mockResolvedValue([]),
+        updateMany: jest.fn(),
         create: jest.fn(),
       },
       block_content: {
         create: jest.fn().mockResolvedValue({ id: 'block-content-id' }),
+        updateMany: jest.fn(),
       },
       assets_block: {
         create: jest.fn(),
+        updateMany: jest.fn(),
       },
       newsletter_state_log: {
         create: jest.fn(),
@@ -110,6 +113,61 @@ describe('NewsLettersService', () => {
         asset_id: '550e8400-e29b-41d4-a716-446655440001',
         field_key: 'logoAsset',
         keyword_text: 'Hola',
+      },
+    });
+  });
+
+  it('soft deletes previous newsletter block rows before recreating them', async () => {
+    prisma.__tx.newsletter_blocks.findMany.mockResolvedValue([
+      { block_content_id: 'old-block-content-id' },
+    ]);
+    prisma.newsletters.findFirst
+      .mockResolvedValueOnce({ id: 'newsletter-id', state: 'DRAFT' })
+      .mockResolvedValueOnce({
+        id: 'newsletter-id',
+        created_by_user_id: null,
+        state: 'DRAFT',
+        template_id: null,
+        brand_kit_id: null,
+        generation_content: null,
+        created_at: new Date('2026-05-24T12:00:00.000Z'),
+        updated_at: new Date('2026-05-24T12:00:00.000Z'),
+        newsletter_blocks: [],
+      });
+
+    await service.update('newsletter-id', {
+      blocks: [],
+    });
+
+    expect(prisma.__tx.newsletter_blocks.updateMany).toHaveBeenCalledWith({
+      where: {
+        newsletter_id: 'newsletter-id',
+        deleted_at: null,
+      },
+      data: {
+        deleted_at: expect.any(Date) as Date,
+      },
+    });
+    expect(prisma.__tx.assets_block.updateMany).toHaveBeenCalledWith({
+      where: {
+        block_id: {
+          in: ['old-block-content-id'],
+        },
+        deleted_at: null,
+      },
+      data: {
+        deleted_at: expect.any(Date) as Date,
+      },
+    });
+    expect(prisma.__tx.block_content.updateMany).toHaveBeenCalledWith({
+      where: {
+        id: {
+          in: ['old-block-content-id'],
+        },
+        deleted_at: null,
+      },
+      data: {
+        deleted_at: expect.any(Date) as Date,
       },
     });
   });

@@ -292,18 +292,66 @@ export class NewsLettersService {
     newsletterId: string,
     blocks: NewsletterEditableBlock[],
   ): Promise<void> {
-    await tx.newsletter_blocks.deleteMany({ where: { newsletter_id: newsletterId } });
+    const existingBlocks = await tx.newsletter_blocks.findMany({
+      where: {
+        newsletter_id: newsletterId,
+        deleted_at: null,
+      },
+      select: {
+        block_content_id: true,
+      },
+    });
+    const existingBlockContentIds = existingBlocks.map(
+      ({ block_content_id: blockContentId }) => blockContentId,
+    );
+
+    await tx.newsletter_blocks.updateMany({
+      where: {
+        newsletter_id: newsletterId,
+        deleted_at: null,
+      },
+      data: {
+        deleted_at: new Date(),
+      },
+    });
+
+    if (existingBlockContentIds.length > 0) {
+      await tx.assets_block.updateMany({
+        where: {
+          block_id: {
+            in: existingBlockContentIds,
+          },
+          deleted_at: null,
+        },
+        data: {
+          deleted_at: new Date(),
+        },
+      });
+
+      await tx.block_content.updateMany({
+        where: {
+          id: {
+            in: existingBlockContentIds,
+          },
+          deleted_at: null,
+        },
+        data: {
+          deleted_at: new Date(),
+        },
+      });
+    }
 
     for (const block of blocks) {
       const persistedBlock = this.toPersistedBlock(block);
+      const blockContentData = {
+        block_type: block.type,
+        content: persistedBlock.content ?? null,
+        display_order: block.displayOrder ?? null,
+        must_fill: block.mustFill ?? false,
+        type: this.toBlockContentType(block),
+      } satisfies Prisma.block_contentUncheckedCreateInput;
       const contentRecord = await tx.block_content.create({
-        data: {
-          block_type: block.type,
-          content: persistedBlock.content ?? null,
-          display_order: block.displayOrder ?? null,
-          must_fill: block.mustFill ?? false,
-          type: this.toBlockContentType(block),
-        } as any,
+        data: blockContentData,
         select: { id: true },
       });
 
@@ -318,13 +366,14 @@ export class NewsLettersService {
       });
 
       for (const assetBinding of block.assetBindings ?? []) {
+        const assetBindingData = {
+          block_id: contentRecord.id,
+          asset_id: assetBinding.assetId,
+          field_key: assetBinding.fieldKey,
+          keyword_text: assetBinding.keywordText ?? null,
+        } satisfies Prisma.assets_blockUncheckedCreateInput;
         await tx.assets_block.create({
-          data: {
-            block_id: contentRecord.id,
-            asset_id: assetBinding.assetId,
-            field_key: assetBinding.fieldKey,
-            keyword_text: assetBinding.keywordText ?? null,
-          } as any,
+          data: assetBindingData,
         });
       }
     }

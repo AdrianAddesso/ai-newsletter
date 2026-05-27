@@ -98,11 +98,6 @@ export async function getAllNewsletters(): Promise<Newsletter[]> {
   return response.data.data
 }
 
-export function seedNewsletterIfMissing(..._args: unknown[]): void {
-  void _args
-  return undefined
-}
-
 export async function updateNewsletterStatus(
   newsletterId: string,
   state: NewsletterStatus,

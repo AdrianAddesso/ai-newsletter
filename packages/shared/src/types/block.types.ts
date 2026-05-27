@@ -27,7 +27,7 @@ export interface BlockEditField {
   type: EditFieldType;
   placeholder?: string;
   options?: { label: string; value: string }[]; // only used when type === 'select'
-  assetTypes?: readonly string[]; // only used when type === 'image-asset'
+  assetTypes?: readonly BlockAssetType[]; // only used when type === 'image-asset'
   required?: boolean;
   defaultValue?: string;
 }

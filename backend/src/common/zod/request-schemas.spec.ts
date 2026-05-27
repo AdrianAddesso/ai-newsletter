@@ -24,11 +24,9 @@ describe('request body schemas', () => {
           displayOrder: 0,
           mustFill: false,
           comment: null,
-          fields: [
+          assetBindings: [
             {
-              id: 'header-asset-0',
-              kind: 'asset',
-              label: 'Asset principal',
+              fieldKey: 'logoAsset',
               assetId: '550e8400-e29b-41d4-a716-446655440001',
               keywordText: 'Hola',
             },
