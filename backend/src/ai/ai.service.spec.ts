@@ -35,6 +35,25 @@ function createConfigService(values: ConfigValues): ConfigService {
         mockPrisma as unknown as PrismaService,
     );
     }
+function createService(
+  values: ConfigValues = {},
+  prismaOverrides: Partial<PrismaService> = {},
+) {
+  const prisma = {
+    templates: {
+      findFirst: jest.fn(),
+    },
+    brand_kit: {
+      findFirst: jest.fn(),
+    },
+    ...prismaOverrides,
+  } as unknown as PrismaService;
+
+  return {
+    service: new AiService(createConfigService(values), prisma),
+    prisma,
+  };
+}
 
     // ─── Fixture factories ────────────────────────────────────────────────────────
 
@@ -149,6 +168,25 @@ function createConfigService(values: ConfigValues): ConfigService {
     };
 
     function mockAiProviderResponse(text: string) {
+    (prisma.templates.findFirst as jest.Mock).mockResolvedValue({
+      id: 'weekly-brief',
+      layout: [
+        {
+          block_type: 'headerLeft',
+          row: 0,
+          grid_column: 0,
+          display_order: 0,
+        },
+      ],
+    });
+    (prisma.brand_kit.findFirst as jest.Mock).mockResolvedValue({
+      id: 'nestle-corporate',
+      name: 'Nestle Corporate',
+      brandkit_assets: [],
+      color_palette: [],
+      font_groups: null,
+    });
+
     global.fetch = jest.fn().mockResolvedValue({
         ok: true,
         json: () =>

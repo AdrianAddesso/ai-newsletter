@@ -1,6 +1,7 @@
 import {
   BadGatewayException,
   BadRequestException,
+  HttpException,
   Injectable,
   Logger,
   NotFoundException,
@@ -16,7 +17,6 @@ import {
 import {
   GenerateNewsletterRequestDto,
   GenerateNewsletterResponseDto,
-  GeneratedNewsletterBlockDto,
 } from './dto/generate-newsletter.dto';
 import { AiConfigResponseDto, UpdateAiConfigDto } from './dto/ai-config.dto';
 import {
@@ -192,6 +192,164 @@ import { PrismaService } from '../prisma/prisma.service';
 
         const responseBody = await this.callAiProvider(
         payload,
+  async generateNewsletter(
+    request: GenerateNewsletterRequestDto,
+  ): Promise<GenerateNewsletterResponseDto> {
+    const template = await this.prisma.templates.findFirst({
+      where: {
+        id: request.templateId,
+        deleted_at: null,
+      },
+      select: {
+        id: true,
+        layout: true,
+      },
+    });
+
+    if (!template) {
+      throw new NotFoundException('No se encontro el template solicitado.');
+    }
+
+    const brandKit = await this.prisma.brand_kit.findFirst({
+      where: {
+        id: request.brandKitId,
+        deleted_at: null,
+        active: true,
+      },
+      select: {
+        id: true,
+        name: true,
+        brandkit_assets: {
+          where: {
+            deleted_at: null,
+            assets: {
+              is: {
+                deleted_at: null,
+              },
+            },
+          },
+          select: {
+            assets: {
+              select: {
+                id: true,
+                name: true,
+                type: true,
+              },
+            },
+          },
+        },
+        color_palette: {
+          where: {
+            deleted_at: null,
+            colors: {
+              is: {
+                deleted_at: null,
+              },
+            },
+          },
+          select: {
+            colors: {
+              select: {
+                id: true,
+                name: true,
+                hex: true,
+              },
+            },
+          },
+        },
+        font_groups: {
+          select: {
+            name: true,
+            fonts: {
+              where: {
+                deleted_at: null,
+              },
+              select: {
+                id: true,
+                name: true,
+                style: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!brandKit) {
+      throw new NotFoundException('No se encontro el brand kit solicitado.');
+    }
+
+    const templateBlocks = buildNewsletterBlocksFromLayout(template.layout);
+    const prompt = this.buildNewsletterGenerationPrompt(
+      request,
+      template.layout,
+      {
+        name: brandKit.name,
+        assets: brandKit.brandkit_assets.map(({ assets }) => ({
+          id: assets.id,
+          name: assets.name,
+          type: assets.type,
+        })),
+        colors: brandKit.color_palette.map(({ colors }) => ({
+          id: colors.id,
+          name: colors.name,
+          hex: colors.hex,
+        })),
+        fonts: (brandKit.font_groups?.fonts ?? []).map((font) => ({
+          id: font.id,
+          name: font.name,
+          style: font.style,
+          groupName: brandKit.font_groups?.name ?? '',
+        })),
+      },
+    );
+    let generatedValues: Map<string, Record<string, string | null | undefined>>;
+
+    try {
+      const generatedText = await this.generateNewsletterWithAi(prompt);
+      generatedValues = this.parseGeneratedNewsletterBlocks(
+        generatedText,
+        templateBlocks,
+      );
+    } catch (error) {
+      if (!this.shouldFallbackToUserContent(error)) {
+        throw error;
+      }
+
+      this.logger.warn(
+        `AI generateNewsletter fallback activated for template=${request.templateId} brandKit=${request.brandKitId}`,
+      );
+      generatedValues = this.buildUserContentFallbackValues(
+        request,
+        templateBlocks,
+        (brandKit.font_groups?.fonts ?? []).map((font) => font.name),
+      );
+    }
+
+    return {
+      blocks: buildNewsletterBlocksFromLayout(template.layout, generatedValues),
+    };
+  }
+
+  private readEnv(key: string): string | null {
+    const value = this.configService.get<string>(key)?.trim();
+    return value ? value : null;
+  }
+
+  private async improveTextWithAi(
+    originalText: string,
+  ): Promise<ImproveTextResponseDto> {
+    const responseBody = await this.callAiProvider(
+      this.buildTextImprovementPayload(originalText),
+      this.textImprovementPublicErrorMessage,
+      'improveText',
+    );
+
+    return {
+      originalText,
+      improvedText: this.extractNestleText(
+        responseBody,
+        this.extractNestleModelName(),
         this.textImprovementPublicErrorMessage,
         'improveText',
         );
@@ -424,6 +582,219 @@ import { PrismaService } from '../prisma/prisma.service';
         updated_at: row.updated_at,
         };
     }
+    const templateBlockMap = new Map(
+      templateBlocks.map((block) => [block.id, block]),
+    );
+    const generatedValues = new Map<
+      string,
+      Record<string, string | null | undefined>
+    >();
+
+    blockSchema.data.blocks.forEach((block) => {
+      const templateBlock = templateBlockMap.get(block.blockId);
+
+      if (!templateBlock) {
+        return;
+      }
+
+      const defaultValues = parseBlockValues(templateBlock.content);
+      const nextValues = Object.fromEntries(
+        templateBlock.editFields.map((field) => [
+          field.key,
+          this.normalizeGeneratedFieldValue(
+            field,
+            block.values[field.key],
+            defaultValues[field.key] ?? '',
+          ),
+        ]),
+      );
+
+      if (Object.keys(nextValues).length > 0) {
+        generatedValues.set(block.blockId, nextValues);
+      }
+    });
+
+    return generatedValues;
+  }
+
+  private normalizeGeneratedFieldValue(
+    field: BlockEditField,
+    value: string | null | undefined,
+    defaultValue: string,
+  ): string {
+    if (field.type === 'image-asset') {
+      return '';
+    }
+
+    if (field.type === 'url') {
+      return this.isValidHttpUrl(value) ? value!.trim() : '';
+    }
+
+    if (field.type === 'color') {
+      return value?.trim() || defaultValue;
+    }
+
+    return value?.trim() || defaultValue;
+  }
+
+  private buildUserContentFallbackValues(
+    request: GenerateNewsletterRequestDto,
+    templateBlocks: GenerateNewsletterResponseDto['blocks'],
+    availableFontNames: string[],
+  ): Map<string, Record<string, string | null | undefined>> {
+    const firstKeyMessage = request.keyMessages[0]?.trim() ?? '';
+    const allKeyMessages = request.keyMessages
+      .map((message) => message.trim())
+      .filter(Boolean)
+      .join(' ');
+    const firstValidLink =
+      request.linksOrSources.find((link) => this.isValidHttpUrl(link))?.trim() ??
+      '';
+    const fallbackByFieldKey: Record<string, string> = {
+      title: request.topic.trim(),
+      subtitle: request.objective.trim() || request.audience.trim(),
+      text: allKeyMessages || request.objective.trim(),
+      bodyText: allKeyMessages || request.additionalContext?.trim() || '',
+      introText: request.objective.trim() || firstKeyMessage,
+      closingText:
+        request.additionalContext?.trim() ||
+        request.contact?.trim() ||
+        request.tone.trim(),
+      primaryText: allKeyMessages || request.objective.trim(),
+      secondaryText:
+        request.additionalContext?.trim() ||
+        request.audience.trim() ||
+        request.tone.trim(),
+      label: firstKeyMessage || request.topic.trim(),
+      topLabel: request.topic.trim(),
+      bottomLabel: request.tone.trim() || request.audience.trim(),
+      buttonLabel: request.cta?.trim() || request.topic.trim(),
+      href: firstValidLink,
+      altText: request.topic.trim(),
+      iconName: request.topic.trim(),
+      fontFamily: availableFontNames[0] ?? '',
+    };
+    const fallbackTextQueue = [
+      request.topic.trim(),
+      request.objective.trim(),
+      request.audience.trim(),
+      allKeyMessages,
+      request.additionalContext?.trim() ?? '',
+      request.relevantDates?.trim() ?? '',
+      request.contact?.trim() ?? '',
+      request.tone.trim(),
+    ].filter(Boolean);
+
+    return new Map(
+      templateBlocks.map((block) => {
+        const defaultValues = parseBlockValues(block.content);
+        let queueIndex = 0;
+        const values = Object.fromEntries(
+          block.editFields.map((field) => {
+            const fieldKey = field.key.trim();
+            const normalizedKey = fieldKey.toLowerCase();
+            const defaultValue = defaultValues[field.key] ?? '';
+            let value = defaultValue;
+
+            if (field.type === 'image-asset') {
+              value = '';
+            } else if (field.type === 'url') {
+              value = firstValidLink || defaultValue;
+            } else if (field.type === 'font-family') {
+              value = fallbackByFieldKey.fontFamily || defaultValue;
+            } else if (field.type === 'font-size' || field.type === 'font-style') {
+              value = defaultValue;
+            } else if (field.type === 'color') {
+              value = defaultValue;
+            } else {
+              value =
+                fallbackByFieldKey[fieldKey] ||
+                fallbackByFieldKey[normalizedKey] ||
+                this.pickFallbackTextForField(
+                  normalizedKey,
+                  fallbackTextQueue,
+                  queueIndex,
+                ) ||
+                defaultValue;
+
+              if (
+                !fallbackByFieldKey[fieldKey] &&
+                !fallbackByFieldKey[normalizedKey] &&
+                value
+              ) {
+                queueIndex += 1;
+              }
+            }
+
+            return [field.key, value];
+          }),
+        );
+
+        return [block.id, values];
+      }),
+    );
+  }
+
+  private pickFallbackTextForField(
+    fieldKey: string,
+    fallbackTextQueue: string[],
+    queueIndex: number,
+  ): string {
+    if (fieldKey.includes('title')) {
+      return fallbackTextQueue[0] ?? '';
+    }
+
+    if (fieldKey.includes('subtitle')) {
+      return fallbackTextQueue[1] ?? fallbackTextQueue[0] ?? '';
+    }
+
+    if (
+      fieldKey.includes('text') ||
+      fieldKey.includes('label') ||
+      fieldKey.includes('copy')
+    ) {
+      return (
+        fallbackTextQueue[queueIndex] ??
+        fallbackTextQueue[fallbackTextQueue.length - 1] ??
+        ''
+      );
+    }
+
+    return fallbackTextQueue[queueIndex] ?? '';
+  }
+
+  private shouldFallbackToUserContent(error: unknown): boolean {
+    if (error instanceof BadGatewayException) {
+      return true;
+    }
+
+    if (error instanceof ServiceUnavailableException) {
+      return true;
+    }
+
+    if (error instanceof TypeError) {
+      return true;
+    }
+
+    if (error instanceof HttpException) {
+      return false;
+    }
+
+    return true;
+  }
+
+  private isValidHttpUrl(value: string | null | undefined): boolean {
+    if (!value?.trim()) {
+      return false;
+    }
+
+    try {
+      const url = new URL(value.trim());
+      return url.protocol === 'http:' || url.protocol === 'https:';
+    } catch {
+      return false;
+    }
+  }
 
     // ─── Private: Utilities ───────────────────────────────────────────────────
 

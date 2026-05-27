@@ -1,5 +1,9 @@
 import axios from 'axios'
-import type { NewsletterTemplate, TemplateGenerationField } from '../types/newsletter'
+import type {
+  NewsletterTemplate,
+  TemplateGenerationField,
+  TemplateLayoutBlock,
+} from '../types/newsletter'
 import { defaultOptionalGenerationFields } from '../utils/newsletterTemplates'
 
 type TemplateApiResponse = {
@@ -7,7 +11,7 @@ type TemplateApiResponse = {
   name: string
   description: string | null
   area: NewsletterTemplate['area']
-  layout: string | null
+  layout: TemplateLayoutBlock[] | null
   orientation: 'PORTRAIT' | 'LANDSCAPE'
   stateCode: string
   stateName: string
@@ -24,10 +28,20 @@ export async function listTemplates(): Promise<NewsletterTemplate[]> {
     try {
       const rawLayout = typeof template.layout === 'string' ? JSON.parse(template.layout) : template.layout;
       if (Array.isArray(rawLayout)) {
-        parsedLayout = rawLayout.map((item: any) => ({
-          ...item,
-          block_type: item.block_type || item.type,
-        }));
+        parsedLayout = rawLayout
+          .map((item: any) => ({
+            ...item,
+            block_type:
+              typeof item?.block_type === 'string' && item.block_type.trim().length > 0
+                ? item.block_type
+                : typeof item?.type === 'string' && item.type.trim().length > 0
+                  ? item.type
+                  : null,
+          }))
+          .filter(
+            (item): item is TemplateLayoutBlock =>
+              typeof item.block_type === 'string' && item.block_type.trim().length > 0,
+          );
       } else {
         parsedLayout = rawLayout;
       }
@@ -52,10 +66,20 @@ export async function getTemplateById(id: string): Promise<NewsletterTemplate> {
   try {
     const rawLayout = typeof response.data.layout === 'string' ? JSON.parse(response.data.layout) : response.data.layout;
     if (Array.isArray(rawLayout)) {
-      parsedLayout = rawLayout.map((item: any) => ({
-        ...item,
-        block_type: item.block_type || item.type,
-      }));
+      parsedLayout = rawLayout
+        .map((item: any) => ({
+          ...item,
+          block_type:
+            typeof item?.block_type === 'string' && item.block_type.trim().length > 0
+              ? item.block_type
+              : typeof item?.type === 'string' && item.type.trim().length > 0
+                ? item.type
+                : null,
+        }))
+        .filter(
+          (item): item is TemplateLayoutBlock =>
+            typeof item.block_type === 'string' && item.block_type.trim().length > 0,
+        );
     } else {
       parsedLayout = rawLayout;
     }

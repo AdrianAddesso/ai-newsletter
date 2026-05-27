@@ -14,15 +14,12 @@ export function ImageBackgroundFullRenderer({
   backgroundImage = "https://placehold.net/400x400.png",
   imageUrl = "https://placehold.net/4.png",
 }: Props) {
-  const {
-    imageUrl: contentImageUrl = imageUrl,
-    altText = "Image",
-    overlayColor,
-  } = parseContent(block.content);
+  const { altText = "Image", overlayColor } = parseContent(block.content);
   const bgSx = backgroundImage
     ? {
         backgroundImage: `url("${backgroundImage}")`,
-        backgroundSize: "cover",
+        backgroundSize: "contain",
+        backgroundRepeat: "no-repeat",
         backgroundPosition: "center",
       }
     : {};
@@ -55,7 +52,7 @@ export function ImageBackgroundFullRenderer({
       >
         <CardMedia
           component="img"
-          image={contentImageUrl}
+          image={imageUrl}
           alt={altText}
           sx={{ width: "80%", objectFit: "cover", borderRadius: 1 }}
         />

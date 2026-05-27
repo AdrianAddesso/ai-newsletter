@@ -178,6 +178,7 @@ CREATE TABLE public.assets (
 
 CREATE TABLE public.block_content (
     id uuid NOT NULL DEFAULT gen_random_uuid(),
+    block_type text NOT NULL,
     content text,
     display_order integer,
     must_fill boolean NOT NULL DEFAULT false,
@@ -320,6 +321,7 @@ CREATE TABLE public.assets_block (
     id uuid NOT NULL DEFAULT gen_random_uuid(),
     block_id uuid NOT NULL,
     asset_id uuid NOT NULL,
+    field_key text NOT NULL,
     keyword_text text,
     created_at timestamp with time zone NOT NULL DEFAULT now(),
     updated_at timestamp with time zone NOT NULL DEFAULT now(),
@@ -382,6 +384,7 @@ CREATE TABLE public.newsletters (
     state public.newsletter_state NOT NULL DEFAULT 'DRAFT'::public.newsletter_state,
     language public.newsletter_language NOT NULL DEFAULT 'SPA'::public.newsletter_language,
     format public.newsletter_format NOT NULL DEFAULT 'PORTRAIT'::public.newsletter_format,
+    generation_content jsonb,
     CONSTRAINT newsletters_pkey PRIMARY KEY (id)
 );
 

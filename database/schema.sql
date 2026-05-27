@@ -16,14 +16,21 @@ CREATE TABLE public.assets (
   CONSTRAINT assets_pkey PRIMARY KEY (id)
 );
 CREATE TABLE public.assets_block (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
   block_id uuid NOT NULL,
   asset_id uuid NOT NULL,
-  CONSTRAINT assets_block_pkey PRIMARY KEY (block_id, asset_id),
+  field_key text NOT NULL,
+  keyword_text text,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  deleted_at timestamp with time zone,
+  CONSTRAINT assets_block_pkey PRIMARY KEY (id),
   CONSTRAINT assets_block_block_id_fkey FOREIGN KEY (block_id) REFERENCES public.block_content(id),
   CONSTRAINT assets_block_asset_id_fkey FOREIGN KEY (asset_id) REFERENCES public.assets(id)
 );
 CREATE TABLE public.block_content (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
+  block_type text NOT NULL,
   content text,
   display_order integer,
   must_fill boolean NOT NULL DEFAULT false,
@@ -145,6 +152,7 @@ CREATE TABLE public.newsletters (
   state USER-DEFINED NOT NULL DEFAULT 'DRAFT'::newsletter_state,
   language USER-DEFINED NOT NULL DEFAULT 'SPA'::newsletter_language,
   format USER-DEFINED NOT NULL DEFAULT 'PORTRAIT'::newsletter_format,
+  generation_content jsonb,
   CONSTRAINT newsletters_pkey PRIMARY KEY (id),
   CONSTRAINT newsletters_area_id_fkey FOREIGN KEY (area_id) REFERENCES public.areas(id),
   CONSTRAINT newsletters_brand_kit_id_fkey FOREIGN KEY (brand_kit_id) REFERENCES public.brand_kit(id),

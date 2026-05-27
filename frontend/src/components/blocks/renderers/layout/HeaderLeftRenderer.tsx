@@ -3,7 +3,7 @@ import { useBlockPreviewUrls } from "../../../../hooks/useBlockPreviewUrls";
 import type { BlockInstance } from "@shared/types/block.types";
 import {
   parseContent,
-  resolveTypographySx,
+  resolveContentTypographySx,
 } from "../../../../utils/blockContent";
 
 const nestleIsotypeStorageKey = "assets/logos/nestle/nestle_isotype.png";
@@ -18,14 +18,10 @@ export function HeaderLeftRenderer({
   block,
   imageUrl,
 }: Props) {
-  const {
-    title = "",
-    subtitle = "",
-    logoUrl = "",
-    fontSize,
-    typographyStyle,
-  } = parseContent(block.content);
-  const typographySx = resolveTypographySx(fontSize, typographyStyle);
+  const values = parseContent(block.content);
+  const { title = "", subtitle = "" } = values;
+  const titleTypographySx = resolveContentTypographySx(values, "title");
+  const subtitleTypographySx = resolveContentTypographySx(values, "subtitle");
   const previewUrls = useBlockPreviewUrls([nestleIsotypeStorageKey], "LOGO");
   const defaultImageUrl = previewUrls[nestleIsotypeStorageKey] ?? "";
   const backgroundColor = "#FF595A";
@@ -58,7 +54,7 @@ export function HeaderLeftRenderer({
       >
         <CardMedia
           component="img"
-          image={(imageUrl ?? logoUrl) || defaultImageUrl}
+          image={imageUrl || defaultImageUrl}
           alt="Logo"
           sx={{
             height: 60,
@@ -74,7 +70,7 @@ export function HeaderLeftRenderer({
                 variant="subtitle2"
                 color="common.white"
                 noWrap
-                sx={{ ...typographySx }}
+                sx={{ ...titleTypographySx }}
               >
                 {title}
               </Typography>
@@ -84,7 +80,7 @@ export function HeaderLeftRenderer({
                 variant="caption"
                 color="common.white"
                 noWrap
-                sx={{ ...typographySx }}
+                sx={{ ...subtitleTypographySx }}
               >
                 {subtitle}
               </Typography>

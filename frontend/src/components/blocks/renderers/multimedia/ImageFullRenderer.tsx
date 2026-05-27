@@ -12,8 +12,7 @@ export function ImageFullRenderer({
   block,
   imageUrl = "https://placehold.net/400x400.png",
 }: Props) {
-  const { imageUrl: contentImageUrl = imageUrl, altText = "Full image" } =
-    parseContent(block.content);
+  const { altText = "Full image" } = parseContent(block.content);
 
   return (
     <Card
@@ -32,7 +31,7 @@ export function ImageFullRenderer({
     >
       <CardMedia
         component="img"
-        image={contentImageUrl}
+        image={imageUrl}
         alt={altText}
         sx={{ width: "100%", flexGrow: 1, objectFit: "cover" }}
       />

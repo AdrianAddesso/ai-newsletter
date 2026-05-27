@@ -1,5 +1,6 @@
 import axios from 'axios'
 import type { AreaName } from '../types/newsletter'
+import type { NewsletterBlock } from '../types/newsletter'
 
 export type ImproveTextRequest = {
   text: string
@@ -8,13 +9,6 @@ export type ImproveTextRequest = {
 export type ImproveTextResponse = {
   originalText: string
   improvedText: string
-}
-
-export type GeneratedNewsletterBlock = {
-  id: string
-  name: string
-  text: string
-  backgroundColor: string
 }
 
 export type GenerateNewsletterRequest = {
@@ -35,7 +29,7 @@ export type GenerateNewsletterRequest = {
 }
 
 export type GenerateNewsletterResponse = {
-  blocks: GeneratedNewsletterBlock[]
+  blocks: NewsletterBlock[]
 }
 
 import { AiConfigType } from "@shared/enums/ai-config-type.enum";

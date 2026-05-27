@@ -10,7 +10,7 @@ export class ImageFullBlock extends BlockDefinition {
   readonly mustFill = true;
   readonly layout = { minCols: 1, minRows: 1, resizable: true };
   readonly editFields = [
-    { key: 'imageUrl', label: 'URL de imagen', type: 'image-url' as const, required: true, defaultValue: 'https://placehold.net/4.png' },
+    { key: 'imageAsset', label: 'Imagen', type: 'image-asset' as const, required: true, assetTypes: ['IMAGE'] as const },
     { key: 'altText', label: 'Texto alternativo', type: 'text' as const, defaultValue: 'Full image' },
   ];
 }

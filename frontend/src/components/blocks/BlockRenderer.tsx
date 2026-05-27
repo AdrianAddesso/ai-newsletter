@@ -1,9 +1,10 @@
 import { Box, Typography } from "@mui/material";
+import type { ElementType } from "react";
 import type { ColumnObject } from "../../interfaces/interfaces.templates";
 import * as AllRenderers from "./renderers";
 
 // Map your exact block types to their specific renderer components
-    const RendererMap: Record<string, React.ElementType> = {
+    const RendererMap: Record<string, ElementType> = {
       // BASE
         ctaAlternative: AllRenderers.CTAAlternativeRenderer,
         ctaFull: AllRenderers.CTAFullRenderer,
@@ -41,9 +42,10 @@ import * as AllRenderers from "./renderers";
     block: ColumnObject;
     editMode?: boolean;
     rowIndex: number;
+    rendererProps?: Record<string, string | null | undefined>;
     }
 
-    export function BlockRenderer({ block, rowIndex, editMode = false }: Props) {
+    export function BlockRenderer({ block, rowIndex, editMode = false, rendererProps = {} }: Props) {
     const blockInstance = {
         localId: block.id,
         type: block.type ?? "",
@@ -56,7 +58,7 @@ import * as AllRenderers from "./renderers";
 
     // If a matching renderer is found, render it
     if (SelectedRenderer) {
-        return <SelectedRenderer block={blockInstance} editMode={editMode} />;
+        return <SelectedRenderer block={blockInstance} editMode={editMode} {...rendererProps} />;
     }
 
   // Default fallback for unknown or unmapped types

@@ -29,12 +29,14 @@ export function ReviewNewsletterPage({ vm }: Props) {
             newsletterComment={vm.newsletter.comment}
             onSaveNewsletterComment={async () => {}}
             onSaveBlockComment={async () => {}}
-            onSendFeedback={() =>
-              void vm.transitionState('CHANGES_REQUESTED')
-            }
-            onApprove={() =>
-              void vm.transitionState('APPROVED')
-            }
+            onSendFeedback={async () => {
+              await vm.transitionState('CHANGES_REQUESTED')
+              vm.navigate('/dashboard')
+            }}
+            onApprove={async () => {
+              await vm.transitionState('APPROVED')
+              vm.navigate('/dashboard')
+            }}
           />
         )
       }

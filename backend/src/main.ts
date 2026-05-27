@@ -38,4 +38,8 @@ async function bootstrap() {
 
   await app.listen(process.env.PORT ?? 3000);
 }
-void bootstrap();
+
+void bootstrap().catch((error: unknown) => {
+  console.error('Backend bootstrap failed', error);
+  process.exit(1);
+});
