@@ -303,11 +303,7 @@ export function ReviewsPage() {
                               <IconButton
                                 size="small"
                                 color="primary"
-                                onClick={() =>
-                                  navigate(`/reviews/${review.id}`, {
-                                    state: { review },
-                                  })
-                                }
+                                onClick={() => navigate(`/editarNewsletter/${review.id}`)}
                               >
                                 <ReviewIcon fontSize="small" />
                               </IconButton>

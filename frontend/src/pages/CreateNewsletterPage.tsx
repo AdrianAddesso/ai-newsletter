@@ -4,7 +4,7 @@ import { Alert, Box, CircularProgress, Stack, Typography } from "@mui/material";
 import { useAuth } from "../contexts/AuthContext";
 import { TemplateCarousel } from "./newsletter/components/TemplateCarousel";
 import { GenerationForm } from "./newsletter/components/GenerationForm";
-import CreationFlowStepper from "./newsletter/components/CreationFlowStepper";
+import { NewsletterStepper } from "./newsletter/components/NewsletterStepper";
 
 import { generateNewsletter, type GenerateNewsletterRequest } from "../api/ai";
 import type { NewsletterTemplate } from "../types/newsletter";
@@ -160,8 +160,12 @@ function CreateNewsletterPage() {
         // 3. Navegar a EditNewsletterPage con el ID
         navigate(`/editarNewsletter/${newsletterId}`);
       } catch (error) {
+        const msg =
+          (error as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+          (error instanceof Error ? error.message : null) ??
+          "No se pudo generar el newsletter en este momento."
         console.error("Error al generar newsletter:", error);
-        setAiError("No se pudo generar el newsletter en este momento.");
+        setAiError(msg);
       } finally {
         setIsGenerating(false);
       }
@@ -189,11 +193,7 @@ function CreateNewsletterPage() {
       component="main"
       sx={{ minHeight: "calc(100vh - 64px)", bgcolor: "background.default" }}
     >
-      <CreationFlowStepper
-        activeStep={0}
-        newsletterId={undefined}
-        userRole={user?.role ?? "USER"}
-      />
+      <NewsletterStepper activeStep={0} />
       <Box
         sx={{
           display: "grid",
