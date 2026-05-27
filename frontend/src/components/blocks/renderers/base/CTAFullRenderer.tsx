@@ -1,6 +1,9 @@
 import { Card, CardActions, Button } from "@mui/material";
 import type { BlockInstance } from "@shared/types/block.types";
-import { parseContent } from "../../../../utils/blockContent";
+import {
+  parseContent,
+  resolveContentTypographySx,
+} from "../../../../utils/blockContent";
 
 interface Props {
   block: BlockInstance;
@@ -8,7 +11,13 @@ interface Props {
 }
 
 export function CTAFullRenderer({ block }: Props) {
-  const { buttonLabel = "Click here", href = "", bgColor } = parseContent(block.content);
+  const values = parseContent(block.content);
+  const {
+    buttonLabel = "Click here",
+    href = "",
+    bgColor,
+  } = values;
+  const typographySx = resolveContentTypographySx(values, "buttonLabel");
 
   return (
     <Card sx={{
@@ -26,7 +35,7 @@ export function CTAFullRenderer({ block }: Props) {
     }}>
       <CardActions sx={{ flexGrow: 1, p: 1.5 }}>
         <Button variant="contained" size="small" disableElevation fullWidth href={href || undefined}
-          sx={{ borderRadius: 1.5, textTransform: "none" }}>
+          sx={{ borderRadius: 1.5, textTransform: "none", ...typographySx }}>
           {buttonLabel}
         </Button>
       </CardActions>

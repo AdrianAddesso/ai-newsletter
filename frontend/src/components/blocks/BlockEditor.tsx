@@ -199,10 +199,14 @@ function FieldInput({ field, value, onChange }: FieldInputProps) {
     );
   }
 
+  if (field.type === "font-family") {
+    return <TextField {...commonProps} />;
+  }
+
   return (
     <TextField
       {...commonProps}
-      type={field.type === "url" || field.type === "image-url" ? "url" : "text"}
+      type={field.type === "url" ? "url" : "text"}
     />
   );
 }

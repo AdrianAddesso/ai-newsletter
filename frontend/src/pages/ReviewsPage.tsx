@@ -34,7 +34,6 @@ import {
 import { useAuth, type User } from '../contexts/AuthContext'
 import SearchBar from '../components/SearchBar'
 import { useLocation } from 'react-router'
-import { seedNewsletterIfMissing } from '../api/newsletters'
 
 type NewsletterReviewStatus = Extract<
   NewsletterStatusValue,
@@ -147,10 +146,6 @@ export function ReviewsPage() {
 
   const [reviews, setReviews] = useState<NewsletterReview[]>(initialReviews)
   const appliedRef = useRef<string | null>(null)
-
-  useEffect(() => {
-    initialReviews.forEach((r) => seedNewsletterIfMissing(r.id, r.status))
-  }, [])
 
   useEffect(() => {
     const { updatedId, newStatus } = (location.state ?? {}) as { updatedId?: string; newStatus?: string }

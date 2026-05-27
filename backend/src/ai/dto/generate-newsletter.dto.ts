@@ -1,4 +1,9 @@
 import { area_name } from '@prisma/client';
+import type {
+  BlockAssetType,
+  BlockContentType,
+  BlockEditField,
+} from '@shared/types/block.types';
 import { z } from 'zod';
 
 const requiredStringSchema = z
@@ -41,9 +46,26 @@ export const generateNewsletterBodySchema = z
 
 export interface GeneratedNewsletterBlockDto {
   id: string;
+  type: string;
+  category: BlockContentType;
   name: string;
-  text: string;
-  backgroundColor: string;
+  content: string | null;
+  row: number;
+  gridColumn: number;
+  displayOrder: number;
+  mustFill: boolean;
+  comment: string | null;
+  editFields: BlockEditField[];
+  assetBindings: GeneratedNewsletterAssetBindingDto[];
+}
+
+export interface GeneratedNewsletterAssetBindingDto {
+  fieldKey: string;
+  assetId: string;
+  assetName: string | null;
+  assetUrl: string | null;
+  assetType: BlockAssetType;
+  keywordText?: string | null;
 }
 
 export interface GenerateNewsletterResponseDto {

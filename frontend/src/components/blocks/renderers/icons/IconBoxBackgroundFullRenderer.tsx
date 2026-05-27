@@ -2,7 +2,7 @@ import { Card, Typography, Box, CardMedia, Grid, Icon } from "@mui/material";
 import type { BlockInstance } from "@shared/types/block.types";
 import {
   parseContent,
-  resolveTypographySx,
+  resolveContentTypographySx,
 } from "../../../../utils/blockContent";
 
 interface IconItem {
@@ -32,18 +32,18 @@ export function IconBoxBackgroundFullRenderer({
   titleContent = null,
   iconItems = DEFAULT_ICON_ITEMS,
 }: Props) {
+  const values = parseContent(block.content);
   const {
     iconName = "description",
     label = titleContent ?? "Lorem ipsum dolor sit amet consectetur.",
     bgColor,
-    fontSize,
-    typographyStyle,
-  } = parseContent(block.content);
-  const typographySx = resolveTypographySx(fontSize, typographyStyle);
+  } = values;
+  const typographySx = resolveContentTypographySx(values, "label");
   const bgSx = backgroundImage
     ? {
         backgroundImage: `url("${backgroundImage}")`,
-        backgroundSize: "cover",
+        backgroundSize: "contain",
+        backgroundRepeat: "no-repeat",
         backgroundPosition: "center",
       }
     : {};

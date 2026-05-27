@@ -2,7 +2,7 @@ import { Card, Typography, Box } from "@mui/material";
 import type { BlockInstance } from "@shared/types/block.types";
 import {
   parseContent,
-  resolveTypographySx,
+  resolveContentTypographySx,
 } from "../../../../utils/blockContent";
 
 interface Props {
@@ -17,18 +17,19 @@ export function TextDoubleCenterBackgroundFullRenderer({
   backgroundImage = "https://placehold.net/400x400.png",
   secondaryContent = null,
 }: Props) {
+  const values = parseContent(block.content);
   const {
     primaryText = "Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat.",
     secondaryText = secondaryContent ?? "Consequuntur eum voluptas iure repellat voluptate, nisi ipsam explicabo fugit architecto sint adipisci.",
     bgColor,
-    fontSize,
-    typographyStyle,
-  } = parseContent(block.content);
-  const typographySx = resolveTypographySx(fontSize, typographyStyle);
+  } = values;
+  const primaryTypographySx = resolveContentTypographySx(values, "primaryText");
+  const secondaryTypographySx = resolveContentTypographySx(values, "secondaryText");
   const bgSx = backgroundImage
     ? {
         backgroundImage: `url("${backgroundImage}")`,
-        backgroundSize: "cover",
+        backgroundSize: "contain",
+        backgroundRepeat: "no-repeat",
         backgroundPosition: "center",
       }
     : {};
@@ -65,14 +66,14 @@ export function TextDoubleCenterBackgroundFullRenderer({
         <Typography
           variant="body2"
           color="text.secondary"
-          sx={{ width: "90%", textAlign: "center", ...typographySx }}
+          sx={{ width: "90%", textAlign: "center", ...primaryTypographySx }}
         >
           {primaryText}
         </Typography>
         <Typography
           variant="body2"
           color="text.secondary"
-          sx={{ width: "90%", textAlign: "center", ...typographySx }}
+          sx={{ width: "90%", textAlign: "center", ...secondaryTypographySx }}
         >
           {secondaryText}
         </Typography>

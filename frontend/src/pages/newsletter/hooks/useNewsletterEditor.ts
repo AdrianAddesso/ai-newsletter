@@ -1,32 +1,32 @@
-import { useCallback,useEffect,useMemo,useState } from 'react'
-import { useNavigate,useParams } from 'react-router'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useNavigate, useParams } from 'react-router'
 
 import { useAuth } from '../../../contexts/AuthContext'
 import { useNotification } from '../../../hooks/useNotification'
 
-import { getNewsletter,updateNewsletter } from '../../../api/newsletters'
+import {
+  getNewsletter,
+  updateNewsletter,
+  updateNewsletterStatus,
+} from '../../../api/newsletters'
 import { listTemplates } from '../../../api/templates'
-import { listBrandKits,getBrandKitResources } from '../../../api/brand-kits'
-import { improveText,generateNewsletter } from '../../../api/ai'
+import { getBrandKitResources, listBrandKits } from '../../../api/brand-kits'
+import { generateNewsletter, improveText } from '../../../api/ai'
 
 import type {
   Newsletter,
   NewsletterBlock,
   NewsletterState,
   NewsletterTemplate,
-  NewsletterAssetSelection,
   ExportFormat,
   ExportOption,
 } from '../../../types/newsletter'
 
-import type {
-  BrandKit,
-  BrandKitResources,
-} from '../../../api/brand-kits'
+import type { BrandKit, BrandKitResources } from '../../../api/brand-kits'
 
-import type {
-  GenerateNewsletterRequest,
-} from '../../../api/ai'
+import type { GenerateNewsletterRequest } from '../../../api/ai'
+import { updateBlockValue } from '../../../utils/newsletterBlocks'
+import { parseContent } from '../../../utils/blockContent'
 
 export function useNewsletterEditor() {
   const navigate = useNavigate()
@@ -34,35 +34,36 @@ export function useNewsletterEditor() {
   const { user } = useAuth()
   const { success } = useNotification()
 
-  const [newsletter,setNewsletter] = useState<Newsletter | null>(null)
-  const [isLoading,setIsLoading] = useState(true)
-  const [error,setError] = useState<string | null>(null)
-  const [selectedBlockId,setSelectedBlockId] = useState('')
-  const [showRegenerationForm,setShowRegenerationForm] = useState(false)
+  const [newsletter, setNewsletter] = useState<Newsletter | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [selectedBlockId, setSelectedBlockIdState] = useState('')
+  const [showRegenerationForm, setShowRegenerationForm] = useState(false)
+  const [isSavingDraft, setIsSavingDraft] = useState(false)
 
-  const [templates,setTemplates] = useState<NewsletterTemplate[]>([])
-  const [brandKits,setBrandKits] = useState<BrandKit[]>([])
-  const [brandKitResources,setBrandKitResources] =
+  const [templates, setTemplates] = useState<NewsletterTemplate[]>([])
+  const [brandKits, setBrandKits] = useState<BrandKit[]>([])
+  const [brandKitResources, setBrandKitResources] =
     useState<BrandKitResources | null>(null)
 
-  const [exportingFormat,setExportingFormat] =
+  const [exportingFormat, setExportingFormat] =
     useState<ExportFormat | null>(null)
 
   const exportOptions: ExportOption[] = [
     {
-      id:'png',
-      label:'Exportar PNG',
-      format:'PNG',
+      id: 'png',
+      label: 'Exportar PNG',
+      format: 'PNG',
     },
     {
-      id:'pdf',
-      label:'Exportar PDF',
+      id: 'pdf',
+      label: 'Exportar PDF',
       format:'PDF' as ExportFormat,
     },
     {
-      id:'eml',
-      label:'Exportar EML',
-      format:'EML',
+      id: 'eml',
+      label: 'Exportar EML',
+      format: 'EML',
     },
   ]
 
@@ -74,9 +75,9 @@ export function useNewsletterEditor() {
         const data = await getNewsletter(id)
 
         setNewsletter(data)
-        setSelectedBlockId(data.blocks?.[0]?.id ?? '')
+        setSelectedBlockIdState(data.blocks?.[0]?.id ?? '')
 
-        const [templateData,brandKitData] = await Promise.all([
+        const [templateData, brandKitData] = await Promise.all([
           listTemplates(),
           listBrandKits(),
         ])
@@ -85,8 +86,7 @@ export function useNewsletterEditor() {
         setBrandKits(brandKitData)
 
         if (data.brandKitId) {
-          const resources =
-            await getBrandKitResources(data.brandKitId)
+          const resources = await getBrandKitResources(data.brandKitId)
 
           setBrandKitResources(resources)
         }
@@ -100,11 +100,48 @@ export function useNewsletterEditor() {
     void load()
   }, [id])
 
+  useEffect(() => {
+    if (!brandKitResources?.fonts.length || typeof FontFace === 'undefined') {
+      return
+    }
+
+    let cancelled = false
+
+    const loadFonts = async (): Promise<void> => {
+      await Promise.all(
+        brandKitResources.fonts.map(async (font) => {
+          try {
+            const fontFace = new FontFace(font.name, `url(${font.url})`)
+            const loadedFontFace = await fontFace.load()
+
+            if (!cancelled) {
+              document.fonts.add(loadedFontFace)
+            }
+          } catch {
+            return
+          }
+        }),
+      )
+    }
+
+    void loadFonts()
+
+    return () => {
+      cancelled = true
+    }
+  }, [brandKitResources])
+
   const selectedBlock = useMemo(() => {
     return newsletter?.blocks.find(
-      b => b.id === selectedBlockId,
+      (block) => block.id === selectedBlockId,
     )
-  }, [newsletter,selectedBlockId])
+  }, [newsletter, selectedBlockId])
+
+  const selectedTemplate = useMemo(() => {
+    if (!newsletter) return undefined
+
+    return templates.find((template) => template.id === newsletter.templateId)
+  }, [newsletter, templates])
 
   const renderHtml = useCallback(() => {
     if (!newsletter) return ''
@@ -114,9 +151,12 @@ export function useNewsletterEditor() {
       <html>
         <body style="font-family:Arial,sans-serif">
           ${newsletter.blocks.map(block => `
-            <section style="padding:24px;background:${block.backgroundColor}">
+            <section style="padding:24px;background:#ffffff">
               <h2>${block.name}</h2>
-              <p>${block.text}</p>
+              ${Object.values(parseContent<Record<string, string>>(block.content))
+                .filter((value) => typeof value === 'string' && value.trim().length > 0)
+                .map((value) => `<p>${value}</p>`)
+                .join('')}
             </section>
           `).join('')}
         </body>
@@ -133,193 +173,200 @@ export function useNewsletterEditor() {
     })
   }, [newsletter])
 
-  const transitionState = useCallback(async (state: NewsletterState) => {
+  const saveDraft = useCallback(async () => {
     if (!id || !newsletter) return
 
-    const updated = await updateNewsletter(id,{
-      blocks: newsletter.blocks,
-      state,
-    })
-
-    setNewsletter(updated)
-  }, [id,newsletter])
-
-  const handleExport = useCallback(async (format: ExportFormat) => {
-    if (!newsletter) return
-
-    setExportingFormat(format)
+    setIsSavingDraft(true)
 
     try {
-      const html =
-        newsletter.renderedHtml ??
-        renderHtml()
+      const updated = await updateNewsletter(id, {
+        blocks: newsletter.blocks,
+        state: 'DRAFT',
+      })
 
-      switch (format) {
-        case 'EML': {
-          const emlContent = [
-            'X-Unsent: 1',
-            'To: ',
-            'Subject: Newsletter Nestlé',
-            'MIME-Version: 1.0',
-            'Content-Type: text/html; charset=UTF-8',
-            'Content-Transfer-Encoding: 8bit',
-            '',
-            html,
-          ].join('\r\n')
+      setNewsletter(updated)
+      setSelectedBlockIdState((current) =>
+        updated.blocks.some((block) => block.id === current)
+          ? current
+          : (updated.blocks[0]?.id ?? ''),
+      )
+      success('Borrador guardado')
+    } finally {
+      setIsSavingDraft(false)
+    }
+  }, [id,newsletter,success])
 
-          const blob = new Blob(
-            [emlContent],
-            {
-              type:'message/rfc822',
-            },
-          )
+  const transitionState = useCallback(
+    async (state: NewsletterState) => {
+      if (!id || !newsletter) return
 
-          const url = URL.createObjectURL(blob)
+      await updateNewsletter(id, { blocks: newsletter.blocks })
+      const updated = await updateNewsletterStatus(id, state)
 
-          const a = document.createElement('a')
+      setNewsletter(updated)
+    },
+    [id, newsletter],
+  )
 
-          a.href = url
-          a.download = 'newsletter.eml'
+  const handleExport = useCallback(
+    async (format: ExportFormat) => {
+      if (!newsletter) return
 
-          document.body.appendChild(a)
+      setExportingFormat(format)
 
-          a.click()
+      try {
+        const html = newsletter.renderedHtml ?? renderHtml()
 
-          document.body.removeChild(a)
+        switch (format) {
+          case 'EML': {
+            const emlContent = [
+              'X-Unsent: 1',
+              'To: ',
+              'Subject: Newsletter Nestlé',
+              'MIME-Version: 1.0',
+              'Content-Type: text/html; charset=UTF-8',
+              'Content-Transfer-Encoding: 8bit',
+              '',
+              html,
+            ].join('\r\n')
 
-          URL.revokeObjectURL(url)
-
-          break
-        }
-
-        case 'PNG':
-        case 'PDF': {
-          const container =
-            document.createElement('div')
-
-          container.innerHTML = html
-
-          container.style.position = 'fixed'
-          container.style.left = '-99999px'
-          container.style.top = '0'
-          container.style.width = '1200px'
-          container.style.background = '#fff'
-
-          document.body.appendChild(container)
-
-          const html2canvas =
-            (await import('html2canvas')).default
-
-          const canvas =
-            await html2canvas(container,{
-              scale:2,
-              useCORS:true,
-              backgroundColor:'#ffffff',
+            const blob = new Blob([emlContent], {
+              type: 'message/rfc822',
             })
 
-          document.body.removeChild(container)
+            const url = URL.createObjectURL(blob)
 
-          if (format === 'PNG') {
-            const image =
-              canvas.toDataURL('image/png')
+            const a = document.createElement('a')
 
-            const link =
-              document.createElement('a')
+            a.href = url
+            a.download = 'newsletter.eml'
 
-            link.href = image
-            link.download = 'newsletter.png'
+            document.body.appendChild(a)
 
-            link.click()
+            a.click()
+
+            document.body.removeChild(a)
+
+            URL.revokeObjectURL(url)
 
             break
           }
 
-          const { jsPDF } =
-            await import('jspdf')
+          case 'PNG':
+          case 'PDF': {
+            const container = document.createElement('div')
 
-          const pdf =
-            new jsPDF({
-              orientation:'portrait',
-              unit:'px',
-              format:[
-                canvas.width,
-                canvas.height,
-              ],
+            container.innerHTML = html
+
+            container.style.position = 'fixed'
+            container.style.left = '-99999px'
+            container.style.top = '0'
+            container.style.width = '1200px'
+            container.style.background = '#fff'
+
+            document.body.appendChild(container)
+
+            const html2canvas = (await import('html2canvas')).default
+
+            const canvas = await html2canvas(container, {
+              scale: 2,
+              useCORS: true,
+              backgroundColor: '#ffffff',
             })
 
-          const image =
-            canvas.toDataURL('image/png')
+            document.body.removeChild(container)
 
-          pdf.addImage(
-            image,
-            'PNG',
-            0,
-            0,
-            canvas.width,
-            canvas.height,
-          )
+            if (format === 'PNG') {
+              const image = canvas.toDataURL('image/png')
 
-          pdf.save('newsletter.pdf')
+              const link = document.createElement('a')
 
-          break
-        }
-      }
-    } finally {
-      setExportingFormat(null)
-    }
-  }, [newsletter,renderHtml])
+              link.href = image
+              link.download = 'newsletter.png'
 
-  const handleRegenerateBlock = useCallback(async (blockId: string) => {
-    if (!newsletter) return
+              link.click()
 
-    const target = newsletter.blocks.find(
-      b => b.id === blockId,
-    )
-
-    if (!target) return
-
-    const response = await improveText({
-      text: target.text,
-    })
-
-    updateBlocks(
-      newsletter.blocks.map(b =>
-        b.id === blockId
-          ? {
-              ...b,
-              text: response.improvedText,
+              break
             }
-          : b,
-      ),
-    )
-  }, [newsletter,updateBlocks])
+
+            const { jsPDF } = await import('jspdf')
+
+            const pdf = new jsPDF({
+              orientation: 'portrait',
+              unit: 'px',
+              format: [canvas.width, canvas.height],
+            })
+
+            const image = canvas.toDataURL('image/png')
+
+            pdf.addImage(image, 'PNG', 0, 0, canvas.width, canvas.height)
+
+            pdf.save('newsletter.pdf')
+
+            break
+          }
+        }
+      } finally {
+        setExportingFormat(null)
+      }
+    },
+    [newsletter, renderHtml],
+  )
+
+  const handleRegenerateBlock = useCallback(
+    async (blockId: string) => {
+      if (!newsletter) return
+
+      const target = newsletter.blocks.find((block) => block.id === blockId)
+
+      if (!target) return
+
+      const editableTextField = target.editFields.find(
+        (field) => field.type === 'text' || field.type === 'textarea',
+      )
+
+      if (!editableTextField) return
+
+      const contentValues = parseContent<Record<string, string>>(target.content)
+      const currentText = contentValues[editableTextField.key]?.trim()
+
+      if (!currentText) {
+        return
+      }
+
+      const response = await improveText({
+        text: currentText,
+      })
+
+      updateBlocks(
+        newsletter.blocks.map((block) =>
+          block.id === blockId
+            ? updateBlockValue(block, editableTextField.key, response.improvedText)
+            : block,
+        ),
+      )
+    },
+    [newsletter, updateBlocks],
+  )
 
   const handleGenerateAll = useCallback(
-    async (
-      request: GenerateNewsletterRequest,
-      assetSelection: NewsletterAssetSelection,
-    ) => {
+    async (request: GenerateNewsletterRequest) => {
       if (!id) return
 
       const response = await generateNewsletter(request)
 
-      const blocks = response.blocks.map(block => ({
-        id:block.id,
-        name:block.name,
-        text:block.text,
-        backgroundColor:block.backgroundColor,
-        comment:null,
-      }))
-
-      const updated = await updateNewsletter(id,{
-        blocks,
-        generationRequest:request,
-        assetSelection,
+      const updated = await updateNewsletter(id, {
+        blocks: response.blocks,
+        generationRequest: request,
+        generationContent: {
+          aiContent: response,
+          originalContent: request,
+        },
       })
 
       setNewsletter(updated)
 
-      setSelectedBlockId(blocks[0]?.id ?? '')
+      setSelectedBlockIdState(updated.blocks[0]?.id ?? '')
 
       setShowRegenerationForm(false)
     },
@@ -341,10 +388,11 @@ export function useNewsletterEditor() {
     error,
     selectedBlock,
     selectedBlockId,
-    setSelectedBlockId,
+    setSelectedBlockId: setSelectedBlockIdState,
     showRegenerationForm,
     setShowRegenerationForm,
     templates,
+    selectedTemplate,
     brandKits,
     brandKitResources,
     exportOptions,
@@ -355,10 +403,12 @@ export function useNewsletterEditor() {
     handleSubmit,
     handleRegenerateBlock,
     handleGenerateAll,
-    currentUserRole:user?.role ?? 'USER',
-    currentUserId:user?.id ?? '',
+    currentUserRole: user?.role ?? 'USER',
+    currentUserId: user?.id ?? '',
+    isSavingDraft,
+    saveDraft,
     navigate,
-    isApproved:newsletter?.state === 'APPROVED',
+    isApproved: newsletter?.state === 'APPROVED',
     isReviewState:
       newsletter?.state === 'IN_REVIEW' ||
       newsletter?.state === 'RESUBMITTED',

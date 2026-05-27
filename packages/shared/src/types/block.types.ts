@@ -7,10 +7,19 @@ export type EditFieldType =
   | "textarea"
   | "url"
   | "color"
-  | "image-url"
+  | "image-asset"
   | "select"
   | "font-size"
-  | "font-style";
+  | "font-style"
+  | "font-family";
+
+export type BlockAssetType =
+  | "IMAGE"
+  | "ICON"
+  | "LOGO"
+  | "SHAPE"
+  | "LOCKUP"
+  | "KEYWORD";
 
 export interface BlockEditField {
   key: string;           // key inside the parsed content JSON object
@@ -18,6 +27,7 @@ export interface BlockEditField {
   type: EditFieldType;
   placeholder?: string;
   options?: { label: string; value: string }[]; // only used when type === 'select'
+  assetTypes?: readonly BlockAssetType[]; // only used when type === 'image-asset'
   required?: boolean;
   defaultValue?: string;
 }

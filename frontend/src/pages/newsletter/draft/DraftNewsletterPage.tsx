@@ -7,6 +7,7 @@ import { NewsletterEditTabs } from '../editor/NewsletterEditTabs'
 
 import { EditPanel } from '../components/EditPanel'
 import { GenerationForm } from '../components/GenerationForm'
+import type { GenerateNewsletterRequest } from '../../../api/ai'
 
 type Props = {
   vm: ReturnType<typeof useNewsletterEditor>
@@ -31,58 +32,55 @@ export function DraftNewsletterPage({ vm }: Props) {
             onChange={vm.setShowRegenerationForm}
           />
 
-          {vm.showRegenerationForm ? (
+          {vm.showRegenerationForm && vm.selectedTemplate ? (
             <GenerationForm
-              selectedTemplate={vm.templates[0]}
+              selectedTemplate={vm.selectedTemplate}
               selectedBrandKitId={vm.newsletter.brandKitId ?? ''}
               isGenerating={false}
               aiError={null}
+              initialValues={
+                vm.newsletter.generationContent?.originalContent
+                  ? requestToFormValues(vm.newsletter.generationContent.originalContent)
+                  : undefined
+              }
               onGenerate={vm.handleGenerateAll}
               onCancel={() => vm.setShowRegenerationForm(false)}
             />
+          ) : vm.showRegenerationForm ? (
+            null
           ) : (
             vm.selectedBlock && (
               <EditPanel
                 selectedBlock={vm.selectedBlock}
+                brandKitResources={vm.brandKitResources}
                 newsletterComment={vm.newsletter.comment}
                 newsletterState={vm.newsletter.state}
                 submitLabel="Enviar a revisión"
                 isSubmitting={false}
+                isSavingDraft={vm.isSavingDraft}
                 isRegeneratingBlock={false}
                 aiError={null}
-                onUpdateText={(blockId,value) => {
+                onUpdateBlock={(updatedBlock) => {
                   if (!vm.newsletter) return
 
                   vm.updateBlocks(
-                    vm.newsletter.blocks.map(block =>
-                      block.id === blockId
-                        ? { ...block,text:value }
-                        : block,
+                    vm.newsletter.blocks.map((block) =>
+                      block.id === updatedBlock.id ? updatedBlock : block,
                     ),
                   )
                 }}
-                onUpdateBackground={(blockId,value) => {
-                  if (!vm.newsletter) return
-
-                  vm.updateBlocks(
-                    vm.newsletter.blocks.map(block =>
-                      block.id === blockId
-                        ? {
-                            ...block,
-                            backgroundColor:value,
-                          }
-                        : block,
-                    ),
-                  )
-                }}
+                onSaveDraft={vm.saveDraft}
                 onRegenerateBlock={vm.handleRegenerateBlock}
                 onRegenerateAll={() =>
                   vm.setShowRegenerationForm(true)
                 }
                 onSubmit={vm.handleSubmit}
-                onCancel={() =>
-                  void vm.transitionState('DISCARDED')
-                }
+                onCancel={() => {
+                  void (async () => {
+                    await vm.transitionState('DISCARDED')
+                    vm.navigate('/dashboard')
+                  })()
+                }}
               />
             )
           )}
@@ -90,4 +88,19 @@ export function DraftNewsletterPage({ vm }: Props) {
       }
     />
   )
+}
+
+function requestToFormValues(req: GenerateNewsletterRequest) {
+  return {
+    topic: req.topic,
+    objective: req.objective,
+    audience: req.audience,
+    keyMessages: req.keyMessages.join('\n'),
+    tone: req.tone,
+    relevantDates: req.relevantDates ?? '',
+    cta: req.cta ?? '',
+    contact: req.contact ?? '',
+    linksOrSources: (req.linksOrSources ?? []).join('\n'),
+    additionalContext: req.additionalContext ?? '',
+  }
 }

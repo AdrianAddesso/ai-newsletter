@@ -6,7 +6,7 @@ type BlockPreviewUrlState = Record<string, string>
 
 export function useBlockPreviewUrls(
   previewKeys: string[],
-  type: AssetType = 'IMAGE',
+  type: AssetType = 'BLOCK',
 ): BlockPreviewUrlState {
   const [previewUrls, setPreviewUrls] = useState<BlockPreviewUrlState>({})
   const previewKeySignature = [...new Set(previewKeys.filter(Boolean))]

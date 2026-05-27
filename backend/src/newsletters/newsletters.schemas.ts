@@ -26,16 +26,34 @@ const newsletterFormatSchema = z.nativeEnum(newsletter_format, {
   error: 'Formato de newsletter invalido.',
 });
 
-const newsletterSelectedAssetSchema = z
+const newsletterAssetBindingSchema = z
   .object({
-    id: uuidFieldSchema,
+    fieldKey: requiredStringFieldSchema,
+    assetId: uuidFieldSchema,
     keywordText: optionalStringFieldSchema.nullable().optional(),
   })
   .strict();
 
-const newsletterAssetSelectionSchema = z
+const newsletterEditableBlockSchema = z
   .object({
-    selectedAssets: z.array(newsletterSelectedAssetSchema),
+    id: requiredStringFieldSchema,
+    type: requiredStringFieldSchema,
+    category: z.string().optional(),
+    name: optionalStringFieldSchema.optional(),
+    content: optionalStringFieldSchema.nullable().optional(),
+    row: optionalIntegerFieldSchema,
+    gridColumn: optionalIntegerFieldSchema,
+    displayOrder: optionalIntegerFieldSchema,
+    mustFill: optionalBooleanFieldSchema,
+    comment: optionalStringFieldSchema.nullable().optional(),
+    assetBindings: z.array(newsletterAssetBindingSchema).optional(),
+  })
+  .strict();
+
+const newsletterGenerationContentSchema = z
+  .object({
+    aiContent: z.unknown(),
+    originalContent: z.unknown(),
   })
   .strict();
 
@@ -52,7 +70,8 @@ export const createNewsletterBodySchema = z
     state: newsletterStateSchema.optional(),
     language: newsletterLanguageSchema.optional(),
     format: newsletterFormatSchema.optional(),
-    assetSelection: newsletterAssetSelectionSchema.optional(),
+    generationContent: newsletterGenerationContentSchema.optional(),
+    blocks: z.array(newsletterEditableBlockSchema).optional(),
   })
   .strict();
 
@@ -122,3 +141,9 @@ export type UpdateNewsletterExportBody = z.infer<
   typeof updateNewsletterExportBodySchema
 >;
 export type DefineNewsletterBlock = z.infer<typeof defineNewsletterBlockSchema>;
+export type NewsletterEditableBlock = z.infer<
+  typeof newsletterEditableBlockSchema
+>;
+export type NewsletterAssetBinding = z.infer<
+  typeof newsletterAssetBindingSchema
+>;

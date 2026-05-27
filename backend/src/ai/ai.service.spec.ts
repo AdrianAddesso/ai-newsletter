@@ -1,5 +1,6 @@
 import { ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { PrismaService } from '../prisma/prisma.service';
 import { AiService } from './ai.service';
 
 type ConfigValues = Record<string, string | undefined>;
@@ -10,9 +11,23 @@ function createConfigService(values: ConfigValues): ConfigService {
   } as ConfigService;
 }
 
-function createService(values: ConfigValues = {}) {
+function createService(
+  values: ConfigValues = {},
+  prismaOverrides: Partial<PrismaService> = {},
+) {
+  const prisma = {
+    templates: {
+      findFirst: jest.fn(),
+    },
+    brand_kit: {
+      findFirst: jest.fn(),
+    },
+    ...prismaOverrides,
+  } as unknown as PrismaService;
+
   return {
-    service: new AiService(createConfigService(values)),
+    service: new AiService(createConfigService(values), prisma),
+    prisma,
   };
 }
 
@@ -33,11 +48,30 @@ describe('AiService', () => {
   });
 
   it('improves text with Nestle GenIA', async () => {
-    const { service } = createService({
+    const { service, prisma } = createService({
       CLIENT_ID: 'client-id',
       CLIENT_SECRET: 'client-secret',
       NESTLE_GENIA_URL:
         'https://eur-sdr-int-pub.nestle.com/api/dv-exp-sandbox-openai-api/1/genai/GCP/gemini-2.0-flash-001/generateContent',
+    });
+
+    (prisma.templates.findFirst as jest.Mock).mockResolvedValue({
+      id: 'weekly-brief',
+      layout: [
+        {
+          block_type: 'headerLeft',
+          row: 0,
+          grid_column: 0,
+          display_order: 0,
+        },
+      ],
+    });
+    (prisma.brand_kit.findFirst as jest.Mock).mockResolvedValue({
+      id: 'nestle-corporate',
+      name: 'Nestle Corporate',
+      brandkit_assets: [],
+      color_palette: [],
+      font_groups: null,
     });
 
     global.fetch = jest.fn().mockResolvedValue({
@@ -106,10 +140,15 @@ describe('AiService', () => {
                     text: JSON.stringify({
                       blocks: [
                         {
-                          id: 'headline',
-                          name: 'Titulo principal',
-                          text: 'Nuevo titulo generado',
-                          backgroundColor: '#97CAEB',
+                          blockId: 'headerLeft-0-0-0-0',
+                          values: {
+                            title: 'Nuevo titulo generado',
+                            subtitle: 'Bajada generada',
+                            logoAsset: '',
+                            fontSize: '1rem',
+                            typographyStyle: 'bold',
+                            fontFamily: 'Arial',
+                          },
                         },
                       ],
                     }),
@@ -134,13 +173,11 @@ describe('AiService', () => {
         linksOrSources: [],
         assetIds: [],
       }),
-    ).resolves.toEqual({
+    ).resolves.toMatchObject({
       blocks: [
         {
-          id: 'headline',
-          name: 'Titulo principal',
-          text: 'Nuevo titulo generado',
-          backgroundColor: '#97CAEB',
+          id: 'headerLeft-0-0-0-0',
+          type: 'headerLeft',
         },
       ],
     });

@@ -10,6 +10,7 @@ export interface UploadedAssetFile {
 export interface UploadedAssetDto {
   id: string;
   name: string;
+  description?: string | null;
   created_at: string;
   updated_at: string;
   url: string;
@@ -24,5 +25,11 @@ export interface UploadAssetsResponseDto {
 
 export interface UpdateAssetDto {
   name: string;
+  description?: string | null;
   type: asset_type;
+}
+
+export interface UploadAssetMetadataDto {
+  name?: string;
+  description?: string | null;
 }

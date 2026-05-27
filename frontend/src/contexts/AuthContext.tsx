@@ -60,7 +60,7 @@ export const MICROSOFT_SSO_USERS: User[] = [
     area: "COMUNICACION_INTERNA",
   },
   {
-    id: "4b7c9f0d-d18d-43e5-9b27-6fd06bce0c1d",
+    id: "9c04b242-d4b8-49fe-9a1b-a0c81701009c",
     email: "user@example.com",
     name: "Usuario Normal",
     role: "USER",

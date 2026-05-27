@@ -3,7 +3,7 @@ import { useBlockPreviewUrls } from "../../../../hooks/useBlockPreviewUrls";
 import type { BlockInstance } from "@shared/types/block.types";
 import {
   parseContent,
-  resolveTypographySx,
+  resolveContentTypographySx,
 } from "../../../../utils/blockContent";
 
 const nestleIsotypeStorageKey = "assets/logos/nestle/nestle_isotype.png";
@@ -20,14 +20,10 @@ export function HeaderFullRenderer({
   leftImageUrl,
   rightImageUrl,
 }: Props) {
-  const {
-    title = "",
-    subtitle = "",
-    logoUrl = "",
-    fontSize,
-    typographyStyle,
-  } = parseContent(block.content);
-  const typographySx = resolveTypographySx(fontSize, typographyStyle);
+  const values = parseContent(block.content);
+  const { title = "", subtitle = "" } = values;
+  const titleTypographySx = resolveContentTypographySx(values, "title");
+  const subtitleTypographySx = resolveContentTypographySx(values, "subtitle");
   const previewUrls = useBlockPreviewUrls([nestleIsotypeStorageKey], "LOGO");
   const defaultImageUrl = previewUrls[nestleIsotypeStorageKey] ?? "";
   const backgroundColor = "#FF595A";
@@ -60,7 +56,7 @@ export function HeaderFullRenderer({
       >
         <CardMedia
           component="img"
-          image={(leftImageUrl ?? logoUrl) || defaultImageUrl}
+          image={leftImageUrl || defaultImageUrl}
           alt="Left logo"
           sx={{
             height: 60,
@@ -76,7 +72,7 @@ export function HeaderFullRenderer({
                 variant="subtitle2"
                 color="common.white"
                 noWrap
-                sx={{ ...typographySx }}
+                sx={{ ...titleTypographySx }}
               >
                 {title}
               </Typography>
@@ -86,7 +82,7 @@ export function HeaderFullRenderer({
                 variant="caption"
                 color="common.white"
                 noWrap
-                sx={{ ...typographySx }}
+                sx={{ ...subtitleTypographySx }}
               >
                 {subtitle}
               </Typography>
@@ -95,7 +91,7 @@ export function HeaderFullRenderer({
         )}
         <CardMedia
           component="img"
-          image={(rightImageUrl ?? logoUrl) || defaultImageUrl}
+          image={rightImageUrl || defaultImageUrl}
           alt="Right logo"
           sx={{
             height: 60,

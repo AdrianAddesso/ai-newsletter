@@ -1,11 +1,14 @@
 import {
   BadGatewayException,
   BadRequestException,
+  HttpException,
   Injectable,
   Logger,
+  NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { PrismaService } from '../prisma/prisma.service';
 import { z } from 'zod';
 import {
   ImproveTextRequestDto,
@@ -14,9 +17,16 @@ import {
 import {
   GenerateNewsletterRequestDto,
   GenerateNewsletterResponseDto,
-  GeneratedNewsletterBlockDto,
 } from './dto/generate-newsletter.dto';
 import { NestleGeniaGenerateContentSuccess } from './ai.types';
+import {
+  buildNewsletterBlockId,
+  buildNewsletterBlocksFromLayout,
+  getBlockEditFields,
+  normalizeTemplateLayout,
+  parseBlockValues,
+} from '../blocks/newsletter-blocks';
+import type { BlockEditField } from '@shared/types/block.types';
 
 @Injectable()
 export class AiService {
@@ -30,7 +40,10 @@ export class AiService {
   private readonly defaultNestleGeniaUrl =
     'https://eur-sdr-int-pub.nestle.com/api/dv-exp-sandbox-openai-api/1/genai/GCP/gemini-2.0-flash-001/generateContent';
 
-  constructor(private readonly configService: ConfigService) {}
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   async improveText(
     request: ImproveTextRequestDto,
@@ -55,11 +68,139 @@ export class AiService {
   async generateNewsletter(
     request: GenerateNewsletterRequestDto,
   ): Promise<GenerateNewsletterResponseDto> {
-    const prompt = this.buildNewsletterGenerationPrompt(request);
-    const generatedText = await this.generateNewsletterWithAi(prompt);
+    const template = await this.prisma.templates.findFirst({
+      where: {
+        id: request.templateId,
+        deleted_at: null,
+      },
+      select: {
+        id: true,
+        layout: true,
+      },
+    });
+
+    if (!template) {
+      throw new NotFoundException('No se encontro el template solicitado.');
+    }
+
+    const brandKit = await this.prisma.brand_kit.findFirst({
+      where: {
+        id: request.brandKitId,
+        deleted_at: null,
+        active: true,
+      },
+      select: {
+        id: true,
+        name: true,
+        brandkit_assets: {
+          where: {
+            deleted_at: null,
+            assets: {
+              is: {
+                deleted_at: null,
+              },
+            },
+          },
+          select: {
+            assets: {
+              select: {
+                id: true,
+                name: true,
+                type: true,
+              },
+            },
+          },
+        },
+        color_palette: {
+          where: {
+            deleted_at: null,
+            colors: {
+              is: {
+                deleted_at: null,
+              },
+            },
+          },
+          select: {
+            colors: {
+              select: {
+                id: true,
+                name: true,
+                hex: true,
+              },
+            },
+          },
+        },
+        font_groups: {
+          select: {
+            name: true,
+            fonts: {
+              where: {
+                deleted_at: null,
+              },
+              select: {
+                id: true,
+                name: true,
+                style: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!brandKit) {
+      throw new NotFoundException('No se encontro el brand kit solicitado.');
+    }
+
+    const templateBlocks = buildNewsletterBlocksFromLayout(template.layout);
+    const prompt = this.buildNewsletterGenerationPrompt(
+      request,
+      template.layout,
+      {
+        name: brandKit.name,
+        assets: brandKit.brandkit_assets.map(({ assets }) => ({
+          id: assets.id,
+          name: assets.name,
+          type: assets.type,
+        })),
+        colors: brandKit.color_palette.map(({ colors }) => ({
+          id: colors.id,
+          name: colors.name,
+          hex: colors.hex,
+        })),
+        fonts: (brandKit.font_groups?.fonts ?? []).map((font) => ({
+          id: font.id,
+          name: font.name,
+          style: font.style,
+          groupName: brandKit.font_groups?.name ?? '',
+        })),
+      },
+    );
+    let generatedValues: Map<string, Record<string, string | null | undefined>>;
+
+    try {
+      const generatedText = await this.generateNewsletterWithAi(prompt);
+      generatedValues = this.parseGeneratedNewsletterBlocks(
+        generatedText,
+        templateBlocks,
+      );
+    } catch (error) {
+      if (!this.shouldFallbackToUserContent(error)) {
+        throw error;
+      }
+
+      this.logger.warn(
+        `AI generateNewsletter fallback activated for template=${request.templateId} brandKit=${request.brandKitId}`,
+      );
+      generatedValues = this.buildUserContentFallbackValues(
+        request,
+        templateBlocks,
+        (brandKit.font_groups?.fonts ?? []).map((font) => font.name),
+      );
+    }
 
     return {
-      blocks: this.parseGeneratedNewsletterBlocks(generatedText),
+      blocks: buildNewsletterBlocksFromLayout(template.layout, generatedValues),
     };
   }
 
@@ -190,11 +331,46 @@ export class AiService {
 
   private buildNewsletterGenerationPrompt(
     request: GenerateNewsletterRequestDto,
+    layout: unknown,
+    brandKitResources: {
+      name: string;
+      assets: Array<{ id: string; name: string; type: string }>;
+      colors: Array<{ id: string; name: string; hex: string }>;
+      fonts: Array<{ id: string; name: string; style: string; groupName: string }>;
+    },
   ): string {
+    const normalizedLayout = normalizeTemplateLayout(layout);
+    const blocks = normalizedLayout.map((layoutBlock, index) => {
+      const type = layoutBlock.type ?? layoutBlock.block_type;
+
+      if (!type) {
+        throw new BadRequestException('La plantilla seleccionada contiene un bloque sin tipo.');
+      }
+
+      const editFields = getBlockEditFields(type);
+
+      return {
+        blockId: buildNewsletterBlockId(type, layoutBlock, index),
+        blockType: type,
+        row: layoutBlock.row,
+        gridColumn: layoutBlock.grid_column,
+        displayOrder: layoutBlock.display_order,
+        editableFields: editFields.map((field) => ({
+          key: field.key,
+          label: field.label,
+          type: field.type,
+          required: field.required ?? false,
+          assetTypes: field.assetTypes ?? [],
+          defaultValue: field.defaultValue ?? '',
+        })),
+      };
+    });
+
     const promptContext = {
       area: request.area,
       templateId: request.templateId,
       brandKitId: request.brandKitId,
+      brandKitName: brandKitResources.name,
       topic: request.topic,
       objective: request.objective,
       audience: request.audience,
@@ -206,37 +382,39 @@ export class AiService {
       linksOrSources: request.linksOrSources,
       additionalContext: request.additionalContext ?? null,
       assetIds: request.assetIds,
+      availableBrandKitAssets: brandKitResources.assets,
+      availableBrandKitColors: brandKitResources.colors,
+      availableBrandKitFonts: brandKitResources.fonts,
+      templateBlocks: blocks,
     };
 
     return [
       'You are a Spanish copywriter for internal Nestle newsletters.',
       'Generate concise, brand-safe newsletter copy in Spanish for an internal communications team.',
       'Return only valid JSON with this exact shape:',
-      '{"blocks":[{"id":"header","name":"Encabezado","text":"...","backgroundColor":"#FFFFFF"},{"id":"headline","name":"Titulo principal","text":"...","backgroundColor":"#97CAEB"},{"id":"body","name":"Cuerpo","text":"...","backgroundColor":"#FFFFFF"},{"id":"cta","name":"Llamado a la accion","text":"...","backgroundColor":"#FFC600"}]}',
+      '{"blocks":[{"blockId":"...","values":{"fieldKey":"value"}}]}',
+      'For each block, return only the exact field keys listed in templateBlocks.editableFields.',
+      'If a field type is image-asset, leave it as an empty string.',
+      'If a field type is url and no valid user-provided source exists, leave it as an empty string.',
+      'If a field type is font-family, choose one of the provided brand kit fonts when possible.',
       'Do not include markdown, comments, explanations, HTML, or fields not shown in the schema.',
-      'Use the supplied structured context as the only source material. If a value is missing, write a neutral internal-newsletter fallback.',
+      'Use the supplied structured context as the only source material.',
       `Structured context JSON: ${JSON.stringify(promptContext)}`,
     ].join('\n');
   }
 
   private parseGeneratedNewsletterBlocks(
     rawText: string,
-  ): GeneratedNewsletterBlockDto[] {
+    templateBlocks: GenerateNewsletterResponseDto['blocks'],
+  ): Map<string, Record<string, string | null | undefined>> {
     const jsonText = this.extractJsonText(rawText);
     const responseSchema = z.object({
-      blocks: z
-        .array(
-          z.object({
-            id: z.string().trim().min(1),
-            name: z.string().trim().min(1),
-            text: z.string().trim().min(1),
-            backgroundColor: z
-              .string()
-              .trim()
-              .regex(/^#[0-9A-Fa-f]{6}$/),
-          }),
-        )
-        .min(1),
+      blocks: z.array(
+        z.object({
+          blockId: z.string().trim().min(1),
+          values: z.record(z.string(), z.union([z.string(), z.null()])),
+        }),
+      ),
     });
     let parsed: unknown;
 
@@ -256,7 +434,218 @@ export class AiService {
       });
     }
 
-    return blockSchema.data.blocks;
+    const templateBlockMap = new Map(
+      templateBlocks.map((block) => [block.id, block]),
+    );
+    const generatedValues = new Map<
+      string,
+      Record<string, string | null | undefined>
+    >();
+
+    blockSchema.data.blocks.forEach((block) => {
+      const templateBlock = templateBlockMap.get(block.blockId);
+
+      if (!templateBlock) {
+        return;
+      }
+
+      const defaultValues = parseBlockValues(templateBlock.content);
+      const nextValues = Object.fromEntries(
+        templateBlock.editFields.map((field) => [
+          field.key,
+          this.normalizeGeneratedFieldValue(
+            field,
+            block.values[field.key],
+            defaultValues[field.key] ?? '',
+          ),
+        ]),
+      );
+
+      if (Object.keys(nextValues).length > 0) {
+        generatedValues.set(block.blockId, nextValues);
+      }
+    });
+
+    return generatedValues;
+  }
+
+  private normalizeGeneratedFieldValue(
+    field: BlockEditField,
+    value: string | null | undefined,
+    defaultValue: string,
+  ): string {
+    if (field.type === 'image-asset') {
+      return '';
+    }
+
+    if (field.type === 'url') {
+      return this.isValidHttpUrl(value) ? value!.trim() : '';
+    }
+
+    if (field.type === 'color') {
+      return value?.trim() || defaultValue;
+    }
+
+    return value?.trim() || defaultValue;
+  }
+
+  private buildUserContentFallbackValues(
+    request: GenerateNewsletterRequestDto,
+    templateBlocks: GenerateNewsletterResponseDto['blocks'],
+    availableFontNames: string[],
+  ): Map<string, Record<string, string | null | undefined>> {
+    const firstKeyMessage = request.keyMessages[0]?.trim() ?? '';
+    const allKeyMessages = request.keyMessages
+      .map((message) => message.trim())
+      .filter(Boolean)
+      .join(' ');
+    const firstValidLink =
+      request.linksOrSources.find((link) => this.isValidHttpUrl(link))?.trim() ??
+      '';
+    const fallbackByFieldKey: Record<string, string> = {
+      title: request.topic.trim(),
+      subtitle: request.objective.trim() || request.audience.trim(),
+      text: allKeyMessages || request.objective.trim(),
+      bodyText: allKeyMessages || request.additionalContext?.trim() || '',
+      introText: request.objective.trim() || firstKeyMessage,
+      closingText:
+        request.additionalContext?.trim() ||
+        request.contact?.trim() ||
+        request.tone.trim(),
+      primaryText: allKeyMessages || request.objective.trim(),
+      secondaryText:
+        request.additionalContext?.trim() ||
+        request.audience.trim() ||
+        request.tone.trim(),
+      label: firstKeyMessage || request.topic.trim(),
+      topLabel: request.topic.trim(),
+      bottomLabel: request.tone.trim() || request.audience.trim(),
+      buttonLabel: request.cta?.trim() || request.topic.trim(),
+      href: firstValidLink,
+      altText: request.topic.trim(),
+      iconName: request.topic.trim(),
+      fontFamily: availableFontNames[0] ?? '',
+    };
+    const fallbackTextQueue = [
+      request.topic.trim(),
+      request.objective.trim(),
+      request.audience.trim(),
+      allKeyMessages,
+      request.additionalContext?.trim() ?? '',
+      request.relevantDates?.trim() ?? '',
+      request.contact?.trim() ?? '',
+      request.tone.trim(),
+    ].filter(Boolean);
+
+    return new Map(
+      templateBlocks.map((block) => {
+        const defaultValues = parseBlockValues(block.content);
+        let queueIndex = 0;
+        const values = Object.fromEntries(
+          block.editFields.map((field) => {
+            const fieldKey = field.key.trim();
+            const normalizedKey = fieldKey.toLowerCase();
+            const defaultValue = defaultValues[field.key] ?? '';
+            let value = defaultValue;
+
+            if (field.type === 'image-asset') {
+              value = '';
+            } else if (field.type === 'url') {
+              value = firstValidLink || defaultValue;
+            } else if (field.type === 'font-family') {
+              value = fallbackByFieldKey.fontFamily || defaultValue;
+            } else if (field.type === 'font-size' || field.type === 'font-style') {
+              value = defaultValue;
+            } else if (field.type === 'color') {
+              value = defaultValue;
+            } else {
+              value =
+                fallbackByFieldKey[fieldKey] ||
+                fallbackByFieldKey[normalizedKey] ||
+                this.pickFallbackTextForField(
+                  normalizedKey,
+                  fallbackTextQueue,
+                  queueIndex,
+                ) ||
+                defaultValue;
+
+              if (
+                !fallbackByFieldKey[fieldKey] &&
+                !fallbackByFieldKey[normalizedKey] &&
+                value
+              ) {
+                queueIndex += 1;
+              }
+            }
+
+            return [field.key, value];
+          }),
+        );
+
+        return [block.id, values];
+      }),
+    );
+  }
+
+  private pickFallbackTextForField(
+    fieldKey: string,
+    fallbackTextQueue: string[],
+    queueIndex: number,
+  ): string {
+    if (fieldKey.includes('title')) {
+      return fallbackTextQueue[0] ?? '';
+    }
+
+    if (fieldKey.includes('subtitle')) {
+      return fallbackTextQueue[1] ?? fallbackTextQueue[0] ?? '';
+    }
+
+    if (
+      fieldKey.includes('text') ||
+      fieldKey.includes('label') ||
+      fieldKey.includes('copy')
+    ) {
+      return (
+        fallbackTextQueue[queueIndex] ??
+        fallbackTextQueue[fallbackTextQueue.length - 1] ??
+        ''
+      );
+    }
+
+    return fallbackTextQueue[queueIndex] ?? '';
+  }
+
+  private shouldFallbackToUserContent(error: unknown): boolean {
+    if (error instanceof BadGatewayException) {
+      return true;
+    }
+
+    if (error instanceof ServiceUnavailableException) {
+      return true;
+    }
+
+    if (error instanceof TypeError) {
+      return true;
+    }
+
+    if (error instanceof HttpException) {
+      return false;
+    }
+
+    return true;
+  }
+
+  private isValidHttpUrl(value: string | null | undefined): boolean {
+    if (!value?.trim()) {
+      return false;
+    }
+
+    try {
+      const url = new URL(value.trim());
+      return url.protocol === 'http:' || url.protocol === 'https:';
+    } catch {
+      return false;
+    }
   }
 
   private extractJsonText(rawText: string): string {

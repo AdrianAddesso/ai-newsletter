@@ -4,9 +4,10 @@ import {
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
-import type { asset_type } from '@prisma/client';
+import { asset_type } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
+import { KEYWORD_MAX_CHARS } from '../../../packages/shared/src/enums/assets-config';
 
 export type BrandKitListItem = {
   id: string;
@@ -18,6 +19,9 @@ export type BrandKitResourceAsset = {
   name: string;
   type: asset_type;
   url: string;
+  svgTemplate?: string | null;
+  maxChars?: number | null;
+  keywordText?: string | null;
 };
 
 export type BrandKitResourceColor = {
@@ -44,6 +48,7 @@ export type BrandKitResources = {
 @Injectable()
 export class BrandKitService {
   private readonly logger = new Logger(BrandKitService.name);
+  private readonly keywordSvgTemplateCache = new Map<string, Promise<string>>();
 
   constructor(
     private readonly prisma: PrismaService,
@@ -154,6 +159,13 @@ export class BrandKitService {
             assets.bucket,
             assets.object_key,
           ),
+          svgTemplate:
+            assets.type === asset_type.KEYWORD
+              ? await this.getKeywordSvgTemplate(assets.bucket, assets.object_key)
+              : null,
+          maxChars:
+            assets.type === asset_type.KEYWORD ? KEYWORD_MAX_CHARS : null,
+          keywordText: null,
         })),
       );
 
@@ -220,5 +232,27 @@ export class BrandKitService {
 
   update(id: string): string {
     return `Actualizando brand kit con id: ${id}`;
+  }
+
+  private async getKeywordSvgTemplate(
+    bucket: string,
+    objectKey: string,
+  ): Promise<string> {
+    const cacheKey = `${bucket}:${objectKey}`;
+    const cachedTemplate = this.keywordSvgTemplateCache.get(cacheKey);
+
+    if (cachedTemplate) {
+      return cachedTemplate;
+    }
+
+    const templatePromise = this.storageService
+      .getObjectText(bucket, objectKey)
+      .catch((error: unknown) => {
+        this.keywordSvgTemplateCache.delete(cacheKey);
+        throw error;
+      });
+
+    this.keywordSvgTemplateCache.set(cacheKey, templatePromise);
+    return templatePromise;
   }
 }

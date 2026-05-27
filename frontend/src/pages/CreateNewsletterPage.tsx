@@ -7,11 +7,7 @@ import { GenerationForm } from "./newsletter/components/GenerationForm";
 import CreationFlowStepper from "./newsletter/components/CreationFlowStepper";
 
 import { generateNewsletter, type GenerateNewsletterRequest } from "../api/ai";
-import type {
-  NewsletterAssetSelection,
-  NewsletterBlock,
-  NewsletterTemplate,
-} from "../types/newsletter";
+import type { NewsletterTemplate } from "../types/newsletter";
 import { createNewsletter, updateNewsletter } from "../api/newsletters";
 import { listTemplates } from "../api/templates";
 
@@ -123,10 +119,7 @@ function CreateNewsletterPage() {
     null;
 
   const handleGenerate = useCallback(
-    async (
-      request: GenerateNewsletterRequest,
-      assetSelection: NewsletterAssetSelection,
-    ) => {
+    async (request: GenerateNewsletterRequest) => {
       setIsGenerating(true);
       setAiError(null);
 
@@ -134,33 +127,32 @@ function CreateNewsletterPage() {
         // 1. Generar bloques con IA
         const response = await generateNewsletter(request);
 
-        const blocks: NewsletterBlock[] = response.blocks.map((block) => ({
-          id: block.id,
-          name: block.name,
-          text: block.text,
-          backgroundColor: block.backgroundColor,
-          comment: null,
-        }));
+        const generationContent = {
+          aiContent: response,
+          originalContent: request,
+        };
 
         // 2. Actualizar newsletter existente o crear uno nuevo
         let newsletterId: string;
         if (backState.newsletterId) {
           await updateNewsletter(backState.newsletterId, {
+            title: request.topic,
             templateId: request.templateId,
             brandKitId: request.brandKitId,
-            blocks,
+            blocks: response.blocks,
             generationRequest: request,
-            assetSelection,
+            generationContent,
           });
           newsletterId = backState.newsletterId;
         } else {
           const created = await createNewsletter({
+            title: request.topic,
             creatorUserId: currentUserId,
             templateId: request.templateId,
             brandKitId: request.brandKitId,
-            blocks,
+            blocks: response.blocks,
             generationRequest: request,
-            assetSelection,
+            generationContent,
           });
           newsletterId = created.id;
         }
@@ -174,7 +166,7 @@ function CreateNewsletterPage() {
         setIsGenerating(false);
       }
     },
-    [backState.newsletterId, currentUserId, navigate],
+    [backState.newsletterId, currentUserId, navigate, selectedTemplate],
   );
 
   if (isLoadingTemplates) {

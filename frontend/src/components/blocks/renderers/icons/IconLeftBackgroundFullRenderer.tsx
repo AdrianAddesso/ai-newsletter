@@ -2,7 +2,7 @@ import { Card, Typography, Box, CardMedia, Icon } from "@mui/material";
 import type { BlockInstance } from "@shared/types/block.types";
 import {
   parseContent,
-  resolveTypographySx,
+  resolveContentTypographySx,
 } from "../../../../utils/blockContent";
 
 interface Props {
@@ -17,17 +17,17 @@ export function IconLeftBackgroundFullRenderer({
   backgroundImage = "https://placehold.net/400x400.png",
   iconUrl = null,
 }: Props) {
+  const values = parseContent(block.content);
   const {
     iconName = "description",
     label = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-    fontSize,
-    typographyStyle,
-  } = parseContent(block.content);
-  const typographySx = resolveTypographySx(fontSize, typographyStyle);
+  } = values;
+  const typographySx = resolveContentTypographySx(values, "label");
   const bgSx = backgroundImage
     ? {
         backgroundImage: `url("${backgroundImage}")`,
-        backgroundSize: "cover",
+        backgroundSize: "contain",
+        backgroundRepeat: "no-repeat",
         backgroundPosition: "center",
       }
     : {};
