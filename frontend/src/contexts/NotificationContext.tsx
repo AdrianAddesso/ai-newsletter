@@ -31,7 +31,7 @@ interface NotificationContextType {
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined)
 
-const STORAGE_PREFIX = 'nestle-ai-newsletter:notifications'
+const STORAGE_PREFIX = 'ai-newsletter:notifications'
 const initialNotificationBaseTime = Date.now()
 
 const roleByUserId: Record<string, UserRole> = {
