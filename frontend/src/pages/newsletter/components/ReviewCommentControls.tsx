@@ -64,7 +64,6 @@ export function ReviewCommentControls({
       </Button>
 
       <ReviewHistoryPanel
-        activeComment={selectedBlock.comment}
         comments={reviewHistory}
       />
 

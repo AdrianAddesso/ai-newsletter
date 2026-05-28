@@ -4,7 +4,6 @@ import {
   Delete,
   ForbiddenException,
   Get,
-  Logger,
   NotFoundException,
   Param,
   Patch,
@@ -70,8 +69,6 @@ type AuthenticatedRequest = {
 @Controller(Resource.NEWSLETTERS)
 @UseGuards(MockAuthGuard, PermissionsGuard)
 export class NewslettersController {
-  private readonly logger = new Logger(NewslettersController.name);
-
   constructor(
     private readonly newslettersService: NewsLettersService,
     private readonly prisma: PrismaService,
@@ -100,9 +97,6 @@ export class NewslettersController {
     @Body(new ZodValidationPipe(createNewsletterBodySchema))
     body: CreateNewsletterBody,
   ) {
-    this.logger.log(
-      `Create newsletter request received with sessionUserId=${request.user?.id ?? 'missing'} bodyCreatedByUserId=${body.createdByUserId ?? 'missing'} templateId=${body.templateId ?? 'missing'}`,
-    );
     return this.newslettersService.create(body, request.user?.id);
   }
 
@@ -248,8 +242,7 @@ export class NewslettersController {
   ) {
     return this.assertReviewPermission(request, params.id).then(() =>
       this.newslettersService.requestChanges(params.id, {
-        previousState: body.previousState,
-        reviewedByUserId: body.reviewedByUserId ?? request.user?.id,
+        reviewedByUserId: request.user?.id,
         blockComments: body.blockComments,
       }),
     );
@@ -264,8 +257,7 @@ export class NewslettersController {
   ) {
     return this.assertReviewPermission(request, params.id).then(() =>
       this.newslettersService.approveReview(params.id, {
-        previousState: body.previousState,
-        reviewedByUserId: body.reviewedByUserId ?? request.user?.id,
+        reviewedByUserId: request.user?.id,
       }),
     );
   }
@@ -324,11 +316,6 @@ export class NewslettersController {
         created_by_user_id: true,
         state: true,
         area_id: true,
-        areas: {
-          select: {
-            name: true,
-          },
-        },
       },
     });
 
@@ -350,10 +337,7 @@ export class NewslettersController {
     const isAuthorized = this.authorizationService.isAuthorized(
       normalizedUser,
       requiredAction,
-      {
-        ...newsletter,
-        area_id: newsletter.areas?.name ?? newsletter.area_id ?? '',
-      },
+      newsletter,
     );
 
     if (!isAuthorized) {

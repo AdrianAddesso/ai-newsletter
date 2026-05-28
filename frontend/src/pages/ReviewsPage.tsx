@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
+  Alert,
   Box,
   Button,
   Card,
@@ -71,12 +72,17 @@ export function ReviewsPage() {
   const [order, setOrder] = useState<'asc' | 'desc'>('desc')
   const [limit, setLimit] = useState(5)
   const [isLoading, setIsLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
 
   useEffect(() => {
     const loadReviews = async () => {
       try {
         const reviewInbox = await getReviewInbox()
         setReviews(reviewInbox)
+        setLoadError(null)
+      } catch {
+        setReviews([])
+        setLoadError('No se pudieron cargar los newsletters pendientes de revisión.')
       } finally {
         setIsLoading(false)
       }
@@ -152,6 +158,7 @@ export function ReviewsPage() {
             variant="outlined"
             sx={{ borderRadius: 2 }}
           >
+            {loadError ? <Alert severity="error">{loadError}</Alert> : null}
             <Table>
               <TableHead sx={{ bgcolor: 'action.hover' }}>
                 <TableRow>
@@ -165,7 +172,7 @@ export function ReviewsPage() {
               </TableHead>
 
               <TableBody>
-                {!isLoading && filteredReviews.length === 0 ? (
+                {!isLoading && !loadError && filteredReviews.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
                       <Stack spacing={1} sx={{ alignItems: 'center' }}>

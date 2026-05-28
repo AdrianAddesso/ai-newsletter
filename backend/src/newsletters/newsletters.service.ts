@@ -1,7 +1,6 @@
 import {
   BadRequestException,
   Injectable,
-  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import {
@@ -51,6 +50,18 @@ type PersistedNewsletterBlock = Prisma.newsletter_blocksGetPayload<{
   };
 }>;
 
+type ExistingEditableBlock = Prisma.newsletter_blocksGetPayload<{
+  include: {
+    block_content: {
+      include: {
+        assets_block: {
+          where: { deleted_at: null };
+        };
+      };
+    };
+  };
+}>;
+
 type ReviewLogRecord = Prisma.newsletter_state_logGetPayload<{
   include: {
     users: {
@@ -70,7 +81,6 @@ type StoredReviewComment = {
 
 @Injectable()
 export class NewsLettersService {
-  private readonly logger = new Logger(NewsLettersService.name);
   private readonly keywordSvgTemplateCache = new Map<string, Promise<string>>();
 
   constructor(
@@ -169,14 +179,8 @@ export class NewsLettersService {
   }
 
   async create(body: CreateNewsletterBody, requestUserId?: string) {
-    this.logger.log(
-      `Create newsletter started with requestUserId=${requestUserId ?? 'missing'} bodyCreatedByUserId=${body.createdByUserId ?? 'missing'} title="${body.title}"`,
-    );
     const creatorId = await this.resolveUserId(
       body.createdByUserId ?? requestUserId,
-    );
-    this.logger.log(
-      `Create newsletter resolved creatorId=${creatorId ?? 'null'} from candidate=${body.createdByUserId ?? requestUserId ?? 'missing'}`,
     );
     const template = body.templateId
       ? await this.prisma.templates.findFirst({
@@ -206,9 +210,6 @@ export class NewsLettersService {
           generation_content: this.toGenerationContentJson(body),
         },
       });
-      this.logger.log(
-        `Newsletter created with id=${created.id} created_by_user_id=${created.created_by_user_id ?? 'null'} state=${created.state}`,
-      );
 
       await this.replaceBlocks(tx, created.id, body.blocks ?? []);
 
@@ -261,7 +262,9 @@ export class NewsLettersService {
       newsletter.newsletter_blocks.map((block) =>
         this.toBlockDto(
           block,
-          activeBlockComments.get(block.block_content_id) ?? null,
+          newsletter.state === newsletter_state.CHANGES_REQUESTED
+            ? activeBlockComments.get(block.block_content_id) ?? null
+            : null,
         ),
       ),
     );
@@ -287,7 +290,9 @@ export class NewsLettersService {
       renderedHtml: null,
       createdAt: newsletter.created_at.toISOString(),
       updatedAt: newsletter.updated_at.toISOString(),
-      reviewRounds: reviewLogs.map((reviewLog) => this.toReviewRound(reviewLog)),
+      reviewRounds: newsletter.state === newsletter_state.APPROVED
+        ? []
+        : reviewLogs.map((reviewLog) => this.toReviewRound(reviewLog)),
     };
   }
 
@@ -322,7 +327,26 @@ export class NewsLettersService {
       });
 
       if (body.blocks) {
-        await this.replaceBlocks(tx, id, body.blocks);
+        const changedBlockIds = await this.replaceBlocks(tx, id, body.blocks);
+
+        if (
+          existing.state === newsletter_state.CHANGES_REQUESTED &&
+          changedBlockIds.length > 0
+        ) {
+          await tx.commentary.updateMany({
+            where: {
+              block_content_id: {
+                in: changedBlockIds,
+              },
+              deleted_at: null,
+              show: true,
+            },
+            data: {
+              deleted_at: new Date(),
+              show: false,
+            },
+          });
+        }
       }
 
       if (body.state && body.state !== existing.state) {
@@ -382,7 +406,6 @@ export class NewsLettersService {
   async requestChanges(
     id: string,
     payload: {
-      previousState?: newsletter_state;
       reviewedByUserId?: string;
       blockComments: ReviewBlockComment[];
     },
@@ -433,7 +456,7 @@ export class NewsLettersService {
       await tx.newsletter_state_log.create({
         data: {
           newsletter_id: id,
-          previous_state: payload.previousState ?? newsletter.state,
+          previous_state: newsletter.state,
           new_state: newsletter_state.CHANGES_REQUESTED,
           reviewed_by_user_id: payload.reviewedByUserId ?? null,
           all_commentaries: JSON.stringify(normalizedComments),
@@ -443,7 +466,7 @@ export class NewsLettersService {
       await tx.commentary.updateMany({
         where: {
           block_content_id: {
-            in: normalizedComments.map((comment) => comment.blockId),
+            in: newsletter.newsletter_blocks.map((block) => block.block_content_id),
           },
           deleted_at: null,
         },
@@ -478,7 +501,6 @@ export class NewsLettersService {
   async approveReview(
     id: string,
     payload: {
-      previousState?: newsletter_state;
       reviewedByUserId?: string;
     },
   ) {
@@ -514,7 +536,7 @@ export class NewsLettersService {
       await tx.newsletter_state_log.create({
         data: {
           newsletter_id: id,
-          previous_state: payload.previousState ?? newsletter.state,
+          previous_state: newsletter.state,
           new_state: newsletter_state.APPROVED,
           reviewed_by_user_id: payload.reviewedByUserId ?? null,
         },
@@ -578,20 +600,27 @@ export class NewsLettersService {
     tx: Prisma.TransactionClient,
     newsletterId: string,
     blocks: NewsletterEditableBlock[],
-  ): Promise<void> {
+  ): Promise<string[]> {
     const existingBlocks = await tx.newsletter_blocks.findMany({
       where: {
         newsletter_id: newsletterId,
         deleted_at: null,
       },
-      select: {
-        block_content_id: true,
+      include: {
+        block_content: {
+          include: {
+            assets_block: {
+              where: { deleted_at: null },
+            },
+          },
+        },
       },
     });
-    const existingById = new Map(
+    const existingById = new Map<string, ExistingEditableBlock>(
       existingBlocks.map((block) => [block.block_content_id, block]),
     );
     const retainedBlockIds = new Set<string>();
+    const changedBlockIds = new Set<string>();
 
     for (const block of blocks) {
       const persistedBlock = this.toPersistedBlock(block);
@@ -599,6 +628,10 @@ export class NewsLettersService {
 
       if (matchedBlock) {
         retainedBlockIds.add(matchedBlock.block_content_id);
+
+        if (this.hasBlockChanged(matchedBlock, persistedBlock)) {
+          changedBlockIds.add(matchedBlock.block_content_id);
+        }
 
         await tx.block_content.update({
           where: {
@@ -680,7 +713,7 @@ export class NewsLettersService {
       .filter((blockContentId) => !retainedBlockIds.has(blockContentId));
 
     if (removedBlockContentIds.length === 0) {
-      return;
+      return Array.from(changedBlockIds);
     }
 
     await tx.newsletter_blocks.updateMany({
@@ -719,6 +752,50 @@ export class NewsLettersService {
         deleted_at: new Date(),
       },
     });
+
+    return Array.from(changedBlockIds);
+  }
+
+  private hasBlockChanged(
+    existingBlock: ExistingEditableBlock,
+    nextBlock: NewsletterEditableBlock,
+  ): boolean {
+    const currentAssetBindings = existingBlock.block_content.assets_block
+      .map((assetBinding) => ({
+        fieldKey: assetBinding.field_key,
+        assetId: assetBinding.asset_id,
+        keywordText: assetBinding.keyword_text ?? null,
+      }))
+      .sort((left, right) => this.compareAssetBinding(left, right));
+
+    const nextAssetBindings = [...(nextBlock.assetBindings ?? [])]
+      .map((assetBinding) => ({
+        fieldKey: assetBinding.fieldKey,
+        assetId: assetBinding.assetId,
+        keywordText: assetBinding.keywordText ?? null,
+      }))
+      .sort((left, right) => this.compareAssetBinding(left, right));
+
+    return (
+      existingBlock.block_content.block_type !== nextBlock.type ||
+      (existingBlock.block_content.content ?? null) !== (nextBlock.content ?? null) ||
+      (existingBlock.display_order ?? null) !== (nextBlock.displayOrder ?? null) ||
+      (existingBlock.row ?? null) !== (nextBlock.row ?? null) ||
+      (existingBlock.grid_column ?? null) !== (nextBlock.gridColumn ?? null) ||
+      existingBlock.block_content.must_fill !== (nextBlock.mustFill ?? false) ||
+      this.toBlockContentType(nextBlock) !== existingBlock.block_content.type ||
+      JSON.stringify(currentAssetBindings) !== JSON.stringify(nextAssetBindings)
+    );
+  }
+
+  private compareAssetBinding(
+    left: { fieldKey: string; assetId: string; keywordText: string | null },
+    right: { fieldKey: string; assetId: string; keywordText: string | null },
+  ): number {
+    const leftKey = `${left.fieldKey}:${left.assetId}:${left.keywordText ?? ''}`;
+    const rightKey = `${right.fieldKey}:${right.assetId}:${right.keywordText ?? ''}`;
+
+    return leftKey.localeCompare(rightKey);
   }
 
   private async createAssetBindings(
@@ -841,17 +918,17 @@ export class NewsLettersService {
   }
 
   private buildActiveBlockComments(reviewLogs: ReviewLogRecord[]): Map<string, string> {
-    const activeComments = new Map<string, string>();
+    const latestReviewLog = reviewLogs[0];
 
-    for (const reviewLog of reviewLogs) {
-      for (const comment of this.parseStoredReviewComments(reviewLog.all_commentaries)) {
-        if (!activeComments.has(comment.blockId)) {
-          activeComments.set(comment.blockId, comment.content);
-        }
-      }
+    if (!latestReviewLog) {
+      return new Map<string, string>();
     }
 
-    return activeComments;
+    return new Map(
+      this.parseStoredReviewComments(latestReviewLog.all_commentaries).map(
+        (comment) => [comment.blockId, comment.content],
+      ),
+    );
   }
 
   private async getReviewLogs(newsletterId: string): Promise<ReviewLogRecord[]> {
@@ -931,7 +1008,7 @@ export class NewsLettersService {
 
     if (latestByBlockId.size === 0) {
       throw new BadRequestException(
-        'Debe indicar al menos un comentario por bloque antes de solicitar cambios.',
+        'Debe indicar al menos un comentario no vacío antes de solicitar cambios.',
       );
     }
 
@@ -942,9 +1019,13 @@ export class NewsLettersService {
   }
 
   private resolveNewsletterTitle(
-    title: string,
+    title: string | null | undefined,
     generationContent: Prisma.JsonValue | null,
   ): string {
+    if (typeof title === 'string' && title.trim().length > 0) {
+      return title;
+    }
+
     const originalContent = this.readOriginalContent(generationContent);
 
     if (
@@ -957,7 +1038,7 @@ export class NewsLettersService {
       return originalContent.topic;
     }
 
-    return title;
+    return title ?? '';
   }
 
   private formatUserName(
@@ -1112,9 +1193,6 @@ export class NewsLettersService {
 
   private async resolveUserId(userId: string | undefined): Promise<string | null> {
     if (!userId || !uuidPattern.test(userId)) {
-      this.logger.warn(
-        `Resolve user id rejected candidate=${userId ?? 'missing'} because it is not a valid UUID`,
-      );
       return null;
     }
 
@@ -1124,13 +1202,8 @@ export class NewsLettersService {
     });
 
     if (!user) {
-      this.logger.warn(
-        `Resolve user id could not find user in database for id=${userId}`,
-      );
       return null;
     }
-
-    this.logger.log(`Resolve user id found persisted user id=${user.id}`);
 
     return user.id;
   }

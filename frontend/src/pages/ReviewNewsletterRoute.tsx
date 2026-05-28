@@ -18,7 +18,7 @@ export function ReviewNewsletterRoute() {
   }
 
   if (!vm.newsletter) {
-    return null
+    return <Alert severity="warning">No se encontró el newsletter solicitado.</Alert>
   }
 
   return <ReviewNewsletterPage vm={vm} />

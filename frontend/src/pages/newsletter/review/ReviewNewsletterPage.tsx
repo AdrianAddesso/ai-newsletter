@@ -52,7 +52,7 @@ export function ReviewNewsletterPage({ vm }: Props) {
     }
 
     if (blockCommentsPayload.length === 0) {
-      error('Debés dejar al menos un comentario por bloque para solicitar cambios.')
+      error('Debés dejar al menos un comentario para solicitar cambios.')
       return
     }
 

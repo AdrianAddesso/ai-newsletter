@@ -97,19 +97,14 @@ const reviewBlockCommentSchema = z
 
 export const requestNewsletterChangesBodySchema = z
   .object({
-    previousState: newsletterStateSchema.optional(),
-    reviewedByUserId: uuidFieldSchema.optional(),
     blockComments: z.array(reviewBlockCommentSchema).min(1, {
-      error: 'Debe indicar al menos un comentario por bloque.',
+      error: 'Debe indicar al menos un comentario.',
     }),
   })
   .strict();
 
 export const approveNewsletterReviewBodySchema = z
-  .object({
-    previousState: newsletterStateSchema.optional(),
-    reviewedByUserId: uuidFieldSchema.optional(),
-  })
+  .object({})
   .strict();
 
 export const addNewsletterLogBodySchema = z

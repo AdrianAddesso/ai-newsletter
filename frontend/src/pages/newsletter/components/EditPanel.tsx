@@ -261,7 +261,6 @@ export function EditPanel({
           )}
 
           <ReviewHistoryPanel
-            activeComment={selectedBlock.comment}
             comments={reviewHistory}
           />
         </Stack>
