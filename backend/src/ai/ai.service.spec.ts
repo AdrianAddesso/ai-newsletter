@@ -13,9 +13,9 @@ function dec(value: number) {
 
 function createConfigService(values: ConfigValues): ConfigService {
     return { get: (key: string) => values[key] } as ConfigService;
-    }
+}
 
-    const mockPrisma = {
+const mockPrisma = {
     ai_config: {
         findFirst: jest.fn(),
         findMany: jest.fn(),
@@ -27,32 +27,19 @@ function createConfigService(values: ConfigValues): ConfigService {
         create: jest.fn(),
         update: jest.fn(),
     },
-    };
+    templates: {
+        findFirst: jest.fn(),
+    },
+    brand_kit: {
+        findFirst: jest.fn(),
+    },
+};
 
-    function createService(values: ConfigValues = {}) {
+function createService(values: ConfigValues = {}) {
     return new AiService(
         createConfigService(values),
         mockPrisma as unknown as PrismaService,
     );
-    }
-function createService(
-  values: ConfigValues = {},
-  prismaOverrides: Partial<PrismaService> = {},
-) {
-  const prisma = {
-    templates: {
-      findFirst: jest.fn(),
-    },
-    brand_kit: {
-      findFirst: jest.fn(),
-    },
-    ...prismaOverrides,
-  } as unknown as PrismaService;
-
-  return {
-    service: new AiService(createConfigService(values), prisma),
-    prisma,
-  };
 }
 
     // ─── Fixture factories ────────────────────────────────────────────────────────
@@ -167,8 +154,8 @@ function createService(
         'https://eur-sdr-int-pub.nestle.com/api/dv-exp-sandbox-openai-api/1/genai/GCP/gemini-2.0-flash-001/generateContent',
     };
 
-    function mockAiProviderResponse(text: string) {
-    (prisma.templates.findFirst as jest.Mock).mockResolvedValue({
+function mockAiProviderResponse(text: string) {
+    (mockPrisma.templates.findFirst as jest.Mock).mockResolvedValue({
       id: 'weekly-brief',
       layout: [
         {
@@ -179,7 +166,7 @@ function createService(
         },
       ],
     });
-    (prisma.brand_kit.findFirst as jest.Mock).mockResolvedValue({
+    (mockPrisma.brand_kit.findFirst as jest.Mock).mockResolvedValue({
       id: 'nestle-corporate',
       name: 'Nestle Corporate',
       brandkit_assets: [],
@@ -345,8 +332,16 @@ function createService(
         ];
         mockAiProviderResponse(JSON.stringify({ blocks: generatedBlocks }));
 
-        await expect(service.generateNewsletter(baseRequest)).resolves.toEqual({
-            blocks: generatedBlocks,
+        const result = await service.generateNewsletter(baseRequest);
+
+        expect(result.blocks).toHaveLength(1);
+        expect(result.blocks[0]).toMatchObject({
+            id: 'headerLeft-0-0-0-0',
+            type: 'headerLeft',
+            name: 'Header Solo Izquierda',
+        });
+        expect(JSON.parse(result.blocks[0]?.content ?? '{}')).toMatchObject({
+            title: 'Nuevo titulo generado',
         });
 
         const fetchMock = global.fetch as jest.MockedFunction<typeof fetch>;
