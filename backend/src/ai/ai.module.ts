@@ -9,10 +9,6 @@ import { PrismaModule } from '../prisma/prisma.module';
 @Module({
   imports: [ConfigModule, PrismaModule],
   controllers: [AiController],
-  providers: [
-    AiService,
-    AuthorizationService,
-    PermissionsGuard,
-  ],
+  providers: [AiService, AuthorizationService, PermissionsGuard],
 })
 export class AiModule {}

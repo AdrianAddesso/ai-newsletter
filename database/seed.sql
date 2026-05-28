@@ -537,3 +537,36 @@ WHERE bk.deleted_at IS NULL
   AND bk.active = TRUE
   AND c.deleted_at IS NULL
 ON CONFLICT (brand_kit_id, color_id) DO NOTHING;
+
+-- ========================================
+-- AI CONFIG
+-- ========================================
+
+INSERT INTO public.ai_config (name, type, temperature, top_p, top_k, max_output_tokens)
+VALUES
+  ('Generacion de Contenido', 'CREATE',     0.5, 0.8, 20, 4000),
+  ('Refinamiento de Texto',      'REGENERATE', 0.1, 0.8, 20, 4000)
+ON CONFLICT (type) DO UPDATE
+SET
+  name              = EXCLUDED.name,
+  temperature       = EXCLUDED.temperature,
+  top_p             = EXCLUDED.top_p,
+  top_k             = EXCLUDED.top_k,
+  max_output_tokens = EXCLUDED.max_output_tokens,
+  updated_at        = now();
+
+
+-- ========================================
+-- PROMPT COMMANDS
+-- ========================================
+
+INSERT INTO public.prompt_commands (name, type, display_order, instruction)
+VALUES
+  ('Contexto para refinamiento',       'REGENERATE', 0, 'Sos un editor de copias en español para boletines internos de Nestle. Mejora el texto para claridad, fluidez, tono y legibilidad manteniendo el significado original. Devuelve solo el texto mejorado en español, sin markdown, viñetas o explicaciones.'),
+  ('Definición de rol',          'CREATE',     1, 'Sos un redactor de copias en español para boletines internos de Nestle.'),
+  ('Instrucción de tarea',         'CREATE',     2, 'Debes generar copias de boletines internos de Nestle en español, manteniendo la coherencia de la marca.'),
+  ('Instrucción de formato de salida','CREATE',     3, 'Devuelve solo JSON válido con esta forma exacta:'),
+  ('Ejemplo de esquema JSON',      'CREATE',     4, '{"blocks":[{"id":"header","name":"Encabezado","text":"...","backgroundColor":"#FFFFFF"},{"id":"headline","name":"Titulo principal","text":"...","backgroundColor":"#97CAEB"},{"id":"body","name":"Cuerpo","text":"...","backgroundColor":"#FFFFFF"},{"id":"cta","name":"Llamado a la accion","text":"...","backgroundColor":"#FFC600"}]}'),
+  ('Restricciones de formato',       'CREATE',     5, 'No incluyas markdown, comentarios, explicaciones, HTML, o campos no mostrados en el esquema.'),
+  ('Restricción de material de origen','CREATE',    6, 'Usa el contexto estructurado proporcionado como el único material de origen. Si un valor está ausente, escribe un fallback neutral para boletines internos.')
+ON CONFLICT DO NOTHING;

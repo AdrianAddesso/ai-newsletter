@@ -1,8 +1,8 @@
 export interface ImproveTextRequestDto {
-  text: string;
+    text: string;
 }
 
 export interface ImproveTextResponseDto {
-  originalText: string;
-  improvedText: string;
+    originalText: string;
+    improvedText: string;
 }

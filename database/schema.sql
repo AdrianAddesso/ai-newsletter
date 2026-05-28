@@ -217,3 +217,30 @@ CREATE TABLE public.users (
   CONSTRAINT users_pkey PRIMARY KEY (id),
   CONSTRAINT users_area_id_fkey FOREIGN KEY (area_id) REFERENCES public.areas(id)
 );
+
+CREATE TABLE public.prompt_commands (
+  id            uuid NOT NULL DEFAULT gen_random_uuid(),
+  name          text NOT NULL,
+  type          USER-DEFINED NOT NULL,
+  display_order integer NOT NULL DEFAULT 0,
+  instruction   text,
+  created_at    timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at    timestamp with time zone NOT NULL DEFAULT now(),
+  deleted_at    timestamp with time zone,
+  CONSTRAINT prompt_commands_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE public.ai_config (
+  id                uuid NOT NULL DEFAULT gen_random_uuid(),
+  name              text NOT NULL,
+  type              USER-DEFINED NOT NULL,
+  temperature       numeric(3,2) NOT NULL,
+  top_p             numeric(3,2) NOT NULL,
+  top_k             integer NOT NULL,
+  max_output_tokens integer NOT NULL,
+  created_at        timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at        timestamp with time zone NOT NULL DEFAULT now(),
+  deleted_at        timestamp with time zone,
+  CONSTRAINT ai_config_pkey     PRIMARY KEY (id),
+  CONSTRAINT ai_config_type_key UNIQUE (type)
+);
