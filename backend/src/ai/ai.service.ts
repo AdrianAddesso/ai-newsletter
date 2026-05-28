@@ -259,17 +259,31 @@ export class AiService {
       );
     }
 
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        client_id: clientId,
-        client_secret: clientSecret,
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
-      body: JSON.stringify(payload),
-      signal: AbortSignal.timeout(60000),
-    });
+    let response: Response;
+
+    try {
+      response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          client_id: clientId,
+          client_secret: clientSecret,
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(60000),
+      });
+    } catch (error) {
+      // Catches network errors, connection aborts, and timeouts
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown network error';
+      throw this.createProviderException(
+        503, // Service Unavailable is usually best for network failures
+        `Fetch failed: ${errorMessage}`,
+        publicMessage,
+        operation,
+      );
+    }
 
     const responseBody = (await response
       .json()
@@ -662,7 +676,9 @@ export class AiService {
 
   private extractNestleModelName(): string {
     const url = this.readEnv('NESTLE_GENIA_URL') ?? this.defaultNestleGeniaUrl;
-    return this.readEnv('NESTLE_GENIA_MODEL') ?? this.extractNestleModelFromUrl(url);
+    return (
+      this.readEnv('NESTLE_GENIA_MODEL') ?? this.extractNestleModelFromUrl(url)
+    );
   }
 
   private extractNestleErrorMessage(
