@@ -66,7 +66,10 @@ export class AiService {
   private readonly defaultNestleGeniaUrl =
     'https://eur-sdr-int-pub.nestle.com/api/dv-exp-sandbox-openai-api/1/genai/GCP/gemini-2.0-flash-001/generateContent';
 
-  private readonly fallbackGenerationConfig: Record<ai_config_type, GenerationConfig> = {
+  private readonly fallbackGenerationConfig: Record<
+    ai_config_type,
+    GenerationConfig
+  > = {
     [ai_config_type.REGENERATE]: {
       temperature: 0.1,
       topP: 0.8,
@@ -374,7 +377,10 @@ export class AiService {
     this.logger.log(
       `AI generateNewsletter using ai_config type=${ai_config_type.CREATE} promptLength=${prompt.length}`,
     );
-    const payload = this.buildNewsletterGenerateContentPayload(prompt, genConfig);
+    const payload = this.buildNewsletterGenerateContentPayload(
+      prompt,
+      genConfig,
+    );
 
     const responseBody = await this.callAiProvider(
       payload,
@@ -428,58 +434,38 @@ export class AiService {
     return normalizedConfig;
   }
 
-  private async fetchPromptCommands(type: ai_config_type): Promise<PromptCommandRow[]> {
-    const commands = await this.prisma.prompt_commands.findMany({
-      where: { type, deleted_at: null },
-      orderBy: { display_order: 'asc' },
-      select: {
-        id: true,
-        name: true,
-        type: true,
-        display_order: true,
-        instruction: true,
-      },
-    });
-    const activeCommands = commands.filter((command) =>
-      Boolean(command.instruction?.trim()),
-    );
-    let response: Response;
-
-    try {
-      response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          client_id: clientId,
-          client_secret: clientSecret,
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
+    private async fetchPromptCommands(
+        type: ai_config_type,
+    ): Promise<PromptCommandRow[]> {
+        const commands = await this.prisma.prompt_commands.findMany({
+        where: { type, deleted_at: null },
+        orderBy: { display_order: 'asc' },
+        select: {
+            id: true,
+            name: true,
+            type: true,
+            display_order: true,
+            instruction: true,
         },
-        body: JSON.stringify(payload),
-        signal: AbortSignal.timeout(60000),
-      });
-    } catch (error) {
-      // Catches network errors, connection aborts, and timeouts
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown network error';
-      throw this.createProviderException(
-        503, // Service Unavailable is usually best for network failures
-        `Fetch failed: ${errorMessage}`,
-        publicMessage,
-        operation,
-      );
+        });
+
+        const activeCommands = commands.filter((command) =>
+        Boolean(command.instruction?.trim()),
+        );
+
+        this.logger.log(
+        `Loaded ${activeCommands.length}/${commands.length} prompt_commands for type=${type}: ${
+            activeCommands
+            .map(
+                (command) =>
+                `[${command.display_order}]${command.name}{id=${command.id},chars=${command.instruction?.trim().length ?? 0}}`,
+            )
+            .join(', ') || 'none'
+        }`,
+        );
+
+        return commands;
     }
-
-    this.logger.log(
-      `Loaded ${activeCommands.length}/${commands.length} prompt_commands for type=${type}: ${activeCommands
-        .map(
-          (command) =>
-            `[${command.display_order}]${command.name}{id=${command.id},chars=${command.instruction?.trim().length ?? 0}}`,
-        )
-        .join(', ') || 'none'}`,
-    );
-
-    return commands;
-  }
 
   private buildTextImprovementPayload(
     originalText: string,
@@ -531,7 +517,9 @@ export class AiService {
     templateBlocks: GenerateNewsletterResponseDto['blocks'],
     brandKit: PromptBrandKit,
   ): Promise<string> {
-    const promptCommands = await this.fetchPromptCommands(ai_config_type.CREATE);
+    const promptCommands = await this.fetchPromptCommands(
+      ai_config_type.CREATE,
+    );
     const promptLines = promptCommands
       .map((command) => command.instruction?.trim() ?? '')
       .filter(Boolean);
@@ -760,7 +748,10 @@ export class AiService {
           id: z.string().trim().min(1),
           name: z.string().trim().min(1),
           text: z.string().trim().min(1),
-          backgroundColor: z.string().trim().regex(/^#[0-9A-Fa-f]{6}$/),
+          backgroundColor: z
+            .string()
+            .trim()
+            .regex(/^#[0-9A-Fa-f]{6}$/),
         }),
       ),
     });
@@ -843,7 +834,9 @@ export class AiService {
       .filter(Boolean)
       .join(' ');
     const firstValidLink =
-      request.linksOrSources.find((link) => this.isValidHttpUrl(link))?.trim() ?? '';
+      request.linksOrSources
+        .find((link) => this.isValidHttpUrl(link))
+        ?.trim() ?? '';
     const fallbackByFieldKey: Record<string, string> = {
       title: request.topic.trim(),
       subtitle: request.objective.trim() || request.audience.trim(),
@@ -896,7 +889,10 @@ export class AiService {
               value = firstValidLink || defaultValue;
             } else if (field.type === 'font-family') {
               value = fallbackByFieldKey.fontFamily || defaultValue;
-            } else if (field.type === 'font-size' || field.type === 'font-style') {
+            } else if (
+              field.type === 'font-size' ||
+              field.type === 'font-style'
+            ) {
               value = defaultValue;
             } else if (field.type === 'color') {
               value = defaultValue;

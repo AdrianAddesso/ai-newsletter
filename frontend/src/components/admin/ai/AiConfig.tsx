@@ -40,7 +40,7 @@
 
     type PromptSortKey = keyof Pick<
     PromptCommand,
-    "name" | "type" | "display_order" | "created_at"
+    "name" | "type" | "created_at"
     >;
 
     // ─── Section 1: AI Config ─────────────────────────────────────────────────────
@@ -190,7 +190,7 @@
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [search, setSearch] = useState("");
-    const [orderBy, setOrderBy] = useState<PromptSortKey>("display_order");
+    const [orderBy, setOrderBy] = useState<PromptSortKey>("name");
     const [order, setOrder] = useState<"asc" | "desc">("asc");
     const [limit, setLimit] = useState(10);
     const [modalOpen, setModalOpen] = useState(false);
@@ -270,208 +270,198 @@
     };
 
     return (
-        <Stack spacing={2}>
+      <Stack spacing={2}>
         <Stack
-            direction={{ xs: "column", sm: "row" }}
-            spacing={2}
-            sx={{
+          direction={{ xs: "column", sm: "row" }}
+          spacing={2}
+          sx={{
             justifyContent: "space-between",
             alignItems: { xs: "flex-start", sm: "center" },
-            }}
+          }}
         >
-            <Stack spacing={0.5}>
+          <Stack spacing={0.5}>
             <Typography variant="h6">Configuración de Prompts</Typography>
             <Typography variant="body2" color="text.secondary">
-                Instrucciones enviadas al modelo para cada tipo de operación.
+              Instrucciones enviadas al modelo para cada tipo de operación.
             </Typography>
-            </Stack>
+          </Stack>
 
-            <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+          <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
             <SearchBar value={search} onChange={setSearch} />
             <Tooltip title="Actualizar lista">
-                <IconButton
+              <IconButton
                 size="small"
                 onClick={() => {
-                    setLoading(true);
-                    setError(null);
-                    void fetchCommands();
+                  setLoading(true);
+                  setError(null);
+                  void fetchCommands();
                 }}
                 disabled={loading}
-                >
+              >
                 <RefreshIcon fontSize="small" />
-                </IconButton>
+              </IconButton>
             </Tooltip>
             <Button
-                variant="contained"
-                size="small"
-                startIcon={<AddIcon />}
-                onClick={() => {
+              variant="contained"
+              size="small"
+              startIcon={<AddIcon />}
+              onClick={() => {
                 setEditTarget(null);
                 setModalOpen(true);
-                }}
-                sx={{ whiteSpace: "nowrap" }}
+              }}
+              sx={{ whiteSpace: "nowrap" }}
             >
-                Nueva instrucción
+              Nueva instrucción
             </Button>
-            </Stack>
+          </Stack>
         </Stack>
 
         {error && (
-            <Alert severity="error" onClose={() => setError(null)}>
+          <Alert severity="error" onClose={() => setError(null)}>
             {error}
-            </Alert>
+          </Alert>
         )}
 
         {loading ? (
-            <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+          <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
             <CircularProgress size={28} />
-            </Box>
+          </Box>
         ) : filtered.length === 0 ? (
-            <Alert severity="info">
+          <Alert severity="info">
             No hay instrucciones que coincidan con la búsqueda.
-            </Alert>
+          </Alert>
         ) : (
-            <TableContainer
+          <TableContainer
             component={Card}
             variant="outlined"
             sx={{ borderRadius: 2 }}
-            >
+          >
             <Table>
                 <TableHead sx={{ bgcolor: "action.hover" }}>
-                <TableRow>
+                    <TableRow>
                     <TableCell>
-                    <TableSortLabel
+                        <TableSortLabel
                         active={orderBy === "name"}
                         direction={orderBy === "name" ? order : "asc"}
                         onClick={() => handleSort("name")}
-                    >
+                        >
                         Nombre
-                    </TableSortLabel>
+                        </TableSortLabel>
                     </TableCell>
                     <TableCell>
-                    <TableSortLabel
+                        <TableSortLabel
                         active={orderBy === "type"}
                         direction={orderBy === "type" ? order : "asc"}
                         onClick={() => handleSort("type")}
-                    >
+                        >
                         Uso
-                    </TableSortLabel>
-                    </TableCell>
-                    <TableCell>
-                    <TableSortLabel
-                        active={orderBy === "display_order"}
-                        direction={orderBy === "display_order" ? order : "asc"}
-                        onClick={() => handleSort("display_order")}
-                    >
-                        Orden
-                    </TableSortLabel>
+                        </TableSortLabel>
                     </TableCell>
                     <TableCell>Instrucción</TableCell>
                     <TableCell>
-                    <TableSortLabel
+                        <TableSortLabel
                         active={orderBy === "created_at"}
                         direction={orderBy === "created_at" ? order : "asc"}
                         onClick={() => handleSort("created_at")}
-                    >
+                        >
                         Creado
-                    </TableSortLabel>
+                        </TableSortLabel>
                     </TableCell>
                     <TableCell align="right">Acciones</TableCell>
-                </TableRow>
+                    </TableRow>
                 </TableHead>
-                <TableBody>
+              <TableBody>
                 {filtered.slice(0, limit).map((cmd) => (
-                    <TableRow key={cmd.id} hover>
+                  <TableRow key={cmd.id} hover>
                     <TableCell>
-                        <Typography variant="body2">{cmd.name}</Typography>
+                      <Typography variant="body2">{cmd.name}</Typography>
                     </TableCell>
                     <TableCell>
-                        <Chip
+                      <Chip
                         label={AiConfigTypeLabel[cmd.type]}
                         size="small"
                         variant="outlined"
                         color={cmd.type === "CREATE" ? "primary" : "secondary"}
-                        />
+                      />
                     </TableCell>
-                    <TableCell>{cmd.display_order}</TableCell>
                     <TableCell>
-                        <Typography
+                      <Typography
                         variant="body2"
                         color="text.secondary"
                         noWrap
                         sx={{ maxWidth: 320, display: "block" }}
-                        >
+                      >
                         {cmd.instruction ?? "—"}
-                        </Typography>
+                      </Typography>
                     </TableCell>
                     <TableCell>
-                        {new Date(cmd.created_at).toLocaleDateString("es-AR")}
+                      {new Date(cmd.created_at).toLocaleDateString("es-AR")}
                     </TableCell>
                     <TableCell align="right">
-                        <Stack
+                      <Stack
                         direction="row"
                         spacing={0.5}
                         sx={{ alignItems: "center" }}
-                        >
+                      >
                         <Tooltip title="Editar">
-                            <IconButton
+                          <IconButton
                             size="small"
                             onClick={() => {
-                                setEditTarget(cmd);
-                                setModalOpen(true);
+                              setEditTarget(cmd);
+                              setModalOpen(true);
                             }}
-                            >
+                          >
                             <EditIcon fontSize="small" />
-                            </IconButton>
+                          </IconButton>
                         </Tooltip>
                         <Tooltip title="Borrar">
-                            <IconButton
+                          <IconButton
                             size="small"
                             color="error"
                             onClick={() => setDeleteId(cmd.id)}
-                            >
+                          >
                             <DeleteIcon fontSize="small" />
-                            </IconButton>
+                          </IconButton>
                         </Tooltip>
-                        </Stack>
+                      </Stack>
                     </TableCell>
-                    </TableRow>
+                  </TableRow>
                 ))}
-                </TableBody>
+              </TableBody>
             </Table>
 
             {limit < filtered.length && (
-                <Box
+              <Box
                 sx={{
-                    p: 2,
-                    textAlign: "center",
-                    borderTop: "1px solid",
-                    borderColor: "divider",
+                  p: 2,
+                  textAlign: "center",
+                  borderTop: "1px solid",
+                  borderColor: "divider",
                 }}
-                >
+              >
                 <Button onClick={() => setLimit((c) => c + 10)}>
-                    Cargar más resultados
+                  Cargar más resultados
                 </Button>
-                </Box>
+              </Box>
             )}
-            </TableContainer>
+          </TableContainer>
         )}
 
         <PromptCommandModal
-            open={modalOpen}
-            command={editTarget}
-            onClose={handleModalClose}
-            onConfirm={handleConfirm}
+          open={modalOpen}
+          command={editTarget}
+          onClose={handleModalClose}
+          onConfirm={handleConfirm}
         />
 
         <ModalDelete
-            open={Boolean(deleteId)}
-            description="Esta acción eliminará la instrucción de prompt de forma permanente."
-            onClose={() => setDeleteId(null)}
-            onConfirm={handleDelete}
-            loading={deleting}
+          open={Boolean(deleteId)}
+          description="Esta acción eliminará la instrucción de prompt de forma permanente."
+          onClose={() => setDeleteId(null)}
+          onConfirm={handleDelete}
+          loading={deleting}
         />
-        </Stack>
+      </Stack>
     );
     }
 
