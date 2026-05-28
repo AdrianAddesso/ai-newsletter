@@ -1,33 +1,10 @@
 import { Alert, Box, Button, CircularProgress, Stack } from '@mui/material'
-import { useCallback } from 'react'
-import { useParams } from 'react-router'
 
 import { useNewsletterEditor } from './newsletter/hooks/useNewsletterEditor'
 import { DraftNewsletterPage } from './newsletter/draft/DraftNewsletterPage'
 
-import { NewsletterStepper, getStepFromState } from './newsletter/components/NewsletterStepper'
-
 export default function EditNewsletterPage() {
   const vm = useNewsletterEditor()
-  const { id } = useParams()
-
-  const handleStepClick = useCallback((step: number) => {
-    if (step === 0 && !vm.isReviewState) {
-      vm.navigate('/crearNewsletter', {
-        state: {
-          newsletterId: id,
-          templateId: vm.newsletter?.templateId,
-          brandKitId: vm.newsletter?.brandKitId,
-          generationRequest: vm.newsletter?.generationRequest,
-        },
-      })
-    }
-    if (step === 1 && vm.isReviewState) {
-      const isCreator = vm.newsletter?.creatorUserId === vm.currentUserId
-      void vm.transitionState('CHANGES_REQUESTED')
-      if (!isCreator) vm.navigate('/dashboard')
-    }
-  }, [vm, id])
 
   if (vm.isLoading) {
     return (
