@@ -31,6 +31,9 @@ describe('NewsLettersService', () => {
       newsletter_state_log: {
         create: jest.fn(),
       },
+      commentary: {
+        create: jest.fn(),
+      },
     };
     const runTransaction = (
       callback: (tx: typeof transactionClient) => Promise<unknown>,
@@ -44,6 +47,7 @@ describe('NewsLettersService', () => {
       },
       newsletter_state_log: {
         create: jest.fn(),
+        findMany: jest.fn().mockResolvedValue([]),
       },
       __tx: transactionClient,
     };
@@ -142,6 +146,9 @@ describe('NewsLettersService', () => {
     expect(prisma.__tx.newsletter_blocks.updateMany).toHaveBeenCalledWith({
       where: {
         newsletter_id: 'newsletter-id',
+        block_content_id: {
+          in: ['old-block-content-id'],
+        },
         deleted_at: null,
       },
       data: {

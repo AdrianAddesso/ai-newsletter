@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import {
@@ -14,6 +15,7 @@ import { StorageService } from '../storage/storage.service';
 import type {
   CreateNewsletterBody,
   NewsletterEditableBlock,
+  ReviewBlockComment,
   UpdateNewsletterBody,
   UpdateNewsletterStatusBody,
 } from './newsletters.schemas';
@@ -24,12 +26,51 @@ import {
   type NewsletterBlockDto,
   parseBlockValues,
 } from '../blocks/newsletter-blocks';
+import { Role } from '../modules/auth/enum/roles';
 
 const uuidPattern =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{12}$/i;
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+type ReviewRequestUser = {
+  id?: string;
+  role?: Role;
+  area?: string;
+  area_id?: string;
+};
+
+type PersistedNewsletterBlock = Prisma.newsletter_blocksGetPayload<{
+  include: {
+    block_content: {
+      include: {
+        assets_block: {
+          where: { deleted_at: null };
+          include: { assets: true };
+        };
+      };
+    };
+  };
+}>;
+
+type ReviewLogRecord = Prisma.newsletter_state_logGetPayload<{
+  include: {
+    users: {
+      select: {
+        id: true;
+        name: true;
+        last_name: true;
+      };
+    };
+  };
+}>;
+
+type StoredReviewComment = {
+  blockId: string;
+  content: string;
+};
 
 @Injectable()
 export class NewsLettersService {
+  private readonly logger = new Logger(NewsLettersService.name);
   private readonly keywordSvgTemplateCache = new Map<string, Promise<string>>();
 
   constructor(
@@ -48,7 +89,7 @@ export class NewsLettersService {
         orderBy: { created_at: 'desc' },
         include: {
           users_newsletters_created_by_user_idTousers: {
-            select: { name: true, last_name: true },
+            select: { id: true, name: true, last_name: true },
           },
         },
       }),
@@ -56,7 +97,22 @@ export class NewsLettersService {
     ]);
 
     return {
-      data,
+      data: data.map((newsletter) => ({
+        id: newsletter.id,
+        title: this.resolveNewsletterTitle(
+          newsletter.title,
+          newsletter.generation_content,
+        ),
+        creatorUserId: newsletter.created_by_user_id ?? '',
+        authorName: this.formatUserName(
+          newsletter.users_newsletters_created_by_user_idTousers,
+        ),
+        state: newsletter.state,
+        language: newsletter.language,
+        publishDate: newsletter.publish_date?.toISOString() ?? null,
+        updatedAt: newsletter.updated_at.toISOString(),
+        createdAt: newsletter.created_at.toISOString(),
+      })),
       meta: {
         total,
         page,
@@ -65,9 +121,62 @@ export class NewsLettersService {
     };
   }
 
+  async getReviewInbox(user?: ReviewRequestUser) {
+    if (!user?.role || user.role === Role.USER) {
+      return [];
+    }
+
+    const where: Prisma.newslettersWhereInput = {
+      deleted_at: null,
+      state: {
+        in: [newsletter_state.IN_REVIEW, newsletter_state.RESUBMITTED],
+      },
+    };
+
+    const newsletters = await this.prisma.newsletters.findMany({
+      where,
+      orderBy: { updated_at: 'desc' },
+      include: {
+        areas: {
+          select: {
+            name: true,
+          },
+        },
+        users_newsletters_created_by_user_idTousers: {
+          select: {
+            id: true,
+            name: true,
+            last_name: true,
+          },
+        },
+      },
+    });
+
+    return newsletters.map((newsletter) => ({
+      id: newsletter.id,
+      title: this.resolveNewsletterTitle(
+        newsletter.title,
+        newsletter.generation_content,
+      ),
+      author: this.formatUserName(
+        newsletter.users_newsletters_created_by_user_idTousers,
+      ),
+      area: newsletter.areas?.name ?? null,
+      status: newsletter.state,
+      submittedAt: newsletter.created_at.toISOString(),
+      updatedAt: newsletter.updated_at.toISOString(),
+    }));
+  }
+
   async create(body: CreateNewsletterBody, requestUserId?: string) {
+    this.logger.log(
+      `Create newsletter started with requestUserId=${requestUserId ?? 'missing'} bodyCreatedByUserId=${body.createdByUserId ?? 'missing'} title="${body.title}"`,
+    );
     const creatorId = await this.resolveUserId(
       body.createdByUserId ?? requestUserId,
+    );
+    this.logger.log(
+      `Create newsletter resolved creatorId=${creatorId ?? 'null'} from candidate=${body.createdByUserId ?? requestUserId ?? 'missing'}`,
     );
     const template = body.templateId
       ? await this.prisma.templates.findFirst({
@@ -97,6 +206,9 @@ export class NewsLettersService {
           generation_content: this.toGenerationContentJson(body),
         },
       });
+      this.logger.log(
+        `Newsletter created with id=${created.id} created_by_user_id=${created.created_by_user_id ?? 'null'} state=${created.state}`,
+      );
 
       await this.replaceBlocks(tx, created.id, body.blocks ?? []);
 
@@ -110,6 +222,18 @@ export class NewsLettersService {
     const newsletter = await this.prisma.newsletters.findFirst({
       where: { id, deleted_at: null },
       include: {
+        areas: {
+          select: {
+            name: true,
+          },
+        },
+        users_newsletters_created_by_user_idTousers: {
+          select: {
+            id: true,
+            name: true,
+            last_name: true,
+          },
+        },
         newsletter_blocks: {
           where: { deleted_at: null },
           orderBy: [{ row: 'asc' }, { grid_column: 'asc' }, { display_order: 'asc' }],
@@ -131,12 +255,27 @@ export class NewsLettersService {
       throw new NotFoundException('No se encontro el newsletter solicitado.');
     }
 
+    const reviewLogs = await this.getReviewLogs(newsletter.id);
+    const activeBlockComments = this.buildActiveBlockComments(reviewLogs);
     const blocks = await Promise.all(
-      newsletter.newsletter_blocks.map((block) => this.toBlockDto(block)),
+      newsletter.newsletter_blocks.map((block) =>
+        this.toBlockDto(
+          block,
+          activeBlockComments.get(block.block_content_id) ?? null,
+        ),
+      ),
     );
 
     return {
       id: newsletter.id,
+      title: this.resolveNewsletterTitle(
+        newsletter.title,
+        newsletter.generation_content,
+      ),
+      authorName: this.formatUserName(
+        newsletter.users_newsletters_created_by_user_idTousers,
+      ),
+      area: newsletter.areas?.name ?? null,
       creatorUserId: newsletter.created_by_user_id ?? '',
       state: newsletter.state,
       templateId: newsletter.template_id ?? '',
@@ -148,6 +287,7 @@ export class NewsLettersService {
       renderedHtml: null,
       createdAt: newsletter.created_at.toISOString(),
       updatedAt: newsletter.updated_at.toISOString(),
+      reviewRounds: reviewLogs.map((reviewLog) => this.toReviewRound(reviewLog)),
     };
   }
 
@@ -210,16 +350,18 @@ export class NewsLettersService {
     const newsletter = await this.prisma.newsletters.findUnique({
       where: { id },
     });
+
     if (!newsletter) {
       throw new NotFoundException(`Newsletter ${id} no encontrado`);
     }
 
-    await Promise.all([
-      this.prisma.newsletters.update({
+    await this.prisma.$transaction(async (tx) => {
+      await tx.newsletters.update({
         where: { id },
         data: { state: body.state },
-      }),
-      this.prisma.newsletter_state_log.create({
+      });
+
+      await tx.newsletter_state_log.create({
         data: {
           newsletter_id: id,
           previous_state: body.previousState ?? newsletter.state,
@@ -227,14 +369,159 @@ export class NewsLettersService {
           reviewed_by_user_id: body.reviewedByUserId ?? null,
           all_commentaries: body.allCommentaries ?? null,
         },
-      }),
-    ]);
+      });
+    });
 
     return this.getById(id);
   }
 
   getLogs(id: string) {
     return 'Desde logs newsletters con ID' + id;
+  }
+
+  async requestChanges(
+    id: string,
+    payload: {
+      previousState?: newsletter_state;
+      reviewedByUserId?: string;
+      blockComments: ReviewBlockComment[];
+    },
+  ) {
+    await this.prisma.$transaction(async (tx) => {
+      const newsletter = await tx.newsletters.findFirst({
+        where: { id, deleted_at: null },
+        select: {
+          id: true,
+          state: true,
+          newsletter_blocks: {
+            where: { deleted_at: null },
+            select: {
+              block_content_id: true,
+            },
+          },
+        },
+      });
+
+      if (!newsletter) {
+        throw new NotFoundException('No se encontro el newsletter solicitado.');
+      }
+
+      if (
+        newsletter.state !== newsletter_state.IN_REVIEW &&
+        newsletter.state !== newsletter_state.RESUBMITTED
+      ) {
+        throw new BadRequestException(
+          'Solo se pueden solicitar cambios para newsletters en revision o reenviados.',
+        );
+      }
+
+      const normalizedComments = this.normalizeReviewComments(
+        payload.blockComments,
+      );
+      const allowedBlockIds = new Set(
+        newsletter.newsletter_blocks.map((block) => block.block_content_id),
+      );
+
+      for (const comment of normalizedComments) {
+        if (!allowedBlockIds.has(comment.blockId)) {
+          throw new BadRequestException(
+            'Uno de los comentarios apunta a un bloque inexistente en el newsletter.',
+          );
+        }
+      }
+
+      await tx.newsletter_state_log.create({
+        data: {
+          newsletter_id: id,
+          previous_state: payload.previousState ?? newsletter.state,
+          new_state: newsletter_state.CHANGES_REQUESTED,
+          reviewed_by_user_id: payload.reviewedByUserId ?? null,
+          all_commentaries: JSON.stringify(normalizedComments),
+        },
+      });
+
+      await tx.commentary.updateMany({
+        where: {
+          block_content_id: {
+            in: normalizedComments.map((comment) => comment.blockId),
+          },
+          deleted_at: null,
+        },
+        data: {
+          deleted_at: new Date(),
+          show: false,
+        },
+      });
+
+      for (const comment of normalizedComments) {
+        await tx.commentary.create({
+          data: {
+            block_content_id: comment.blockId,
+            commented_by_user_id: payload.reviewedByUserId ?? null,
+            show: true,
+            content: comment.content,
+          },
+        });
+      }
+
+      await tx.newsletters.update({
+        where: { id },
+        data: {
+          state: newsletter_state.CHANGES_REQUESTED,
+        },
+      });
+    });
+
+    return this.getById(id);
+  }
+
+  async approveReview(
+    id: string,
+    payload: {
+      previousState?: newsletter_state;
+      reviewedByUserId?: string;
+    },
+  ) {
+    await this.prisma.$transaction(async (tx) => {
+      const newsletter = await tx.newsletters.findFirst({
+        where: { id, deleted_at: null },
+        select: {
+          id: true,
+          state: true,
+        },
+      });
+
+      if (!newsletter) {
+        throw new NotFoundException('No se encontro el newsletter solicitado.');
+      }
+
+      if (
+        newsletter.state !== newsletter_state.IN_REVIEW &&
+        newsletter.state !== newsletter_state.RESUBMITTED
+      ) {
+        throw new BadRequestException(
+          'Solo se pueden aprobar newsletters en revision o reenviados.',
+        );
+      }
+
+      await tx.newsletters.update({
+        where: { id },
+        data: {
+          state: newsletter_state.APPROVED,
+        },
+      });
+
+      await tx.newsletter_state_log.create({
+        data: {
+          newsletter_id: id,
+          previous_state: payload.previousState ?? newsletter.state,
+          new_state: newsletter_state.APPROVED,
+          reviewed_by_user_id: payload.reviewedByUserId ?? null,
+        },
+      });
+    });
+
+    return this.getById(id);
   }
 
   async addLog(
@@ -301,13 +588,107 @@ export class NewsLettersService {
         block_content_id: true,
       },
     });
-    const existingBlockContentIds = existingBlocks.map(
-      ({ block_content_id: blockContentId }) => blockContentId,
+    const existingById = new Map(
+      existingBlocks.map((block) => [block.block_content_id, block]),
     );
+    const retainedBlockIds = new Set<string>();
+
+    for (const block of blocks) {
+      const persistedBlock = this.toPersistedBlock(block);
+      const matchedBlock = existingById.get(persistedBlock.id);
+
+      if (matchedBlock) {
+        retainedBlockIds.add(matchedBlock.block_content_id);
+
+        await tx.block_content.update({
+          where: {
+            id: matchedBlock.block_content_id,
+          },
+          data: {
+            block_type: persistedBlock.type,
+            content: persistedBlock.content ?? null,
+            display_order: persistedBlock.displayOrder ?? null,
+            must_fill: persistedBlock.mustFill ?? false,
+            type: this.toBlockContentType(persistedBlock),
+            deleted_at: null,
+          },
+        });
+
+        await tx.newsletter_blocks.updateMany({
+          where: {
+            newsletter_id: newsletterId,
+            block_content_id: matchedBlock.block_content_id,
+          },
+          data: {
+            display_order: persistedBlock.displayOrder ?? null,
+            row: persistedBlock.row ?? null,
+            grid_column: persistedBlock.gridColumn ?? null,
+            deleted_at: null,
+          },
+        });
+
+        await tx.assets_block.updateMany({
+          where: {
+            block_id: matchedBlock.block_content_id,
+            deleted_at: null,
+          },
+          data: {
+            deleted_at: new Date(),
+          },
+        });
+
+        await this.createAssetBindings(
+          tx,
+          matchedBlock.block_content_id,
+          persistedBlock.assetBindings ?? [],
+        );
+        continue;
+      }
+
+      const contentRecord = await tx.block_content.create({
+        data: {
+          block_type: persistedBlock.type,
+          content: persistedBlock.content ?? null,
+          display_order: persistedBlock.displayOrder ?? null,
+          must_fill: persistedBlock.mustFill ?? false,
+          type: this.toBlockContentType(persistedBlock),
+        },
+        select: { id: true },
+      });
+
+      retainedBlockIds.add(contentRecord.id);
+
+      await tx.newsletter_blocks.create({
+        data: {
+          newsletter_id: newsletterId,
+          block_content_id: contentRecord.id,
+          display_order: persistedBlock.displayOrder ?? null,
+          row: persistedBlock.row ?? null,
+          grid_column: persistedBlock.gridColumn ?? null,
+        },
+      });
+
+      await this.createAssetBindings(
+        tx,
+        contentRecord.id,
+        persistedBlock.assetBindings ?? [],
+      );
+    }
+
+    const removedBlockContentIds = existingBlocks
+      .map((block) => block.block_content_id)
+      .filter((blockContentId) => !retainedBlockIds.has(blockContentId));
+
+    if (removedBlockContentIds.length === 0) {
+      return;
+    }
 
     await tx.newsletter_blocks.updateMany({
       where: {
         newsletter_id: newsletterId,
+        block_content_id: {
+          in: removedBlockContentIds,
+        },
         deleted_at: null,
       },
       data: {
@@ -315,67 +696,45 @@ export class NewsLettersService {
       },
     });
 
-    if (existingBlockContentIds.length > 0) {
-      await tx.assets_block.updateMany({
-        where: {
-          block_id: {
-            in: existingBlockContentIds,
-          },
-          deleted_at: null,
+    await tx.assets_block.updateMany({
+      where: {
+        block_id: {
+          in: removedBlockContentIds,
         },
+        deleted_at: null,
+      },
+      data: {
+        deleted_at: new Date(),
+      },
+    });
+
+    await tx.block_content.updateMany({
+      where: {
+        id: {
+          in: removedBlockContentIds,
+        },
+        deleted_at: null,
+      },
+      data: {
+        deleted_at: new Date(),
+      },
+    });
+  }
+
+  private async createAssetBindings(
+    tx: Prisma.TransactionClient,
+    blockContentId: string,
+    assetBindings: NonNullable<NewsletterEditableBlock['assetBindings']>,
+  ): Promise<void> {
+    for (const assetBinding of assetBindings) {
+      await tx.assets_block.create({
         data: {
-          deleted_at: new Date(),
-        },
-      });
-
-      await tx.block_content.updateMany({
-        where: {
-          id: {
-            in: existingBlockContentIds,
-          },
-          deleted_at: null,
-        },
-        data: {
-          deleted_at: new Date(),
-        },
-      });
-    }
-
-    for (const block of blocks) {
-      const persistedBlock = this.toPersistedBlock(block);
-      const blockContentData = {
-        block_type: block.type,
-        content: persistedBlock.content ?? null,
-        display_order: block.displayOrder ?? null,
-        must_fill: block.mustFill ?? false,
-        type: this.toBlockContentType(block),
-      } satisfies Prisma.block_contentUncheckedCreateInput;
-      const contentRecord = await tx.block_content.create({
-        data: blockContentData,
-        select: { id: true },
-      });
-
-      await tx.newsletter_blocks.create({
-        data: {
-          newsletter_id: newsletterId,
-          block_content_id: contentRecord.id,
-          display_order: block.displayOrder ?? null,
-          row: block.row ?? null,
-          grid_column: block.gridColumn ?? null,
-        },
-      });
-
-      for (const assetBinding of block.assetBindings ?? []) {
-        const assetBindingData = {
-          block_id: contentRecord.id,
+          block_id: blockContentId,
           asset_id: assetBinding.assetId,
           field_key: assetBinding.fieldKey,
           keyword_text: assetBinding.keywordText ?? null,
-        } satisfies Prisma.assets_blockUncheckedCreateInput;
-        await tx.assets_block.create({
-          data: assetBindingData,
-        });
-      }
+        },
+      });
     }
   }
 
@@ -399,7 +758,10 @@ export class NewsLettersService {
     };
   }
 
-  private async toBlockDto(block: any): Promise<NewsletterBlockDto> {
+  private async toBlockDto(
+    block: PersistedNewsletterBlock,
+    activeComment: string | null,
+  ): Promise<NewsletterBlockDto> {
     const editFields = getBlockEditFields(block.block_content.block_type);
     const values = parseBlockValues(block.block_content.content);
     const assetBindings = await Promise.all(
@@ -448,10 +810,168 @@ export class NewsLettersService {
       gridColumn: block.grid_column ?? 0,
       displayOrder: block.display_order ?? block.block_content.display_order ?? 0,
       mustFill: block.block_content.must_fill,
-      comment: null,
+      comment: activeComment,
       editFields,
       assetBindings,
     };
+  }
+
+  private toReviewRound(reviewLog: ReviewLogRecord) {
+    const storedComments = this.parseStoredReviewComments(
+      reviewLog.all_commentaries,
+    );
+
+    return {
+      id: reviewLog.id,
+      createdAt: reviewLog.created_at.toISOString(),
+      reviewerUserId: reviewLog.users?.id ?? '',
+      reviewerName: this.formatUserName(reviewLog.users),
+      fromState: reviewLog.previous_state,
+      toState: reviewLog.new_state,
+      comments: storedComments.map((comment, index) => ({
+        id: `${reviewLog.id}-${index}`,
+        blockId: comment.blockId,
+        content: comment.content,
+        commentedAt: reviewLog.created_at.toISOString(),
+        commentedByUserId: reviewLog.users?.id ?? '',
+        commentedByName: this.formatUserName(reviewLog.users),
+        reviewRoundId: reviewLog.id,
+      })),
+    };
+  }
+
+  private buildActiveBlockComments(reviewLogs: ReviewLogRecord[]): Map<string, string> {
+    const activeComments = new Map<string, string>();
+
+    for (const reviewLog of reviewLogs) {
+      for (const comment of this.parseStoredReviewComments(reviewLog.all_commentaries)) {
+        if (!activeComments.has(comment.blockId)) {
+          activeComments.set(comment.blockId, comment.content);
+        }
+      }
+    }
+
+    return activeComments;
+  }
+
+  private async getReviewLogs(newsletterId: string): Promise<ReviewLogRecord[]> {
+    return this.prisma.newsletter_state_log.findMany({
+      where: {
+        newsletter_id: newsletterId,
+        new_state: newsletter_state.CHANGES_REQUESTED,
+      },
+      include: {
+        users: {
+          select: {
+            id: true,
+            name: true,
+            last_name: true,
+          },
+        },
+      },
+      orderBy: {
+        created_at: 'desc',
+      },
+    });
+  }
+
+  private parseStoredReviewComments(
+    rawComments: string | null,
+  ): StoredReviewComment[] {
+    if (!rawComments) {
+      return [];
+    }
+
+    try {
+      const parsed = JSON.parse(rawComments) as unknown;
+
+      if (!Array.isArray(parsed)) {
+        return [];
+      }
+
+      return parsed.flatMap((entry) => {
+        if (
+          !entry ||
+          typeof entry !== 'object' ||
+          Array.isArray(entry) ||
+          typeof entry.blockId !== 'string' ||
+          typeof entry.content !== 'string'
+        ) {
+          return [];
+        }
+
+        const normalizedContent = entry.content.trim();
+
+        if (!normalizedContent) {
+          return [];
+        }
+
+        return [{
+          blockId: entry.blockId,
+          content: normalizedContent,
+        }];
+      });
+    } catch {
+      return [];
+    }
+  }
+
+  private normalizeReviewComments(blockComments: ReviewBlockComment[]) {
+    const latestByBlockId = new Map<string, string>();
+
+    for (const blockComment of blockComments) {
+      const normalizedContent = blockComment.content.trim();
+
+      if (normalizedContent.length === 0) {
+        continue;
+      }
+
+      latestByBlockId.set(blockComment.blockId, normalizedContent);
+    }
+
+    if (latestByBlockId.size === 0) {
+      throw new BadRequestException(
+        'Debe indicar al menos un comentario por bloque antes de solicitar cambios.',
+      );
+    }
+
+    return Array.from(latestByBlockId.entries()).map(([blockId, content]) => ({
+      blockId,
+      content,
+    }));
+  }
+
+  private resolveNewsletterTitle(
+    title: string,
+    generationContent: Prisma.JsonValue | null,
+  ): string {
+    const originalContent = this.readOriginalContent(generationContent);
+
+    if (
+      originalContent &&
+      typeof originalContent === 'object' &&
+      !Array.isArray(originalContent) &&
+      typeof originalContent.topic === 'string' &&
+      originalContent.topic.trim().length > 0
+    ) {
+      return originalContent.topic;
+    }
+
+    return title;
+  }
+
+  private formatUserName(
+    user:
+      | { name: string | null; last_name: string | null }
+      | null
+      | undefined,
+  ): string {
+    const fullName = [user?.name ?? '', user?.last_name ?? '']
+      .map((value) => value.trim())
+      .filter(Boolean)
+      .join(' ');
+
+    return fullName || 'Sin autor';
   }
 
   private toBlockContentType(block: NewsletterEditableBlock): block_content_type {
@@ -592,6 +1112,9 @@ export class NewsLettersService {
 
   private async resolveUserId(userId: string | undefined): Promise<string | null> {
     if (!userId || !uuidPattern.test(userId)) {
+      this.logger.warn(
+        `Resolve user id rejected candidate=${userId ?? 'missing'} because it is not a valid UUID`,
+      );
       return null;
     }
 
@@ -600,6 +1123,15 @@ export class NewsLettersService {
       select: { id: true },
     });
 
-    return user?.id ?? null;
+    if (!user) {
+      this.logger.warn(
+        `Resolve user id could not find user in database for id=${userId}`,
+      );
+      return null;
+    }
+
+    this.logger.log(`Resolve user id found persisted user id=${user.id}`);
+
+    return user.id;
   }
 }

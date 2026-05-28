@@ -34,6 +34,7 @@ import type {
   BrandKitResources,
 } from "../../../api/brand-kits";
 import type {
+  BlockReviewComment,
   NewsletterBlock,
   NewsletterState,
 } from "../../../types/newsletter";
@@ -47,6 +48,7 @@ import {
 } from "../../../utils/newsletterBlocks";
 import { buildKeywordSvgMarkup } from "../utils/keywordSvg";
 import { AssetImageCard } from "./AssetImageCard";
+import { ReviewHistoryPanel } from "./ReviewHistoryPanel";
 
 type SelectableAssetType = Exclude<AssetType, "BLOCK">;
 type UploadStatus =
@@ -61,8 +63,8 @@ type AssetSourceTab = "global" | "brandkit";
 type Props = {
   selectedBlock: NewsletterBlock;
   brandKitResources: BrandKitResources | null;
-  newsletterComment: string | null;
   newsletterState: NewsletterState;
+  reviewHistory: BlockReviewComment[];
   submitLabel: string;
   isSubmitting: boolean;
   isSavingDraft: boolean;
@@ -111,9 +113,6 @@ const fontSizeOptions = [
 ];
 const assetsPerPage = 6;
 
-const emptyComment = (value: string | null): boolean =>
-  !value || value.trim().length === 0;
-
 function isTextualField(field: BlockEditField): boolean {
   return field.type === "text" || field.type === "textarea";
 }
@@ -133,8 +132,8 @@ function supportsIndependentTypography(field: BlockEditField): boolean {
 export function EditPanel({
   selectedBlock,
   brandKitResources,
-  newsletterComment,
   newsletterState,
+  reviewHistory,
   submitLabel,
   isSubmitting,
   isSavingDraft,
@@ -261,9 +260,10 @@ export function EditPanel({
             </>
           )}
 
-          {!emptyComment(newsletterComment) && (
-            <Alert severity="info">{newsletterComment}</Alert>
-          )}
+          <ReviewHistoryPanel
+            activeComment={selectedBlock.comment}
+            comments={reviewHistory}
+          />
         </Stack>
       </Box>
 

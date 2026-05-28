@@ -554,6 +554,7 @@ ALTER TABLE public.commentary
     ON UPDATE NO ACTION
     ON DELETE NO ACTION;
 
+
 ALTER TABLE public.hyperlinks
     ADD CONSTRAINT hyperlinks_block_content_id_fkey
     FOREIGN KEY (block_content_id)
@@ -695,6 +696,7 @@ CREATE INDEX commentary_block_content_id_idx
 
 CREATE INDEX commentary_commented_by_user_id_idx
     ON public.commentary(commented_by_user_id);
+
 
 CREATE INDEX exports_export_type_id_idx
     ON public.exports(export_type_id);

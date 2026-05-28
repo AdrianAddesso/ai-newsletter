@@ -1,8 +1,11 @@
 import axios from 'axios'
 import type {
+  BlockReviewComment,
   CreateNewsletterPayload,
   Newsletter,
   NewsletterBlock,
+  NewsletterListItem,
+  ReviewInboxItem,
   UpdateNewsletterPayload,
 } from '../types/newsletter'
 
@@ -19,6 +22,7 @@ const API_BASE = '/newsletters'
 function createBody(payload: CreateNewsletterPayload) {
   return {
     title: payload.title ?? 'Newsletter sin titulo',
+    createdByUserId: payload.creatorUserId,
     templateId: payload.templateId,
     brandKitId: payload.brandKitId,
     blocks: toPersistedBlocks(payload.blocks),
@@ -93,8 +97,8 @@ export async function deleteNewsletter(id: string): Promise<void> {
   await axios.delete(`${API_BASE}/${id}`)
 }
 
-export async function getAllNewsletters(): Promise<Newsletter[]> {
-  const response = await axios.get<{ data: Newsletter[] }>(API_BASE)
+export async function getAllNewsletters(): Promise<NewsletterListItem[]> {
+  const response = await axios.get<{ data: NewsletterListItem[] }>(API_BASE)
   return response.data.data
 }
 
@@ -109,6 +113,36 @@ export async function updateNewsletterStatus(
       state,
       allCommentaries: comment ?? undefined,
     },
+  )
+
+  return response.data
+}
+
+export async function getReviewInbox(): Promise<ReviewInboxItem[]> {
+  const response = await axios.get<ReviewInboxItem[]>(`${API_BASE}/reviews`)
+  return response.data
+}
+
+export async function requestNewsletterChanges(
+  newsletterId: string,
+  blockComments: Array<Pick<BlockReviewComment, 'blockId' | 'content'>>,
+): Promise<Newsletter> {
+  const response = await axios.post<Newsletter>(
+    `${API_BASE}/${newsletterId}/review/request-changes`,
+    {
+      blockComments,
+    },
+  )
+
+  return response.data
+}
+
+export async function approveNewsletterReview(
+  newsletterId: string,
+): Promise<Newsletter> {
+  const response = await axios.post<Newsletter>(
+    `${API_BASE}/${newsletterId}/review/approve`,
+    {},
   )
 
   return response.data

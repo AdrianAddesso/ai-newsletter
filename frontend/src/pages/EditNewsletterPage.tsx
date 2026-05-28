@@ -1,7 +1,6 @@
 import { Alert, Box, Button,Stack, CircularProgress } from '@mui/material'
 import { useNewsletterEditor } from './newsletter/hooks/useNewsletterEditor'
 import { DraftNewsletterPage } from './newsletter/draft/DraftNewsletterPage'
-import { ReviewNewsletterPage } from './newsletter/review/ReviewNewsletterPage'
 
 export default function EditNewsletterPage() {
   const vm = useNewsletterEditor()
@@ -50,10 +49,6 @@ export default function EditNewsletterPage() {
         Este newsletter ya fue aprobado.
       </Alert>
     )
-  }
-
-  if (vm.isReviewState) {
-    return <ReviewNewsletterPage vm={vm} />
   }
 
   return <DraftNewsletterPage vm={vm} />
