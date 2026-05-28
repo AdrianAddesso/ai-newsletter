@@ -25,18 +25,22 @@ import type {
 } from '../common/zod/route-params.schema';
 import { ZodValidationPipe } from '../common/zod/zod-validation.pipe';
 import {
+  approveNewsletterReviewBodySchema,
   addNewsletterCommentBodySchema,
   addNewsletterLogBodySchema,
   createNewsletterBodySchema,
+  requestNewsletterChangesBodySchema,
   updateNewsletterBodySchema,
   updateNewsletterCommentBodySchema,
   updateNewsletterExportBodySchema,
   updateNewsletterStatusBodySchema,
 } from './newsletters.schemas';
 import type {
+  ApproveNewsletterReviewBody,
   AddNewsletterCommentBody,
   AddNewsletterLogBody,
   CreateNewsletterBody,
+  RequestNewsletterChangesBody,
   UpdateNewsletterBody,
   UpdateNewsletterCommentBody,
   UpdateNewsletterExportBody,
@@ -79,6 +83,11 @@ export class NewslettersController {
   ) {
     // Los Query params vienen como string, los convertimos a números
     return this.newslettersService.getAll(Number(page), Number(limit));
+  }
+
+  @Get('reviews')
+  getReviewInbox(@Req() request: AuthenticatedRequest) {
+    return this.newslettersService.getReviewInbox(request.user);
   }
 
   @Post()
@@ -224,10 +233,59 @@ export class NewslettersController {
     });
   }
 
+  @Post(':id/review/request-changes')
+  requestChanges(
+    @Req() request: AuthenticatedRequest,
+    @Param(new ZodValidationPipe(idParamSchema)) params: IdParam,
+    @Body(new ZodValidationPipe(requestNewsletterChangesBodySchema))
+    body: RequestNewsletterChangesBody,
+  ) {
+    return this.assertReviewPermission(request, params.id).then(() =>
+      this.newslettersService.requestChanges(params.id, {
+        reviewedByUserId: request.user?.id,
+        blockComments: body.blockComments,
+      }),
+    );
+  }
+
+  @Post(':id/review/approve')
+  approveReview(
+    @Req() request: AuthenticatedRequest,
+    @Param(new ZodValidationPipe(idParamSchema)) params: IdParam,
+    @Body(new ZodValidationPipe(approveNewsletterReviewBodySchema))
+    body: ApproveNewsletterReviewBody,
+  ) {
+    return this.assertReviewPermission(request, params.id).then(() =>
+      this.newslettersService.approveReview(params.id, {
+        reviewedByUserId: request.user?.id,
+      }),
+    );
+  }
+
   private async assertStatusPermission(
     request: AuthenticatedRequest,
     newsletterId: string,
     nextState: newsletter_state,
+  ): Promise<void> {
+    const requiredAction = this.getStatusAction(nextState);
+    return this.assertActionPermission(request, newsletterId, requiredAction);
+  }
+
+  private async assertReviewPermission(
+    request: AuthenticatedRequest,
+    newsletterId: string,
+  ): Promise<void> {
+    return this.assertActionPermission(
+      request,
+      newsletterId,
+      Action.REVIEW_FINAL_APPROVE_COMMENT,
+    );
+  }
+
+  private async assertActionPermission(
+    request: AuthenticatedRequest,
+    newsletterId: string,
+    requiredAction: Action,
   ): Promise<void> {
     const user = request.user;
 
@@ -239,7 +297,6 @@ export class NewslettersController {
       });
     }
 
-    const requiredAction = this.getStatusAction(nextState);
     const rolePermissions = await this.permissionCacheService.getPermissionsForRole(
       user.role,
     );
