@@ -26,7 +26,7 @@ export function IconCenterBackgroundFullRenderer({
   const bgSx = backgroundImage
     ? {
         backgroundImage: `url("${backgroundImage}")`,
-        backgroundSize: "contain",
+        backgroundSize: "cover",
         backgroundRepeat: "no-repeat",
         backgroundPosition: "center",
       }

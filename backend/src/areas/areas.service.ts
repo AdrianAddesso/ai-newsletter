@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -8,23 +8,21 @@ export class AreasService {
 
   findAll() {
     return this.prisma.areas.findMany({
-      select: {
-        id: true,
-        name: true,
-      },
-      orderBy: {
-        name: 'asc',
-      },
+      select: { id: true, name: true },
+      orderBy: { name: 'asc' },
     });
   }
 
-  findOne(id: string): Prisma.PrismaPromise<{ id: string; name: string } | null> {
-    return this.prisma.areas.findUnique({
+  async findOne(id: string) {
+    const area = await this.prisma.areas.findUnique({
       where: { id },
-      select: {
-        id: true,
-        name: true,
-      },
+      select: { id: true, name: true },
     });
+
+    if (!area) {
+      throw new NotFoundException(`Area with ID ${id} not found`);
+    }
+
+    return area;
   }
 }

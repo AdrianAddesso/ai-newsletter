@@ -42,6 +42,48 @@ export type NewsletterBlockAssetBinding = {
   keywordText?: string | null
 }
 
+export type BlockReviewComment = {
+  id: string
+  blockId: string
+  content: string
+  commentedAt: string
+  commentedByUserId: string
+  commentedByName: string
+  reviewRoundId: string
+}
+
+export type ReviewRound = {
+  id: string
+  createdAt: string
+  reviewerUserId: string
+  reviewerName: string
+  fromState: string | null
+  toState: string | null
+  comments: BlockReviewComment[]
+}
+
+export type ReviewInboxItem = {
+  id: string
+  title: string
+  author: string
+  area: AreaName | null
+  status: Extract<NewsletterState, 'IN_REVIEW' | 'RESUBMITTED'>
+  submittedAt: string
+  updatedAt: string
+}
+
+export type NewsletterListItem = {
+  id: string
+  title: string
+  creatorUserId: string
+  authorName: string
+  state: NewsletterState
+  language: string
+  publishDate: string | null
+  updatedAt: string
+  createdAt: string
+}
+
 export type TemplateLayoutItem = {
   block_type: string
   content: unknown
@@ -88,6 +130,9 @@ export type ExportOption = {
 // Modelo completo de Newsletter persistido
 export type Newsletter = {
   id: string
+  title: string
+  authorName: string
+  area: AreaName | null
   creatorUserId: string
   state: NewsletterState
   templateId: string
@@ -99,6 +144,7 @@ export type Newsletter = {
   renderedHtml: string | null
   createdAt: string
   updatedAt: string
+  reviewRounds: ReviewRound[]
 }
 
 export type NewsletterGenerationContent = {
