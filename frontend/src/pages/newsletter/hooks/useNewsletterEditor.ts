@@ -14,6 +14,7 @@ import { getBrandKitResources, listBrandKits } from '../../../api/brand-kits'
 import { generateNewsletter, improveText } from '../../../api/ai'
 
 import type {
+  BlockReviewComment,
   Newsletter,
   NewsletterBlock,
   NewsletterState,
@@ -135,6 +136,19 @@ export function useNewsletterEditor() {
     return newsletter?.blocks.find(
       (block) => block.id === selectedBlockId,
     )
+  }, [newsletter, selectedBlockId])
+
+  const selectedBlockReviewHistory = useMemo((): BlockReviewComment[] => {
+    if (!newsletter || !selectedBlockId) {
+      return []
+    }
+
+    return newsletter.reviewRounds
+      .flatMap((reviewRound) => reviewRound.comments)
+      .filter((comment) => comment.blockId === selectedBlockId)
+      .sort((a, b) => (
+        new Date(b.commentedAt).getTime() - new Date(a.commentedAt).getTime()
+      ))
   }, [newsletter, selectedBlockId])
 
   const selectedTemplate = useMemo(() => {
@@ -374,12 +388,21 @@ export function useNewsletterEditor() {
   )
 
   const handleSubmit = useCallback(async () => {
-    await transitionState('IN_REVIEW')
+    if (!newsletter) {
+      return
+    }
+
+    const nextState: NewsletterState =
+      newsletter.state === 'CHANGES_REQUESTED'
+        ? 'RESUBMITTED'
+        : 'IN_REVIEW'
+
+    await transitionState(nextState)
 
     success('Newsletter enviado')
 
     navigate('/dashboard')
-  }, [navigate,success,transitionState])
+  }, [navigate, newsletter, success, transitionState])
 
   return {
     newsletter,
@@ -387,6 +410,7 @@ export function useNewsletterEditor() {
     isLoading,
     error,
     selectedBlock,
+    selectedBlockReviewHistory,
     selectedBlockId,
     setSelectedBlockId: setSelectedBlockIdState,
     showRegenerationForm,
@@ -409,8 +433,5 @@ export function useNewsletterEditor() {
     saveDraft,
     navigate,
     isApproved: newsletter?.state === 'APPROVED',
-    isReviewState:
-      newsletter?.state === 'IN_REVIEW' ||
-      newsletter?.state === 'RESUBMITTED',
   }
 }

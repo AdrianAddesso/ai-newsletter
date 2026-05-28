@@ -99,11 +99,11 @@ export function BlockList({
                       rendererProps={buildRendererProps(block)}
                     />
                   </Box>
-                  {block.comment && block.comment.trim().length > 0 && (
+                  {block.comment && block.comment.trim().length > 0 ? (
                     <Alert severity="info" sx={{ mt: 1 }}>
                       {block.comment}
                     </Alert>
-                  )}
+                  ) : null}
                 </Paper>
               )
             })}

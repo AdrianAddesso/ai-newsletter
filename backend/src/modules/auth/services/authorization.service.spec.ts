@@ -92,17 +92,17 @@ describe('AuthorizationService', () => {
         area_id: 'area-1'
       };
 
-      it('should grant access to owner', () => {
-        expect(service.isAuthorized(regularUser, Action.REVIEW_COMMENT_CREATE, newsletter)).toBe(true);
+      it('should deny access to owner when user is not reviewer', () => {
+        expect(service.isAuthorized(regularUser, Action.REVIEW_COMMENT_CREATE, newsletter)).toBe(false);
       });
 
-      it('should grant access to functional admin of the same area', () => {
+      it('should grant access to functional admin', () => {
         expect(service.isAuthorized(functionalAdmin, Action.REVIEW_COMMENT_CREATE, newsletter)).toBe(true);
       });
 
-      it('should deny access to functional admin of a different area', () => {
+      it('should grant access to functional admin of a different area', () => {
         const otherFunctional = { ...functionalAdmin, area_id: 'area-2' };
-        expect(service.isAuthorized(otherFunctional, Action.REVIEW_COMMENT_CREATE, newsletter)).toBe(false);
+        expect(service.isAuthorized(otherFunctional, Action.REVIEW_COMMENT_CREATE, newsletter)).toBe(true);
       });
     });
 
@@ -113,8 +113,13 @@ describe('AuthorizationService', () => {
         area_id: 'area-1'
       };
 
-      it('should grant access to functional admin of same area if under review', () => {
+      it('should grant access to functional admin if under review', () => {
         expect(service.isAuthorized(functionalAdmin, Action.REVIEW_FINAL_APPROVE_COMMENT, newsletter)).toBe(true);
+      });
+
+      it('should grant access to functional admin of a different area if under review', () => {
+        const otherFunctional = { ...functionalAdmin, area_id: 'area-2' };
+        expect(service.isAuthorized(otherFunctional, Action.REVIEW_FINAL_APPROVE_COMMENT, newsletter)).toBe(true);
       });
 
       it('should deny access if not under review (e.g. DRAFT)', () => {

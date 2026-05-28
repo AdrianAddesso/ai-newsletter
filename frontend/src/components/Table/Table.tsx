@@ -109,12 +109,12 @@ export function NewslettersTable({ search, filter, userRole, }: Props) {
         const newsletters = await getAllNewsletters();
         const rows: NewsletterRow[] = newsletters.map((n) => ({
           id: n.id,
-          title: n.generationRequest?.topic || n.blocks?.[0]?.name || 'Sin título',
-          autor: n.creatorUserId,
+          title: n.title || 'Sin título',
+          autor: n.authorName || n.creatorUserId,
           state: n.state as NewsletterStatus,
-          language: 'Spanish',
+          language: n.language,
           reviewer: '—',
-          publish_date: null,
+          publish_date: n.publishDate ? new Date(n.publishDate).toLocaleDateString() : null,
           updated_at: new Date(n.updatedAt).toLocaleDateString(),
         }));
         setData(rows);
@@ -247,8 +247,7 @@ export function NewslettersTable({ search, filter, userRole, }: Props) {
               const isPrivilegedUser =
                 userRole === 'ADMIN' || userRole === 'FUNCTIONAL'
 
-              const canEdit =
-                (isPrivilegedUser || editableStatuses.has(n.state)) && n.state !== NewsletterStatus.APPROVED
+              const canEdit = editableStatuses.has(n.state)
 
               const canDelete = isPrivilegedUser
 

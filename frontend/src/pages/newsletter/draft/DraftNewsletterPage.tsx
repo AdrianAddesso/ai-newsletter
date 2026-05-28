@@ -53,9 +53,13 @@ export function DraftNewsletterPage({ vm }: Props) {
               <EditPanel
                 selectedBlock={vm.selectedBlock}
                 brandKitResources={vm.brandKitResources}
-                newsletterComment={vm.newsletter.comment}
                 newsletterState={vm.newsletter.state}
-                submitLabel="Enviar a revisión"
+                reviewHistory={vm.selectedBlockReviewHistory}
+                submitLabel={
+                  vm.newsletter.state === 'CHANGES_REQUESTED'
+                    ? 'Reenviar a revisión'
+                    : 'Enviar a revisión'
+                }
                 isSubmitting={false}
                 isSavingDraft={vm.isSavingDraft}
                 isRegeneratingBlock={false}
