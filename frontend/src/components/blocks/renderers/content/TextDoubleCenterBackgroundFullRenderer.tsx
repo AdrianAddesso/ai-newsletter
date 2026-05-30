@@ -28,7 +28,7 @@ export function TextDoubleCenterBackgroundFullRenderer({
   const bgSx = backgroundImage
     ? {
         backgroundImage: `url("${backgroundImage}")`,
-        backgroundSize: "contain",
+        backgroundSize: "cover",
         backgroundRepeat: "no-repeat",
         backgroundPosition: "center",
       }

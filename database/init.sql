@@ -129,6 +129,17 @@ BEGIN
 END
 $$;
 
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'ai_config_type') THEN
+        CREATE TYPE public.ai_config_type AS ENUM (
+            'CREATE',
+            'REGENERATE'
+        );
+    END IF;
+END
+$$;
+
 -- =========================
 -- BASE TABLES
 -- =========================
@@ -424,6 +435,33 @@ CREATE TABLE public.role_permissions (
     CONSTRAINT role_permissions_pkey PRIMARY KEY (role, permission_id)
 );
 
+CREATE TABLE public.prompt_commands (
+    id              uuid                     NOT NULL DEFAULT gen_random_uuid(),
+    name            text                     NOT NULL,
+    type            public.ai_config_type    NOT NULL,
+    display_order   INTEGER                  NOT NULL DEFAULT 0,
+    instruction     text,
+    created_at      timestamp with time zone NOT NULL DEFAULT now(),
+    updated_at      timestamp with time zone NOT NULL DEFAULT now(),
+    deleted_at      timestamp with time zone,
+    CONSTRAINT prompt_commands_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE public.ai_config (
+    id               uuid                     NOT NULL DEFAULT gen_random_uuid(),
+    name             text                     NOT NULL,
+    type             public.ai_config_type    NOT NULL,
+    temperature      NUMERIC(3,2)             NOT NULL,
+    top_p            NUMERIC(3,2)             NOT NULL,
+    top_k            INTEGER                  NOT NULL,
+    max_output_tokens INTEGER                 NOT NULL,
+    created_at       timestamp with time zone NOT NULL DEFAULT now(),
+    updated_at       timestamp with time zone NOT NULL DEFAULT now(),
+    deleted_at       timestamp with time zone,
+    CONSTRAINT ai_config_pkey       PRIMARY KEY (id),
+    CONSTRAINT ai_config_type_key   UNIQUE (type)
+);
+
 -- =========================
 -- FOREIGN KEYS
 -- =========================
@@ -553,6 +591,7 @@ ALTER TABLE public.commentary
     REFERENCES public.users(id)
     ON UPDATE NO ACTION
     ON DELETE NO ACTION;
+
 
 ALTER TABLE public.hyperlinks
     ADD CONSTRAINT hyperlinks_block_content_id_fkey
@@ -696,6 +735,7 @@ CREATE INDEX commentary_block_content_id_idx
 CREATE INDEX commentary_commented_by_user_id_idx
     ON public.commentary(commented_by_user_id);
 
+
 CREATE INDEX exports_export_type_id_idx
     ON public.exports(export_type_id);
 
@@ -770,6 +810,12 @@ CREATE INDEX idx_role_permissions_permission_id
 
 CREATE INDEX idx_role_permissions_role
     ON public.role_permissions(role);
+
+CREATE INDEX prompt_commands_type_idx
+    ON public.prompt_commands(type);
+
+CREATE INDEX ai_config_type_idx
+    ON public.ai_config(type);
 
 -- =========================
 -- ROW LEVEL SECURITY

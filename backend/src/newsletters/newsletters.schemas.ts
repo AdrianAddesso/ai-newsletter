@@ -88,6 +88,25 @@ export const updateNewsletterStatusBodySchema = z
   })
   .strict();
 
+const reviewBlockCommentSchema = z
+  .object({
+    blockId: uuidFieldSchema,
+    content: requiredStringFieldSchema,
+  })
+  .strict();
+
+export const requestNewsletterChangesBodySchema = z
+  .object({
+    blockComments: z.array(reviewBlockCommentSchema).min(1, {
+      error: 'Debe indicar al menos un comentario.',
+    }),
+  })
+  .strict();
+
+export const approveNewsletterReviewBodySchema = z
+  .object({})
+  .strict();
+
 export const addNewsletterLogBodySchema = z
   .object({
     previousState: newsletterStateSchema.optional(),
@@ -130,6 +149,12 @@ export type UpdateNewsletterBody = z.infer<typeof updateNewsletterBodySchema>;
 export type UpdateNewsletterStatusBody = z.infer<
   typeof updateNewsletterStatusBodySchema
 >;
+export type RequestNewsletterChangesBody = z.infer<
+  typeof requestNewsletterChangesBodySchema
+>;
+export type ApproveNewsletterReviewBody = z.infer<
+  typeof approveNewsletterReviewBodySchema
+>;
 export type AddNewsletterLogBody = z.infer<typeof addNewsletterLogBodySchema>;
 export type AddNewsletterCommentBody = z.infer<
   typeof addNewsletterCommentBodySchema
@@ -147,3 +172,4 @@ export type NewsletterEditableBlock = z.infer<
 export type NewsletterAssetBinding = z.infer<
   typeof newsletterAssetBindingSchema
 >;
+export type ReviewBlockComment = z.infer<typeof reviewBlockCommentSchema>;
