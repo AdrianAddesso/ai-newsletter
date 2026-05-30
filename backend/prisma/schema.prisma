@@ -48,6 +48,7 @@ model assets_block {
   id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   block_id      String        @db.Uuid
   asset_id      String        @db.Uuid
+  field_key     String
   keyword_text  String?
   created_at    DateTime      @default(now()) @db.Timestamptz(6)
   updated_at    DateTime      @default(now()) @updatedAt @db.Timestamptz(6)
@@ -61,6 +62,7 @@ model assets_block {
 
 model block_content {
   id                String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  block_type        String
   content           String?
   display_order     Int?
   must_fill         Boolean             @default(false)
@@ -282,6 +284,7 @@ model newsletters {
   state                                        newsletter_state       @default(DRAFT)
   language                                     newsletter_language    @default(SPA)
   format                                       newsletter_format      @default(PORTRAIT)
+  generation_content                           Json?
   newsletter_blocks                            newsletter_blocks[]
   newsletter_exports                           newsletter_exports[]
   newsletter_state_log                         newsletter_state_log[]
@@ -389,6 +392,30 @@ model role_permissions {
   @@index([role], map: "idx_role_permissions_role")
 }
 
+model prompt_commands {
+  id            String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name          String
+  type          ai_config_type
+  display_order Int            @default(0)
+  instruction   String?
+  created_at    DateTime       @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime       @default(now()) @updatedAt @db.Timestamptz(6)
+  deleted_at    DateTime?      @db.Timestamptz(6)
+}
+
+model ai_config {
+  id                String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name              String
+  type              ai_config_type @unique
+  temperature       Decimal        @db.Decimal(3, 2)
+  top_p             Decimal        @db.Decimal(3, 2)
+  top_k             Int
+  max_output_tokens Int
+  created_at        DateTime       @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime       @default(now()) @updatedAt @db.Timestamptz(6)
+  deleted_at        DateTime?      @db.Timestamptz(6)
+}
+
 enum area_name {
   COMUNICACION_INTERNA
   COMUNICACION_CORPORATIVA
@@ -452,4 +479,9 @@ enum user_state {
   ACTIVE
   INACTIVE
   REMOVED
+}
+
+enum ai_config_type {
+  CREATE
+  REGENERATE
 }

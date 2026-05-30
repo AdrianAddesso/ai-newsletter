@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from "../../../prisma/prisma.service";
 import { Role } from "../enum/roles";
 
@@ -10,7 +10,7 @@ export class PermissionCacheService {
     constructor(private readonly prisma: PrismaService) {}
 
     async getPermissionsForRole(role: Role): Promise<string[]> {
-        if(!role) throw new Error('Role is required to fetch permissions');
+        if(!role) throw new BadRequestException('Role is required to fetch permissions');
 
         if(this.cachePermissionService.has(role)) {
             return this.cachePermissionService.get(role) || [];

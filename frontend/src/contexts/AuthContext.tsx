@@ -44,7 +44,7 @@ export interface AuthContextType {
 
 export const MICROSOFT_SSO_USERS: User[] = [
   {
-    id: "368324de-372f-4961-9b37-f4e1b99d91c0",
+    id: "ecbe7026-4405-4697-95de-20a855ebdcd0",
     email: "superadmin@example.com",
     name: "Administrador",
     role: "ADMIN",
@@ -52,7 +52,7 @@ export const MICROSOFT_SSO_USERS: User[] = [
     state: "ACTIVE",
   },
   {
-    id: "4d0be22f-4265-4cbe-8728-77919ba72951",
+    id: "107a3baf-5b4a-40ec-a7b9-c627e624ab97",
     email: "funcional@example.com",
     name: "Funcional",
     role: "FUNCTIONAL",
@@ -60,7 +60,7 @@ export const MICROSOFT_SSO_USERS: User[] = [
     area: "COMUNICACION_INTERNA",
   },
   {
-    id: "4b7c9f0d-d18d-43e5-9b27-6fd06bce0c1d",
+    id: "720deb80-e0a5-44e4-bb21-c2e14597126c",
     email: "user@example.com",
     name: "Usuario Normal",
     role: "USER",

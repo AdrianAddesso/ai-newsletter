@@ -4,14 +4,10 @@ import { Alert, Box, CircularProgress, Stack, Typography } from "@mui/material";
 import { useAuth } from "../contexts/AuthContext";
 import { TemplateCarousel } from "./newsletter/components/TemplateCarousel";
 import { GenerationForm } from "./newsletter/components/GenerationForm";
-import CreationFlowStepper from "./newsletter/components/CreationFlowStepper";
+import { NewsletterStepper } from "./newsletter/components/NewsletterStepper";
 
 import { generateNewsletter, type GenerateNewsletterRequest } from "../api/ai";
-import type {
-  NewsletterAssetSelection,
-  NewsletterBlock,
-  NewsletterTemplate,
-} from "../types/newsletter";
+import type { NewsletterTemplate } from "../types/newsletter";
 import { createNewsletter, updateNewsletter } from "../api/newsletters";
 import { listTemplates } from "../api/templates";
 
@@ -123,10 +119,7 @@ function CreateNewsletterPage() {
     null;
 
   const handleGenerate = useCallback(
-    async (
-      request: GenerateNewsletterRequest,
-      assetSelection: NewsletterAssetSelection,
-    ) => {
+    async (request: GenerateNewsletterRequest) => {
       setIsGenerating(true);
       setAiError(null);
 
@@ -134,33 +127,32 @@ function CreateNewsletterPage() {
         // 1. Generar bloques con IA
         const response = await generateNewsletter(request);
 
-        const blocks: NewsletterBlock[] = response.blocks.map((block) => ({
-          id: block.id,
-          name: block.name,
-          text: block.text,
-          backgroundColor: block.backgroundColor,
-          comment: null,
-        }));
+        const generationContent = {
+          aiContent: response,
+          originalContent: request,
+        };
 
         // 2. Actualizar newsletter existente o crear uno nuevo
         let newsletterId: string;
         if (backState.newsletterId) {
           await updateNewsletter(backState.newsletterId, {
+            title: request.topic,
             templateId: request.templateId,
             brandKitId: request.brandKitId,
-            blocks,
+            blocks: response.blocks,
             generationRequest: request,
-            assetSelection,
+            generationContent,
           });
           newsletterId = backState.newsletterId;
         } else {
           const created = await createNewsletter({
+            title: request.topic,
             creatorUserId: currentUserId,
             templateId: request.templateId,
             brandKitId: request.brandKitId,
-            blocks,
+            blocks: response.blocks,
             generationRequest: request,
-            assetSelection,
+            generationContent,
           });
           newsletterId = created.id;
         }
@@ -168,13 +160,17 @@ function CreateNewsletterPage() {
         // 3. Navegar a EditNewsletterPage con el ID
         navigate(`/editarNewsletter/${newsletterId}`);
       } catch (error) {
+        const msg =
+          (error as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+          (error instanceof Error ? error.message : null) ??
+          "No se pudo generar el newsletter en este momento."
         console.error("Error al generar newsletter:", error);
-        setAiError("No se pudo generar el newsletter en este momento.");
+        setAiError(msg);
       } finally {
         setIsGenerating(false);
       }
     },
-    [backState.newsletterId, currentUserId, navigate],
+    [backState.newsletterId, currentUserId, navigate, selectedTemplate],
   );
 
   if (isLoadingTemplates) {
@@ -197,11 +193,7 @@ function CreateNewsletterPage() {
       component="main"
       sx={{ minHeight: "calc(100vh - 64px)", bgcolor: "background.default" }}
     >
-      <CreationFlowStepper
-        activeStep={0}
-        newsletterId={undefined}
-        userRole={user?.role ?? "USER"}
-      />
+      <NewsletterStepper activeStep={0} />
       <Box
         sx={{
           display: "grid",

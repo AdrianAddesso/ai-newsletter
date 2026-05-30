@@ -104,6 +104,8 @@ export class AssetsController {
   )
   uploadAssets(
     @Body('type') type: string | undefined,
+    @Body('name') name: string | undefined,
+    @Body('description') description: string | undefined,
     @UploadedFiles() files: UploadedAssetFile[] | undefined,
   ): Promise<UploadAssetsResponseDto> {
     if (!files?.length) {
@@ -114,7 +116,10 @@ export class AssetsController {
       throw new BadRequestException('Debe indicar un tipo de asset valido.');
     }
 
-    return this.assetsService.uploadAssets(files, type);
+    return this.assetsService.uploadAssets(files, type, {
+      name,
+      description,
+    });
   }
 
   @Patch(':id')
@@ -133,6 +138,7 @@ export class AssetsController {
 
     return this.assetsService.updateAsset(id, {
       name: body.name,
+      description: body.description,
       type: body.type,
     });
   }

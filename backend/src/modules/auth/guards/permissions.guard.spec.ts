@@ -8,8 +8,8 @@ import { ExecutionContext, NotFoundException } from '@nestjs/common';
 describe('PermissionsGuard', () => {
   let guard: PermissionsGuard;
   let reflector: Reflector;
-  let prisma: PrismaService;
-  let authService: AuthorizationService;
+  let prisma: any;
+  let authService: any;
 
   const mockReflector = {
     get: jest.fn(),

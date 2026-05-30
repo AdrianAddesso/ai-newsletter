@@ -11,28 +11,41 @@ const createdAtIso = createdAt.toISOString();
 const updatedAt = new Date('2026-05-23T12:00:00.000Z');
 const updatedAtIso = updatedAt.toISOString();
 
+type AssetCreateInput = {
+  data: {
+    name: string;
+    description: string | null;
+    type: asset_type;
+    source: string;
+    from_brand: boolean;
+  };
+};
+
 function createService() {
   const uploadObjectMock = jest.fn().mockResolvedValue(undefined);
   const getSignedUrlMock = jest
     .fn()
     .mockResolvedValue('http://localhost:9000/nestle-ai-newsletter-assets/fake');
   const getObjectTextMock = jest.fn().mockResolvedValue('<svg><g id="Text" /></svg>');
+  const createAssetMock = jest.fn<Promise<unknown>, [AssetCreateInput]>().mockResolvedValue({
+    id: 'asset-id',
+    name: 'banner.png',
+    description: null,
+    created_at: createdAt,
+    updated_at: updatedAt,
+    type: 'IMAGE',
+    bucket: 'nestle-ai-newsletter-assets',
+    object_key: 'assets/uploads/image/banner-fake.png',
+  });
   const updateAssetMock = jest.fn();
   const prisma = {
     assets: {
-      create: jest.fn().mockResolvedValue({
-        id: 'asset-id',
-        name: 'banner.png',
-        created_at: createdAt,
-        updated_at: updatedAt,
-        type: 'IMAGE',
-        bucket: 'nestle-ai-newsletter-assets',
-        object_key: 'assets/uploads/image/banner-fake.png',
-      }),
+      create: createAssetMock,
       findMany: jest.fn().mockResolvedValue([
         {
           id: 'seed-asset-id',
           name: 'dark-green.svg',
+          description: null,
           created_at: createdAt,
           updated_at: updatedAt,
           type: 'SHAPE',
@@ -61,6 +74,7 @@ function createService() {
       getSignedUrlMock,
       getObjectTextMock,
       updateAssetMock,
+      createAssetMock,
       prisma,
   };
 }
@@ -87,6 +101,7 @@ describe('AssetsService', () => {
         {
           id: 'asset-id',
           name: 'banner.png',
+          description: null,
           created_at: createdAtIso,
           updated_at: updatedAtIso,
           type: 'IMAGE',
@@ -105,6 +120,34 @@ describe('AssetsService', () => {
     );
   });
 
+  it('uploads a single asset with explicit metadata', async () => {
+    const { service, createAssetMock } = createService();
+
+    await service.uploadAssets([
+      {
+        originalname: 'banner.png',
+        mimetype: 'image/png',
+        size: 1200,
+        buffer: Buffer.from('fake'),
+      },
+    ], 'IMAGE', {
+      name: 'Banner principal',
+      description: 'Imagen para header',
+    });
+
+    const createCall = createAssetMock.mock.calls[0]?.[0];
+
+    expect(createCall).toBeDefined();
+
+    expect(createCall?.data).toMatchObject({
+      name: 'Banner principal',
+      description: 'Imagen para header',
+      type: 'IMAGE',
+      source: 'USER',
+      from_brand: false,
+    });
+  });
+
   it('lists persisted assets with signed urls', async () => {
     const { service } = createService();
 
@@ -113,6 +156,7 @@ describe('AssetsService', () => {
         {
           id: 'seed-asset-id',
           name: 'dark-green.svg',
+          description: null,
           created_at: createdAtIso,
           updated_at: updatedAtIso,
           type: 'SHAPE',
@@ -157,6 +201,7 @@ describe('AssetsService', () => {
     updateAssetMock.mockResolvedValue({
       id: 'asset-id',
       name: 'Updated banner',
+      description: 'Updated description',
       created_at: createdAt,
       updated_at: updatedAt,
       type: asset_type.LOGO,
@@ -166,12 +211,14 @@ describe('AssetsService', () => {
 
     await expect(
       service.updateAsset('asset-id', {
-        name: ' Updated banner ',
-        type: asset_type.LOGO,
+      name: ' Updated banner ',
+      description: ' Updated description ',
+      type: asset_type.LOGO,
       }),
     ).resolves.toEqual({
       id: 'asset-id',
       name: 'Updated banner',
+      description: 'Updated description',
       created_at: createdAtIso,
       updated_at: updatedAtIso,
       type: asset_type.LOGO,
@@ -184,6 +231,7 @@ describe('AssetsService', () => {
       expect.objectContaining({
         data: {
           name: 'Updated banner',
+          description: 'Updated description',
           type: asset_type.LOGO,
         },
       }),
@@ -226,14 +274,61 @@ describe('AssetsService', () => {
     ).rejects.toBeInstanceOf(NotFoundException);
   });
 
+  it('returns seeded assets without mutating persisted metadata', async () => {
+    const { service, prisma, createAssetMock, updateAssetMock } = createService();
+
+    (prisma.assets.findFirst as jest.Mock).mockResolvedValue({
+      id: 'block-asset-id',
+      name: 'HeaderFullRenderer.svg',
+      description: 'Seeded asset: assets/blocks/HeaderFullRenderer.svg',
+      created_at: createdAt,
+      updated_at: updatedAt,
+      type: asset_type.BLOCK,
+      bucket: 'nestle-ai-newsletter-assets',
+      object_key: 'assets/blocks/HeaderFullRenderer.svg',
+    });
+
+    await expect(
+      service.getSeededAsset(
+        'assets/blocks/HeaderFullRenderer.svg',
+        asset_type.BLOCK,
+      ),
+    ).resolves.toEqual({
+      id: 'block-asset-id',
+      name: 'HeaderFullRenderer.svg',
+      description: 'Seeded asset: assets/blocks/HeaderFullRenderer.svg',
+      created_at: createdAtIso,
+      updated_at: updatedAtIso,
+      type: asset_type.BLOCK,
+      url: 'http://localhost:9000/nestle-ai-newsletter-assets/fake',
+      svgTemplate: null,
+      maxChars: null,
+    });
+
+    expect(createAssetMock).not.toHaveBeenCalled();
+    expect(updateAssetMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects missing seeded assets', async () => {
+    const { service } = createService();
+
+    await expect(
+      service.getSeededAsset(
+        'assets/blocks/MissingRenderer.svg',
+        asset_type.BLOCK,
+      ),
+    ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
   it('caches keyword svg templates across repeated reads', async () => {
     const { service, prisma, getObjectTextMock } = createService();
 
     (prisma.assets.findMany as jest.Mock).mockResolvedValue([
       {
-        id: 'keyword-asset-id',
-        name: 'keyword-template.svg',
-        created_at: createdAt,
+          id: 'keyword-asset-id',
+          name: 'keyword-template.svg',
+          description: null,
+          created_at: createdAt,
         updated_at: updatedAt,
         type: 'KEYWORD',
         bucket: 'nestle-ai-newsletter-assets',
@@ -246,6 +341,7 @@ describe('AssetsService', () => {
         {
           id: 'keyword-asset-id',
           name: 'keyword-template.svg',
+          description: null,
           created_at: createdAtIso,
           updated_at: updatedAtIso,
           type: 'KEYWORD',

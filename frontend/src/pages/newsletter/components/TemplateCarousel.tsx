@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import {
   Alert,
   Box,
@@ -14,9 +14,11 @@ import {
 } from '@mui/material'
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
-import { areaLabels, getTemplatePreviewImage } from '../../../utils/newsletterTemplates'
+import { areaLabels } from '../../../utils/newsletterTemplates'
 import type { AreaName, NewsletterTemplate } from '../../../types/newsletter'
 import { listBrandKits } from '../../../api/brand-kits'
+import { TemplateCreator } from '../../../components/canvas/TemplateCreator'
+import { mapLayoutItemsToRows } from '../../../utils/canvas.utils'
 
 type Props = {
   templates: NewsletterTemplate[]
@@ -35,6 +37,7 @@ export function TemplateCarousel({
 }: Props) {
   const [selectedArea, setSelectedArea] = useState<AreaName>('COMUNICACION_INTERNA')
   const [brandKitOptions, setBrandKitOptions] = useState<Array<{ id: string; name: string }>>([])
+  const [layoutError, setLayoutError] = useState(false)
 
   useEffect(() => {
     let mounted = true
@@ -79,8 +82,22 @@ export function TemplateCarousel({
     0,
   )
   const selected = filtered[selectedIndex] ?? filtered[0]
-  const selectedBrandKitName =
-    brandKitOptions.find((brandKit) => brandKit.id === selectedBrandKitId)?.name ?? selectedBrandKitId
+
+  const layoutRows = useMemo(() => {
+    setLayoutError(false)
+    try {
+      if (!selected?.layout) return []
+      if (!Array.isArray(selected.layout)) {
+        setLayoutError(true)
+        return []
+      }
+      return mapLayoutItemsToRows(selected.layout)
+    } catch (e) {
+      console.error('Error generating layout rows:', e)
+      setLayoutError(true)
+      return []
+    }
+  }, [selected?.layout])
 
   useEffect(() => {
     if (selected && selected.id !== selectedTemplateId) {
@@ -145,10 +162,8 @@ export function TemplateCarousel({
           </FormControl>
         </Stack>
       </Stack>
-
       <Box
         sx={{
-          height: 'calc(100vh - 220px)',
           minHeight: 480,
           position: 'relative',
           overflow: 'hidden',
@@ -168,37 +183,25 @@ export function TemplateCarousel({
         >
           <ChevronLeftIcon />
         </IconButton>
-
         {selected ? (
-          <Stack spacing={2} sx={{ minWidth: 0, maxHeight: '100%', overflow: 'hidden', p: { xs: 1, md: 3 } }}>
+          <Stack sx={{ minWidth: 0, maxHeight: '100%', overflow: 'hidden', p: { xs: 1, md: 3 } }}>
             <Paper
               elevation={0}
-              sx={{ border: '1px solid', borderColor: 'divider', overflow: 'hidden', maxWidth: 620, mx: 'auto', width: '100%' }}
+              sx={{ maxWidth: 620, mx: 'auto', width: '100%', display: 'flex', flexDirection: 'column' }}
             >
-              <Box
-                component="img"
-                src={getTemplatePreviewImage(selected.layout)}
-                alt={selected.name}
-                sx={{
-                  width: '100%',
-                  height: 'auto',
-                  maxHeight: { xs: 300, md: 'calc(100vh - 430px)' },
-                  minHeight: { xs: 220, md: 260 },
-                  objectFit: 'contain',
-                  display: 'block',
-                  bgcolor: 'background.default',
-                }}
-              />
-              <Box sx={{ p: 2 }}>
-                <Typography variant="subtitle1">{selected.name}</Typography>
-                <Typography variant="body2" color="text.secondary">{areaLabels[selected.area]}</Typography>
-                <Typography variant="body2" color="text.secondary">{selectedBrandKitName}</Typography>
-                {selected.description && (
-                  <Typography variant="body2" color="text.secondary">{selected.description}</Typography>
+              <Box sx={{ flex: 1 }}>
+                {layoutError ? (
+                  <Box sx={{ p: 4, display: 'flex', justifyContent: 'center' }}>
+                    <Alert severity="error">
+                      El diseño de esta plantilla tiene un formato inválido o está corrupto.
+                    </Alert>
+                  </Box>
+                ) : (
+                  <TemplateCreator mode="edit" rows={layoutRows} />
                 )}
               </Box>
             </Paper>
-            <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
+            <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', mt: 2 }}>
               {selectedIndex + 1} de {filtered.length}
             </Typography>
           </Stack>

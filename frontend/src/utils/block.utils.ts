@@ -5,7 +5,7 @@ const blockPreviewUrlCache = new Map<string, string>()
 
 export async function getBlockPreviewUrl(
   previewKey: string,
-  type: AssetType = 'IMAGE',
+  type: AssetType = 'BLOCK',
 ): Promise<string> {
   const cacheKey = `${type}:${previewKey}`
   const cachedUrl = blockPreviewUrlCache.get(cacheKey)

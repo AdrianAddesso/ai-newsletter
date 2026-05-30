@@ -44,11 +44,11 @@ export class AuthorizationService {
 
     [Action.REVIEW_REQUEST_PREVIEW]: (user, res: Newsletter) => this.isOwner(user, res) && this.isEditable(res),
 
-    [Action.REVIEW_COMMENT_CREATE]: (user, res: Newsletter) => (this.isFunctionalAdmin(user) && this.isSameArea(user, res)) || this.isSuperAdmin(user),
+    [Action.REVIEW_COMMENT_CREATE]: (user) => this.isFunctionalAdmin(user) || this.isSuperAdmin(user),
 
-    [Action.REVIEW_COMMENT_VIEW_REPLY]: (user, res: Newsletter) => (this.isFunctionalAdmin(user) && this.isSameArea(user, res)) || this.isOwner(user, res),
+    [Action.REVIEW_COMMENT_VIEW_REPLY]: (user, res: Newsletter) => this.isFunctionalAdmin(user) || this.isOwner(user, res) || this.isSuperAdmin(user),
 
-    [Action.REVIEW_FINAL_APPROVE_COMMENT]: (user, res: Newsletter) => this.isFunctionalAdmin(user) && this.isSameArea(user, res) && this.isUnderReview(res) || this.isSuperAdmin(user),
+    [Action.REVIEW_FINAL_APPROVE_COMMENT]: (user, res: Newsletter) => this.isFunctionalAdmin(user) && this.isUnderReview(res) || this.isSuperAdmin(user),
 
     [Action.AUDIT_LOGS_METRICS_VIEW]: (user) => this.isFunctionalAdmin(user) || this.isSuperAdmin(user),
 

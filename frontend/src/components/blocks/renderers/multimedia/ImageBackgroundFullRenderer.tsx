@@ -1,5 +1,6 @@
 import { Card, CardMedia, Box } from "@mui/material";
 import type { BlockInstance } from "@shared/types/block.types";
+import { parseContent } from "../../../../utils/blockContent";
 
 interface Props {
   block: BlockInstance;
@@ -10,14 +11,15 @@ interface Props {
 
 export function ImageBackgroundFullRenderer({
   block,
-  editMode = false,
   backgroundImage = "https://placehold.net/400x400.png",
   imageUrl = "https://placehold.net/4.png",
 }: Props) {
+  const { altText = "Image", overlayColor } = parseContent(block.content);
   const bgSx = backgroundImage
     ? {
         backgroundImage: `url("${backgroundImage}")`,
         backgroundSize: "cover",
+        backgroundRepeat: "no-repeat",
         backgroundPosition: "center",
       }
     : {};
@@ -43,6 +45,7 @@ export function ImageBackgroundFullRenderer({
           flexGrow: 1,
           display: "flex",
           justifyContent: "center",
+          backgroundColor: overlayColor,
           py: 4,
           ...bgSx,
         }}
@@ -50,7 +53,7 @@ export function ImageBackgroundFullRenderer({
         <CardMedia
           component="img"
           image={imageUrl}
-          alt="Image"
+          alt={altText}
           sx={{ width: "80%", objectFit: "cover", borderRadius: 1 }}
         />
       </Box>

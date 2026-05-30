@@ -1,5 +1,9 @@
 import { Card, Typography, Chip, CardMedia, Box, Grid } from "@mui/material";
 import type { BlockInstance } from "@shared/types/block.types";
+import {
+  parseContent,
+  resolveContentTypographySx,
+} from "../../../../utils/blockContent";
 
 interface Props {
   block: BlockInstance;
@@ -14,14 +18,21 @@ interface Props {
 
 export function SpecialBoxBackgroundFullRenderer({
   block,
-  editMode = false,
   backgroundImage = null,
   imageUrl = "https://placehold.co/120x160/e0e0e0/9e9e9e?text=Image",
-  labelContent = null,
-  text1Content = null,
-  text2Content = null,
-  text3Content = null,
 }: Props) {
+  const values = parseContent(block.content);
+  const {
+    title = "Lorem ipsum sit",
+    introText = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+    bodyText = "Provident blanditiis omnis natus ratione necessitatibus.",
+    closingText = "Consequuntur eum voluptas iure repellat voluptate nisi.",
+    bgColor,
+  } = values;
+  const titleTypographySx = resolveContentTypographySx(values, "title");
+  const introTypographySx = resolveContentTypographySx(values, "introText");
+  const bodyTypographySx = resolveContentTypographySx(values, "bodyText");
+  const closingTypographySx = resolveContentTypographySx(values, "closingText");
   const bgSx = backgroundImage
     ? {
         backgroundImage: `url("${backgroundImage}")`,
@@ -51,6 +62,7 @@ export function SpecialBoxBackgroundFullRenderer({
           flexGrow: 1,
           display: "flex",
           alignItems: "stretch",
+          backgroundColor: bgColor,
           py: 4,
           ...bgSx,
         }}
@@ -68,7 +80,7 @@ export function SpecialBoxBackgroundFullRenderer({
             }}
           >
             <Chip
-              label={labelContent ?? "Lorem ipsum sit"}
+              label={title}
               sx={{
                 alignSelf: "flex-start",
                 maxWidth: "100%",
@@ -76,33 +88,30 @@ export function SpecialBoxBackgroundFullRenderer({
                   whiteSpace: "nowrap",
                   overflow: "hidden",
                   textOverflow: "ellipsis",
+                  ...titleTypographySx,
                 },
               }}
             />
             <Typography
               variant="body2"
               color="text.secondary"
-              sx={{ textAlign: "center" }}
+              sx={{ textAlign: "center", ...introTypographySx }}
             >
-              {text1Content ??
-                "Lorem ipsum dolor sit amet, consectetur adipiscing elit."}
+              {introText}
             </Typography>
             <Typography
               variant="body2"
               color="text.secondary"
-              sx={{ textAlign: "center" }}
+              sx={{ textAlign: "center", ...bodyTypographySx }}
             >
-              {text2Content ??
-                block.content ??
-                "Provident blanditiis omnis natus ratione necessitatibus."}
+              {bodyText}
             </Typography>
             <Typography
               variant="body2"
               color="text.secondary"
-              sx={{ textAlign: "center" }}
+              sx={{ textAlign: "center", ...closingTypographySx }}
             >
-              {text3Content ??
-                "Consequuntur eum voluptas iure repellat voluptate nisi."}
+              {closingText}
             </Typography>
           </Grid>
           <Grid
@@ -118,7 +127,7 @@ export function SpecialBoxBackgroundFullRenderer({
               component="img"
               image={imageUrl}
               alt="Image"
-              sx={{ width: "80%", borderRadius: 1, objectFit: "cover" }}
+              sx={{ width: "80%", borderRadius: 1, objectFit: "contain" }}
             />
           </Grid>
         </Grid>

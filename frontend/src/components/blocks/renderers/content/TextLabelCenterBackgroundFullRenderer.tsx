@@ -1,5 +1,9 @@
 import { Card, Typography, Chip, Box } from "@mui/material";
 import type { BlockInstance } from "@shared/types/block.types";
+import {
+  parseContent,
+  resolveContentTypographySx,
+} from "../../../../utils/blockContent";
 
 interface Props {
   block: BlockInstance;
@@ -10,14 +14,22 @@ interface Props {
 
 export function TextLabelCenterBackgroundFullRenderer({
   block,
-  editMode = false,
   backgroundImage = "https://placehold.net/400x400.png",
   labelContent = null,
 }: Props) {
+  const values = parseContent(block.content);
+  const {
+    label = labelContent ?? "Lorem ipsum dolor sit amet",
+    text = "Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat.",
+    bgColor,
+  } = values;
+  const textTypographySx = resolveContentTypographySx(values, "text");
+  const labelTypographySx = resolveContentTypographySx(values, "label");
   const bgSx = backgroundImage
     ? {
         backgroundImage: `url("${backgroundImage}")`,
         backgroundSize: "cover",
+        backgroundRepeat: "no-repeat",
         backgroundPosition: "center",
       }
     : {};
@@ -46,6 +58,7 @@ export function TextLabelCenterBackgroundFullRenderer({
           alignItems: "center",
           justifyContent: "center",
           gap: 1.5,
+          backgroundColor: bgColor,
           py: 4,
           ...bgSx,
         }}
@@ -53,19 +66,19 @@ export function TextLabelCenterBackgroundFullRenderer({
         <Typography
           variant="body2"
           color="text.secondary"
-          sx={{ width: "90%", textAlign: "left" }}
+          sx={{ width: "90%", textAlign: "left", ...textTypographySx }}
         >
-          {block.content ??
-            "Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat."}
+          {text}
         </Typography>
         <Chip
-          label={labelContent ?? "Lorem ipsum dolor sit amet"}
+          label={label}
           sx={{
             maxWidth: "90%",
             "& .MuiChip-label": {
               whiteSpace: "nowrap",
               overflow: "hidden",
               textOverflow: "ellipsis",
+              ...labelTypographySx,
             },
           }}
         />

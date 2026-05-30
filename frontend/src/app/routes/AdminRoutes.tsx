@@ -3,7 +3,7 @@ import { ProtectedLayout } from '../../components/ProtectedLayout'
 import { ProtectedRoute } from '../../components/ProtectedRoute'
 import { AnalyticsPage } from '../../pages/AnalyticsPage'
 import { ReviewsPage } from '../../pages/ReviewsPage'
-import { ReviewDetailPage } from '../../pages/ReviewDetailPage'
+import { ReviewNewsletterRoute } from '../../pages/ReviewNewsletterRoute'
 import TemplatesPage from '../../pages/TemplatesPage'
 import { UsersPage } from '../../pages/UsersPage'
 import { CreateTemplate } from '../../pages/templates/CreateTemplate'
@@ -46,11 +46,11 @@ export const adminRoutes = (
     />
 
     <Route
-      path="/reviews/:id"
+      path="/reviewNewsletter/:id"
       element={
         <ProtectedRoute allowedRoles={["ADMIN", "FUNCTIONAL"]}>
           <ProtectedLayout>
-            <ReviewDetailPage />
+            <ReviewNewsletterRoute />
           </ProtectedLayout>
         </ProtectedRoute>
       }

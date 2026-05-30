@@ -9,4 +9,8 @@ export class ImageFullBlock extends BlockDefinition {
   readonly previewKey = 'ImageFullRenderer.svg';
   readonly mustFill = true;
   readonly layout = { minCols: 1, minRows: 1, resizable: true };
+  readonly editFields = [
+    { key: 'imageAsset', label: 'Imagen', type: 'image-asset' as const, required: true, assetTypes: ['IMAGE'] as const },
+    { key: 'altText', label: 'Texto alternativo', type: 'text' as const, defaultValue: 'Full image' },
+  ];
 }

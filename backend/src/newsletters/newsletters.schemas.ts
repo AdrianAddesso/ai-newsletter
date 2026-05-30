@@ -26,16 +26,34 @@ const newsletterFormatSchema = z.nativeEnum(newsletter_format, {
   error: 'Formato de newsletter invalido.',
 });
 
-const newsletterSelectedAssetSchema = z
+const newsletterAssetBindingSchema = z
   .object({
-    id: uuidFieldSchema,
+    fieldKey: requiredStringFieldSchema,
+    assetId: uuidFieldSchema,
     keywordText: optionalStringFieldSchema.nullable().optional(),
   })
   .strict();
 
-const newsletterAssetSelectionSchema = z
+const newsletterEditableBlockSchema = z
   .object({
-    selectedAssets: z.array(newsletterSelectedAssetSchema),
+    id: requiredStringFieldSchema,
+    type: requiredStringFieldSchema,
+    category: z.string().optional(),
+    name: optionalStringFieldSchema.optional(),
+    content: optionalStringFieldSchema.nullable().optional(),
+    row: optionalIntegerFieldSchema,
+    gridColumn: optionalIntegerFieldSchema,
+    displayOrder: optionalIntegerFieldSchema,
+    mustFill: optionalBooleanFieldSchema,
+    comment: optionalStringFieldSchema.nullable().optional(),
+    assetBindings: z.array(newsletterAssetBindingSchema).optional(),
+  })
+  .strict();
+
+const newsletterGenerationContentSchema = z
+  .object({
+    aiContent: z.unknown(),
+    originalContent: z.unknown(),
   })
   .strict();
 
@@ -52,7 +70,8 @@ export const createNewsletterBodySchema = z
     state: newsletterStateSchema.optional(),
     language: newsletterLanguageSchema.optional(),
     format: newsletterFormatSchema.optional(),
-    assetSelection: newsletterAssetSelectionSchema.optional(),
+    generationContent: newsletterGenerationContentSchema.optional(),
+    blocks: z.array(newsletterEditableBlockSchema).optional(),
   })
   .strict();
 
@@ -67,6 +86,25 @@ export const updateNewsletterStatusBodySchema = z
     reviewedByUserId: uuidFieldSchema.optional(),
     allCommentaries: optionalStringFieldSchema,
   })
+  .strict();
+
+const reviewBlockCommentSchema = z
+  .object({
+    blockId: uuidFieldSchema,
+    content: requiredStringFieldSchema,
+  })
+  .strict();
+
+export const requestNewsletterChangesBodySchema = z
+  .object({
+    blockComments: z.array(reviewBlockCommentSchema).min(1, {
+      error: 'Debe indicar al menos un comentario.',
+    }),
+  })
+  .strict();
+
+export const approveNewsletterReviewBodySchema = z
+  .object({})
   .strict();
 
 export const addNewsletterLogBodySchema = z
@@ -111,6 +149,12 @@ export type UpdateNewsletterBody = z.infer<typeof updateNewsletterBodySchema>;
 export type UpdateNewsletterStatusBody = z.infer<
   typeof updateNewsletterStatusBodySchema
 >;
+export type RequestNewsletterChangesBody = z.infer<
+  typeof requestNewsletterChangesBodySchema
+>;
+export type ApproveNewsletterReviewBody = z.infer<
+  typeof approveNewsletterReviewBodySchema
+>;
 export type AddNewsletterLogBody = z.infer<typeof addNewsletterLogBodySchema>;
 export type AddNewsletterCommentBody = z.infer<
   typeof addNewsletterCommentBodySchema
@@ -127,3 +171,10 @@ export const exportNewsletterBodySchema = z.object({
   format: z.enum(['PDF', 'JPG', 'EML'], { error: 'Formato inválido. Usá PDF, JPG o EML.' }),
 }).strict();
 export type ExportNewsletterBody = z.infer<typeof exportNewsletterBodySchema>;
+export type NewsletterEditableBlock = z.infer<
+  typeof newsletterEditableBlockSchema
+>;
+export type NewsletterAssetBinding = z.infer<
+  typeof newsletterAssetBindingSchema
+>;
+export type ReviewBlockComment = z.infer<typeof reviewBlockCommentSchema>;

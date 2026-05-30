@@ -1,5 +1,6 @@
 import { Card, CardMedia } from "@mui/material";
 import type { BlockInstance } from "@shared/types/block.types";
+import { parseContent } from "../../../../utils/blockContent";
 
 interface Props {
   block: BlockInstance;
@@ -9,9 +10,10 @@ interface Props {
 
 export function ImageFullRenderer({
   block,
-  editMode = false,
-  imageUrl = "https://placehold.net/4.png",
+  imageUrl = "https://placehold.net/400x400.png",
 }: Props) {
+  const { altText = "Full image" } = parseContent(block.content);
+
   return (
     <Card
       sx={{
@@ -30,7 +32,7 @@ export function ImageFullRenderer({
       <CardMedia
         component="img"
         image={imageUrl}
-        alt="Full image"
+        alt={altText}
         sx={{ width: "100%", flexGrow: 1, objectFit: "cover" }}
       />
     </Card>

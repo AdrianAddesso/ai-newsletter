@@ -1,5 +1,9 @@
 import { Card, Typography, Box } from "@mui/material";
 import type { BlockInstance } from "@shared/types/block.types";
+import {
+  parseContent,
+  resolveContentTypographySx,
+} from "../../../../utils/blockContent";
 
 interface Props {
   block: BlockInstance;
@@ -9,13 +13,19 @@ interface Props {
 
 export function TextCenterBackgroundFullRenderer({
   block,
-  editMode = false,
   backgroundImage = "https://placehold.net/400x400.png",
 }: Props) {
+  const values = parseContent(block.content);
+  const {
+    text = "Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat.",
+    bgColor,
+  } = values;
+  const typographySx = resolveContentTypographySx(values, "text");
   const bgSx = backgroundImage
     ? {
         backgroundImage: `url("${backgroundImage}")`,
         backgroundSize: "cover",
+        backgroundRepeat: "no-repeat",
         backgroundPosition: "center",
       }
     : {};
@@ -42,6 +52,7 @@ export function TextCenterBackgroundFullRenderer({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
+          backgroundColor: bgColor,
           py: 4,
           ...bgSx,
         }}
@@ -49,10 +60,9 @@ export function TextCenterBackgroundFullRenderer({
         <Typography
           variant="body2"
           color="text.secondary"
-          sx={{ width: "90%", textAlign: "center" }}
+          sx={{ width: "90%", textAlign: "center", ...typographySx }}
         >
-          {block.content ??
-            "Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat."}
+          {text}
         </Typography>
       </Box>
     </Card>

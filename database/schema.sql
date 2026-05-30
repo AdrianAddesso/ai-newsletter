@@ -16,14 +16,21 @@ CREATE TABLE public.assets (
   CONSTRAINT assets_pkey PRIMARY KEY (id)
 );
 CREATE TABLE public.assets_block (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
   block_id uuid NOT NULL,
   asset_id uuid NOT NULL,
-  CONSTRAINT assets_block_pkey PRIMARY KEY (block_id, asset_id),
+  field_key text NOT NULL,
+  keyword_text text,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  deleted_at timestamp with time zone,
+  CONSTRAINT assets_block_pkey PRIMARY KEY (id),
   CONSTRAINT assets_block_block_id_fkey FOREIGN KEY (block_id) REFERENCES public.block_content(id),
   CONSTRAINT assets_block_asset_id_fkey FOREIGN KEY (asset_id) REFERENCES public.assets(id)
 );
 CREATE TABLE public.block_content (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
+  block_type text NOT NULL,
   content text,
   display_order integer,
   must_fill boolean NOT NULL DEFAULT false,
@@ -145,6 +152,7 @@ CREATE TABLE public.newsletters (
   state USER-DEFINED NOT NULL DEFAULT 'DRAFT'::newsletter_state,
   language USER-DEFINED NOT NULL DEFAULT 'SPA'::newsletter_language,
   format USER-DEFINED NOT NULL DEFAULT 'PORTRAIT'::newsletter_format,
+  generation_content jsonb,
   CONSTRAINT newsletters_pkey PRIMARY KEY (id),
   CONSTRAINT newsletters_area_id_fkey FOREIGN KEY (area_id) REFERENCES public.areas(id),
   CONSTRAINT newsletters_brand_kit_id_fkey FOREIGN KEY (brand_kit_id) REFERENCES public.brand_kit(id),
@@ -208,4 +216,31 @@ CREATE TABLE public.users (
   state public.user_state NOT NULL DEFAULT 'ACTIVE'::user_state,
   CONSTRAINT users_pkey PRIMARY KEY (id),
   CONSTRAINT users_area_id_fkey FOREIGN KEY (area_id) REFERENCES public.areas(id)
+);
+
+CREATE TABLE public.prompt_commands (
+  id            uuid NOT NULL DEFAULT gen_random_uuid(),
+  name          text NOT NULL,
+  type          USER-DEFINED NOT NULL,
+  display_order integer NOT NULL DEFAULT 0,
+  instruction   text,
+  created_at    timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at    timestamp with time zone NOT NULL DEFAULT now(),
+  deleted_at    timestamp with time zone,
+  CONSTRAINT prompt_commands_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE public.ai_config (
+  id                uuid NOT NULL DEFAULT gen_random_uuid(),
+  name              text NOT NULL,
+  type              USER-DEFINED NOT NULL,
+  temperature       numeric(3,2) NOT NULL,
+  top_p             numeric(3,2) NOT NULL,
+  top_k             integer NOT NULL,
+  max_output_tokens integer NOT NULL,
+  created_at        timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at        timestamp with time zone NOT NULL DEFAULT now(),
+  deleted_at        timestamp with time zone,
+  CONSTRAINT ai_config_pkey     PRIMARY KEY (id),
+  CONSTRAINT ai_config_type_key UNIQUE (type)
 );
