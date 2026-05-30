@@ -4,7 +4,7 @@
 
 These instructions apply to `backend`, a NestJS + TypeScript API.
 
-The backend owns business workflows, validation, authentication and authorization, Prisma data access, newsletter export orchestration, optional external storage integration, and the GenIA/Cloudhub proxy.
+The backend owns business workflows, validation, authentication and authorization, Prisma data access, newsletter export orchestration, optional external storage integration, and the GenAI/Cloudhub proxy.
 
 Follow the root `AGENTS.md` first. This file adds backend-specific rules.
 
@@ -67,7 +67,7 @@ Follow the root `AGENTS.md` first. This file adds backend-specific rules.
 - Return a user-safe Spanish fallback message when AI generation fails and the error is shown in the UI.
 - Log AI failures by operation and provider category, not by raw prompt or generated content.
 - Validate and sanitize AI output before persistence, rendering, export, or reuse in later prompts.
-- Use direct HTTP calls for GenIA unless the task explicitly requires a higher-level orchestration layer.
+- Use direct HTTP calls for GenAI unless the task explicitly requires a higher-level orchestration layer.
 
 ## Exports
 

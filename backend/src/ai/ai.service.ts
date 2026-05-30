@@ -11,15 +11,21 @@ import { ConfigService } from '@nestjs/config';
 import { ai_config_type } from '@prisma/client';
 import type { BlockEditField } from '@shared/types/block.types';
 import { z } from 'zod';
-import { buildNewsletterBlocksFromLayout, parseBlockValues } from '../blocks/newsletter-blocks';
+import {
+  buildNewsletterBlocksFromLayout,
+  parseBlockValues,
+} from '../blocks/newsletter-blocks';
 import { PrismaService } from '../prisma/prisma.service';
-import { GenerationConfig, NestleGeniaGenerateContentSuccess } from './ai.types';
+import { GenerationConfig, GenAIGenerateContentSuccess } from './ai.types';
 import { AiConfigResponseDto, UpdateAiConfigDto } from './dto/ai-config.dto';
 import {
   GenerateNewsletterRequestDto,
   GenerateNewsletterResponseDto,
 } from './dto/generate-newsletter.dto';
-import { ImproveTextRequestDto, ImproveTextResponseDto } from './dto/improve-text.dto';
+import {
+  ImproveTextRequestDto,
+  ImproveTextResponseDto,
+} from './dto/improve-text.dto';
 import {
   CreatePromptCommandDto,
   PromptCommandResponseDto,
@@ -63,8 +69,6 @@ export class AiService {
     'No se pudo mejorar el texto en este momento.';
   private readonly newsletterGenerationPublicErrorMessage =
     'No se pudo generar el newsletter en este momento.';
-  private readonly defaultNestleGeniaUrl =
-    'https://eur-sdr-int-pub.nestle.com/api/dv-exp-sandbox-openai-api/1/genai/GCP/gemini-2.0-flash-001/generateContent';
 
   private readonly fallbackGenerationConfig: Record<
     ai_config_type,
@@ -434,38 +438,38 @@ export class AiService {
     return normalizedConfig;
   }
 
-    private async fetchPromptCommands(
-        type: ai_config_type,
-    ): Promise<PromptCommandRow[]> {
-        const commands = await this.prisma.prompt_commands.findMany({
-        where: { type, deleted_at: null },
-        orderBy: { display_order: 'asc' },
-        select: {
-            id: true,
-            name: true,
-            type: true,
-            display_order: true,
-            instruction: true,
-        },
-        });
+  private async fetchPromptCommands(
+    type: ai_config_type,
+  ): Promise<PromptCommandRow[]> {
+    const commands = await this.prisma.prompt_commands.findMany({
+      where: { type, deleted_at: null },
+      orderBy: { display_order: 'asc' },
+      select: {
+        id: true,
+        name: true,
+        type: true,
+        display_order: true,
+        instruction: true,
+      },
+    });
 
-        const activeCommands = commands.filter((command) =>
-        Boolean(command.instruction?.trim()),
-        );
+    const activeCommands = commands.filter((command) =>
+      Boolean(command.instruction?.trim()),
+    );
 
-        this.logger.log(
-        `Loaded ${activeCommands.length}/${commands.length} prompt_commands for type=${type}: ${
-            activeCommands
-            .map(
-                (command) =>
-                `[${command.display_order}]${command.name}{id=${command.id},chars=${command.instruction?.trim().length ?? 0}}`,
-            )
-            .join(', ') || 'none'
-        }`,
-        );
+    this.logger.log(
+      `Loaded ${activeCommands.length}/${commands.length} prompt_commands for type=${type}: ${
+        activeCommands
+          .map(
+            (command) =>
+              `[${command.display_order}]${command.name}{id=${command.id},chars=${command.instruction?.trim().length ?? 0}}`,
+          )
+          .join(', ') || 'none'
+      }`,
+    );
 
-        return commands;
-    }
+    return commands;
+  }
 
   private buildTextImprovementPayload(
     originalText: string,
@@ -584,19 +588,19 @@ export class AiService {
     payload: object,
     publicMessage: string,
     operation: 'improveText' | 'generateNewsletter',
-  ): Promise<NestleGeniaGenerateContentSuccess | null> {
+  ): Promise<GenAIGenerateContentSuccess | null> {
     const clientId = this.readEnv('CLIENT_ID');
     const clientSecret = this.readEnv('CLIENT_SECRET');
-    const url = this.readEnv('NESTLE_GENIA_URL') ?? this.defaultNestleGeniaUrl;
+    const url = this.readEnv('GENAI_URL');
 
-    if (!clientId || !clientSecret) {
+    if (!url || !clientId || !clientSecret) {
       throw new ServiceUnavailableException(
-        'Nestle GenIA is not configured on the server.',
+        'GenAI is not configured on the server.',
       );
     }
 
     this.logger.log(
-      `Calling AI provider operation=${operation} provider=nestle model=${this.extractNestleModelName()} url=${url}`,
+      `Calling AI provider operation=${operation} provider=genai model=${this.extractModelName()} url=${url}`,
     );
 
     let response: Response;
@@ -626,12 +630,12 @@ export class AiService {
 
     const responseBody = (await response
       .json()
-      .catch(() => null)) as NestleGeniaGenerateContentSuccess | null;
+      .catch(() => null)) as GenAIGenerateContentSuccess | null;
 
     if (!response.ok) {
       throw this.createProviderException(
         response.status,
-        this.extractNestleErrorMessage(responseBody, response.status),
+        this.extractErrorMessage(responseBody, response.status),
         publicMessage,
         operation,
       );
@@ -1003,7 +1007,7 @@ export class AiService {
   }
 
   private extractErrorMessage(
-    responseBody: GenaiGenerateContentSuccess | null,
+    responseBody: GenAIGenerateContentSuccess | null,
     responseStatus: number,
   ): string {
     if (typeof responseBody?.error === 'string' && responseBody.error.trim()) {
@@ -1017,11 +1021,11 @@ export class AiService {
       return responseBody.error.message.trim();
     }
 
-    return `GenIA returned status ${responseStatus}.`;
+    return `GenAI returned status ${responseStatus}.`;
   }
 
   private extractText(
-    responseBody: GenaiGenerateContentSuccess | null,
+    responseBody: GenAIGenerateContentSuccess | null,
     model: string,
     publicMessage: string,
     operation: 'improveText' | 'generateNewsletter',
@@ -1037,7 +1041,7 @@ export class AiService {
 
     throw this.createProviderException(
       502,
-      `GenIA model ${model} did not return any text content.`,
+      `GenAI model ${model} did not return any text content.`,
       publicMessage,
       operation,
     );

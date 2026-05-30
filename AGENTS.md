@@ -111,7 +111,7 @@ Approval state transitions must be validated server-side. A user must not approv
 
 ## AI Integration
 
-The current practical AI integration path is the GenIA/Cloudhub endpoint using  and .
+The current practical AI integration path is the GenAI/Cloudhub endpoint using  and .
 
 - Do not add LangChain only because the planning document mentions it.
 - Add LangChain only when a task explicitly requires chains, tools, agents, memory, RAG, or provider abstraction.
