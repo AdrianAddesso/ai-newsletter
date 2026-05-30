@@ -68,7 +68,6 @@ SELECT 'FUNCTIONAL'::user_role, id
 FROM public.permissions
 WHERE code IN (
   'ROLE_ASSIGN',
-  'TEMPLATE_EDIT',
   'TEMPLATE_VIEW_COPY',
   'CONTENT_UPLOAD',
   'CONTENT_EXPORT_APPROVED',
@@ -88,7 +87,8 @@ WHERE code IN (
   'CONTENT_UPLOAD',
   'CONTENT_EXPORT_APPROVED',
   'REVIEW_REQUEST_PREVIEW',
-  'REVIEW_COMMENT_VIEW_REPLY'
+  'REVIEW_COMMENT_VIEW_REPLY',
+  'TEMPLATE_VIEW_COPY'
 )
 ON CONFLICT (role, permission_id) DO NOTHING;
 
@@ -106,6 +106,7 @@ ON CONFLICT (name) DO NOTHING;
 -- ========================================
 
 INSERT INTO public.users (
+  id,
   name,
   last_name,
   email,
@@ -114,6 +115,7 @@ INSERT INTO public.users (
   state
 )
 SELECT
+  v.id::uuid,
   v.name,
   v.last_name,
   v.email,
@@ -122,10 +124,10 @@ SELECT
   'ACTIVE'::user_state
 FROM (
   VALUES
-    ('Admin', 'Local', 'admin@local.test', 'COMUNICACION_INTERNA', 'ADMIN'),
-    ('Functional', 'Local', 'functional@local.test', 'COMUNICACION_INTERNA', 'FUNCTIONAL'),
-    ('User', 'Local', 'user@local.test', 'COMUNICACION_CORPORATIVA', 'USER')
-) AS v(name, last_name, email, area_name, role)
+    ('ecbe7026-4405-4697-95de-20a855ebdcd0'::uuid, 'Admin', 'Local', 'admin@local.test', 'COMUNICACION_INTERNA', 'ADMIN'),
+    ('107a3baf-5b4a-40ec-a7b9-c627e624ab97'::uuid, 'Functional', 'Local', 'functional@local.test', 'COMUNICACION_INTERNA', 'FUNCTIONAL'),
+    ('720deb80-e0a5-44e4-bb21-c2e14597126c'::uuid, 'User', 'Local', 'user@local.test', 'COMUNICACION_CORPORATIVA', 'USER')
+) AS v(id, name, last_name, email, area_name, role)
 JOIN public.areas a
   ON a.name = v.area_name::area_name
 ON CONFLICT (email) DO UPDATE
@@ -183,173 +185,173 @@ VALUES
 ON CONFLICT (code) DO UPDATE
 SET name = EXCLUDED.name;
 
--- ========================================
--- TEMPLATES
--- ========================================
+-- -- ========================================
+-- -- TEMPLATES
+-- -- ========================================
 
-WITH desired_templates AS (
-  SELECT
-    v.name,
-    v.description,
-    a.id AS area_id,
-    v.layout,
-    v.orientation::public.template_orientation AS orientation,
-    ts.id AS state_id,
-    v.prompt_base,
-    u.id AS created_by_user_id,
-    v.created_at,
-    v.updated_at,
-    v.deleted_at
-  FROM (
-    VALUES
-      (
-        'Cultura y reconocimiento',
-        'Formato para destacar cultura, reconocimientos y acciones de engagement.',
-        'COMUNICACION_INTERNA',
-        $json${
-          "blocks": [
-            { "type": "BANNER_HERO", "content": "Título de cultura", "row": 0, "grid_column": 0, "displayOrder": 0 },
-            { "type": "TEXT_2_COLUMNS", "content": "Cuerpo del reconocimiento", "row": 1, "grid_column": 0, "displayOrder": 1 }
-          ]
-        }$json$::json,
-        'PORTRAIT',
-        $json${"promptText":"Plantilla para cultura organizacional y reconocimiento.","requiredGenerationFields":[],"optionalGenerationFields":["relevantDates","cta","linksOrSources","additionalContext"]}$json$,
-        '2026-05-10 06:20:08.60622+00'::timestamptz,
-        '2026-05-10 06:20:08.60622+00'::timestamptz,
-        NULL::timestamptz
-      ),
-      (
-        'Mensaje de liderazgo',
-        'Comunicaciones formales de liderazgo con llamado a la accion y contacto.',
-        'COMUNICACION_INTERNA',
-        $json${
-          "blocks": [
-            { "type": "BANNER_HERO", "content": "Título de liderazgo", "row": 0, "grid_column": 0, "displayOrder": 0 },
-            { "type": "TEXT_2_COLUMNS", "content": "Cuerpo del mensaje", "row": 1, "grid_column": 0, "displayOrder": 1 }
-          ]
-        }$json$::json,
-        'PORTRAIT',
-        $json${"promptText":"Plantilla para mensajes institucionales de liderazgo.","requiredGenerationFields":["contact"],"optionalGenerationFields":["relevantDates","cta","linksOrSources","additionalContext"]}$json$,
-        '2026-05-10 06:20:08.60622+00'::timestamptz,
-        '2026-05-10 06:20:08.60622+00'::timestamptz,
-        NULL::timestamptz
-      ),
-      (
-        'Resumen semanal',
-        'Plantilla breve para resumir noticias clave y proximos hitos semanales.',
-        'COMUNICACION_INTERNA',
-        $json${
-          "blocks": [
-            { "type": "BANNER_HERO", "content": "Título de resumen", "row": 0, "grid_column": 0, "displayOrder": 0 },
-            { "type": "TEXT_2_COLUMNS", "content": "Cuerpo del resumen", "row": 1, "grid_column": 0, "displayOrder": 1 }
-          ]
-        }$json$::json,
-        'PORTRAIT',
-        $json${"promptText":"Plantilla para resumenes ejecutivos semanales.","requiredGenerationFields":[],"optionalGenerationFields":["relevantDates","cta","linksOrSources","additionalContext"]}$json$,
-        '2026-05-10 06:20:08.60622+00'::timestamptz,
-        '2026-05-10 06:20:08.60622+00'::timestamptz,
-        NULL::timestamptz
-      ),
-      (
-        'Actualizacion corporativa',
-        'Comunicados internos con foco en hitos, avances y decisiones corporativas.',
-        'COMUNICACION_CORPORATIVA',
-        $json${
-          "blocks": [
-            { "type": "BANNER_HERO", "content": "Título de actualización", "row": 0, "grid_column": 0, "displayOrder": 0 },
-            { "type": "TEXT_2_COLUMNS", "content": "Cuerpo de la actualización", "row": 1, "grid_column": 0, "displayOrder": 1 }
-          ]
-        }$json$::json,
-        'PORTRAIT',
-        $json${"promptText":"Plantilla para novedades corporativas internas.","requiredGenerationFields":[],"optionalGenerationFields":["relevantDates","cta","linksOrSources","additionalContext"]}$json$,
-        '2026-05-10 06:20:08.60622+00'::timestamptz,
-        '2026-05-10 06:20:08.60622+00'::timestamptz,
-        NULL::timestamptz
-      ),
-      (
-        'Historia de equipos',
-        'Formato editorial para contar iniciativas, logros y testimonios de equipos.',
-        'COMUNICACION_CORPORATIVA',
-        $json${
-          "blocks": [
-            { "type": "BANNER_HERO", "content": "Título de historia", "row": 0, "grid_column": 0, "displayOrder": 0 },
-            { "type": "TEXT_2_COLUMNS", "content": "Cuerpo de la historia", "row": 1, "grid_column": 0, "displayOrder": 1 }
-          ]
-        }$json$::json,
-        'PORTRAIT',
-        $json${"promptText":"Plantilla para historias de equipos y reconocimiento interno.","requiredGenerationFields":["contact"],"optionalGenerationFields":["relevantDates","cta","linksOrSources","additionalContext"]}$json$,
-        '2026-05-10 06:20:08.60622+00'::timestamptz,
-        '2026-05-10 06:20:08.60622+00'::timestamptz,
-        NULL::timestamptz
-      )
-  ) AS v(
-    name,
-    description,
-    area_name,
-    layout,
-    orientation,
-    prompt_base,
-    created_at,
-    updated_at,
-    deleted_at
-  )
-  JOIN public.areas a
-    ON a.name = v.area_name::area_name
-  JOIN public.template_states ts
-    ON ts.code = 'ACTIVE'
-  JOIN public.users u
-    ON u.email = 'admin@local.test'
-),
-updated_templates AS (
-  UPDATE public.templates t
-  SET
-    description = d.description,
-    area_id = d.area_id,
-    layout = d.layout,
-    orientation = d.orientation,
-    state_id = d.state_id,
-    prompt_base = d.prompt_base,
-    created_by_user_id = d.created_by_user_id,
-    created_at = d.created_at,
-    updated_at = d.updated_at,
-    deleted_at = d.deleted_at
-  FROM desired_templates d
-  WHERE t.name = d.name
-  RETURNING t.name
-)
-INSERT INTO public.templates (
-  id,
-  name,
-  description,
-  area_id,
-  layout,
-  orientation,
-  state_id,
-  prompt_base,
-  created_by_user_id,
-  created_at,
-  updated_at,
-  deleted_at
-)
-SELECT
-  gen_random_uuid(),
-  d.name,
-  d.description,
-  d.area_id,
-  d.layout,
-  d.orientation,
-  d.state_id,
-  d.prompt_base,
-  d.created_by_user_id,
-  d.created_at,
-  d.updated_at,
-  d.deleted_at
-FROM desired_templates d
-WHERE NOT EXISTS (
-  SELECT 1
-  FROM updated_templates ut
-  WHERE ut.name = d.name
-);
+-- WITH desired_templates AS (
+--   SELECT
+--     v.name,
+--     v.description,
+--     a.id AS area_id,
+--     v.layout,
+--     v.orientation::public.template_orientation AS orientation,
+--     ts.id AS state_id,
+--     v.prompt_base,
+--     u.id AS created_by_user_id,
+--     v.created_at,
+--     v.updated_at,
+--     v.deleted_at
+--   FROM (
+--     VALUES
+--       (
+--         'Cultura y reconocimiento',
+--         'Formato para destacar cultura, reconocimientos y acciones de engagement.',
+--         'COMUNICACION_INTERNA',
+--         $json${
+--           "blocks": [
+--             { "type": "BANNER_HERO", "content": "Título de cultura", "row": 0, "grid_column": 0, "displayOrder": 0 },
+--             { "type": "TEXT_2_COLUMNS", "content": "Cuerpo del reconocimiento", "row": 1, "grid_column": 0, "displayOrder": 1 }
+--           ]
+--         }$json$::json,
+--         'PORTRAIT',
+--         $json${"promptText":"Plantilla para cultura organizacional y reconocimiento.","requiredGenerationFields":[],"optionalGenerationFields":["relevantDates","cta","linksOrSources","additionalContext"]}$json$,
+--         '2026-05-10 06:20:08.60622+00'::timestamptz,
+--         '2026-05-10 06:20:08.60622+00'::timestamptz,
+--         NULL::timestamptz
+--       ),
+--       (
+--         'Mensaje de liderazgo',
+--         'Comunicaciones formales de liderazgo con llamado a la accion y contacto.',
+--         'COMUNICACION_INTERNA',
+--         $json${
+--           "blocks": [
+--             { "type": "BANNER_HERO", "content": "Título de liderazgo", "row": 0, "grid_column": 0, "displayOrder": 0 },
+--             { "type": "TEXT_2_COLUMNS", "content": "Cuerpo del mensaje", "row": 1, "grid_column": 0, "displayOrder": 1 }
+--           ]
+--         }$json$::json,
+--         'PORTRAIT',
+--         $json${"promptText":"Plantilla para mensajes institucionales de liderazgo.","requiredGenerationFields":["contact"],"optionalGenerationFields":["relevantDates","cta","linksOrSources","additionalContext"]}$json$,
+--         '2026-05-10 06:20:08.60622+00'::timestamptz,
+--         '2026-05-10 06:20:08.60622+00'::timestamptz,
+--         NULL::timestamptz
+--       ),
+--       (
+--         'Resumen semanal',
+--         'Plantilla breve para resumir noticias clave y proximos hitos semanales.',
+--         'COMUNICACION_INTERNA',
+--         $json${
+--           "blocks": [
+--             { "type": "BANNER_HERO", "content": "Título de resumen", "row": 0, "grid_column": 0, "displayOrder": 0 },
+--             { "type": "TEXT_2_COLUMNS", "content": "Cuerpo del resumen", "row": 1, "grid_column": 0, "displayOrder": 1 }
+--           ]
+--         }$json$::json,
+--         'PORTRAIT',
+--         $json${"promptText":"Plantilla para resumenes ejecutivos semanales.","requiredGenerationFields":[],"optionalGenerationFields":["relevantDates","cta","linksOrSources","additionalContext"]}$json$,
+--         '2026-05-10 06:20:08.60622+00'::timestamptz,
+--         '2026-05-10 06:20:08.60622+00'::timestamptz,
+--         NULL::timestamptz
+--       ),
+--       (
+--         'Actualizacion corporativa',
+--         'Comunicados internos con foco en hitos, avances y decisiones corporativas.',
+--         'COMUNICACION_CORPORATIVA',
+--         $json${
+--           "blocks": [
+--             { "type": "BANNER_HERO", "content": "Título de actualización", "row": 0, "grid_column": 0, "displayOrder": 0 },
+--             { "type": "TEXT_2_COLUMNS", "content": "Cuerpo de la actualización", "row": 1, "grid_column": 0, "displayOrder": 1 }
+--           ]
+--         }$json$::json,
+--         'PORTRAIT',
+--         $json${"promptText":"Plantilla para novedades corporativas internas.","requiredGenerationFields":[],"optionalGenerationFields":["relevantDates","cta","linksOrSources","additionalContext"]}$json$,
+--         '2026-05-10 06:20:08.60622+00'::timestamptz,
+--         '2026-05-10 06:20:08.60622+00'::timestamptz,
+--         NULL::timestamptz
+--       ),
+--       (
+--         'Historia de equipos',
+--         'Formato editorial para contar iniciativas, logros y testimonios de equipos.',
+--         'COMUNICACION_CORPORATIVA',
+--         $json${
+--           "blocks": [
+--             { "type": "BANNER_HERO", "content": "Título de historia", "row": 0, "grid_column": 0, "displayOrder": 0 },
+--             { "type": "TEXT_2_COLUMNS", "content": "Cuerpo de la historia", "row": 1, "grid_column": 0, "displayOrder": 1 }
+--           ]
+--         }$json$::json,
+--         'PORTRAIT',
+--         $json${"promptText":"Plantilla para historias de equipos y reconocimiento interno.","requiredGenerationFields":["contact"],"optionalGenerationFields":["relevantDates","cta","linksOrSources","additionalContext"]}$json$,
+--         '2026-05-10 06:20:08.60622+00'::timestamptz,
+--         '2026-05-10 06:20:08.60622+00'::timestamptz,
+--         NULL::timestamptz
+--       )
+--   ) AS v(
+--     name,
+--     description,
+--     area_name,
+--     layout,
+--     orientation,
+--     prompt_base,
+--     created_at,
+--     updated_at,
+--     deleted_at
+--   )
+--   JOIN public.areas a
+--     ON a.name = v.area_name::area_name
+--   JOIN public.template_states ts
+--     ON ts.code = 'ACTIVE'
+--   JOIN public.users u
+--     ON u.email = 'admin@local.test'
+-- ),
+-- updated_templates AS (
+--   UPDATE public.templates t
+--   SET
+--     description = d.description,
+--     area_id = d.area_id,
+--     layout = d.layout,
+--     orientation = d.orientation,
+--     state_id = d.state_id,
+--     prompt_base = d.prompt_base,
+--     created_by_user_id = d.created_by_user_id,
+--     created_at = d.created_at,
+--     updated_at = d.updated_at,
+--     deleted_at = d.deleted_at
+--   FROM desired_templates d
+--   WHERE t.name = d.name
+--   RETURNING t.name
+-- )
+-- INSERT INTO public.templates (
+--   id,
+--   name,
+--   description,
+--   area_id,
+--   layout,
+--   orientation,
+--   state_id,
+--   prompt_base,
+--   created_by_user_id,
+--   created_at,
+--   updated_at,
+--   deleted_at
+-- )
+-- SELECT
+--   gen_random_uuid(),
+--   d.name,
+--   d.description,
+--   d.area_id,
+--   d.layout,
+--   d.orientation,
+--   d.state_id,
+--   d.prompt_base,
+--   d.created_by_user_id,
+--   d.created_at,
+--   d.updated_at,
+--   d.deleted_at
+-- FROM desired_templates d
+-- WHERE NOT EXISTS (
+--   SELECT 1
+--   FROM updated_templates ut
+--   WHERE ut.name = d.name
+-- );
 
 -- ========================================
 -- BRAND KITS
