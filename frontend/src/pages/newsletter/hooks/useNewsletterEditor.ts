@@ -52,9 +52,9 @@ export function useNewsletterEditor() {
 
   const exportOptions: ExportOption[] = [
     {
-      id: 'png',
-      label: 'Exportar PNG',
-      format: 'PNG',
+      id: 'jpg',
+      label: 'Exportar JPG',
+      format: 'JPG',
     },
     {
       id: 'pdf',
@@ -266,7 +266,7 @@ export function useNewsletterEditor() {
             break
           }
 
-          case 'PNG':
+          case 'JPG':
           case 'PDF': {
             const container = document.createElement('div')
 
@@ -290,13 +290,13 @@ export function useNewsletterEditor() {
 
             document.body.removeChild(container)
 
-            if (format === 'PNG') {
-              const image = canvas.toDataURL('image/png')
+            if (format === 'JPG') {
+              const image = canvas.toDataURL('image/jpeg', 0.92)
 
               const link = document.createElement('a')
 
               link.href = image
-              link.download = 'newsletter.png'
+              link.download = 'newsletter.jpg'
 
               link.click()
 
