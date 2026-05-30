@@ -13,6 +13,7 @@ describe('NewsLettersService', () => {
   beforeEach(async () => {
     const transactionClient = {
       newsletters: {
+        findFirst: jest.fn(),
         update: jest.fn(),
       },
       newsletter_blocks: {
@@ -22,6 +23,7 @@ describe('NewsLettersService', () => {
       },
       block_content: {
         create: jest.fn().mockResolvedValue({ id: 'block-content-id' }),
+        update: jest.fn(),
         updateMany: jest.fn(),
       },
       assets_block: {
@@ -29,6 +31,10 @@ describe('NewsLettersService', () => {
         updateMany: jest.fn(),
       },
       newsletter_state_log: {
+        create: jest.fn(),
+      },
+      commentary: {
+        updateMany: jest.fn(),
         create: jest.fn(),
       },
     };
@@ -42,8 +48,15 @@ describe('NewsLettersService', () => {
         findFirst: jest.fn(),
         update: jest.fn(),
       },
+      users: {
+        findUnique: jest.fn(),
+      },
+      templates: {
+        findFirst: jest.fn(),
+      },
       newsletter_state_log: {
         create: jest.fn(),
+        findMany: jest.fn().mockResolvedValue([]),
       },
       __tx: transactionClient,
     };
@@ -142,6 +155,9 @@ describe('NewsLettersService', () => {
     expect(prisma.__tx.newsletter_blocks.updateMany).toHaveBeenCalledWith({
       where: {
         newsletter_id: 'newsletter-id',
+        block_content_id: {
+          in: ['old-block-content-id'],
+        },
         deleted_at: null,
       },
       data: {
@@ -168,6 +184,70 @@ describe('NewsLettersService', () => {
       },
       data: {
         deleted_at: expect.any(Date) as Date,
+      },
+    });
+  });
+
+  it('clears active comments for blocks changed while the newsletter is in CHANGES_REQUESTED', async () => {
+    prisma.__tx.newsletter_blocks.findMany.mockResolvedValue([
+      {
+        block_content_id: 'block-content-id',
+        display_order: 0,
+        row: 0,
+        grid_column: 0,
+        block_content: {
+          block_type: 'headerLeft',
+          content: '{"headline":"Texto original"}',
+          display_order: 0,
+          must_fill: false,
+          type: 'CONTENT',
+          assets_block: [],
+        },
+      },
+    ]);
+    prisma.newsletters.findFirst
+      .mockResolvedValueOnce({ id: 'newsletter-id', state: 'CHANGES_REQUESTED' })
+      .mockResolvedValueOnce({
+        id: 'newsletter-id',
+        title: 'Newsletter',
+        created_by_user_id: null,
+        state: 'CHANGES_REQUESTED',
+        template_id: null,
+        brand_kit_id: null,
+        generation_content: null,
+        created_at: new Date('2026-05-24T12:00:00.000Z'),
+        updated_at: new Date('2026-05-24T12:00:00.000Z'),
+        newsletter_blocks: [],
+      });
+
+    await service.update('newsletter-id', {
+      blocks: [
+        {
+          id: 'block-content-id',
+          type: 'headerLeft',
+          name: 'Header Left',
+          content: '{"headline":"Texto editado"}',
+          row: 0,
+          gridColumn: 0,
+          displayOrder: 0,
+          mustFill: false,
+          comment: null,
+          assetBindings: [],
+        },
+      ],
+    });
+
+    expect(prisma.__tx.commentary.updateMany).toHaveBeenCalledWith({
+      where: {
+        block_content_id: {
+          in: ['block-content-id'],
+        },
+        deleted_at: null,
+        show: true,
+      },
+      data: {
+        deleted_at: expect.any(Date) as Date,
+        show: false,
       },
     });
   });
@@ -305,6 +385,161 @@ describe('NewsLettersService', () => {
           BadRequestException,
         );
       });
+    });
+  });
+
+  describe('requestChanges', () => {
+    it('stores a review round, updates active block comments, and moves the newsletter to CHANGES_REQUESTED', async () => {
+      prisma.__tx.newsletters.findFirst.mockResolvedValue({
+        id: 'newsletter-id',
+        state: 'IN_REVIEW',
+        newsletter_blocks: [
+          { block_content_id: 'block-a' },
+          { block_content_id: 'block-b' },
+        ],
+      });
+      jest.spyOn(service, 'getById').mockResolvedValue({ id: 'newsletter-id' } as never);
+
+      await service.requestChanges('newsletter-id', {
+        reviewedByUserId: 'reviewer-id',
+        blockComments: [
+          { blockId: 'block-a', content: ' Primer comentario ' },
+          { blockId: 'block-a', content: ' Comentario final ' },
+          { blockId: 'block-b', content: ' Ajustar CTA ' },
+        ],
+      });
+
+      expect(prisma.__tx.newsletter_state_log.create).toHaveBeenCalledWith({
+        data: {
+          newsletter_id: 'newsletter-id',
+          previous_state: 'IN_REVIEW',
+          new_state: 'CHANGES_REQUESTED',
+          reviewed_by_user_id: 'reviewer-id',
+          all_commentaries:
+            '[{"blockId":"block-a","content":"Comentario final"},{"blockId":"block-b","content":"Ajustar CTA"}]',
+        },
+      });
+      expect(prisma.__tx.commentary.updateMany).toHaveBeenCalledWith({
+        where: {
+          block_content_id: {
+            in: ['block-a', 'block-b'],
+          },
+          deleted_at: null,
+        },
+        data: {
+          deleted_at: expect.any(Date) as Date,
+          show: false,
+        },
+      });
+      expect(prisma.__tx.commentary.create).toHaveBeenNthCalledWith(1, {
+        data: {
+          block_content_id: 'block-a',
+          commented_by_user_id: 'reviewer-id',
+          show: true,
+          content: 'Comentario final',
+        },
+      });
+      expect(prisma.__tx.commentary.create).toHaveBeenNthCalledWith(2, {
+        data: {
+          block_content_id: 'block-b',
+          commented_by_user_id: 'reviewer-id',
+          show: true,
+          content: 'Ajustar CTA',
+        },
+      });
+      expect(prisma.__tx.newsletters.update).toHaveBeenCalledWith({
+        where: { id: 'newsletter-id' },
+        data: {
+          state: 'CHANGES_REQUESTED',
+        },
+      });
+    });
+
+    it('rejects requestChanges when the newsletter is not under review', async () => {
+      prisma.__tx.newsletters.findFirst.mockResolvedValue({
+        id: 'newsletter-id',
+        state: 'DRAFT',
+        newsletter_blocks: [],
+      });
+
+      await expect(
+        service.requestChanges('newsletter-id', {
+          reviewedByUserId: 'reviewer-id',
+          blockComments: [{ blockId: 'block-a', content: 'Ajustar título' }],
+        }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('rejects requestChanges when a comment targets a block outside the newsletter', async () => {
+      prisma.__tx.newsletters.findFirst.mockResolvedValue({
+        id: 'newsletter-id',
+        state: 'RESUBMITTED',
+        newsletter_blocks: [{ block_content_id: 'block-a' }],
+      });
+
+      await expect(
+        service.requestChanges('newsletter-id', {
+          reviewedByUserId: 'reviewer-id',
+          blockComments: [{ blockId: 'block-z', content: 'Ajustar imagen' }],
+        }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('rejects requestChanges when every comment is blank', async () => {
+      prisma.__tx.newsletters.findFirst.mockResolvedValue({
+        id: 'newsletter-id',
+        state: 'IN_REVIEW',
+        newsletter_blocks: [{ block_content_id: 'block-a' }],
+      });
+
+      await expect(
+        service.requestChanges('newsletter-id', {
+          reviewedByUserId: 'reviewer-id',
+          blockComments: [{ blockId: 'block-a', content: '   ' }],
+        }),
+      ).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('approveReview', () => {
+    it('moves the newsletter to APPROVED and logs the persisted previous state', async () => {
+      prisma.__tx.newsletters.findFirst.mockResolvedValue({
+        id: 'newsletter-id',
+        state: 'RESUBMITTED',
+      });
+      jest.spyOn(service, 'getById').mockResolvedValue({ id: 'newsletter-id' } as never);
+
+      await service.approveReview('newsletter-id', {
+        reviewedByUserId: 'reviewer-id',
+      });
+
+      expect(prisma.__tx.newsletters.update).toHaveBeenCalledWith({
+        where: { id: 'newsletter-id' },
+        data: {
+          state: 'APPROVED',
+        },
+      });
+      expect(prisma.__tx.newsletter_state_log.create).toHaveBeenCalledWith({
+        data: {
+          newsletter_id: 'newsletter-id',
+          previous_state: 'RESUBMITTED',
+          new_state: 'APPROVED',
+          reviewed_by_user_id: 'reviewer-id',
+        },
+      });
+    });
+
+    it('rejects approveReview when the newsletter is not under review', async () => {
+      prisma.__tx.newsletters.findFirst.mockResolvedValue({
+        id: 'newsletter-id',
+        state: 'CHANGES_REQUESTED',
+      });
+
+      await expect(
+        service.approveReview('newsletter-id', {
+          reviewedByUserId: 'reviewer-id',
+        }),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 });

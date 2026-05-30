@@ -11,7 +11,7 @@ import { Role } from '../modules/auth/enum/roles';
 
 describe('NewslettersController', () => {
   let controller: NewslettersController;
-  let newslettersService: { updateStatus: jest.Mock };
+  let newslettersService: Record<string, jest.Mock>;
   let prisma: { newsletters: { findUnique: jest.Mock } };
   let authorizationService: { isAuthorized: jest.Mock };
   let permissionCacheService: { getPermissionsForRole: jest.Mock };
@@ -31,7 +31,9 @@ describe('NewslettersController', () => {
       updateComment: jest.fn(),
       updateExports: jest.fn(),
       getExports: jest.fn(),
-    } as unknown as { updateStatus: jest.Mock };
+      requestChanges: jest.fn(),
+      approveReview: jest.fn(),
+    };
     prisma = {
       newsletters: {
         findUnique: jest.fn(),
@@ -151,6 +153,69 @@ describe('NewslettersController', () => {
         state: 'IN_REVIEW',
       }),
     );
+  });
+
+  it('derives the reviewer identity from the authenticated request when requesting changes', async () => {
+    permissionCacheService.getPermissionsForRole.mockResolvedValue([
+      Action.REVIEW_FINAL_APPROVE_COMMENT,
+    ]);
+    prisma.newsletters.findUnique.mockResolvedValue({
+      id: 'newsletter-id',
+      created_by_user_id: 'user-id',
+      state: 'IN_REVIEW',
+      area_id: 'area-1',
+    });
+    authorizationService.isAuthorized.mockReturnValue(true);
+    newslettersService.requestChanges = jest.fn().mockResolvedValue({ id: 'newsletter-id' });
+
+    await controller.requestChanges(
+      {
+        user: {
+          id: 'functional-id',
+          role: Role.FUNCTIONAL,
+          area_id: 'area-1',
+        },
+      },
+      { id: 'newsletter-id' },
+      {
+        blockComments: [{ blockId: 'block-a', content: 'Ajustar hero' }],
+      },
+    );
+
+    expect(newslettersService.requestChanges).toHaveBeenCalledWith('newsletter-id', {
+      reviewedByUserId: 'functional-id',
+      blockComments: [{ blockId: 'block-a', content: 'Ajustar hero' }],
+    });
+  });
+
+  it('derives the reviewer identity from the authenticated request when approving a review', async () => {
+    permissionCacheService.getPermissionsForRole.mockResolvedValue([
+      Action.REVIEW_FINAL_APPROVE_COMMENT,
+    ]);
+    prisma.newsletters.findUnique.mockResolvedValue({
+      id: 'newsletter-id',
+      created_by_user_id: 'user-id',
+      state: 'RESUBMITTED',
+      area_id: 'area-1',
+    });
+    authorizationService.isAuthorized.mockReturnValue(true);
+    newslettersService.approveReview = jest.fn().mockResolvedValue({ id: 'newsletter-id' });
+
+    await controller.approveReview(
+      {
+        user: {
+          id: 'functional-id',
+          role: Role.FUNCTIONAL,
+          area_id: 'area-1',
+        },
+      },
+      { id: 'newsletter-id' },
+      {},
+    );
+
+    expect(newslettersService.approveReview).toHaveBeenCalledWith('newsletter-id', {
+      reviewedByUserId: 'functional-id',
+    });
   });
 
 });
