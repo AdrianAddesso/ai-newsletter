@@ -51,8 +51,7 @@ describe('AiService', () => {
     const { service, prisma } = createService({
       CLIENT_ID: 'client-id',
       CLIENT_SECRET: 'client-secret',
-      GENAI_URL:
-        'https://eur-sdr-int-pub.nestle.com/api/dv-exp-sandbox-openai-api/1/genai/GCP/gemini-2.0-flash-001/generateContent',
+      GENAI_URL: process.env.GENAI_URL,
     });
 
     (prisma.templates.findFirst as jest.Mock).mockResolvedValue({
@@ -97,14 +96,19 @@ describe('AiService', () => {
 
     const fetchMock = global.fetch as jest.MockedFunction<typeof fetch>;
     const [url, requestInit] = fetchMock.mock.calls[0] ?? [];
-    const fetchBody = JSON.parse((requestInit?.body as string | undefined) ?? '{}') as {
+    const fetchBody = JSON.parse(
+      (requestInit?.body as string | undefined) ?? '{}',
+    ) as {
       contents: Array<{ parts: Array<{ text: string }> }>;
-      generationConfig: { temperature: number; topP: number; topK: number; maxOutputTokens: number };
+      generationConfig: {
+        temperature: number;
+        topP: number;
+        topK: number;
+        maxOutputTokens: number;
+      };
     };
 
-    expect(url).toBe(
-      'https://eur-sdr-int-pub.nestle.com/api/dv-exp-sandbox-openai-api/1/genai/GCP/gemini-2.0-flash-001/generateContent',
-    );
+    expect(url).toBe(process.env.GENAI_URL);
     expect(requestInit?.headers).toMatchObject({
       client_id: 'client-id',
       client_secret: 'client-secret',
@@ -124,8 +128,7 @@ describe('AiService', () => {
     const { service } = createService({
       CLIENT_ID: 'client-id',
       CLIENT_SECRET: 'client-secret',
-      GENAI_URL:
-        'https://eur-sdr-int-pub.nestle.com/api/dv-exp-sandbox-openai-api/1/genai/GCP/gemini-2.0-flash-001/generateContent',
+      GENAI_URL: process.env.GENAI_URL,
     });
 
     global.fetch = jest.fn().mockResolvedValue({
@@ -184,12 +187,21 @@ describe('AiService', () => {
 
     const fetchMock = global.fetch as jest.MockedFunction<typeof fetch>;
     const requestInit = fetchMock.mock.calls[0]?.[1];
-    const fetchBody = JSON.parse((requestInit?.body as string | undefined) ?? '{}') as {
+    const fetchBody = JSON.parse(
+      (requestInit?.body as string | undefined) ?? '{}',
+    ) as {
       contents: Array<{ parts: Array<{ text: string }> }>;
-      generationConfig: { temperature: number; topP: number; topK: number; maxOutputTokens: number };
+      generationConfig: {
+        temperature: number;
+        topP: number;
+        topK: number;
+        maxOutputTokens: number;
+      };
     };
 
-    expect(fetchBody.contents[0].parts[0].text).toContain('"topic":"Seguridad"');
+    expect(fetchBody.contents[0].parts[0].text).toContain(
+      '"topic":"Seguridad"',
+    );
     expect(fetchBody.contents[0].parts[0].text).toContain(
       '"templateId":"weekly-brief"',
     );
