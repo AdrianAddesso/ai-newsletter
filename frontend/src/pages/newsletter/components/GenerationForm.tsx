@@ -155,7 +155,9 @@ export function GenerationForm({
   return (
     <Stack spacing={2}>
       {aiError && <Alert severity="error">{aiError}</Alert>}
-      <Alert severity="info">Plantilla seleccionada: {selectedTemplate.name}</Alert>
+      <Alert severity="info">
+        Plantilla seleccionada: {selectedTemplate.name}
+      </Alert>
 
       <TextField
         label="Departamento o area"
@@ -169,7 +171,7 @@ export function GenerationForm({
         slotProps={{ inputLabel: { required: false } }}
         value={form.topic}
         onChange={(event: ChangeEvent<HTMLInputElement>) =>
-          update('topic', event.target.value)
+          update("topic", event.target.value)
         }
         error={!!formErrors.topic}
         helperText={formErrors.topic}
@@ -181,7 +183,7 @@ export function GenerationForm({
         slotProps={{ inputLabel: { required: false } }}
         value={form.objective}
         onChange={(event: ChangeEvent<HTMLInputElement>) =>
-          update('objective', event.target.value)
+          update("objective", event.target.value)
         }
         error={!!formErrors.objective}
         helperText={formErrors.objective}
@@ -195,7 +197,7 @@ export function GenerationForm({
         slotProps={{ inputLabel: { required: false } }}
         value={form.audience}
         onChange={(event: ChangeEvent<HTMLInputElement>) =>
-          update('audience', event.target.value)
+          update("audience", event.target.value)
         }
         error={!!formErrors.audience}
         helperText={formErrors.audience}
@@ -207,10 +209,10 @@ export function GenerationForm({
         slotProps={{ inputLabel: { required: false } }}
         value={form.keyMessages}
         onChange={(event: ChangeEvent<HTMLInputElement>) =>
-          update('keyMessages', event.target.value)
+          update("keyMessages", event.target.value)
         }
         error={!!formErrors.keyMessages}
-        helperText={formErrors.keyMessages || 'Escribi un mensaje por linea.'}
+        helperText={formErrors.keyMessages || "Escriba un mensaje por linea."}
         multiline
         minRows={3}
         fullWidth
@@ -221,7 +223,7 @@ export function GenerationForm({
         slotProps={{ inputLabel: { required: false } }}
         value={form.tone}
         onChange={(event: ChangeEvent<HTMLInputElement>) =>
-          update('tone', event.target.value)
+          update("tone", event.target.value)
         }
         error={!!formErrors.tone}
         helperText={formErrors.tone}
@@ -230,82 +232,82 @@ export function GenerationForm({
 
       {selectedTemplate.requiredGenerationFields.length > 0 && (
         <Alert severity="warning">
-          Esta plantilla requiere:{' '}
+          Esta plantilla requiere:{" "}
           {selectedTemplate.requiredGenerationFields
             .map((field) => generationFieldLabels[field])
-            .join(', ')}
+            .join(", ")}
         </Alert>
       )}
 
-      {visibleFields.has('relevantDates') && (
+      {visibleFields.has("relevantDates") && (
         <TextField
           label="Fecha CTA"
           type="date"
           slotProps={{ inputLabel: { shrink: true } }}
           value={form.relevantDates}
           onChange={(event: ChangeEvent<HTMLInputElement>) =>
-            update('relevantDates', event.target.value)
+            update("relevantDates", event.target.value)
           }
           error={!!formErrors.relevantDates}
           helperText={formErrors.relevantDates}
           fullWidth
         />
       )}
-      {visibleFields.has('cta') && (
+      {visibleFields.has("cta") && (
         <TextField
           label="Texto CTA"
           value={form.cta}
           onChange={(event: ChangeEvent<HTMLInputElement>) =>
-            update('cta', event.target.value)
+            update("cta", event.target.value)
           }
           error={!!formErrors.cta}
           helperText={formErrors.cta}
           fullWidth
         />
       )}
-      {visibleFields.has('contact') && (
+      {visibleFields.has("contact") && (
         <TextField
           label="Contacto"
           value={form.contact}
           onChange={(event: ChangeEvent<HTMLInputElement>) =>
-            update('contact', event.target.value)
+            update("contact", event.target.value)
           }
           error={!!formErrors.contact}
           helperText={formErrors.contact}
           fullWidth
         />
       )}
-      {visibleFields.has('linksOrSources') && (
+      {visibleFields.has("linksOrSources") && (
         <TextField
           label="Link CTA"
           type="url"
           value={form.linksOrSources}
           onChange={(event: ChangeEvent<HTMLInputElement>) => {
-            update('linksOrSources', event.target.value)
-            const error = validateLinks(event.target.value)
+            update("linksOrSources", event.target.value);
+            const error = validateLinks(event.target.value);
             setFormErrors((current) => {
-              const next = { ...current }
-              if (error) next.linksOrSources = error
-              else delete next.linksOrSources
-              return next
-            })
+              const next = { ...current };
+              if (error) next.linksOrSources = error;
+              else delete next.linksOrSources;
+              return next;
+            });
           }}
           error={!!formErrors.linksOrSources}
-          helperText={formErrors.linksOrSources || 'Escribi un link por linea.'}
+          helperText={formErrors.linksOrSources || "Escribi un link por linea."}
           multiline
           minRows={2}
           fullWidth
         />
       )}
 
-      {visibleFields.has('additionalContext') && (
+      {visibleFields.has("additionalContext") && (
         <Stack spacing={2}>
           <Typography variant="h6">Contexto adicional</Typography>
           <TextField
             label="Notas adicionales"
             value={form.additionalContext}
             onChange={(event: ChangeEvent<HTMLInputElement>) =>
-              update('additionalContext', event.target.value)
+              update("additionalContext", event.target.value)
             }
             multiline
             minRows={3}
@@ -316,16 +318,24 @@ export function GenerationForm({
 
       <Divider />
 
-      <Button
-        variant="contained"
-        disabled={isGenerating}
-        onClick={() => void submit()}
-      >
-        {isGenerating ? 'Generando...' : 'Generar'}
-      </Button>
-      <Button variant="outlined" color="error" onClick={onCancel}>
-        {cancelLabel}
-      </Button>
+      <Stack direction="row" spacing={2} sx={{ width: "100%" }}>
+        <Button
+          sx={{ flex: 1 }}
+          variant="outlined"
+          color="error"
+          onClick={onCancel}
+        >
+          {cancelLabel}
+        </Button>
+        <Button
+          sx={{ flex: 1 }}
+          variant="contained"
+          disabled={isGenerating}
+          onClick={() => void submit()}
+        >
+          {isGenerating ? "Generando..." : "Generar"}
+        </Button>
+      </Stack>
     </Stack>
-  )
+  );
 }

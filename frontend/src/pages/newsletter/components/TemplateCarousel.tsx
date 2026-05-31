@@ -63,8 +63,16 @@ export function TemplateCarousel({
   }, [])
 
   useEffect(() => {
-    if (!selectedBrandKitId && brandKitOptions[0]?.id) {
-      onSelectBrandKit(brandKitOptions[0].id)
+    if (selectedBrandKitId || brandKitOptions.length === 0) {
+      return
+    }
+
+    const defaultBrandKit =
+      brandKitOptions.find((brandKit) => brandKit.name === 'Nestle') ??
+      brandKitOptions[0]
+
+    if (defaultBrandKit) {
+      onSelectBrandKit(defaultBrandKit.id)
     }
   }, [brandKitOptions, onSelectBrandKit, selectedBrandKitId])
 
