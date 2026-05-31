@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useCallback, useContext, useState, type ReactNode } from 'react'
-import { useAuth } from './AuthContext'
+import { useAuth, type UserRole } from './AuthContext'
 
 export type NotificationType = 'pending-review' | 'approved' | 'rejected' | 'reminder' | 'info'
 
@@ -52,9 +52,6 @@ const readStoredNotifications = (userId: string): AppNotification[] | null => {
 const getInitialNotificationsForUser = (userId: string) =>
   readStoredNotifications(userId) ?? []
 
-const cloneNotifications = (notifications: AppNotification[]) =>
-  notifications.map((notification) => ({ ...notification }))
-
 const persistNotifications = (userId: string, notifications: AppNotification[]) => {
   localStorage.setItem(getStorageKey(userId), JSON.stringify(notifications))
 }
@@ -83,7 +80,9 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       setNotificationsByUser((prev) => {
         const currentNotifications =
           prev[userId] ?? getInitialNotificationsForUser(userId)
-        const nextNotifications = updater(cloneNotifications(currentNotifications))
+        const nextNotifications = updater(
+          currentNotifications.map((notification) => ({ ...notification })),
+        )
 
         persistNotifications(userId, nextNotifications)
 
