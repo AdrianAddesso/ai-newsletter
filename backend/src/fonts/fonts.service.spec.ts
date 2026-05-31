@@ -8,12 +8,12 @@ function createService() {
   const uploadObjectMock = jest.fn().mockResolvedValue(undefined);
   const getSignedUrlMock = jest
     .fn()
-    .mockResolvedValue('http://localhost:9000/nestle-ai-newsletter-fonts/fake');
+    .mockResolvedValue('http://localhost:9000/ai-newsletter-fonts/fake');
   const prisma = {
     font_groups: {
       upsert: jest.fn().mockResolvedValue({
         id: 'font-group-id',
-        name: 'Nestle',
+        name: 'Lumen',
       }),
     },
     fonts: {
@@ -21,10 +21,10 @@ function createService() {
         id: 'font-id',
         name: 'NestleTextTF-BoldItalic.ttf',
         style: 'BoldItalic',
-        bucket: 'nestle-ai-newsletter-fonts',
+        bucket: 'ai-newsletter-fonts',
         object_key: 'fonts/uploads/nestle/nestletexttf-bolditalic-fake.ttf',
         font_groups: {
-          name: 'Nestle',
+          name: 'Lumen',
         },
       }),
       findMany: jest.fn().mockResolvedValue([
@@ -32,10 +32,10 @@ function createService() {
           id: 'seed-font-id',
           name: 'NestleTextTF-BoldItalic.ttf',
           style: 'BoldItalic',
-          bucket: 'nestle-ai-newsletter-fonts',
+          bucket: 'ai-newsletter-fonts',
           object_key: 'fonts/nestle/NestleTextTF-BoldItalic.ttf',
           font_groups: {
-            name: 'Nestle',
+            name: 'Lumen',
           },
         },
       ]),
@@ -47,7 +47,7 @@ function createService() {
   const storageService = {
     uploadObject: uploadObjectMock,
     getSignedUrl: getSignedUrlMock,
-    getFontsBucket: jest.fn().mockReturnValue('nestle-ai-newsletter-fonts'),
+    getFontsBucket: jest.fn().mockReturnValue('ai-newsletter-fonts'),
   } as unknown as StorageService;
 
   return {
@@ -75,7 +75,7 @@ describe('FontsService', () => {
             buffer: Buffer.from('fake-font'),
           },
         ],
-        'Nestle',
+        'Lumen',
       ),
     ).resolves.toEqual({
       fonts: [
@@ -83,14 +83,14 @@ describe('FontsService', () => {
           id: 'font-id',
           name: 'NestleTextTF-BoldItalic.ttf',
           style: 'BoldItalic',
-          groupName: 'Nestle',
-          url: 'http://localhost:9000/nestle-ai-newsletter-fonts/fake',
+          groupName: 'Lumen',
+          url: 'http://localhost:9000/ai-newsletter-fonts/fake',
         },
       ],
     });
 
     expect(uploadObjectMock).toHaveBeenCalledWith(
-      'nestle-ai-newsletter-fonts',
+      'ai-newsletter-fonts',
       expect.stringMatching(
         /^fonts\/uploads\/nestle\/nestletexttf-bolditalic-/,
       ),
@@ -102,14 +102,14 @@ describe('FontsService', () => {
   it('lists persisted fonts with signed urls', async () => {
     const { service } = createService();
 
-    await expect(service.listFonts('Nestle')).resolves.toEqual({
+    await expect(service.listFonts('Lumen')).resolves.toEqual({
       fonts: [
         {
           id: 'seed-font-id',
           name: 'NestleTextTF-BoldItalic.ttf',
           style: 'BoldItalic',
-          groupName: 'Nestle',
-          url: 'http://localhost:9000/nestle-ai-newsletter-fonts/fake',
+          groupName: 'Lumen',
+          url: 'http://localhost:9000/ai-newsletter-fonts/fake',
         },
       ],
     });
@@ -128,7 +128,7 @@ describe('FontsService', () => {
             buffer: Buffer.from('fake'),
           } as UploadedFontFile,
         ],
-        'Nestle',
+        'Lumen',
       ),
     ).rejects.toBeInstanceOf(BadRequestException);
   });

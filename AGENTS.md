@@ -2,7 +2,7 @@
 
 ## Scope
 
-This file defines the project-wide instructions for `nestle-ai-newsletter`.
+This file defines the project-wide instructions for `ai-newsletter`.
 
 These rules apply to all agents and contributors unless a more specific `AGENTS.md` in a subdirectory adds stricter rules for that area.
 
@@ -10,12 +10,12 @@ Subdirectory files must not contradict this file. If instructions conflict, foll
 
 ## Product Context
 
-`nestle-ai-newsletter` is a production platform for internal communications teams to create Nestle newsletters with AI assistance, predefined brand-aligned templates, review and approval workflows, traceable history, and export support.
+`ai-newsletter` is a production platform for internal communications teams to create internal newsletters with AI assistance, predefined brand-aligned templates, review and approval workflows, traceable history, and export support.
 
 Use `/ref` as reference material:
 
 - The development plan PDF describes intended scope, actors, requirements, and architecture.
-- The Nestle brand guideline PDF describes visual identity constraints.
+- The brand guideline PDF describes visual identity constraints.
 - Reference files are context. Do not implement features from them unless the task explicitly asks for that work.
 
 ## Product Scope
@@ -24,7 +24,7 @@ The platform must support:
 
 - Structured newsletter creation from predefined templates.
 - AI-assisted generation for subject, preheader, headlines, body, CTA, and closing copy.
-- Review states from `newsletter_state`: `DRAFT`, `IN_REVIEW`, `CHANGES_REQUESTED`, `RESUBMITTED`, `APPROVED`, `DISCARDED`.
+- Review states from `newsletter_state`: , , , , , .
 - Traceability for versions, comments, approvals, and exports.
 - Export targets: HTML/MJML, PDF, and internal web preview.
 
@@ -36,14 +36,14 @@ Use the database enums as the source of truth for domain state and permissions. 
 
 Current public enums:
 
-- `user_role`: `ADMIN`, `FUNCTIONAL`, `USER`.
-- `user_state`: `ACTIVE`, `INACTIVE`, `REMOVED`.
-- `newsletter_state`: `DRAFT`, `IN_REVIEW`, `CHANGES_REQUESTED`, `RESUBMITTED`, `APPROVED`, `DISCARDED`.
-- `newsletter_format`: `PORTRAIT`, `LANDSCAPE`.
-- `newsletter_language`: `SPA`.
-- `block_content_type`: `LAYOUT`, `BASE`, `DIVIDER`, `CONTENT`, `MULTIMEDIA`, `ICONS`, `SPECIAL`.
-- `asset_type`: `IMAGE`, `ICON`, `LOGO`, `SHAPE`, `LOCKUP`, `KEYWORD`.
-- `area_name`: `COMUNICACION_INTERNA`, `COMUNICACION_CORPORATIVA`.
+- `user_role`: , , .
+- `user_state`: , , .
+- `newsletter_state`: , , , , , .
+- `newsletter_format`: , .
+- `newsletter_language`: .
+- `block_content_type`: , , , , , , .
+- `asset_type`: , , , , , .
+- `area_name`: , .
 
 Use Spanish labels in the UI when displaying enum values. Keep enum identifiers unchanged in code, API contracts, persistence, tests, and technical documentation.
 
@@ -92,7 +92,7 @@ Use Spanish labels in the UI when displaying enum values. Keep enum identifiers 
 - Backend endpoints are private by default.
 - New backend endpoints must require an authenticated application session unless the task explicitly defines them as public.
 - Public endpoints must be rare, documented in code, and limited to safe cases such as health checks or deliberately public static assets.
-- Do not expose `.env` values, credentials, API keys, storage provider keys, AI credentials, `CLIENT_ID`, or `CLIENT_SECRET` in logs, client bundles, HTTP responses, exports, or generated files.
+- Do not expose `.env` values, credentials, API keys, storage provider keys, AI credentials, , or  in logs, client bundles, HTTP responses, exports, or generated files.
 - Do not interpolate untrusted values into SQL, shell commands, file paths, generated HTML, MJML, PDFs, logs, prompts, or external URLs.
 - Use allowlists for CORS origins, upload file types, export formats, AI destinations, and external links.
 - Error responses must be useful but generic. Do not return stack traces, internal provider details, SQL errors, tokens, or secrets.
@@ -107,15 +107,11 @@ Until RBAC is fully implemented:
 
 Current roles:
 
-- `ADMIN`: manages users, templates, integrations, configuration, and administrative workflows.
-- `FUNCTIONAL`: manages functional newsletter workflows, review operations, and content operations assigned to their area.
-- `USER`: creates, edits, reviews, or consumes newsletters only within permissions granted by backend rules.
-
 Approval state transitions must be validated server-side. A user must not approve, discard, export, or change ownership of a newsletter unless the backend authorizes that action.
 
 ## AI Integration
 
-The current practical AI integration path is the Nestle GenIA/Cloudhub endpoint using `CLIENT_ID` and `CLIENT_SECRET`.
+The current practical AI integration path is the GenAI/Cloudhub endpoint using  and .
 
 - Do not add LangChain only because the planning document mentions it.
 - Add LangChain only when a task explicitly requires chains, tools, agents, memory, RAG, or provider abstraction.

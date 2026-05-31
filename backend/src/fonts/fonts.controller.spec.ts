@@ -33,7 +33,7 @@ describe('FontsController', () => {
   });
 
   it('rejects font uploads without bearer authentication', () => {
-    expect(() => controller.uploadFonts(undefined, 'Nestle', [])).toThrow(
+    expect(() => controller.uploadFonts(undefined, 'Lumen', [])).toThrow(
       UnauthorizedException,
     );
   });

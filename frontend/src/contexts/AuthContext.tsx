@@ -71,7 +71,7 @@ export const MICROSOFT_SSO_USERS: User[] = [
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const SESSION_STORAGE_KEY = "nestle-ai-newsletter:session";
+const SESSION_STORAGE_KEY = "ai-newsletter:session";
 // MOCK_PASSWORD solo para desarrollo local/demo. No usar en producción.
 const MOCK_PASSWORD = "password123";
 const ACCESS_TOKEN_TTL = 10 * 60 * 1000;

@@ -34,10 +34,11 @@ const NotificationContext = createContext<NotificationContextType | undefined>(u
 const STORAGE_PREFIX = 'ai-newsletter:notifications'
 const initialNotificationBaseTime = Date.now()
 
-const roleByUserId = MICROSOFT_SSO_USERS.reduce<Record<string, UserRole>>((roles, user) => {
-  roles[user.id] = user.role
-  return roles
-}, {})
+const roleByUserId: Record<string, UserRole> = {
+  '1': 'ADMIN',
+  '2': 'FUNCTIONAL',
+  '3': 'USER',
+}
 
 const cloneNotifications = (notifications: AppNotification[]) =>
   notifications.map((notification) => ({ ...notification }))

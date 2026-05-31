@@ -11,7 +11,7 @@ import {
 } from '@mui/material'
 import { useNavigate } from 'react-router'
 import SearchIcon from '@mui/icons-material/Search'
-import theme from '../../styles/nestleMuiTheme'
+import theme from '../../styles/appMuiTheme'
 import AddIcon from "@mui/icons-material/Add";
 
 interface ToolbarProps {

@@ -19,7 +19,7 @@ jobs:
   frontend:
     runs-on: ubuntu-latest
     env:
-      IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/nestle-ai-newsletter-frontend
+      IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/ai-newsletter-frontend
 
     steps:
       - uses: actions/checkout@v4
