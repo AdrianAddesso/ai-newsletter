@@ -1,7 +1,5 @@
 import axios, { isAxiosError } from "axios";
-import { useNotification } from "../hooks/useNotification";
-import type { AreaName } from "../types/newsletter";
-import type { NewsletterBlock } from "../types/newsletter";
+import type { AreaName, NewsletterBlock } from "../types/newsletter";
 
 export type ImproveTextRequest = {
   text: string;
@@ -89,26 +87,34 @@ export type UpdatePromptCommandRequest = {
 
 export async function improveText(
   request: ImproveTextRequest,
-  notifyError?: (message: string) => void
+  notifyError?: (message: string) => void,
 ): Promise<ImproveTextResponse> {
   try {
-    const response = await axios.post<ImproveTextResponse>('/ai/improve-text', request)
-    return response.data
+    const response = await axios.post<ImproveTextResponse>(
+      "/ai/improve-text",
+      request,
+    );
+    return response.data;
   } catch (error) {
-    handleNoResponseError(error, notifyError)
-    throw error
+    handleNoResponseError(error, notifyError);
+    throw error;
   }
 }
 
 export async function generateNewsletter(
   request: GenerateNewsletterRequest,
+  notifyError?: (message: string) => void,
 ): Promise<GenerateNewsletterResponse> {
-  const response = await axios.post<GenerateNewsletterResponse>(
-    "/ai/generate-newsletter",
-    request,
-  );
-
-  return response.data;
+  try {
+    const response = await axios.post<GenerateNewsletterResponse>(
+      "/ai/generate-newsletter",
+      request,
+    );
+    return response.data;
+  } catch (error) {
+    handleNoResponseError(error, notifyError);
+    throw error;
+  }
 }
 
 export async function getAiConfigs(): Promise<AiConfig[]> {
@@ -173,13 +179,15 @@ export async function deletePromptCommand(id: string): Promise<void> {
  * Helper to handle missing API responses
  */
 function handleNoResponseError(
-  error: unknown, 
-  notifyError?: (message: string) => void
+  error: unknown,
+  notifyError?: (message: string) => void,
 ) {
   if (isAxiosError(error) && !error.response) {
-    console.error('No response from API:', error.message)
+    console.error("No response from API:", error.message);
     if (notifyError) {
-      notifyError('El servidor no responde. Verifica tu conexión o intenta más tarde.')
+      notifyError(
+        "El servidor no responde. Verifica tu conexión o intenta más tarde.",
+      );
     }
   }
 }
