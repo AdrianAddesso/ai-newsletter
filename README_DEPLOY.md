@@ -30,15 +30,7 @@ cp .env.deploy.example .env.deploy
 
 Complete these values in `.env.deploy`:
 
-- `POSTGRES_PASSWORD`
-- `CLIENT_ID`
-- `CLIENT_SECRET`
-- `DOCKERHUB_USERNAME`
-- `APP_VERSION`
-- `MINIO_ROOT_USER`
-- `MINIO_ROOT_PASSWORD`
-
-`APP_VERSION` can be:
+ can be:
 
 - `latest`
 - a commit SHA
@@ -102,11 +94,11 @@ The frontend serves the SPA and proxies:
 
 Validate MinIO:
 
-- sign in with `MINIO_ROOT_USER` and `MINIO_ROOT_PASSWORD`
+- sign in with  and 
 - confirm that these private buckets exist:
-- `nestle-ai-newsletter-assets`
-- `nestle-ai-newsletter-fonts`
-- `nestle-ai-newsletter-exports`
+- `ai-newsletter-assets`
+- `ai-newsletter-fonts`
+- `ai-newsletter-exports`
 
 MinIO bucket commands:
 

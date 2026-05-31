@@ -49,9 +49,9 @@ type ScriptOptions = {
 class AssetSeedScriptModule {}
 
 const assetBucketName =
-  process.env.S3_ASSETS_BUCKET?.trim() || 'nestle-ai-newsletter-assets';
+  process.env.S3_ASSETS_BUCKET?.trim() || 'ai-newsletter-assets';
 const fontBucketName =
-  process.env.S3_FONTS_BUCKET?.trim() || 'nestle-ai-newsletter-fonts';
+  process.env.S3_FONTS_BUCKET?.trim() || 'ai-newsletter-fonts';
 
 async function main(): Promise<void> {
   const options = parseArguments(process.argv.slice(2));
@@ -316,10 +316,10 @@ function resolveMimeType(filePath: string): string {
 
 function inferFontGroupName(relativePath: string): string {
   const segments = relativePath.split('/');
-  const groupSegment = segments.length <= 2 ? 'nestle' : segments[1];
+  const groupSegment = segments.length <= 2 ? 'default' : segments[1];
 
   if (!groupSegment) {
-    return 'Nestle';
+    return 'Default';
   }
 
   return groupSegment
@@ -340,7 +340,7 @@ function inferBrandKitName(relativePath: string): string | null {
     (relativePath.startsWith('logos/') || relativePath.startsWith('lockups/')) &&
     segments[1]
   ) {
-    return humanizeBrandName(segments.length <= 2 ? 'nestle' : segments[1]);
+    return humanizeBrandName(segments.length <= 2 ? 'default' : segments[1]);
   }
 
   return null;

@@ -25,7 +25,7 @@ function createService() {
   const uploadObjectMock = jest.fn().mockResolvedValue(undefined);
   const getSignedUrlMock = jest
     .fn()
-    .mockResolvedValue('http://localhost:9000/nestle-ai-newsletter-assets/fake');
+    .mockResolvedValue('http://localhost:9000/ai-newsletter-assets/fake');
   const getObjectTextMock = jest.fn().mockResolvedValue('<svg><g id="Text" /></svg>');
   const createAssetMock = jest.fn<Promise<unknown>, [AssetCreateInput]>().mockResolvedValue({
     id: 'asset-id',
@@ -34,7 +34,7 @@ function createService() {
     created_at: createdAt,
     updated_at: updatedAt,
     type: 'IMAGE',
-    bucket: 'nestle-ai-newsletter-assets',
+    bucket: 'ai-newsletter-assets',
     object_key: 'assets/uploads/image/banner-fake.png',
   });
   const updateAssetMock = jest.fn();
@@ -49,7 +49,7 @@ function createService() {
           created_at: createdAt,
           updated_at: updatedAt,
           type: 'SHAPE',
-          bucket: 'nestle-ai-newsletter-assets',
+          bucket: 'ai-newsletter-assets',
           object_key:
             'assets/brand_shapes/isolated-by-brand/maggi/bottle/dark-green.svg',
         },
@@ -65,7 +65,7 @@ function createService() {
     getObjectText: getObjectTextMock,
     getAssetsBucket: jest
       .fn()
-      .mockReturnValue('nestle-ai-newsletter-assets'),
+      .mockReturnValue('ai-newsletter-assets'),
   } as unknown as StorageService;
 
   return {
@@ -105,7 +105,7 @@ describe('AssetsService', () => {
           created_at: createdAtIso,
           updated_at: updatedAtIso,
           type: 'IMAGE',
-          url: 'http://localhost:9000/nestle-ai-newsletter-assets/fake',
+          url: 'http://localhost:9000/ai-newsletter-assets/fake',
           svgTemplate: null,
           maxChars: null,
         },
@@ -113,7 +113,7 @@ describe('AssetsService', () => {
     });
 
     expect(uploadObjectMock).toHaveBeenCalledWith(
-      'nestle-ai-newsletter-assets',
+      'ai-newsletter-assets',
       expect.stringMatching(/^assets\/uploads\/image\/banner-/),
       Buffer.from('fake'),
       'image/png',
@@ -160,7 +160,7 @@ describe('AssetsService', () => {
           created_at: createdAtIso,
           updated_at: updatedAtIso,
           type: 'SHAPE',
-          url: 'http://localhost:9000/nestle-ai-newsletter-assets/fake',
+          url: 'http://localhost:9000/ai-newsletter-assets/fake',
           svgTemplate: null,
           maxChars: null,
         },
@@ -195,7 +195,7 @@ describe('AssetsService', () => {
     (prisma.assets.findFirst as jest.Mock).mockResolvedValue({
       id: 'asset-id',
       type: asset_type.IMAGE,
-      bucket: 'nestle-ai-newsletter-assets',
+      bucket: 'ai-newsletter-assets',
       object_key: 'assets/uploads/image/banner-fake.png',
     });
     updateAssetMock.mockResolvedValue({
@@ -205,7 +205,7 @@ describe('AssetsService', () => {
       created_at: createdAt,
       updated_at: updatedAt,
       type: asset_type.LOGO,
-      bucket: 'nestle-ai-newsletter-assets',
+      bucket: 'ai-newsletter-assets',
       object_key: 'assets/uploads/image/banner-fake.png',
     });
 
@@ -222,7 +222,7 @@ describe('AssetsService', () => {
       created_at: createdAtIso,
       updated_at: updatedAtIso,
       type: asset_type.LOGO,
-      url: 'http://localhost:9000/nestle-ai-newsletter-assets/fake',
+      url: 'http://localhost:9000/ai-newsletter-assets/fake',
       svgTemplate: null,
       maxChars: null,
     });
@@ -244,7 +244,7 @@ describe('AssetsService', () => {
     (prisma.assets.findFirst as jest.Mock).mockResolvedValue({
       id: 'asset-id',
       type: asset_type.IMAGE,
-      bucket: 'nestle-ai-newsletter-assets',
+      bucket: 'ai-newsletter-assets',
       object_key: 'assets/uploads/image/banner-fake.png',
     });
     updateAssetMock.mockResolvedValue({
@@ -284,7 +284,7 @@ describe('AssetsService', () => {
       created_at: createdAt,
       updated_at: updatedAt,
       type: asset_type.BLOCK,
-      bucket: 'nestle-ai-newsletter-assets',
+      bucket: 'ai-newsletter-assets',
       object_key: 'assets/blocks/HeaderFullRenderer.svg',
     });
 
@@ -300,7 +300,7 @@ describe('AssetsService', () => {
       created_at: createdAtIso,
       updated_at: updatedAtIso,
       type: asset_type.BLOCK,
-      url: 'http://localhost:9000/nestle-ai-newsletter-assets/fake',
+      url: 'http://localhost:9000/ai-newsletter-assets/fake',
       svgTemplate: null,
       maxChars: null,
     });
@@ -331,7 +331,7 @@ describe('AssetsService', () => {
           created_at: createdAt,
         updated_at: updatedAt,
         type: 'KEYWORD',
-        bucket: 'nestle-ai-newsletter-assets',
+        bucket: 'ai-newsletter-assets',
         object_key: 'assets/keywords/keyword-template.svg',
       },
     ]);
@@ -345,7 +345,7 @@ describe('AssetsService', () => {
           created_at: createdAtIso,
           updated_at: updatedAtIso,
           type: 'KEYWORD',
-          url: 'http://localhost:9000/nestle-ai-newsletter-assets/fake',
+          url: 'http://localhost:9000/ai-newsletter-assets/fake',
           svgTemplate: '<svg><g id="Text" /></svg>',
           maxChars: KEYWORD_MAX_CHARS,
         },
