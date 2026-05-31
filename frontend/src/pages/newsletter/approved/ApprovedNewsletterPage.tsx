@@ -30,7 +30,7 @@ export function ApprovedNewsletterPage({
       sx={{ p:3 }}
     >
       <Box sx={{ flex:1 }}>
-        <NewsletterViewer newsletter={newsletter} />
+        <NewsletterViewer newsletter={newsletter} readOnly />
       </Box>
 
       <Box sx={{ width:{ lg:380 } }}>

@@ -59,7 +59,12 @@ export function HeaderRightRenderer({
                 variant="subtitle2"
                 color="common.white"
                 noWrap
-                sx={{ ...titleTypographySx }}
+                sx={{
+                  ...titleTypographySx,
+                  lineHeight: 1.2,
+                  overflow: "visible",
+                  display: "block",
+                }}
               >
                 {title}
               </Typography>
@@ -69,7 +74,12 @@ export function HeaderRightRenderer({
                 variant="caption"
                 color="common.white"
                 noWrap
-                sx={{ ...subtitleTypographySx }}
+                sx={{
+                  ...subtitleTypographySx,
+                  lineHeight: 1.2,
+                  overflow: "visible",
+                  display: "block",
+                }}
               >
                 {subtitle}
               </Typography>

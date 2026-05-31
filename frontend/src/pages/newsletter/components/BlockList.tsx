@@ -24,11 +24,7 @@ export function BlockList({
     <Stack
       spacing={2}
       sx={{
-        bgcolor: "grey.200", // distinctly grey background
-        p: 3, // padding around the whole component
-        borderRadius: 2, // slightly rounded outer corners
         height: "100%", // take full height of the container
-
       }}
     >
       <Stack
@@ -37,12 +33,24 @@ export function BlockList({
         sx={{
           alignItems: "center",
           justifyContent: "space-between",
+          bgcolor: "grey.200",
+          p: 3,
+          borderRadius: 2,
         }}
       >
         <Typography variant="h5">Bloques de la plantilla</Typography>
         {readOnly && <Chip label="Solo lectura" />}
       </Stack>
-      <Stack spacing={0}>
+      <Stack
+        spacing={0}
+        data-newsletter-export-root
+        sx={{
+          bgcolor: "grey.200",
+          p: 3,
+          borderRadius: 2,
+          minHeight: 240,
+        }}
+      >
         {rows.map((row) => (
           <Box
             key={row.row}
@@ -63,11 +71,11 @@ export function BlockList({
               return (
                 <Paper
                   key={block.id}
-                  component="button"
+                  component={readOnly ? 'div' : 'button'}
                   square
                   elevation={0}
-                  disabled={readOnly}
-                  onClick={() => onSelectBlock(block.id)}
+                  disabled={readOnly ? undefined : false}
+                  onClick={readOnly ? undefined : () => onSelectBlock(block.id)}
                   sx={{
                     py: 0,
                     px: 0,

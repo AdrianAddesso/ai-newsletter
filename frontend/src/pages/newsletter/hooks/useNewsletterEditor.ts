@@ -27,7 +27,71 @@ import type { BrandKit, BrandKitResources } from '../../../api/brand-kits'
 
 import type { GenerateNewsletterRequest } from '../../../api/ai'
 import { updateBlockValue } from '../../../utils/newsletterBlocks'
-import { parseContent } from '../../../utils/blockContent'
+
+const waitForExportRender = async (): Promise<void> => {
+  if (typeof document !== 'undefined' && document.fonts?.ready) {
+    await document.fonts.ready
+  }
+
+  await new Promise<void>((resolve) => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => resolve())
+    })
+  })
+}
+
+const captureExportCanvas = async (): Promise<{
+  canvas: HTMLCanvasElement
+  width: number
+  height: number
+}> => {
+  const exportRoot = document.querySelector<HTMLElement>(
+    '[data-newsletter-export-root]',
+  )
+
+  if (!exportRoot) {
+    throw new Error('No se encontro el contenido visible para exportar')
+  }
+
+  await waitForExportRender()
+
+  const html2canvas = (await import('html2canvas')).default
+  const { width, height } = exportRoot.getBoundingClientRect()
+  const normalizedWidth = Math.ceil(width)
+  const normalizedHeight = Math.ceil(height)
+
+  const canvas = await html2canvas(exportRoot, {
+    scale: Math.max(2, window.devicePixelRatio || 1),
+    useCORS: true,
+    backgroundColor: '#ffffff',
+    width: normalizedWidth,
+    height: normalizedHeight,
+    windowWidth: document.documentElement.clientWidth,
+    windowHeight: document.documentElement.clientHeight,
+    scrollX: 0,
+    scrollY: -window.scrollY,
+    onclone: (clonedDocument) => {
+      const root = clonedDocument.querySelector<HTMLElement>(
+        '[data-newsletter-export-root]',
+      )
+
+      if (!root) return
+
+      root
+        .querySelectorAll<HTMLElement>('.MuiTypography-root')
+        .forEach((node) => {
+          node.style.overflow = 'visible'
+          node.style.lineHeight = node.style.lineHeight || '1.2'
+        })
+    },
+  })
+
+  return {
+    canvas,
+    width: normalizedWidth,
+    height: normalizedHeight,
+  }
+}
 
 export function useNewsletterEditor() {
   const navigate = useNavigate()
@@ -157,27 +221,6 @@ export function useNewsletterEditor() {
     return templates.find((template) => template.id === newsletter.templateId)
   }, [newsletter, templates])
 
-  const renderHtml = useCallback(() => {
-    if (!newsletter) return ''
-
-    return `
-      <!doctype html>
-      <html>
-        <body style="font-family:Arial,sans-serif">
-          ${newsletter.blocks.map(block => `
-            <section style="padding:24px;background:#ffffff">
-              <h2>${block.name}</h2>
-              ${Object.values(parseContent<Record<string, string>>(block.content))
-                .filter((value) => typeof value === 'string' && value.trim().length > 0)
-                .map((value) => `<p>${value}</p>`)
-                .join('')}
-            </section>
-          `).join('')}
-        </body>
-      </html>
-    `
-  }, [newsletter])
-
   const updateBlocks = useCallback((blocks: NewsletterBlock[]) => {
     if (!newsletter) return
 
@@ -229,10 +272,23 @@ export function useNewsletterEditor() {
       setExportingFormat(format)
 
       try {
-        const html = newsletter.renderedHtml ?? renderHtml()
-
         switch (format) {
           case 'EML': {
+            const { canvas, width } = await captureExportCanvas()
+            const imageData = canvas.toDataURL('image/png')
+            const html = `
+              <!doctype html>
+              <html>
+                <body style="margin:0;padding:0;background:#ffffff;">
+                  <img
+                    src="${imageData}"
+                    alt="Newsletter"
+                    width="${width}"
+                    style="display:block;width:100%;max-width:${width}px;height:auto;border:0;outline:none;text-decoration:none;"
+                  />
+                </body>
+              </html>
+            `
             const emlContent = [
               'X-Unsent: 1',
               'To: ',
@@ -268,27 +324,7 @@ export function useNewsletterEditor() {
 
           case 'JPG':
           case 'PDF': {
-            const container = document.createElement('div')
-
-            container.innerHTML = html
-
-            container.style.position = 'fixed'
-            container.style.left = '-99999px'
-            container.style.top = '0'
-            container.style.width = '1200px'
-            container.style.background = '#fff'
-
-            document.body.appendChild(container)
-
-            const html2canvas = (await import('html2canvas')).default
-
-            const canvas = await html2canvas(container, {
-              scale: 2,
-              useCORS: true,
-              backgroundColor: '#ffffff',
-            })
-
-            document.body.removeChild(container)
+            const { canvas, width, height } = await captureExportCanvas()
 
             if (format === 'JPG') {
               const image = canvas.toDataURL('image/jpeg', 0.92)
@@ -306,14 +342,15 @@ export function useNewsletterEditor() {
             const { jsPDF } = await import('jspdf')
 
             const pdf = new jsPDF({
-              orientation: 'portrait',
+              orientation: width >= height ? 'landscape' : 'portrait',
               unit: 'px',
-              format: [canvas.width, canvas.height],
+              format: [width, height],
+              hotfixes: ['px_scaling'],
             })
 
             const image = canvas.toDataURL('image/png')
 
-            pdf.addImage(image, 'PNG', 0, 0, canvas.width, canvas.height)
+            pdf.addImage(image, 'PNG', 0, 0, width, height)
 
             pdf.save('newsletter.pdf')
 
@@ -324,7 +361,7 @@ export function useNewsletterEditor() {
         setExportingFormat(null)
       }
     },
-    [newsletter, renderHtml],
+    [newsletter],
   )
 
   const handleRegenerateBlock = useCallback(
