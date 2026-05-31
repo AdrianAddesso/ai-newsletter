@@ -99,7 +99,7 @@ export async function deleteNewsletter(id: string): Promise<void> {
 
 export async function getAllNewsletters(): Promise<NewsletterListItem[]> {
   const response = await axios.get<{ data: NewsletterListItem[] }>(API_BASE)
-  return response.data.data
+  return Array.isArray(response.data?.data) ? response.data.data : []
 }
 
 export async function updateNewsletterStatus(
