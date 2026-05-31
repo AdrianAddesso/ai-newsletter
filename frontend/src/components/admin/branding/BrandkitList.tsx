@@ -42,29 +42,7 @@ export interface Brandkit {
 // ---------------------------------------------------------------------------
 // Mock data
 // ---------------------------------------------------------------------------
-const INITIAL_BRANDKITS: Brandkit[] = [
-  {
-    id: "1",
-    name: "Comunicación Interna 2024",
-    active: true,
-    created_at: "2024-01-05",
-    updated_at: "2024-03-10",
-  },
-  {
-    id: "2",
-    name: "Comunicación Corporativa Global",
-    active: false,
-    created_at: "2024-02-12",
-    updated_at: "2024-02-28",
-  },
-  {
-    id: "3",
-    name: "Campaña Verano 2024",
-    active: false,
-    created_at: "2024-03-01",
-    updated_at: "2024-03-20",
-  },
-];
+const INITIAL_BRANDKITS: Brandkit[] = [];
 
 // ---------------------------------------------------------------------------
 // Component
@@ -128,7 +106,10 @@ export function BrandkitList() {
             <Tooltip title="Actualizar lista">
                 <IconButton
                 size="small"
-                onClick={() => setBrandkits(INITIAL_BRANDKITS)}
+                onClick={() => {
+                    // TODO: Implement actual fetch for real data
+                    setBrandkits([]);
+                }}
                 >
                 <RefreshIcon fontSize="small" />
                 </IconButton>

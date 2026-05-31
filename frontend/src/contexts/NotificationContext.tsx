@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useCallback, useContext, useState, type ReactNode } from 'react'
-import { useAuth, type UserRole } from './AuthContext'
+import { useAuth } from './AuthContext'
 
 export type NotificationType = 'pending-review' | 'approved' | 'rejected' | 'reminder' | 'info'
 
@@ -32,104 +32,7 @@ interface NotificationContextType {
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined)
 
 const STORAGE_PREFIX = 'nestle-ai-newsletter:notifications'
-const initialNotificationBaseTime = Date.now()
-
-const roleByUserId: Record<string, UserRole> = {
-  '1': 'ADMIN',
-  '2': 'FUNCTIONAL',
-  '3': 'USER',
-}
-
-const cloneNotifications = (notifications: AppNotification[]) =>
-  notifications.map((notification) => ({ ...notification }))
-
-const createDefaultNotifications = (role: UserRole, userId: string): AppNotification[] => {
-  const commonNotifications: AppNotification[] = [
-    {
-      id: `${userId}-welcome`,
-      type: 'info',
-      title: 'Sesion iniciada',
-      message: 'Tu sesion Microsoft esta activa',
-      timestamp: initialNotificationBaseTime - 10 * 60 * 1000,
-      isRead: true,
-      actionPath: '/settings',
-    },
-  ]
-
-  if (role === 'ADMIN') {
-    return [
-      {
-        id: `${userId}-pending-review`,
-        type: 'pending-review',
-        title: 'Nuevo newsletter pendiente',
-        message: 'Hay un newsletter nuevo esperando aprobacion final',
-        timestamp: initialNotificationBaseTime - 5 * 60 * 1000,
-        isRead: false,
-        actionPath: '/reviews',
-      },
-      {
-        id: `${userId}-user-alert`,
-        type: 'reminder',
-        title: 'Gestion de usuarios',
-        message: 'Hay permisos de usuario para revisar',
-        timestamp: initialNotificationBaseTime - 90 * 60 * 1000,
-        isRead: false,
-        actionPath: '/users',
-      },
-      ...commonNotifications,
-    ]
-  }
-
-  if (role === 'FUNCTIONAL') {
-    return [
-      {
-        id: `${userId}-review-queue`,
-        type: 'pending-review',
-        title: 'Revision pendiente',
-        message: 'Tenes newsletters asignados para revisar',
-        timestamp: initialNotificationBaseTime - 15 * 60 * 1000,
-        isRead: false,
-        actionPath: '/reviews',
-      },
-      {
-        id: `${userId}-deadline`,
-        type: 'reminder',
-        title: 'Recordatorio',
-        message: 'La revision de marzo vence hoy',
-        timestamp: initialNotificationBaseTime - 2 * 60 * 60 * 1000,
-        isRead: false,
-        actionPath: '/reviews',
-      },
-      ...commonNotifications,
-    ]
-  }
-
-  return [
-    {
-      id: `${userId}-approved`,
-      type: 'approved',
-      title: 'Newsletter aprobado',
-      message: "Newsletter 'Marzo 2024' fue aprobado",
-      timestamp: initialNotificationBaseTime - 2 * 60 * 60 * 1000,
-      isRead: false,
-      actionPath: '/campaigns',
-    },
-    {
-      id: `${userId}-draft`,
-      type: 'info',
-      title: 'Borrador guardado',
-      message: 'Tu ultimo borrador se guardo correctamente',
-      timestamp: initialNotificationBaseTime - 24 * 60 * 60 * 1000,
-      isRead: true,
-      actionPath: '/dashboard',
-    },
-    ...commonNotifications,
-  ]
-}
-
 const getStorageKey = (userId: string) => `${STORAGE_PREFIX}:${userId}`
-
-const getRoleForUserId = (userId: string): UserRole => roleByUserId[userId] ?? 'USER'
 
 const readStoredNotifications = (userId: string): AppNotification[] | null => {
   const storedNotifications = localStorage.getItem(getStorageKey(userId))
@@ -146,14 +49,11 @@ const readStoredNotifications = (userId: string): AppNotification[] | null => {
   }
 }
 
-const getInitialNotificationsForUser = (userId: string, role: UserRole) =>
-  readStoredNotifications(userId) ?? createDefaultNotifications(role, userId)
+const getInitialNotificationsForUser = (userId: string) =>
+  readStoredNotifications(userId) ?? []
 
-const loadInitialNotificationsByUser = (): NotificationsByUser =>
-  Object.entries(roleByUserId).reduce<NotificationsByUser>((notificationsByUser, [userId, role]) => {
-    notificationsByUser[userId] = getInitialNotificationsForUser(userId, role)
-    return notificationsByUser
-  }, {})
+const cloneNotifications = (notifications: AppNotification[]) =>
+  notifications.map((notification) => ({ ...notification }))
 
 const persistNotifications = (userId: string, notifications: AppNotification[]) => {
   localStorage.setItem(getStorageKey(userId), JSON.stringify(notifications))
@@ -168,24 +68,21 @@ const createRuntimeNotification = (notification: NewNotification): AppNotificati
 
 export function NotificationProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth()
-  const [notificationsByUser, setNotificationsByUser] = useState<NotificationsByUser>(
-    loadInitialNotificationsByUser,
-  )
+  const [notificationsByUser, setNotificationsByUser] = useState<NotificationsByUser>({})
 
   const notifications = user
-    ? notificationsByUser[user.id] ?? getInitialNotificationsForUser(user.id, user.role)
+    ? notificationsByUser[user.id] ?? getInitialNotificationsForUser(user.id)
     : []
   const unreadCount = notifications.filter((notification) => !notification.isRead).length
 
   const updateUserNotifications = useCallback(
     (
       userId: string,
-      role: UserRole,
       updater: (notifications: AppNotification[]) => AppNotification[],
     ) => {
       setNotificationsByUser((prev) => {
         const currentNotifications =
-          prev[userId] ?? getInitialNotificationsForUser(userId, role)
+          prev[userId] ?? getInitialNotificationsForUser(userId)
         const nextNotifications = updater(cloneNotifications(currentNotifications))
 
         persistNotifications(userId, nextNotifications)
@@ -207,7 +104,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
       const newNotification = createRuntimeNotification(notification)
 
-      updateUserNotifications(user.id, user.role, (prev) => [newNotification, ...prev])
+      updateUserNotifications(user.id, (prev) => [newNotification, ...prev])
 
       return newNotification.id
     },
@@ -218,7 +115,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     (userId: string, notification: NewNotification) => {
       const newNotification = createRuntimeNotification(notification)
 
-      updateUserNotifications(userId, getRoleForUserId(userId), (prev) => [
+      updateUserNotifications(userId, (prev) => [
         newNotification,
         ...prev,
       ])
@@ -234,7 +131,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         return
       }
 
-      updateUserNotifications(user.id, user.role, (prev) =>
+      updateUserNotifications(user.id, (prev) =>
         prev.map((notification) =>
           notification.id === id ? { ...notification, isRead: true } : notification,
         ),
@@ -248,7 +145,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       return
     }
 
-    updateUserNotifications(user.id, user.role, (prev) =>
+    updateUserNotifications(user.id, (prev) =>
       prev.map((notification) => ({ ...notification, isRead: true })),
     )
   }, [updateUserNotifications, user])
@@ -259,7 +156,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         return
       }
 
-      updateUserNotifications(user.id, user.role, (prev) =>
+      updateUserNotifications(user.id, (prev) =>
         prev.filter((notification) => notification.id !== id),
       )
     },
@@ -271,7 +168,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       return
     }
 
-    updateUserNotifications(user.id, user.role, () => [])
+    updateUserNotifications(user.id, () => [])
   }, [updateUserNotifications, user])
 
   const value: NotificationContextType = {
