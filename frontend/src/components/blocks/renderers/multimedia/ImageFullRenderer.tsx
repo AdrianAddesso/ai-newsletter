@@ -1,5 +1,6 @@
 import { Card, CardMedia } from "@mui/material";
 import type { BlockInstance } from "@shared/types/block.types";
+import placeholderImageUrl from "../../../../assets/placeholders/PlaceholderImage.svg";
 import { parseContent } from "../../../../utils/blockContent";
 
 interface Props {
@@ -10,7 +11,7 @@ interface Props {
 
 export function ImageFullRenderer({
   block,
-  imageUrl = "https://placehold.net/400x400.png",
+  imageUrl = placeholderImageUrl,
 }: Props) {
   const { altText = "Full image" } = parseContent(block.content);
 

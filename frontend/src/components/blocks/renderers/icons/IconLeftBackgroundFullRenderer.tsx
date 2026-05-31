@@ -1,5 +1,6 @@
 import { Card, Typography, Box, CardMedia, Icon } from "@mui/material";
 import type { BlockInstance } from "@shared/types/block.types";
+import placeholderIconUrl from "../../../../assets/placeholders/PlaceholderIcon.svg";
 import {
   parseContent,
   resolveContentTypographySx,
@@ -14,8 +15,8 @@ interface Props {
 
 export function IconLeftBackgroundFullRenderer({
   block,
-  backgroundImage = "https://placehold.net/400x400.png",
-  iconUrl = null,
+  backgroundImage = null,
+  iconUrl = placeholderIconUrl,
 }: Props) {
   const values = parseContent(block.content);
   const {

@@ -7,7 +7,7 @@ interface Props {
 }
 
 export function EmptyRenderer(props: Props) {
-    const backgroundColor = "#FF595A";
+    const backgroundColor = "#ffffff";
 
     return (
         <Card

@@ -1,5 +1,6 @@
 import { Card, Typography, Chip, CardMedia, Box, Grid } from "@mui/material";
 import type { BlockInstance } from "@shared/types/block.types";
+import placeholderImageUrl from "../../../../assets/placeholders/PlaceholderImage.svg";
 import {
   parseContent,
   resolveContentTypographySx,
@@ -19,7 +20,7 @@ interface Props {
 export function SpecialBoxBackgroundFullRenderer({
   block,
   backgroundImage = null,
-  imageUrl = "https://placehold.co/120x160/e0e0e0/9e9e9e?text=Image",
+  imageUrl = placeholderImageUrl,
 }: Props) {
   const values = parseContent(block.content);
   const {
