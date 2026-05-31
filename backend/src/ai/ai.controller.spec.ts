@@ -45,7 +45,7 @@ describe('AiController', () => {
     const body = {
       area: 'COMUNICACION_INTERNA' as const,
       templateId: 'weekly-brief',
-      brandKitId: 'nestle-corporate',
+      brandKitId: 'lumen-corporate',
       topic: 'Tema',
       objective: 'Objetivo',
       audience: 'Audiencia',

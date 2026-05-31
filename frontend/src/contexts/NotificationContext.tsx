@@ -31,7 +31,102 @@ interface NotificationContextType {
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined)
 
-const STORAGE_PREFIX = 'nestle-ai-newsletter:notifications'
+const STORAGE_PREFIX = 'ai-newsletter:notifications'
+const initialNotificationBaseTime = Date.now()
+
+const roleByUserId: Record<string, UserRole> = {
+  '1': 'ADMIN',
+  '2': 'FUNCTIONAL',
+  '3': 'USER',
+}
+
+const cloneNotifications = (notifications: AppNotification[]) =>
+  notifications.map((notification) => ({ ...notification }))
+
+const createDefaultNotifications = (role: UserRole, userId: string): AppNotification[] => {
+  const commonNotifications: AppNotification[] = [
+    {
+      id: `${userId}-welcome`,
+      type: 'info',
+      title: 'Sesion iniciada',
+      message: 'Tu sesion Microsoft esta activa',
+      timestamp: initialNotificationBaseTime - 10 * 60 * 1000,
+      isRead: true,
+      actionPath: '/settings',
+    },
+  ]
+
+  if (role === 'ADMIN') {
+    return [
+      {
+        id: `${userId}-pending-review`,
+        type: 'pending-review',
+        title: 'Nuevo newsletter pendiente',
+        message: 'Hay un newsletter nuevo esperando aprobacion final',
+        timestamp: initialNotificationBaseTime - 5 * 60 * 1000,
+        isRead: false,
+        actionPath: '/reviews',
+      },
+      {
+        id: `${userId}-user-alert`,
+        type: 'reminder',
+        title: 'Gestion de usuarios',
+        message: 'Hay permisos de usuario para revisar',
+        timestamp: initialNotificationBaseTime - 90 * 60 * 1000,
+        isRead: false,
+        actionPath: '/users',
+      },
+      ...commonNotifications,
+    ]
+  }
+
+  if (role === 'FUNCTIONAL') {
+    return [
+      {
+        id: `${userId}-review-queue`,
+        type: 'pending-review',
+        title: 'Revision pendiente',
+        message: 'Tenes newsletters asignados para revisar',
+        timestamp: initialNotificationBaseTime - 15 * 60 * 1000,
+        isRead: false,
+        actionPath: '/reviews',
+      },
+      {
+        id: `${userId}-deadline`,
+        type: 'reminder',
+        title: 'Recordatorio',
+        message: 'La revision de marzo vence hoy',
+        timestamp: initialNotificationBaseTime - 2 * 60 * 60 * 1000,
+        isRead: false,
+        actionPath: '/reviews',
+      },
+      ...commonNotifications,
+    ]
+  }
+
+  return [
+    {
+      id: `${userId}-approved`,
+      type: 'approved',
+      title: 'Newsletter aprobado',
+      message: "Newsletter 'Marzo 2024' fue aprobado",
+      timestamp: initialNotificationBaseTime - 2 * 60 * 60 * 1000,
+      isRead: false,
+      actionPath: '/campaigns',
+    },
+    {
+      id: `${userId}-draft`,
+      type: 'info',
+      title: 'Borrador guardado',
+      message: 'Tu ultimo borrador se guardo correctamente',
+      timestamp: initialNotificationBaseTime - 24 * 60 * 60 * 1000,
+      isRead: true,
+      actionPath: '/dashboard',
+    },
+    ...commonNotifications,
+  ]
+}
+
 const getStorageKey = (userId: string) => `${STORAGE_PREFIX}:${userId}`
 
 const readStoredNotifications = (userId: string): AppNotification[] | null => {
