@@ -157,6 +157,7 @@ export const StructureControl: React.FC<{ onConfirm: () => void }> = ({ onConfir
           fullWidth
           startIcon={<AddIcon />}
           onClick={addRow}
+          sx={{ maxWidth: '50%', alignSelf: 'center', marginLeft: '25%' }}
         >
           Añadir Fila
         </Button>
@@ -172,7 +173,7 @@ export const StructureControl: React.FC<{ onConfirm: () => void }> = ({ onConfir
           description.length < 5 || description.length > 200 ||
           area.length === 0
         }
-        sx={{ mt: 2, bgcolor: 'brand.red', '&:hover': { bgcolor: '#e04040' } }}
+        sx={{ maxWidth: '50%', mt: 2, bgcolor: 'brand.red', '&:hover': { bgcolor: '#e04040' }, alignSelf: 'center' }}
       >
         Confirmar Estructura
       </Button>

@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useCallback, useContext, useState, type ReactNode } from 'react'
-import { useAuth, type UserRole } from './AuthContext'
+import { useAuth } from './AuthContext'
 
 export type NotificationType = 'pending-review' | 'approved' | 'rejected' | 'reminder' | 'info'
 
@@ -129,8 +129,6 @@ const createDefaultNotifications = (role: UserRole, userId: string): AppNotifica
 
 const getStorageKey = (userId: string) => `${STORAGE_PREFIX}:${userId}`
 
-const getRoleForUserId = (userId: string): UserRole => roleByUserId[userId] ?? 'USER'
-
 const readStoredNotifications = (userId: string): AppNotification[] | null => {
   const storedNotifications = localStorage.getItem(getStorageKey(userId))
 
@@ -146,14 +144,11 @@ const readStoredNotifications = (userId: string): AppNotification[] | null => {
   }
 }
 
-const getInitialNotificationsForUser = (userId: string, role: UserRole) =>
-  readStoredNotifications(userId) ?? createDefaultNotifications(role, userId)
+const getInitialNotificationsForUser = (userId: string) =>
+  readStoredNotifications(userId) ?? []
 
-const loadInitialNotificationsByUser = (): NotificationsByUser =>
-  Object.entries(roleByUserId).reduce<NotificationsByUser>((notificationsByUser, [userId, role]) => {
-    notificationsByUser[userId] = getInitialNotificationsForUser(userId, role)
-    return notificationsByUser
-  }, {})
+const cloneNotifications = (notifications: AppNotification[]) =>
+  notifications.map((notification) => ({ ...notification }))
 
 const persistNotifications = (userId: string, notifications: AppNotification[]) => {
   localStorage.setItem(getStorageKey(userId), JSON.stringify(notifications))
@@ -168,24 +163,21 @@ const createRuntimeNotification = (notification: NewNotification): AppNotificati
 
 export function NotificationProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth()
-  const [notificationsByUser, setNotificationsByUser] = useState<NotificationsByUser>(
-    loadInitialNotificationsByUser,
-  )
+  const [notificationsByUser, setNotificationsByUser] = useState<NotificationsByUser>({})
 
   const notifications = user
-    ? notificationsByUser[user.id] ?? getInitialNotificationsForUser(user.id, user.role)
+    ? notificationsByUser[user.id] ?? getInitialNotificationsForUser(user.id)
     : []
   const unreadCount = notifications.filter((notification) => !notification.isRead).length
 
   const updateUserNotifications = useCallback(
     (
       userId: string,
-      role: UserRole,
       updater: (notifications: AppNotification[]) => AppNotification[],
     ) => {
       setNotificationsByUser((prev) => {
         const currentNotifications =
-          prev[userId] ?? getInitialNotificationsForUser(userId, role)
+          prev[userId] ?? getInitialNotificationsForUser(userId)
         const nextNotifications = updater(cloneNotifications(currentNotifications))
 
         persistNotifications(userId, nextNotifications)
@@ -207,7 +199,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
       const newNotification = createRuntimeNotification(notification)
 
-      updateUserNotifications(user.id, user.role, (prev) => [newNotification, ...prev])
+      updateUserNotifications(user.id, (prev) => [newNotification, ...prev])
 
       return newNotification.id
     },
@@ -218,7 +210,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     (userId: string, notification: NewNotification) => {
       const newNotification = createRuntimeNotification(notification)
 
-      updateUserNotifications(userId, getRoleForUserId(userId), (prev) => [
+      updateUserNotifications(userId, (prev) => [
         newNotification,
         ...prev,
       ])
@@ -234,7 +226,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         return
       }
 
-      updateUserNotifications(user.id, user.role, (prev) =>
+      updateUserNotifications(user.id, (prev) =>
         prev.map((notification) =>
           notification.id === id ? { ...notification, isRead: true } : notification,
         ),
@@ -248,7 +240,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       return
     }
 
-    updateUserNotifications(user.id, user.role, (prev) =>
+    updateUserNotifications(user.id, (prev) =>
       prev.map((notification) => ({ ...notification, isRead: true })),
     )
   }, [updateUserNotifications, user])
@@ -259,7 +251,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         return
       }
 
-      updateUserNotifications(user.id, user.role, (prev) =>
+      updateUserNotifications(user.id, (prev) =>
         prev.filter((notification) => notification.id !== id),
       )
     },
@@ -271,7 +263,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       return
     }
 
-    updateUserNotifications(user.id, user.role, () => [])
+    updateUserNotifications(user.id, () => [])
   }, [updateUserNotifications, user])
 
   const value: NotificationContextType = {
