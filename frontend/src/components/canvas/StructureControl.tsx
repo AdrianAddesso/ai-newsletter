@@ -74,7 +74,8 @@ export const StructureControl: React.FC<{ onConfirm: () => void }> = ({ onConfir
                 required
                 error={description.length > 0 &&(description.length < 5 || description.length > 200)}
                 helperText={description.length > 0 &&(description.length < 5 || description.length > 200)
-                    ? "Debe tener entre 5 y 200 caracteres": ""}
+                    ? "Debe tener entre 5 y 200 caracteres": ""
+                }
                 value={description}
                 onChange={(e) =>
                 setTemplateDetails(undefined, e.target.value, undefined)
@@ -84,7 +85,6 @@ export const StructureControl: React.FC<{ onConfirm: () => void }> = ({ onConfir
             size="small"
             fullWidth
             required
-            error={area.length === 0}
           >
             <InputLabel>Area</InputLabel>
             <Select
