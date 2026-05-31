@@ -26,7 +26,6 @@ export function CreateTemplate() {
   const { isSkeletonView, setIsSkeletonView, saveTemplate, resetStore, rows } = useTemplateStore()
 
   useEffect(() => {
-    // For now, we just reset the store.
     resetStore({})
   }, [resetStore])
 
