@@ -20,11 +20,8 @@ import type {
 import { parseContent, serializeContent } from "../../utils/blockContent";
 
 interface BlockEditorProps {
-  /** Full definition DTO fetched via useBlockDefinitions() - provides the editFields schema */
   definition: BlockDefinitionDTO;
-  /** The current block instance being edited */
   block: BlockInstance;
-  /** Called with an updated BlockInstance when the user clicks Save */
   onSave: (updated: BlockInstance) => void;
   onCancel: () => void;
 }
