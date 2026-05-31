@@ -41,7 +41,7 @@ services:
 
   assets-seed:
     profiles: ["seed"]
-    image: ${DOCKERHUB_USERNAME}/nestle-ai-newsletter-backend:${APP_VERSION}
+    image: ${DOCKERHUB_USERNAME}/ai-newsletter-backend:${APP_VERSION}
     command: pnpm run assets:seed-minio
     restart: "no"
     depends_on:
@@ -61,7 +61,7 @@ services:
       S3_FORCE_PATH_STYLE: "true"
 
   backend:
-    image: ${DOCKERHUB_USERNAME}/nestle-ai-newsletter-backend:${APP_VERSION}
+    image: ${DOCKERHUB_USERNAME}/ai-newsletter-backend:${APP_VERSION}
     restart: unless-stopped
     depends_on:
       - postgres
@@ -85,7 +85,7 @@ services:
       S3_FORCE_PATH_STYLE: "true"
 
   frontend:
-    image: ${DOCKERHUB_USERNAME}/nestle-ai-newsletter-frontend:${APP_VERSION}
+    image: ${DOCKERHUB_USERNAME}/ai-newsletter-frontend:${APP_VERSION}
     restart: unless-stopped
     depends_on:
       - backend

@@ -9,7 +9,7 @@ export class AppService {
   getHealth() {
     return {
       ok: true,
-      service: 'nestle-ai-newsletter-api',
+      service: 'ai-newsletter-api',
       timestamp: new Date().toISOString(),
     };
   }

@@ -4,7 +4,7 @@ import { CssBaseline, ThemeProvider } from '@mui/material'
 import './index.css'
 import App from './App.tsx'
 import { configureAxiosBaseUrl } from './config/api.ts'
-import theme from './styles/nestleMuiTheme.ts'
+import theme from './styles/appMuiTheme.ts'
 
 configureAxiosBaseUrl()
 

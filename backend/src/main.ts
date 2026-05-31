@@ -3,7 +3,12 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 
-const allowedOrigins = new Set(['https://nestle-ai-newsletter.vercel.app']);
+const allowedOrigins = new Set(
+  (process.env.CORS_ALLOWED_ORIGINS ?? '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean),
+);
 const localhostOriginPattern = /^http:\/\/(localhost|127\.0\.0\.1):\d+$/;
 
 async function bootstrap() {

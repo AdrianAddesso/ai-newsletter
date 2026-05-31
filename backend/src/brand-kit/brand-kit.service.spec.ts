@@ -9,12 +9,12 @@ function createService() {
       findMany: jest.fn().mockResolvedValue([
         {
           id: 'cc8f4470-16d2-4a71-b8e5-c73c05abef3a',
-          name: 'Nestle',
+          name: 'Lumen',
         },
       ]),
       findFirst: jest.fn().mockResolvedValue({
         id: 'cc8f4470-16d2-4a71-b8e5-c73c05abef3a',
-        name: 'Nestle',
+        name: 'Lumen',
         brandkit_assets: [
           {
             assets: {
@@ -52,7 +52,7 @@ function createService() {
           },
         ],
         font_groups: {
-          name: 'Nestle',
+          name: 'Lumen',
           fonts: [
             {
               id: 'font-b',
@@ -102,7 +102,7 @@ describe('BrandKitService', () => {
     ).resolves.toEqual({
       brandKit: {
         id: 'cc8f4470-16d2-4a71-b8e5-c73c05abef3a',
-        name: 'Nestle',
+        name: 'Lumen',
       },
       assets: [
         {
@@ -135,14 +135,14 @@ describe('BrandKitService', () => {
           id: 'font-b',
           name: 'NestleTextTF-Bold.ttf',
           style: 'Bold',
-          groupName: 'Nestle',
+          groupName: 'Lumen',
           url: 'https://signed.example/fonts-bucket/fonts/nestle/bold.ttf',
         },
         {
           id: 'font-a',
           name: 'NestleTextTF-Book.ttf',
           style: 'Book',
-          groupName: 'Nestle',
+          groupName: 'Lumen',
           url: 'https://signed.example/fonts-bucket/fonts/nestle/book.ttf',
         },
       ],
