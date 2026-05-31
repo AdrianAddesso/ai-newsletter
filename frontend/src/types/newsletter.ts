@@ -117,7 +117,7 @@ export type TemplateLayoutBlock = {
 }
 
 export type ExportFormat =
-  | 'PNG'
+  | 'JPG'
   | 'EML'
   | 'PDF'
 

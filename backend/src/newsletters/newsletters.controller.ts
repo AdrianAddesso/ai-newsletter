@@ -4,6 +4,7 @@ import {
   Delete,
   ForbiddenException,
   Get,
+  Headers,
   NotFoundException,
   Param,
   Patch,
@@ -13,6 +14,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { NewsLettersService } from './newsletters.service';
+import { NewsletterExportService, type ExportFormat } from './newsletter-export.service';
 import {
   idAndCommentIdParamSchema,
   idAndExportIdParamSchema,
@@ -34,6 +36,7 @@ import {
   updateNewsletterCommentBodySchema,
   updateNewsletterExportBodySchema,
   updateNewsletterStatusBodySchema,
+  exportNewsletterBodySchema,
 } from './newsletters.schemas';
 import type {
   ApproveNewsletterReviewBody,
@@ -45,6 +48,7 @@ import type {
   UpdateNewsletterCommentBody,
   UpdateNewsletterExportBody,
   UpdateNewsletterStatusBody,
+   ExportNewsletterBody,
 } from './newsletters.schemas';
 import { MockAuthGuard } from '../modules/auth/guards/mockup.guard';
 import { PermissionsGuard } from '../modules/auth/guards/permissions.guard';
@@ -71,6 +75,7 @@ type AuthenticatedRequest = {
 export class NewslettersController {
   constructor(
     private readonly newslettersService: NewsLettersService,
+    private readonly exportService: NewsletterExportService,
     private readonly prisma: PrismaService,
     private readonly authorizationService: AuthorizationService,
     private readonly permissionCacheService: PermissionCacheService,
@@ -233,6 +238,16 @@ export class NewslettersController {
     });
   }
 
+  @Post(':id/export')
+  @RequirePermission(Action.CONTENT_EXPORT_APPROVED, Resource.NEWSLETTERS)
+  async exportNewsletter(
+    @Param(new ZodValidationPipe(idParamSchema)) params: IdParam,
+    @Body(new ZodValidationPipe(exportNewsletterBodySchema)) body: ExportNewsletterBody,
+    @Headers('x-user-id') userId: string,
+  ) {
+    return this.exportService.exportNewsletter(params.id, body.format as ExportFormat, userId);
+  }
+
   @Post(':id/review/request-changes')
   requestChanges(
     @Req() request: AuthenticatedRequest,
@@ -360,3 +375,4 @@ export class NewslettersController {
     return Action.REVIEW_FINAL_APPROVE_COMMENT;
   }
 }
+

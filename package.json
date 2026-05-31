@@ -4,6 +4,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
     "html2canvas": "^1.4.1",
-    "jspdf": "^4.2.1"
+    "jspdf": "^4.2.1",
+    "mjml": "^5.2.2"
   }
 }
