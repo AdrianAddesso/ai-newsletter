@@ -37,15 +37,23 @@ export type UploadAssetRequest = {
   type: Exclude<AssetType, 'BLOCK'>
   name: string
   description?: string | null
+  brandKitId?: string
   signal?: AbortSignal
   onUploadProgress?: (progress: number) => void
 }
 
 export async function listAssets(
   type?: AssetType,
+  brandKitId?: string,
 ): Promise<UploadAssetsResponse> {
   const response = await axios.get<UploadAssetsResponse>('/assets', {
-    params: type ? { type } : undefined,
+    params:
+      type || brandKitId
+        ? {
+            ...(type ? { type } : {}),
+            ...(brandKitId ? { brandKitId } : {}),
+          }
+        : undefined,
   })
 
   return response.data
@@ -56,6 +64,7 @@ export async function uploadAsset({
   type,
   name,
   description,
+  brandKitId,
   signal,
   onUploadProgress,
 }: UploadAssetRequest): Promise<UploadedAsset> {
@@ -66,6 +75,9 @@ export async function uploadAsset({
   formData.append('name', name)
   if (description?.trim()) {
     formData.append('description', description.trim())
+  }
+  if (brandKitId) {
+    formData.append('brandKitId', brandKitId)
   }
 
   const response = await axios.post<UploadAssetsResponse>(
@@ -86,6 +98,7 @@ export async function uploadAsset({
 export async function uploadAssets(
   files: File[],
   type: AssetType,
+  brandKitId?: string,
 ): Promise<UploadAssetsResponse> {
   const formData = new FormData()
 
@@ -93,6 +106,9 @@ export async function uploadAssets(
     formData.append('files', file)
   })
   formData.append('type', type)
+  if (brandKitId) {
+    formData.append('brandKitId', brandKitId)
+  }
 
   const response = await axios.post<UploadAssetsResponse>('/assets', formData)
   return response.data
@@ -106,6 +122,11 @@ export async function updateAsset(
   return response.data
 }
 
-export async function deleteAsset(id: string): Promise<void> {
-  await axios.delete(`/assets/${id}`)
+export async function deleteAsset(
+  id: string,
+  brandKitId?: string,
+): Promise<void> {
+  await axios.delete(`/assets/${id}`, {
+    params: brandKitId ? { brandKitId } : undefined,
+  })
 }

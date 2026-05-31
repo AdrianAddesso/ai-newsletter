@@ -63,9 +63,17 @@ export class AssetsService {
   async uploadAssets(
     files: UploadedAssetFile[],
     type: asset_type,
-    metadata: { name?: string; description?: string | null } = {},
+    metadata: {
+      name?: string;
+      description?: string | null;
+      brandKitId?: string;
+    } = {},
   ): Promise<UploadAssetsResponseDto> {
     try {
+      if (metadata.brandKitId) {
+        await this.ensureBrandKitExists(metadata.brandKitId);
+      }
+
       const assets = await Promise.all(
         files.map(async (file) => {
           this.validateAssetFile(file);
@@ -101,8 +109,15 @@ export class AssetsService {
               extension: this.getExtension(storageKey),
               mime_type: file.mimetype,
               size_bytes: file.size,
-              from_brand: false,
+              from_brand: Boolean(metadata.brandKitId),
               source: userStorageObjectSource,
+              brandkit_assets: metadata.brandKitId
+                ? {
+                    create: {
+                      brand_kit_id: metadata.brandKitId,
+                    },
+                  }
+                : undefined,
             },
             select: {
               id: true,
@@ -134,19 +149,42 @@ export class AssetsService {
     }
   }
 
-  async listAssets(type?: asset_type): Promise<UploadAssetsResponseDto> {
+  async listAssets(
+    type?: asset_type,
+    brandKitId?: string,
+  ): Promise<UploadAssetsResponseDto> {
     try {
       if (type === asset_type.BLOCK) {
         return { assets: [] };
       }
 
+      if (brandKitId) {
+        await this.ensureBrandKitExists(brandKitId);
+      }
+
       const assets = await this.prisma.assets.findMany({
-        where: type
-          ? { type, deleted_at: null }
-          : {
-              type: { not: asset_type.BLOCK as asset_type },
+        where: brandKitId
+          ? {
               deleted_at: null,
-            },
+              ...(type ? { type } : { type: { not: asset_type.BLOCK as asset_type } }),
+              brandkit_assets: {
+                some: {
+                  brand_kit_id: brandKitId,
+                  deleted_at: null,
+                },
+              },
+            }
+          : type
+            ? {
+                type,
+                deleted_at: null,
+                from_brand: false,
+              }
+            : {
+                type: { not: asset_type.BLOCK as asset_type },
+                deleted_at: null,
+                from_brand: false,
+              },
         orderBy: [{ type: 'asc' }, { name: 'asc' }],
         select: {
           id: true,
@@ -232,7 +270,7 @@ export class AssetsService {
     return this.toUploadedAssetDto(asset);
   }
 
-  async deleteAsset(id: string): Promise<void> {
+  async deleteAsset(id: string, brandKitId?: string): Promise<void> {
     const existingAsset = await this.prisma.assets.findFirst({
       where: {
         id,
@@ -248,6 +286,12 @@ export class AssetsService {
 
     if (!existingAsset) {
       throw new NotFoundException('No se encontro el asset solicitado.');
+    }
+
+    if (brandKitId) {
+      await this.ensureBrandKitExists(brandKitId);
+      await this.detachAssetFromBrandKit(id, brandKitId);
+      return;
     }
 
     if (existingAsset.type === asset_type.KEYWORD) {
@@ -560,5 +604,75 @@ export class AssetsService {
   private getExtension(storageKey: string): string | null {
     const extension = extname(storageKey).toLowerCase();
     return extension ? extension.slice(1) : null;
+  }
+
+  private async ensureBrandKitExists(brandKitId: string): Promise<void> {
+    const brandKit = await this.prisma.brand_kit.findFirst({
+      where: {
+        id: brandKitId,
+        deleted_at: null,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!brandKit) {
+      throw new NotFoundException('No se encontro el brand kit solicitado.');
+    }
+  }
+
+  private async detachAssetFromBrandKit(
+    assetId: string,
+    brandKitId: string,
+  ): Promise<void> {
+    const relation = await this.prisma.brandkit_assets.findFirst({
+      where: {
+        asset_id: assetId,
+        brand_kit_id: brandKitId,
+        deleted_at: null,
+      },
+      select: {
+        asset_id: true,
+      },
+    });
+
+    if (!relation) {
+      throw new NotFoundException(
+        'No se encontro el asset asociado al brand kit solicitado.',
+      );
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.brandkit_assets.update({
+        where: {
+          brand_kit_id_asset_id: {
+            brand_kit_id: brandKitId,
+            asset_id: assetId,
+          },
+        },
+        data: {
+          deleted_at: new Date(),
+        },
+      });
+
+      const remainingRelations = await tx.brandkit_assets.count({
+        where: {
+          asset_id: assetId,
+          deleted_at: null,
+        },
+      });
+
+      if (remainingRelations === 0) {
+        await tx.assets.update({
+          where: {
+            id: assetId,
+          },
+          data: {
+            deleted_at: new Date(),
+          },
+        });
+      }
+    });
   }
 }

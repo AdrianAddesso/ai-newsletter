@@ -76,7 +76,7 @@ interface AssetsListProps {
   compact?: boolean;
 }
 
-export function AssetsList({ compact = false }: AssetsListProps) {
+export function AssetsList({ brandId, compact = false }: AssetsListProps) {
   const [assets, setAssets] = useState<UploadedAsset[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [search, setSearch] = useState("");
@@ -98,7 +98,7 @@ export function AssetsList({ compact = false }: AssetsListProps) {
     setError(null);
 
     try {
-      const response = await listAssets();
+      const response = await listAssets(undefined, brandId);
       setAssets(response.assets);
     } catch (unknownError) {
       console.error("Error fetching assets:", unknownError);
@@ -106,7 +106,7 @@ export function AssetsList({ compact = false }: AssetsListProps) {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [brandId]);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -185,7 +185,7 @@ const filtered = useMemo(() => {
       }
 
       if (data.mode === "create") {
-        const response = await uploadAssets(data.files, data.type);
+        const response = await uploadAssets(data.files, data.type, brandId);
         const uploadedAsset = response.assets[0];
 
         if (uploadedAsset && uploadedAsset.name !== data.name) {
@@ -210,7 +210,7 @@ const filtered = useMemo(() => {
     setError(null);
 
     try {
-      await deleteAsset(deleteId);
+      await deleteAsset(deleteId, brandId);
       setAssets((currentAssets) =>
         currentAssets.filter((asset) => asset.id !== deleteId),
       );
@@ -275,7 +275,9 @@ const filtered = useMemo(() => {
         </Box>
       ) : filtered.length === 0 ? (
         <Alert severity="info">
-          No se encontraron assets con esa busqueda.
+          {brandId
+            ? 'No se encontraron assets asociados a este brandkit.'
+            : 'No se encontraron assets con esa busqueda.'}
         </Alert>
       ) : (
         <TableContainer

@@ -128,11 +128,6 @@ export function BrandkitPage() {
         })
 
         success('Brandkit actualizado correctamente.')
-        setSnackbar({
-          open: true,
-          message: 'Brandkit actualizado correctamente.',
-          severity: 'success',
-        })
         return
       }
 
@@ -142,11 +137,6 @@ export function BrandkitPage() {
       })
 
       success('Brandkit creado correctamente.')
-      setSnackbar({
-        open: true,
-        message: 'Brandkit creado correctamente.',
-        severity: 'success',
-      })
       navigate(`/admin/brandkit?id=${createdBrandKit.id}`, { replace: true })
     } catch (saveError) {
       console.error('Error saving brand kit:', saveError)
@@ -314,7 +304,7 @@ export function BrandkitPage() {
                 Imagenes y archivos asociados a este brandkit.
               </Typography>
             </Stack>
-            <AssetsList compact />
+            <AssetsList brandId={brandkitId ?? undefined} compact />
           </Box>
 
           <Box
