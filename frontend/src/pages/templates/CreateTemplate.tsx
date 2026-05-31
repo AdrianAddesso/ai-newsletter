@@ -39,7 +39,7 @@ export function CreateTemplate() {
     try {
       const res = await saveTemplate()
       success(res?.message || 'Template creado exitosamente')
-      navigate('/dashboard')
+      navigate("/templates");
     } catch (err:unknown) {
       if(err instanceof Error) {
         error(err.message || 'Error al guardar el template')
