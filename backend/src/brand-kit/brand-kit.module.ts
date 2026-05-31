@@ -6,10 +6,11 @@ import { AuthorizationService } from '../modules/auth/services/authorization.ser
 import { PermissionsGuard } from '../modules/auth/guards/permissions.guard';
 import { PrismaModule } from '../prisma/prisma.module';
 import { StorageService } from '../storage/storage.service';
+import { FontsModule } from '../fonts/fonts.module';
 
 @Module({
   controllers: [BrandKitController],
-  imports: [PrismaModule,AuthModule],
+  imports: [PrismaModule, AuthModule, FontsModule],
   providers: [
     BrandKitService,
     AuthorizationService,
