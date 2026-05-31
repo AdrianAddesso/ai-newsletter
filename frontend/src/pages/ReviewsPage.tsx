@@ -58,7 +58,7 @@ const reviewMatchesSearch = (
   ]
 
   return searchableValues.some((value) =>
-    value.toLowerCase().includes(normalizedSearch),
+    value != null && value.toLowerCase().includes(normalizedSearch),
   )
 }
 
@@ -78,7 +78,7 @@ export function ReviewsPage() {
     const loadReviews = async () => {
       try {
         const reviewInbox = await getReviewInbox()
-        setReviews(reviewInbox)
+        setReviews(Array.isArray(reviewInbox) ? reviewInbox : [])
         setLoadError(null)
       } catch {
         setReviews([])
