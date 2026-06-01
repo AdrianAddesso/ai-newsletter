@@ -279,6 +279,9 @@ export function EditPanel({
   const backgroundAssetField = selectedBlock.editFields.find(
     (field) => field.key === "backgroundAsset",
   );
+  const iconAssetField = selectedBlock.editFields.find(
+    (field) => field.key === "iconAsset",
+  );
   const backgroundColorField = selectedBlock.editFields.find(
     (field) => field.key === "bgColor" || field.key === "overlayColor",
   );
@@ -321,6 +324,10 @@ export function EditPanel({
               return null;
             }
 
+            if (field.key === "iconName") {
+              return null;
+            }
+
             if (field.key === "backgroundAsset") {
               if (!backgroundAssetField) {
                 return null;
@@ -335,6 +342,23 @@ export function EditPanel({
                   backgroundMode={backgroundMode}
                   brandKitResources={brandKitResources}
                   canEdit={canEdit}
+                  onUpdateBlock={onUpdateBlock}
+                />
+              );
+            }
+
+            if (field.key === "iconAsset") {
+              if (!iconAssetField) {
+                return null;
+              }
+
+              return (
+                <ImageAssetFieldEditor
+                  key="icon-asset"
+                  block={selectedBlock}
+                  field={iconAssetField}
+                  canEdit={canEdit}
+                  brandKitResources={brandKitResources}
                   onUpdateBlock={onUpdateBlock}
                 />
               );

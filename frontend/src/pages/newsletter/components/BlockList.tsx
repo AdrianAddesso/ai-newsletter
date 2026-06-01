@@ -165,6 +165,7 @@ function buildRendererProps(
     block.assetBindings.map((binding) => [binding.fieldKey, binding]),
   )
   const logoAsset = assetByFieldKey.get('logoAsset')?.assetUrl
+  const iconAsset = assetByFieldKey.get('iconAsset')?.assetUrl
   const imageAsset = assetByFieldKey.get('imageAsset')?.assetUrl
   const backgroundAsset = assetByFieldKey.get('backgroundAsset')?.assetUrl
   const leftImageAsset =
@@ -177,6 +178,7 @@ function buildRendererProps(
 
   return {
     imageUrl: imageAsset ?? logoAsset,
+    iconUrl: iconAsset,
     backgroundImage:
       backgroundMode === 'none' || backgroundMode === 'color'
         ? null
