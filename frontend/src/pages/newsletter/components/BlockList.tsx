@@ -29,7 +29,8 @@ export function BlockList({
         p: 3, // padding around the whole component
         borderRadius: 2, // slightly rounded outer corners
         height: "100%", // take full height of the container
-
+        maxHeight: "100%",
+        overflowY: "auto",
       }}
     >
       <Stack

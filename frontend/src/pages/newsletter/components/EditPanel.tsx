@@ -291,8 +291,9 @@ export function EditPanel({
   return (
     <Stack
       sx={{
-        height: "calc(100vh - 180px)",
-        minHeight: 0,
+        height: "100%",
+        width: "100%",
+        minHeight: "calc(100vh - 48px)",
         border: "1px solid",
         borderColor: "divider",
         borderRadius: 2,
@@ -302,8 +303,6 @@ export function EditPanel({
       <Box
         sx={{
           flex: 1,
-          minHeight: 0,
-          overflowY: "auto",
           px: 2,
           py: 2,
         }}
@@ -412,9 +411,7 @@ export function EditPanel({
             </>
           )}
 
-          <ReviewHistoryPanel
-            comments={reviewHistory}
-          />
+          <ReviewHistoryPanel comments={reviewHistory} />
         </Stack>
       </Box>
 
@@ -427,7 +424,11 @@ export function EditPanel({
           py: 2,
         }}
       >
-        <Stack direction={{ xs: "column", md: "row" }} sx={{justifyContent:"space-between"}}  spacing={1.5}>
+        <Stack
+          direction={{ xs: "column", md: "row" }}
+          sx={{ justifyContent: "space-between" }}
+          spacing={1.5}
+        >
           <Button
             variant="outlined"
             color="error"
