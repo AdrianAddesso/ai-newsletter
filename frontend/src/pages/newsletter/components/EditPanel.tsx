@@ -59,6 +59,7 @@ type UploadStatus =
   | "error"
   | "cancelled";
 type AssetSourceTab = "global" | "brandkit";
+type BackgroundMode = "image" | "color" | "none";
 
 type Props = {
   selectedBlock: NewsletterBlock;
@@ -129,6 +130,123 @@ function supportsIndependentTypography(field: BlockEditField): boolean {
   return supportsIndependentTextSize(field);
 }
 
+function resolveBackgroundMode(
+  storedMode: string | undefined,
+  hasBackgroundAsset: boolean,
+  hasBackgroundColor: boolean,
+): BackgroundMode {
+  if (
+    storedMode === "image" ||
+    storedMode === "color" ||
+    storedMode === "none"
+  ) {
+    return storedMode;
+  }
+
+  if (hasBackgroundAsset) {
+    return "image";
+  }
+
+  if (hasBackgroundColor) {
+    return "color";
+  }
+
+  return "image";
+}
+
+function BackgroundStyleFieldEditor({
+  block,
+  backgroundAssetField,
+  backgroundColorField,
+  backgroundMode,
+  brandKitResources,
+  canEdit,
+  onUpdateBlock,
+}: {
+  block: NewsletterBlock;
+  backgroundAssetField: BlockEditField;
+  backgroundColorField: BlockEditField | undefined;
+  backgroundMode: BackgroundMode;
+  brandKitResources: BrandKitResources | null;
+  canEdit: boolean;
+  onUpdateBlock: (block: NewsletterBlock) => void;
+}) {
+  const values = parseContent<Record<string, string>>(block.content);
+  const availableModes: Array<{ value: BackgroundMode; label: string }> = [
+    { value: "image", label: "Imagen" },
+  ];
+
+  if (backgroundColorField) {
+    availableModes.push({ value: "color", label: "Color" });
+  }
+
+  availableModes.push({ value: "none", label: "Sin fondo" });
+
+  const effectiveMode: BackgroundMode =
+    availableModes.find((option) => option.value === backgroundMode)?.value ??
+    "image";
+
+  return (
+    <Stack
+      spacing={1.5}
+      sx={{
+        border: "1px solid",
+        borderColor: "divider",
+        borderRadius: 1.5,
+        p: 1.5,
+        backgroundColor: "background.paper",
+      }}
+    >
+      <Typography variant="subtitle2">{backgroundAssetField.label}</Typography>
+
+      <TextField
+        select
+        label="Tipo de fondo"
+        value={effectiveMode}
+        onChange={(event) =>
+          onUpdateBlock(
+            updateBlockValue(
+              block,
+              "backgroundMode",
+              event.target.value as BackgroundMode,
+            ),
+          )
+        }
+        fullWidth
+        disabled={!canEdit}
+      >
+        {availableModes.map((option) => (
+          <MenuItem key={option.value} value={option.value}>
+            {option.label}
+          </MenuItem>
+        ))}
+      </TextField>
+
+      {effectiveMode === "image" && (
+        <ImageAssetFieldEditor
+          block={block}
+          field={backgroundAssetField}
+          canEdit={canEdit}
+          brandKitResources={brandKitResources}
+          onUpdateBlock={onUpdateBlock}
+        />
+      )}
+
+      {effectiveMode === "color" && backgroundColorField && (
+        <FieldEditor
+          block={block}
+          field={backgroundColorField}
+          value={values[backgroundColorField.key] ?? ""}
+          brandKitResources={brandKitResources}
+          canEdit={canEdit}
+          onUpdateBlock={onUpdateBlock}
+          hideLabel
+        />
+      )}
+    </Stack>
+  );
+}
+
 export function EditPanel({
   selectedBlock,
   brandKitResources,
@@ -158,6 +276,17 @@ export function EditPanel({
   const hasTextFontFamilyControl =
     selectedBlock.editFields.some((field) => field.type === "font-family") &&
     (brandKitResources?.fonts.length ?? 0) > 0;
+  const backgroundAssetField = selectedBlock.editFields.find(
+    (field) => field.key === "backgroundAsset",
+  );
+  const backgroundColorField = selectedBlock.editFields.find(
+    (field) => field.key === "bgColor" || field.key === "overlayColor",
+  );
+  const backgroundMode = resolveBackgroundMode(
+    values.backgroundMode,
+    getBlockAssetBinding(selectedBlock, "backgroundAsset") !== undefined,
+    Boolean(values.bgColor?.trim() || values.overlayColor?.trim()),
+  );
 
   return (
     <Stack
@@ -190,6 +319,29 @@ export function EditPanel({
             }
 
             if (field.type === "font-family") {
+              return null;
+            }
+
+            if (field.key === "backgroundAsset") {
+              if (!backgroundAssetField) {
+                return null;
+              }
+
+              return (
+                <BackgroundStyleFieldEditor
+                  key="background-style"
+                  block={selectedBlock}
+                  backgroundAssetField={backgroundAssetField}
+                  backgroundColorField={backgroundColorField}
+                  backgroundMode={backgroundMode}
+                  brandKitResources={brandKitResources}
+                  canEdit={canEdit}
+                  onUpdateBlock={onUpdateBlock}
+                />
+              );
+            }
+
+            if (field.key === "bgColor" || field.key === "overlayColor") {
               return null;
             }
 

@@ -5,6 +5,10 @@ import {
   parseContent,
   resolveContentTypographySx,
 } from "../../../../utils/blockContent";
+import {
+  buildBackgroundImageSx,
+  resolveRenderableBackgroundImage,
+} from "../utils/backgroundImage";
 
 interface Props {
   block: BlockInstance;
@@ -15,7 +19,8 @@ interface Props {
 
 export function IconCenterBackgroundFullRenderer({
   block,
-  backgroundImage = null,
+  backgroundImage,
+  editMode = false,
   iconUrl = placeholderIconUrl,
 }: Props) {
   const values = parseContent(block.content);
@@ -24,14 +29,12 @@ export function IconCenterBackgroundFullRenderer({
     label = "Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat.",
   } = values;
   const typographySx = resolveContentTypographySx(values, "label");
-  const bgSx = backgroundImage
-    ? {
-        backgroundImage: `url("${backgroundImage}")`,
-        backgroundSize: "cover",
-        backgroundRepeat: "no-repeat",
-        backgroundPosition: "center",
-      }
-    : {};
+  const resolvedBackgroundImage = resolveRenderableBackgroundImage(
+    backgroundImage,
+    editMode,
+    placeholderIconUrl,
+  );
+  const bgSx = buildBackgroundImageSx(resolvedBackgroundImage);
 
   return (
     <Card

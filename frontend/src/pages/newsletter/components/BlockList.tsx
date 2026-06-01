@@ -4,6 +4,7 @@ import type {
   NewsletterBlock,
   NewsletterBlockAssetBinding,
 } from '../../../types/newsletter'
+import { parseContent } from '../../../utils/blockContent'
 
 type Props = {
   blocks: NewsletterBlock[];
@@ -158,6 +159,7 @@ function groupBlocksByRow(
 function buildRendererProps(
   block: NewsletterBlock,
 ): Record<string, string | null | undefined> {
+  const values = parseContent<Record<string, string>>(block.content)
   const assetByFieldKey = new Map<string, NewsletterBlockAssetBinding>(
     block.assetBindings.map((binding) => [binding.fieldKey, binding]),
   )
@@ -170,10 +172,20 @@ function buildRendererProps(
   const rightImageAsset =
     assetByFieldKey.get('rightLogoAsset')?.assetUrl ??
     assetByFieldKey.get('rightImageAsset')?.assetUrl
+  const backgroundMode = values.backgroundMode
 
   return {
     imageUrl: imageAsset ?? logoAsset,
-    backgroundImage: backgroundAsset,
+    backgroundImage:
+      backgroundMode === 'none' || backgroundMode === 'color'
+        ? null
+        : backgroundMode === 'image'
+          ? backgroundAsset ?? undefined
+          : backgroundAsset ?? (
+              values.bgColor?.trim() || values.overlayColor?.trim()
+                ? null
+                : undefined
+            ),
     leftImageUrl: leftImageAsset,
     rightImageUrl: rightImageAsset,
   }

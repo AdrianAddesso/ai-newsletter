@@ -2,6 +2,10 @@ import { Card, Typography, Box, CardMedia, Icon } from "@mui/material";
 import type { BlockInstance } from "@shared/types/block.types";
 import placeholderIconUrl from "../../../../assets/placeholders/PlaceholderIcon.svg";
 import {
+  buildBackgroundImageSx,
+  resolveRenderableBackgroundImage,
+} from "../utils/backgroundImage";
+import {
   parseContent,
   resolveContentTypographySx,
 } from "../../../../utils/blockContent";
@@ -15,7 +19,8 @@ interface Props {
 
 export function IconRightBackgroundFullRenderer({
   block,
-  backgroundImage = null,
+  backgroundImage,
+  editMode = false,
   iconUrl = placeholderIconUrl,
 }: Props) {
   const values = parseContent(block.content);
@@ -24,14 +29,12 @@ export function IconRightBackgroundFullRenderer({
     label = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
   } = values;
   const typographySx = resolveContentTypographySx(values, "label");
-  const bgSx = backgroundImage
-    ? {
-        backgroundImage: `url("${backgroundImage}")`,
-        backgroundSize: "cover",
-        backgroundRepeat: "no-repeat",
-        backgroundPosition: "center",
-      }
-    : {};
+  const resolvedBackgroundImage = resolveRenderableBackgroundImage(
+    backgroundImage,
+    editMode,
+    placeholderIconUrl,
+  );
+  const bgSx = buildBackgroundImageSx(resolvedBackgroundImage);
 
   return (
     <Card

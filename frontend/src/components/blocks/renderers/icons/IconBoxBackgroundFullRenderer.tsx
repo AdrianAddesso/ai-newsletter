@@ -5,6 +5,10 @@ import {
   parseContent,
   resolveContentTypographySx,
 } from "../../../../utils/blockContent";
+import {
+  buildBackgroundImageSx,
+  resolveRenderableBackgroundImage,
+} from "../utils/backgroundImage";
 
 interface IconItem {
     iconUrl?: string | null;
@@ -30,7 +34,8 @@ const DEFAULT_ICON_ITEMS: IconItem[] = [
 
 export function IconBoxBackgroundFullRenderer({
   block,
-  backgroundImage = null,
+  backgroundImage,
+  editMode = false,
   iconUrl = placeholderIconUrl,
   titleContent = null,
   iconItems = DEFAULT_ICON_ITEMS,
@@ -42,14 +47,12 @@ export function IconBoxBackgroundFullRenderer({
     bgColor,
   } = values;
   const typographySx = resolveContentTypographySx(values, "label");
-  const bgSx = backgroundImage
-    ? {
-        backgroundImage: `url("${backgroundImage}")`,
-        backgroundSize: "cover",
-        backgroundRepeat: "no-repeat",
-        backgroundPosition: "center",
-      }
-    : {};
+  const resolvedBackgroundImage = resolveRenderableBackgroundImage(
+    backgroundImage,
+    editMode,
+    placeholderIconUrl,
+  );
+  const bgSx = buildBackgroundImageSx(resolvedBackgroundImage);
 
   return (
     <Card
