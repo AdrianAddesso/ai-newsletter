@@ -175,7 +175,9 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       setNotificationsByUser((prev) => {
         const currentNotifications =
           prev[userId] ?? getInitialNotificationsForUser(userId)
-        const nextNotifications = updater(cloneNotifications(currentNotifications))
+        const nextNotifications = updater(
+          currentNotifications.map((notification) => ({ ...notification })),
+        )
 
         persistNotifications(userId, nextNotifications)
 

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useLocation, useParams } from "react-router";
 import { Alert, Box, CircularProgress, Stack, Typography } from "@mui/material";
 import { useAuth } from "../contexts/AuthContext";
+import { useNotification } from "../hooks/useNotification";
 import { TemplateCarousel } from "./newsletter/components/TemplateCarousel";
 import { GenerationForm } from "./newsletter/components/GenerationForm";
 import { NewsletterStepper } from "./newsletter/components/NewsletterStepper";
@@ -41,6 +42,7 @@ function CreateNewsletterPage() {
   const { templateId: routeTemplateId } = useParams<{ templateId?: string }>();
   const backState = (location.state as BackState | null) ?? emptyBackState;
   const { user } = useAuth();
+  const { error: notifyError } = useNotification();
   const currentUserId = user?.id ?? "anonymous";
 
   const [templates, setTemplates] = useState<NewsletterTemplate[]>([]);
@@ -125,7 +127,7 @@ function CreateNewsletterPage() {
 
       try {
         // 1. Generar bloques con IA
-        const response = await generateNewsletter(request);
+        const response = await generateNewsletter(request, notifyError);
 
         const generationContent = {
           aiContent: response,
@@ -170,7 +172,7 @@ function CreateNewsletterPage() {
         setIsGenerating(false);
       }
     },
-    [backState.newsletterId, currentUserId, navigate, selectedTemplate],
+    [backState.newsletterId, currentUserId, navigate, notifyError],
   );
 
   if (isLoadingTemplates) {
