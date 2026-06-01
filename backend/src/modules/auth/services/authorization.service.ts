@@ -34,7 +34,7 @@ export class AuthorizationService {
 
     [Action.TEMPLATE_CREATE_RETIRE]: (user) => this.isSuperAdmin(user) || this.isFunctionalAdmin(user),
 
-    [Action.TEMPLATE_EDIT]: (user) => this.isSuperAdmin(user),
+    [Action.TEMPLATE_EDIT]: (user) => this.isSuperAdmin(user) || this.isFunctionalAdmin(user),
 
     [Action.TEMPLATE_VIEW_COPY]: () => true,
 

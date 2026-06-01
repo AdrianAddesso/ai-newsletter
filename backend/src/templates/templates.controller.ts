@@ -79,20 +79,7 @@ export class TemplatesController {
   @Get(':id')
   async getById(@Param(new ZodValidationPipe(idParamSchema)) params: IdParam) {
     try {
-      const template = await this.templatesService.getById(params.id);
-
-      if (!template) {
-        throw new BadRequestException({
-          message: `Template no encontrado con ID: ${params.id}`,
-          status: 404
-        });
-      }
-
-      return {
-        payload: template,
-        status: 200
-      };
-
+      return await this.templatesService.getById(params.id);
     } catch (error) {
       throw new BadRequestException({
         message: 'No se pudo obtener el template en este momento.',
@@ -109,8 +96,11 @@ export class TemplatesController {
     @Body(new ZodValidationPipe(updateTemplateBodySchema))
     body: UpdateTemplateBody,
   ) {
-    void body;
-    return this.templatesService.update(params.id);
+    return this.templatesService.update(params.id, body).then((updatedTemplate) => ({
+      message: 'Template actualizado exitosamente',
+      updatedTemplate,
+      status: 200,
+    }));
   }
 
   @Delete(':id')

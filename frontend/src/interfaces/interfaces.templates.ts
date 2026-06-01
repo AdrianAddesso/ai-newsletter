@@ -9,6 +9,7 @@ export interface TemplateState {
     description: string;
     promptBase: string;
     area: string;
+    state: string;
 }
 
 export interface RowObject {

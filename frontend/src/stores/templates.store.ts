@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { CONSTANTS_CANVAS } from '@shared/enums/templates-canvas'
 import { type TemplateState } from '../interfaces/interfaces.templates';
 import type { BlockDefinitionDTO } from '../../../packages/shared/src/types/block.types';
-import type { CreateTemplateResponse} from '../../../packages/shared/src/types/template.types';
+import type { TemplateMutationResponse } from '../../../packages/shared/src/types/template.types';
 import axios from 'axios';
 
 interface TemplateStore extends TemplateState {
@@ -23,7 +23,7 @@ interface TemplateStore extends TemplateState {
 
   resetStore: (initialData?: Partial<TemplateState>) => void;
 
-  saveTemplate: () => Promise<CreateTemplateResponse>;
+  saveTemplate: (templateId?: string) => Promise<TemplateMutationResponse>;
 
   buildTemplateToSave: () => {
     name: string;
@@ -45,10 +45,11 @@ interface TemplateStore extends TemplateState {
 export const useTemplateStore = create<TemplateStore>((set, get) => ({
     name: '',
     description: '',
-    promptBase: '',
-    layoutMode: 'PORTRAIT',
-    area: '',
-    isSkeletonView: true,
+      promptBase: '',
+      layoutMode: 'PORTRAIT',
+      area: '',
+      state: 'ACTIVE',
+      isSkeletonView: true,
     rows: [
       {
         id: uuidv4(),
@@ -152,6 +153,7 @@ export const useTemplateStore = create<TemplateStore>((set, get) => ({
       description: '',
       promptBase: '',
       area: '',
+      state: 'ACTIVE',
       rows: [
         {
           id: uuidv4(),
@@ -163,15 +165,17 @@ export const useTemplateStore = create<TemplateStore>((set, get) => ({
       ...initialData
     }),
 
-    saveTemplate: async () => {
+    saveTemplate: async (templateId) => {
       const templateData = get().buildTemplateToSave();
-      const res = await axios.post('/templates', templateData);
+      const res = templateId
+        ? await axios.patch(`/templates/${templateId}`, templateData)
+        : await axios.post('/templates', templateData);
 
       return res.data;
     },
 
     buildTemplateToSave: () => {
-      const { name, description, promptBase, layoutMode, area, rows } = get();
+      const { name, description, promptBase, layoutMode, area, rows, state } = get();
       const layout = rows.flatMap(row =>
         row.columns.map(col => ({
           block_type: col.type,
@@ -188,7 +192,7 @@ export const useTemplateStore = create<TemplateStore>((set, get) => ({
         promptBase,
         orientation: layoutMode,
         area,
-        state: 'ACTIVE',
+        state,
         layout
       };
     }

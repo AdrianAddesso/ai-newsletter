@@ -29,4 +29,16 @@ describe('TemplatesController', () => {
       entity: Resource.TEMPLATES,
     });
   });
+
+  it('requires template edit permission for update', () => {
+    const metadata = Reflect.getMetadata(
+      'permissions_metadata',
+      TemplatesController.prototype.update,
+    );
+
+    expect(metadata).toEqual({
+      action: Action.TEMPLATE_EDIT,
+      entity: Resource.TEMPLATES,
+    });
+  });
 });

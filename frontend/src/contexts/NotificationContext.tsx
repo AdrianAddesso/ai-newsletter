@@ -1,6 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useCallback, useContext, useState, type ReactNode } from 'react'
 import { useAuth } from './AuthContext'
+import type { UserRole } from '../users/types/users'
 
 export type NotificationType = 'pending-review' | 'approved' | 'rejected' | 'reminder' | 'info'
 
@@ -39,9 +40,6 @@ const roleByUserId: Record<string, UserRole> = {
   '2': 'FUNCTIONAL',
   '3': 'USER',
 }
-
-const cloneNotifications = (notifications: AppNotification[]) =>
-  notifications.map((notification) => ({ ...notification }))
 
 const createDefaultNotifications = (role: UserRole, userId: string): AppNotification[] => {
   const commonNotifications: AppNotification[] = [
