@@ -57,12 +57,17 @@ const captureExportCanvas = async (): Promise<{
 
   const html2canvas = (await import('html2canvas')).default
   const { width, height } = exportRoot.getBoundingClientRect()
-  const normalizedWidth = Math.ceil(width)
-  const normalizedHeight = Math.ceil(height)
+  const normalizedWidth = Math.ceil(
+    Math.max(width, exportRoot.scrollWidth, exportRoot.offsetWidth),
+  )
+  const normalizedHeight = Math.ceil(
+    Math.max(height, exportRoot.scrollHeight, exportRoot.offsetHeight),
+  )
 
   const canvas = await html2canvas(exportRoot, {
     scale: Math.max(2, window.devicePixelRatio || 1),
     useCORS: true,
+    foreignObjectRendering: true,
     backgroundColor: '#ffffff',
     width: normalizedWidth,
     height: normalizedHeight,
@@ -82,6 +87,26 @@ const captureExportCanvas = async (): Promise<{
         .forEach((node) => {
           node.style.overflow = 'visible'
           node.style.lineHeight = node.style.lineHeight || '1.2'
+        })
+
+      root
+        .querySelectorAll<HTMLElement>('.MuiChip-root')
+        .forEach((node) => {
+          node.style.height = 'auto'
+          node.style.minHeight = 'auto'
+          node.style.maxWidth = '100%'
+          node.style.overflow = 'visible'
+        })
+
+      root
+        .querySelectorAll<HTMLElement>('.MuiChip-label')
+        .forEach((node) => {
+          node.style.display = 'inline-block'
+          node.style.lineHeight = node.style.lineHeight || '1.2'
+          node.style.overflow = 'visible'
+          node.style.textOverflow = 'clip'
+          node.style.paddingTop = node.style.paddingTop || '2px'
+          node.style.paddingBottom = node.style.paddingBottom || '2px'
         })
     },
   })
