@@ -1,5 +1,7 @@
 import { TemplatesController } from './templates.controller';
 import { TemplatesService } from './templates.service';
+import { Action } from '../modules/auth/enum/actions';
+import { Resource } from '../modules/auth/enum/resources';
 
 describe('TemplatesController', () => {
   let controller: TemplatesController;
@@ -14,5 +16,17 @@ describe('TemplatesController', () => {
 
   it('should be defined', () => {
     expect(controller).toBeDefined();
+  });
+
+  it('requires template retire permission for delete', () => {
+    const metadata = Reflect.getMetadata(
+      'permissions_metadata',
+      TemplatesController.prototype.delete,
+    );
+
+    expect(metadata).toEqual({
+      action: Action.TEMPLATE_CREATE_RETIRE,
+      entity: Resource.TEMPLATES,
+    });
   });
 });

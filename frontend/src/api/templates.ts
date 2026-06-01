@@ -13,7 +13,8 @@ type TemplateApiResponse = {
   area: NewsletterTemplate['area']
   layout: TemplateLayoutBlock[] | null
   orientation: 'PORTRAIT' | 'LANDSCAPE'
-  stateCode: string
+  state?: string
+  stateCode?: string
   stateName: string
   createdAt: string
   requiredGenerationFields: TemplateGenerationField[]
@@ -51,6 +52,7 @@ export async function listTemplates(): Promise<NewsletterTemplate[]> {
 
     return {
       ...template,
+      stateCode: template.stateCode ?? template.state ?? '',
       layout: parsedLayout,
       requiredGenerationFields: template.requiredGenerationFields ?? [],
       optionalGenerationFields:
@@ -89,11 +91,16 @@ export async function getTemplateById(id: string): Promise<NewsletterTemplate> {
 
   return {
     ...response.data,
+    stateCode: response.data.stateCode ?? response.data.state ?? '',
     layout: parsedLayout,
     requiredGenerationFields: response.data.requiredGenerationFields ?? [],
     optionalGenerationFields:
       response.data.optionalGenerationFields ?? defaultOptionalGenerationFields,
   }
+}
+
+export async function deleteTemplate(id: string): Promise<void> {
+  await axios.delete(`/templates/${id}`)
 }
 
 export type TemplateAsset = {

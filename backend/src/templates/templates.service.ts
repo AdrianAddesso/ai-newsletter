@@ -257,8 +257,22 @@
     }
 
     async delete(id: string) {
+        const template = await this.prisma.templates.findFirst({
+        where: {
+            id,
+            deleted_at: null,
+        },
+        select: {
+            id: true,
+        },
+        });
+
+        if (!template) {
+        throw new NotFoundException('Template no encontrado');
+        }
+
         return this.prisma.templates.update({
-        where: { id },
+        where: { id: template.id },
         data: {
             deleted_at: new Date(),
         },

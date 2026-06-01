@@ -114,6 +114,7 @@ export class TemplatesController {
   }
 
   @Delete(':id')
+  @RequirePermission(Action.TEMPLATE_CREATE_RETIRE, Resource.TEMPLATES)
   async delete(@Param(new ZodValidationPipe(idParamSchema)) params: IdParam) {
     return this.templatesService.delete(params.id);
   }
