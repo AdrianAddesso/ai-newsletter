@@ -1,8 +1,6 @@
 import { Box,Stack } from '@mui/material'
-
-import { NewsletterViewer } from '../viewer/NewsletterViewer'
-
 import { ApprovedNewsletterExport } from './ApprovedNewsletterExport'
+import { ApprovedNewsletterViewer } from './ApprovedNewsletterViewer'
 
 import type {
   Newsletter,
@@ -30,7 +28,9 @@ export function ApprovedNewsletterPage({
       sx={{ p:3 }}
     >
       <Box sx={{ flex:1 }}>
-        <NewsletterViewer newsletter={newsletter} readOnly />
+        <div data-newsletter-export-root>
+          <ApprovedNewsletterViewer blocks={newsletter.blocks} />
+        </div>
       </Box>
 
       <Box sx={{ width:{ lg:380 } }}>

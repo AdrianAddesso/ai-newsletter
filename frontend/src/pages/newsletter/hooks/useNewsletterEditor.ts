@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
-
+import { parseContent } from '../../../utils/blockContent'
 import { useAuth } from '../../../contexts/AuthContext'
 import { useNotification } from '../../../hooks/useNotification'
 
@@ -57,17 +57,12 @@ const captureExportCanvas = async (): Promise<{
 
   const html2canvas = (await import('html2canvas')).default
   const { width, height } = exportRoot.getBoundingClientRect()
-  const normalizedWidth = Math.ceil(
-    Math.max(width, exportRoot.scrollWidth, exportRoot.offsetWidth),
-  )
-  const normalizedHeight = Math.ceil(
-    Math.max(height, exportRoot.scrollHeight, exportRoot.offsetHeight),
-  )
+  const normalizedWidth = Math.ceil(width)
+  const normalizedHeight = Math.ceil(height)
 
   const canvas = await html2canvas(exportRoot, {
     scale: Math.max(2, window.devicePixelRatio || 1),
     useCORS: true,
-    foreignObjectRendering: true,
     backgroundColor: '#ffffff',
     width: normalizedWidth,
     height: normalizedHeight,
@@ -75,40 +70,59 @@ const captureExportCanvas = async (): Promise<{
     windowHeight: document.documentElement.clientHeight,
     scrollX: 0,
     scrollY: -window.scrollY,
+    
     onclone: (clonedDocument) => {
       const root = clonedDocument.querySelector<HTMLElement>(
         '[data-newsletter-export-root]',
       )
-
       if (!root) return
 
-      root
-        .querySelectorAll<HTMLElement>('.MuiTypography-root')
-        .forEach((node) => {
-          node.style.overflow = 'visible'
-          node.style.lineHeight = node.style.lineHeight || '1.2'
-        })
+      // Fix Typography
+       root.querySelectorAll<HTMLElement>('.MuiTypography-root').forEach((node) => {
+        node.style.overflow = 'visible'
+        node.style.lineHeight = node.style.lineHeight || '1.2'
+      })
 
-      root
-        .querySelectorAll<HTMLElement>('.MuiChip-root')
-        .forEach((node) => {
-          node.style.height = 'auto'
-          node.style.minHeight = 'auto'
-          node.style.maxWidth = '100%'
-          node.style.overflow = 'visible'
-        })
+      // Reemplazar Chip por div simple
+      root.querySelectorAll<HTMLElement>('.MuiChip-root').forEach((chip) => {
+        const label = chip.querySelector<HTMLElement>('.MuiChip-label')
+        const text = label?.textContent ?? ''
+        const computedBg = window.getComputedStyle(chip).backgroundColor
+        const computedColor = window.getComputedStyle(chip).color
 
-      root
-        .querySelectorAll<HTMLElement>('.MuiChip-label')
-        .forEach((node) => {
-          node.style.display = 'inline-block'
-          node.style.lineHeight = node.style.lineHeight || '1.2'
-          node.style.overflow = 'visible'
-          node.style.textOverflow = 'clip'
-          node.style.paddingTop = node.style.paddingTop || '2px'
-          node.style.paddingBottom = node.style.paddingBottom || '2px'
-        })
+        const replacement = clonedDocument.createElement('div')
+        replacement.textContent = text
+        replacement.style.cssText = `
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 6px 16px;
+          border-radius: 16px;;
+          background-color: ${computedBg};
+          color: ${computedColor};
+          font-size: 0.8125rem;
+          font-family: inherit;
+          font-weight: 400;
+          white-space: normal;
+          word-break: break-word;
+          max-width: 90%;
+          box-sizing: border-box;
+          border: none;
+          box-shadow: 0 0 0 2px rgba(0,0,0,0.25);
+        `
+
+        chip.parentNode?.replaceChild(replacement, chip)
+      })
+
+      root.querySelectorAll<HTMLElement>('*').forEach((node) => {
+        const computed = window.getComputedStyle(node)
+        if (computed.overflow === 'hidden') {
+          node.style.setProperty('overflow', 'visible', 'important')
+        }
+      })  
+      
     },
+
   })
 
   return {
