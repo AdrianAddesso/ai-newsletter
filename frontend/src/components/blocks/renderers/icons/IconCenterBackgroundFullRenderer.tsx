@@ -1,4 +1,4 @@
-import { Card, Typography, Box, CardMedia, Icon } from "@mui/material";
+import { Card, Typography, Box, CardMedia } from "@mui/material";
 import type { BlockInstance } from "@shared/types/block.types";
 import placeholderIconUrl from "../../../../assets/placeholders/PlaceholderIcon.svg";
 import {
@@ -25,9 +25,9 @@ export function IconCenterBackgroundFullRenderer({
 }: Props) {
   const values = parseContent(block.content);
   const {
-    iconName = "description",
     label = "Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat.",
   } = values;
+
   const typographySx = resolveContentTypographySx(values, "label");
   const resolvedBackgroundImage = resolveRenderableBackgroundImage(
     backgroundImage,
@@ -64,17 +64,13 @@ export function IconCenterBackgroundFullRenderer({
           ...bgSx,
         }}
       >
-        {iconUrl ? (
+        {iconUrl && (
           <CardMedia
             component="img"
             image={iconUrl}
             alt="Icon"
             sx={{ width: 48, height: 48, objectFit: "contain" }}
           />
-        ) : (
-          <Icon sx={{ fontSize: 48 }} color="action">
-            {iconName}
-          </Icon>
         )}
         <Typography
           variant="body2"
