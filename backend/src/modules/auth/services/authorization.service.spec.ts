@@ -58,6 +58,12 @@ describe('AuthorizationService', () => {
       expect(service.isAuthorized(functionalAdmin, Action.TEMPLATE_VIEW_COPY)).toBe(true);
     });
 
+    it('should grant TEMPLATE_EDIT to functional and admin only', () => {
+      expect(service.isAuthorized(adminUser, Action.TEMPLATE_EDIT)).toBe(true);
+      expect(service.isAuthorized(functionalAdmin, Action.TEMPLATE_EDIT)).toBe(true);
+      expect(service.isAuthorized(regularUser, Action.TEMPLATE_EDIT)).toBe(false);
+    });
+
     describe('REVIEW_REQUEST_PREVIEW', () => {
       const newsletter = {
         created_by_user_id: 'user-id',

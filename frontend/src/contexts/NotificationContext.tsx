@@ -40,9 +40,6 @@ const roleByUserId: Record<string, UserRole> = {
   '3': 'USER',
 }
 
-const cloneNotifications = (notifications: AppNotification[]) =>
-  notifications.map((notification) => ({ ...notification }))
-
 const createDefaultNotifications = (role: UserRole, userId: string): AppNotification[] => {
   const commonNotifications: AppNotification[] = [
     {

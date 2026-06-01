@@ -5,7 +5,6 @@ import { ProtectedRoute } from '../../components/ProtectedRoute'
 import { DashboardPage } from '../../pages/DashboardPage'
 import CreateNewsletterPage from '../../pages/CreateNewsletterPage'
 import EditNewsletterPage from '../../pages/EditNewsletterPage'
-import { EditTemplatePage } from '../../pages/EditTemplatePage'
 import { SettingsPage } from '../../pages/SettingsPage'
 import { TemplateLibraryPage } from '../../pages/TemplateLibraryPage'
 import { ApprovedNewsletterRoute } from '../../pages/newsletter/approved/ApprovedNewsletterRoute'
@@ -70,17 +69,6 @@ export const protectedRoutes = (
                 <ProtectedRoute>
                     <ProtectedLayout>
                         <ApprovedNewsletterRoute />
-                    </ProtectedLayout>
-                </ProtectedRoute>
-            }
-        />
-
-        <Route
-            path="/editarTemplate/:id"
-            element={
-                <ProtectedRoute>
-                    <ProtectedLayout>
-                        <EditTemplatePage />
                     </ProtectedLayout>
                 </ProtectedRoute>
             }

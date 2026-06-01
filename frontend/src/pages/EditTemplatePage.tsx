@@ -1,240 +1,226 @@
-import { useState } from 'react'
-import { useParams, useNavigate } from 'react-router'
+import { useEffect, useMemo, useState } from 'react'
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
 import {
+  Alert,
   Box,
   Button,
   Chip,
-  Divider,
+  CircularProgress,
   IconButton,
   Paper,
-  Stack,
   Tab,
   Tabs,
-  ToggleButton,
-  ToggleButtonGroup,
   Typography,
 } from '@mui/material'
-import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew'
-import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos'
-import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined'
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
-import SendIcon from '@mui/icons-material/Send'
-import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined'
-import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined'
-import ViewQuiltOutlinedIcon from '@mui/icons-material/ViewQuiltOutlined'
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
-import ViewModuleOutlinedIcon from '@mui/icons-material/ViewModuleOutlined'
-import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
+import { v4 as uuidv4 } from 'uuid'
+import { useNavigate, useParams } from 'react-router'
+import { getTemplateById } from '../api/templates'
+import { EditorControl } from '../components/canvas/EditorControl'
+import { StructureControl } from '../components/canvas/StructureControl'
+import { Template } from '../components/canvas/Template'
+import { useNotification } from '../hooks/useNotification'
+import type { RowObject } from '../interfaces/interfaces.templates'
+import { useTemplateStore } from '../stores/templates.store'
+import type { TemplateLayoutBlock } from '../types/newsletter'
+import { TAB_LABELS } from '@shared/enums/tab-enum'
 
-interface Block {
-  id: string
-  label: string
-  type: 'CONTENT' | 'MULTIMEDIA' | 'LAYOUT'
-  content: string
-}
+const buildRowsFromLayout = (
+  layout: TemplateLayoutBlock[] | null,
+): RowObject[] => {
+  if (!layout || layout.length === 0) {
+    return [
+      {
+        id: uuidv4(),
+        rowIndex: 0,
+        columns: [
+          {
+            id: uuidv4(),
+            type: null,
+            content: null,
+            mustFill: false,
+            displayOrder: 0,
+          },
+        ],
+      },
+    ]
+  }
 
-interface MockTemplate {
-  id: string
-  title: string
-  category: string
-  subject: string
-  blocks: Block[]
-}
+  const rowsByIndex = new Map<number, TemplateLayoutBlock[]>()
 
-const MOCK_TEMPLATES: MockTemplate[] = [
-  {
-    id: '1',
-    title: 'Template Actualizacion Interna',
-    category: 'Comunicacion',
-    subject: 'Las novedades más importantes del equipo esta semana',
-    blocks: [
-      { id: 'block-a', label: 'Bloque A', type: 'CONTENT', content: 'Introducción al contenido de la semana con las novedades más importantes del equipo. Este espacio resume los logros, noticias y actualizaciones relevantes para todos.' },
-      { id: 'block-b', label: 'Bloque B', type: 'MULTIMEDIA', content: 'Imagen principal del template con el mensaje de la semana.' },
-      { id: 'block-c', label: 'Bloque C', type: 'CONTENT', content: 'Sección de cierre con los próximos eventos y recordatorios importantes para el equipo durante la semana.' },
-    ],
-  },
-  {
-    id: '2',
-    title: 'Template Newsletter Institucional',
-    category: 'Marketing',
-    subject: 'Resultados del trimestre y próximos objetivos',
-    blocks: [
-      { id: 'block-a', label: 'Bloque A', type: 'CONTENT', content: 'Mensaje institucional principal con los objetivos del trimestre y los resultados obtenidos hasta el momento.' },
-      { id: 'block-b', label: 'Bloque B', type: 'LAYOUT', content: 'Sección de dos columnas con métricas clave del período.' },
-      { id: 'block-c', label: 'Bloque C', type: 'CONTENT', content: 'Sección de novedades y lanzamientos recientes que impactan al equipo y los clientes.' },
-      { id: 'block-d', label: 'Bloque D', type: 'MULTIMEDIA', content: 'Imagen de cierre con call to action hacia el portal interno.' },
-    ],
-  },
-]
+  layout.forEach((block) => {
+    const blocks = rowsByIndex.get(block.row) ?? []
+    blocks.push(block)
+    rowsByIndex.set(block.row, blocks)
+  })
 
-const TAB_LABELS = ['Crear', 'Editar', 'Revisar']
-
-const BLOCK_TYPE_CONFIG = {
-  CONTENT: {
-    icon: <ArticleOutlinedIcon fontSize="small" />,
-    color: '#E3F2FD',
-    borderColor: '#90CAF9',
-    label: 'Contenido',
-  },
-  MULTIMEDIA: {
-    icon: <ImageOutlinedIcon fontSize="small" />,
-    color: '#F3E5F5',
-    borderColor: '#CE93D8',
-    label: 'Multimedia',
-  },
-  LAYOUT: {
-    icon: <ViewQuiltOutlinedIcon fontSize="small" />,
-    color: '#E8F5E9',
-    borderColor: '#A5D6A7',
-    label: 'Layout',
-  },
-}
-
-// Renderizado de un bloque individual en la vista previa de email
-function EmailBlockPreview({
-  block,
-  isSelected,
-  onClick,
-}: {
-  block: Block
-  isSelected: boolean
-  onClick: () => void
-}) {
-  return (
-    <Box
-      onClick={onClick}
-      sx={{
-        position: 'relative',
-        cursor: 'pointer',
-        outline: isSelected ? '2px solid #FF595A' : '2px solid transparent',
-        outlineOffset: 2,
-        borderRadius: 1,
-        transition: 'outline 0.15s ease',
-        '&:hover': { outline: isSelected ? '2px solid #FF595A' : '2px solid #bbb' },
-      }}
-    >
-      {/* Etiqueta del bloque al hacer hover/seleccionar */}
-      {isSelected && (
-        <Box
-          sx={{
-            position: 'absolute',
-            top: -10,
-            left: 8,
-            bgcolor: '#FF595A',
-            color: 'white',
-            fontSize: 10,
-            fontWeight: 700,
-            px: 0.75,
-            py: 0.25,
-            borderRadius: 0.5,
-            zIndex: 1,
-            letterSpacing: 0.3,
-          }}
-        >
-          {block.label}
-        </Box>
-      )}
-
-      {block.type === 'CONTENT' && (
-        <Box sx={{ py: 2, px: 3 }}>
-          <Typography
-            variant="body2"
-            sx={{ color: '#30261D', lineHeight: 1.7, fontSize: 14 }}
-          >
-            {block.content}
-          </Typography>
-        </Box>
-      )}
-
-      {block.type === 'MULTIMEDIA' && (
-        <Box
-          sx={{
-            height: 140,
-            bgcolor: isSelected ? 'rgba(255,89,90,0.06)' : '#F5F5F5',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 1,
-            borderRadius: 1,
-          }}
-        >
-          <ImageOutlinedIcon sx={{ color: '#bbb', fontSize: 32 }} />
-          <Typography variant="caption" color="text.disabled">
-            {block.content}
-          </Typography>
-        </Box>
-      )}
-
-      {block.type === 'LAYOUT' && (
-        <Box sx={{ py: 2, px: 3, display: 'flex', gap: 1.5 }}>
-          <Box
-            sx={{
-              flex: 1,
-              height: 80,
-              bgcolor: isSelected ? 'rgba(255,89,90,0.06)' : '#F5F5F5',
-              borderRadius: 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Typography variant="caption" color="text.disabled">
-              Columna 1
-            </Typography>
-          </Box>
-          <Box
-            sx={{
-              flex: 1,
-              height: 80,
-              bgcolor: isSelected ? 'rgba(255,89,90,0.06)' : '#F5F5F5',
-              borderRadius: 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Typography variant="caption" color="text.disabled">
-              Columna 2
-            </Typography>
-          </Box>
-        </Box>
-      )}
-    </Box>
-  )
+  return [...rowsByIndex.entries()]
+    .sort(([left], [right]) => left - right)
+    .map(([rowIndex, blocks]) => ({
+      id: uuidv4(),
+      rowIndex,
+      columns: [...blocks]
+        .sort((left, right) => left.grid_column - right.grid_column)
+        .map((block) => ({
+          id: uuidv4(),
+          type: block.block_type,
+          content: block.content,
+          mustFill: block.mustFill ?? false,
+          displayOrder: block.grid_column,
+        })),
+    }))
 }
 
 export function EditTemplatePage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-
-  const initialIndex = MOCK_TEMPLATES.findIndex(n => n.id === id)
-  const [templateIndex, setTemplateIndex] = useState(initialIndex >= 0 ? initialIndex : 0)
+  const { success, error } = useNotification()
   const [activeTab, setActiveTab] = useState(1)
-  const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null)
-  const [leftView, setLeftView] = useState<'blocks' | 'preview'>('blocks')
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const [isInitialized, setIsInitialized] = useState(false)
 
-  const template = MOCK_TEMPLATES[templateIndex]
-  const selectedBlock = template.blocks.find(b => b.id === selectedBlockId) ?? null
+  const {
+    isSkeletonView,
+    setIsSkeletonView,
+    saveTemplate,
+    resetStore,
+    rows,
+    name,
+    description,
+    area,
+  } = useTemplateStore()
 
-  const handleBlockClick = (blockId: string) => {
-    setSelectedBlockId(blockId === selectedBlockId ? null : blockId)
+  useEffect(() => {
+    let mounted = true
+
+    const loadTemplate = async () => {
+      if (!id) {
+        if (mounted) {
+          setLoadError('No se encontró el template solicitado.')
+          setIsLoading(false)
+        }
+        return
+      }
+
+      setIsLoading(true)
+      setLoadError(null)
+
+      try {
+        const template = await getTemplateById(id)
+
+        if (!mounted) {
+          return
+        }
+
+        resetStore({
+          name: template.name,
+          description: template.description ?? '',
+          promptBase: template.promptBase,
+          area: template.area,
+          state: template.stateCode,
+          layoutMode: template.orientation,
+          rows: buildRowsFromLayout(template.layout),
+          isSkeletonView: false,
+        })
+        setActiveTab(1)
+        setIsInitialized(true)
+      } catch {
+        if (mounted) {
+          setLoadError('No se pudo cargar el template para editarlo.')
+        }
+      } finally {
+        if (mounted) {
+          setIsLoading(false)
+        }
+      }
+    }
+
+    void loadTemplate()
+
+    return () => {
+      mounted = false
+    }
+  }, [id, resetStore])
+
+  useEffect(() => {
+    if (!isInitialized) {
+      return
+    }
+
+    setIsSkeletonView(activeTab === 0)
+  }, [activeTab, isInitialized, setIsSkeletonView])
+
+  const handleConfirmStructure = () => {
+    setIsSkeletonView(false)
     setActiveTab(1)
   }
 
-  const handlePrev = () => {
-    setTemplateIndex(i => Math.max(0, i - 1))
-    setSelectedBlockId(null)
+  const handleSaveTemplate = async () => {
+    if (!id) {
+      error('No se encontró el template solicitado')
+      return
+    }
+
+    setIsSaving(true)
+
+    try {
+      const response = await saveTemplate(id)
+      success(response.message || 'Template actualizado exitosamente')
+      navigate('/templates')
+    } catch (requestError: unknown) {
+      if (requestError instanceof Error) {
+        error(requestError.message || 'Error al guardar el template')
+      } else {
+        error('Error al guardar el template')
+      }
+    } finally {
+      setIsSaving(false)
+    }
   }
 
-  const handleNext = () => {
-    setTemplateIndex(i => Math.min(MOCK_TEMPLATES.length - 1, i + 1))
-    setSelectedBlockId(null)
+  const isSaveDisabled = useMemo(() => {
+    const hasAtLeastOneBlock = rows.some((row) =>
+      row.columns.some((column) => column.type),
+    )
+
+    return (
+      !hasAtLeastOneBlock ||
+      name.length < 3 ||
+      name.length > 50 ||
+      description.length < 5 ||
+      description.length > 200 ||
+      area.length === 0 ||
+      isSaving
+    )
+  }, [area.length, description.length, isSaving, name.length, rows])
+
+  if (isLoading) {
+    return (
+      <Box
+        sx={{
+          minHeight: 'calc(100vh - 64px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          bgcolor: 'grey.50',
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    )
+  }
+
+  if (loadError) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Alert severity="error">{loadError}</Alert>
+      </Box>
+    )
   }
 
   return (
     <Box sx={{ bgcolor: 'grey.50', minHeight: 'calc(100vh - 64px)' }}>
-      {/* Header */}
       <Box
         sx={{
           bgcolor: 'white',
@@ -250,47 +236,21 @@ export function EditTemplatePage() {
         <IconButton size="small" onClick={() => navigate(-1)} sx={{ color: 'text.secondary' }}>
           <ChevronLeftIcon />
         </IconButton>
-
         <Box sx={{ flex: 1 }}>
-          <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: 0.5 }}>
-            {template.category}
+          <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+            Editar Template
           </Typography>
-          <Typography variant="subtitle1"  sx={{ lineHeight: 1.2, fontWeight: 700 }}>
-            {template.title}
+          <Typography variant="body2" color="text.secondary">
+            Modifica nombre, área, prompt y bloques del template seleccionado.
           </Typography>
         </Box>
-
-        <Stack direction="row" sx={{ alignItems: 'center' }} spacing={0.5}>
-          <IconButton
-            size="small"
-            onClick={handlePrev}
-            disabled={templateIndex === 0}
-            sx={{ color: 'brand.red' }}
-          >
-            <ArrowBackIosNewIcon fontSize="small" />
-          </IconButton>
-          <Typography variant="caption" color="text.secondary" sx={{ minWidth: 40, textAlign: 'center' }}>
-            {templateIndex + 1} / {MOCK_TEMPLATES.length}
-          </Typography>
-          <IconButton
-            size="small"
-            onClick={handleNext}
-            disabled={templateIndex === MOCK_TEMPLATES.length - 1}
-            sx={{ color: 'brand.red' }}
-          >
-            <ArrowForwardIosIcon fontSize="small" />
-          </IconButton>
-        </Stack>
-
         <Chip
-          label="Borrador"
+          label="Editable"
           size="small"
           variant="outlined"
           sx={{ color: 'warning.dark', borderColor: 'warning.main' }}
         />
       </Box>
-
-      {/* Content */}
       <Box
         sx={{
           display: 'flex',
@@ -299,11 +259,10 @@ export function EditTemplatePage() {
           height: 'calc(100vh - 64px - 65px)',
         }}
       >
-        {/* Panel izquierdo */}
         <Paper
           elevation={0}
           sx={{
-            flex: 1,
+            flex: 2,
             border: '1px solid',
             borderColor: 'divider',
             borderRadius: 2,
@@ -312,7 +271,6 @@ export function EditTemplatePage() {
             overflow: 'hidden',
           }}
         >
-          {/* Header del panel con toggle */}
           <Box
             sx={{
               px: 2,
@@ -325,188 +283,18 @@ export function EditTemplatePage() {
               justifyContent: 'space-between',
             }}
           >
-            <Typography variant="caption" sx={{fontWeight: 600, letterSpacing:0.5, color: "text.secondary", textTransform: 'uppercase' }}>
-              {leftView === 'blocks' ? 'Por bloques' : 'Vista previa'}
-            </Typography>
-
-            <ToggleButtonGroup
-              value={leftView}
-              exclusive
-              onChange={(_, val) => { if (val) setLeftView(val) }}
-              size="small"
-              sx={{
-                '& .MuiToggleButton-root': {
-                  py: 0.25,
-                  px: 1,
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  '&.Mui-selected': {
-                    bgcolor: 'brand.red',
-                    color: 'white',
-                    borderColor: 'brand.red',
-                    '&:hover': { bgcolor: '#e04040' },
-                  },
-                },
-              }}
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}
             >
-              <ToggleButton value="blocks" aria-label="vista por bloques">
-                <ViewModuleOutlinedIcon sx={{ fontSize: 16, mr: 0.5 }} />
-                <Typography variant="caption" sx={{ fontWeight: 600 }}>Bloques</Typography>
-              </ToggleButton>
-              <ToggleButton value="preview" aria-label="vista previa">
-                <VisibilityOutlinedIcon sx={{ fontSize: 16, mr: 0.5 }} />
-                <Typography variant="caption" sx={{ fontWeight: 600 }}>Previa</Typography>
-              </ToggleButton>
-            </ToggleButtonGroup>
-          </Box>
-
-          {/* Vista por bloques */}
-          {leftView === 'blocks' && (
-            <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
-              <Stack spacing={1.5}>
-                {template.blocks.map(block => {
-                  const config = BLOCK_TYPE_CONFIG[block.type]
-                  const isSelected = selectedBlockId === block.id
-                  return (
-                    <Paper
-                      key={block.id}
-                      onClick={() => handleBlockClick(block.id)}
-                      elevation={0}
-                      sx={{
-                        p: 0,
-                        cursor: 'pointer',
-                        borderRadius: 1.5,
-                        border: '2px solid',
-                        borderColor: isSelected ? 'brand.red' : config.borderColor,
-                        overflow: 'hidden',
-                        transition: 'all 0.15s ease',
-                        transform: isSelected ? 'translateY(-1px)' : 'none',
-                        boxShadow: isSelected ? '0 4px 12px rgba(0,0,0,0.1)' : 'none',
-                        '&:hover': {
-                          borderColor: isSelected ? 'brand.red' : 'text.secondary',
-                          transform: 'translateY(-1px)',
-                        },
-                      }}
-                    >
-                      <Box sx={{ height: 4, bgcolor: isSelected ? 'brand.red' : config.borderColor }} />
-                      <Box sx={{ p: 1.5, bgcolor: isSelected ? 'rgba(255,89,90,0.04)' : config.color }}>
-                        <Stack direction="row" sx={{ alignItems: 'center' }} spacing={0.5}>
-                          <Box sx={{ color: isSelected ? 'brand.red' : 'text.secondary', display: 'flex' }}>
-                            {config.icon}
-                          </Box>
-                          <Typography variant="caption" sx={{ fontWeight: 700, color: isSelected ? 'brand.red' : 'text.primary' }}>
-                            {block.label}
-                          </Typography>
-                          <Chip label={config.label} size="small" sx={{ height: 16, fontSize: 10, ml: 'auto' }} />
-                        </Stack>
-                        <Typography
-                          variant="caption"
-                          color="text.secondary"
-                          sx={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
-                        >
-                          {block.content}
-                        </Typography>
-                      </Box>
-                    </Paper>
-                  )
-                })}
-              </Stack>
-            </Box>
-          )}
-
-          {/* Vista previa — simula el email */}
-          {leftView === 'preview' && (
-            <Box sx={{ flex: 1, overflow: 'auto', p: 2, bgcolor: '#E5E5E5' }}>
-              {/* Contenedor del email */}
-              <Box
-                sx={{
-                  maxWidth: 520,
-                  mx: 'auto',
-                  bgcolor: 'white',
-                  borderRadius: 1,
-                  overflow: 'hidden',
-                  boxShadow: '0 2px 12px rgba(0,0,0,0.12)',
-                }}
-              >
-                {/* Header del email */}
-                <Box sx={{ bgcolor: '#FF595A', px: 3, py: 2 }}>
-                  <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)', display: 'block', mb: 0.25 }}>
-                    {template.category}
-                  </Typography>
-                  <Typography sx={{ color: 'white', fontWeight: 700, fontSize: 16, lineHeight: 1.3 }}>
-                    {template.title}
-                  </Typography>
-                </Box>
-
-                {/* Asunto */}
-                <Box sx={{ px: 3, py: 1.5, bgcolor: '#FFF8F8', borderBottom: '1px solid #FFE0E0' }}>
-                  <Typography variant="caption" color="text.secondary">
-                    <strong>Asunto:</strong> {template.subject}
-                  </Typography>
-                </Box>
-
-                {/* Bloques del email */}
-                <Box>
-                  {template.blocks.map((block, index) => (
-                    <Box key={block.id}>
-                      <EmailBlockPreview
-                        block={block}
-                        isSelected={selectedBlockId === block.id}
-                        onClick={() => handleBlockClick(block.id)}
-                      />
-                      {index < template.blocks.length - 1 && (
-                        <Divider sx={{ mx: 3, borderColor: '#F0F0F0' }} />
-                      )}
-                    </Box>
-                  ))}
-                </Box>
-
-                {/* Footer del email */}
-                <Box sx={{ bgcolor: '#F5F5F5', px: 3, py: 2, borderTop: '1px solid #E0E0E0' }}>
-                  <Typography variant="caption" sx={{color: "text.disabled", display: "block", textAlign: "center"}} >
-                    Nestlé Argentina · Template interno
-                  </Typography>
-                  <Typography variant="caption" sx={{color: "text.disabled", display: "block", textAlign: "center"}} >
-                    Para cancelar suscripción, hacé clic aquí
-                  </Typography>
-                </Box>
-              </Box>
-
-              {selectedBlockId && (
-                <Box sx={{ maxWidth: 520, mx: 'auto', mt: 1.5 }}>
-                  <Typography variant="caption" sx={{ color: '#FF595A', fontWeight: 600 }}>
-                    {template.blocks.find(b => b.id === selectedBlockId)?.label} seleccionado — editalo en el panel derecho
-                  </Typography>
-                </Box>
-              )}
-            </Box>
-          )}
-
-          {/* Footer del panel */}
-          <Box
-            sx={{
-              px: 2.5,
-              py: 1,
-              borderTop: '1px solid',
-              borderColor: 'divider',
-              bgcolor: 'grey.50',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
-            <Typography variant="caption" color="text.secondary">
-              {template.blocks.length} bloques
+              {isSkeletonView ? 'Diseño de Estructura' : 'Edición de Contenido'}
             </Typography>
-            {selectedBlockId && (
-              <Typography variant="caption" sx={{ color: 'brand.red', fontWeight: 600 }}>
-                {template.blocks.find(b => b.id === selectedBlockId)?.label} seleccionado
-              </Typography>
-            )}
+          </Box>
+          <Box sx={{ flex: 1, overflow: 'auto', p: 4, bgcolor: '#E5E5E5' }}>
+            <Template />
           </Box>
         </Paper>
-
-        {/* Panel derecho — edición */}
         <Paper
           elevation={0}
           sx={{
@@ -522,7 +310,7 @@ export function EditTemplatePage() {
           <Box sx={{ borderBottom: '1px solid', borderColor: 'divider' }}>
             <Tabs
               value={activeTab}
-              onChange={(_, v) => setActiveTab(v)}
+              onChange={(_, value) => setActiveTab(value)}
               variant="fullWidth"
               sx={{
                 '& .MuiTab-root': { fontWeight: 600, fontSize: 13 },
@@ -530,134 +318,20 @@ export function EditTemplatePage() {
                 '& .Mui-selected': { color: 'brand.red !important' },
               }}
             >
-              {TAB_LABELS.map((label, i) => (
-                <Tab key={label} label={label} value={i} />
+              {TAB_LABELS.map((label: string, index: number) => (
+                <Tab key={label} label={label} value={index} disabled={index === 2} />
               ))}
             </Tabs>
           </Box>
-
           <Box sx={{ flex: 1, overflow: 'auto', p: 2.5 }}>
-            {activeTab === 1 && (
-              selectedBlock ? (
-                <Stack spacing={2.5}>
-                  <Stack direction="row" sx={{ alignItems: 'center' }} spacing={0.5}>
-                    <Box
-                      sx={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: 1,
-                        bgcolor: BLOCK_TYPE_CONFIG[selectedBlock.type].color,
-                        border: '1px solid',
-                        borderColor: BLOCK_TYPE_CONFIG[selectedBlock.type].borderColor,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: 'text.secondary',
-                      }}
-                    >
-                      {BLOCK_TYPE_CONFIG[selectedBlock.type].icon}
-                    </Box>
-                    <Box>
-                      <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                        {selectedBlock.label}
-                      </Typography>
-                      <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                        {BLOCK_TYPE_CONFIG[selectedBlock.type].label}
-                      </Typography>
-                    </Box>
-                  </Stack>
-
-                  <Divider />
-
-                  <Box
-                    sx={{
-                      bgcolor: 'grey.50',
-                      borderRadius: 1.5,
-                      p: 2,
-                      border: '1px dashed',
-                      borderColor: 'divider',
-                      minHeight: 120,
-                    }}
-                  >
-                    <Typography variant="body2" color="text.secondary">
-                      {selectedBlock.content}
-                    </Typography>
-                  </Box>
-
-                  <Stack spacing={1}>
-                    <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                      Acciones
-                    </Typography>
-                    <Stack direction="row" sx={{ alignItems: 'center', flexWrap: 'wrap'}} spacing={1} useFlexGap>
-                      {selectedBlock.type === 'MULTIMEDIA' && (
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          startIcon={<CloudUploadOutlinedIcon />}
-                          sx={{ borderRadius: 1.5 }}
-                        >
-                          Subir imagen
-                        </Button>
-                      )}
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        startIcon={<AutoAwesomeIcon />}
-                        sx={{
-                          borderRadius: 1.5,
-                          borderColor: 'brand.red',
-                          color: 'brand.red',
-                          '&:hover': { bgcolor: 'rgba(255,89,90,0.04)', borderColor: 'brand.red' },
-                        }}
-                      >
-                        Regenerar con IA
-                      </Button>
-                    </Stack>
-                  </Stack>
-                </Stack>
-              ) : (
-                <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1, py: 6 }}>
-                  <Box
-                    sx={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: 2,
-                      bgcolor: 'grey.100',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'text.disabled',
-                    }}
-                  >
-                    <ArticleOutlinedIcon />
-                  </Box>
-                  <Typography variant="body2" sx={{color: "text.disabled", textAlign: "center"}} >
-                    Seleccioná un bloque para editar sus atributos
-                  </Typography>
-                  <Typography variant="caption" sx={{color: "text.disabled", textAlign: "center"}} >
-                    Usá la vista "Bloques" o "Previa" del panel izquierdo
-                  </Typography>
-                </Box>
-              )
-            )}
-
-            {activeTab === 0 && (
-              <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Typography variant="body2" color="text.disabled">
-                  Flujo de creación — próximamente
-                </Typography>
-              </Box>
-            )}
-
+            {activeTab === 0 && <StructureControl onConfirm={handleConfirmStructure} />}
+            {activeTab === 1 && <EditorControl />}
             {activeTab === 2 && (
-              <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Typography variant="body2" color="text.disabled">
-                  Flujo de revisión — próximamente
-                </Typography>
-              </Box>
+              <Alert severity="info">
+                La revisión del template no forma parte de este flujo de edición.
+              </Alert>
             )}
           </Box>
-
           <Box
             sx={{
               px: 2.5,
@@ -669,17 +343,16 @@ export function EditTemplatePage() {
               gap: 1,
             }}
           >
-            <Button variant="outlined" size="small" sx={{ borderRadius: 1.5 }}>
-              Guardar borrador
-            </Button>
-            <Button
-              variant="contained"
-              size="small"
-              endIcon={<SendIcon />}
-              sx={{ borderRadius: 1.5, bgcolor: 'brand.red', '&:hover': { bgcolor: '#e04040' } }}
-            >
-              Enviar a revisión
-            </Button>
+            {!isSkeletonView && activeTab === 1 && (
+              <Button
+                variant="contained"
+                fullWidth
+                onClick={handleSaveTemplate}
+                disabled={isSaveDisabled}
+              >
+                {isSaving ? 'Guardando...' : 'Guardar Template'}
+              </Button>
+            )}
           </Box>
         </Paper>
       </Box>
