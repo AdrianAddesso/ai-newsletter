@@ -1,5 +1,6 @@
 import { Card, Typography, Chip, Box } from "@mui/material";
 import type { BlockInstance } from "@shared/types/block.types";
+import placeholderImageUrl from "../../../../assets/placeholders/PlaceholderImage.svg";
 import {
   parseContent,
   resolveContentTypographySx,
@@ -14,7 +15,7 @@ interface Props {
 
 export function TextLabelCenterBackgroundFullRenderer({
   block,
-  backgroundImage = "https://placehold.net/400x400.png",
+  backgroundImage = placeholderImageUrl,
   labelContent = null,
 }: Props) {
   const values = parseContent(block.content);
