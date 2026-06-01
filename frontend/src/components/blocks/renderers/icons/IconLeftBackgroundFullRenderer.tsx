@@ -24,8 +24,10 @@ export function IconLeftBackgroundFullRenderer({
   iconUrl = placeholderIconUrl,
 }: Props) {
   const values = parseContent(block.content);
-  const { label = "Lorem ipsum dolor sit amet, consectetur adipiscing elit." } =
-    values;
+  const {
+    label = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+    bgColor,
+  } = values;
 
   const typographySx = resolveContentTypographySx(values, "label");
   const resolvedBackgroundImage = resolveRenderableBackgroundImage(
@@ -56,6 +58,7 @@ export function IconLeftBackgroundFullRenderer({
           flexGrow: 1,
           display: "flex",
           alignItems: "center",
+          backgroundColor: bgColor,
           py: 4,
           ...bgSx,
         }}

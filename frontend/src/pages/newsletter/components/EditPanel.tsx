@@ -526,28 +526,100 @@ function FieldEditor({
   }
 
   if (field.type === "color") {
+    const colorSwatches = brandKitResources?.colors ?? [];
+
     return (
-      <Stack spacing={1}>
+      <Stack spacing={1.25}>
         {!hideLabel && (
           <Typography variant="subtitle2">{field.label}</Typography>
         )}
-        <Box
-          component="input"
-          type="color"
-          value={value || "#ffffff"}
-          onChange={(event: ChangeEvent<HTMLInputElement>) =>
-            setValue(event.target.value)
-          }
-          disabled={!canEdit}
-          sx={{
-            width: "100%",
-            height: 48,
-            p: 0,
-            border: "none",
-            background: "transparent",
-            cursor: canEdit ? "pointer" : "default",
-          }}
-        />
+
+        {colorSwatches.length > 0 && (
+          <Stack spacing={0.75}>
+            <Typography variant="caption" color="text.secondary">
+              Colores del brandkit
+            </Typography>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, 50px)",
+                gap: 1,
+              }}
+            >
+              {colorSwatches.map((color) => {
+                const isSelected =
+                  normalizeHexColor(value) === normalizeHexColor(color.hex);
+
+                return (
+                  <Box
+                    key={color.id}
+                    role="button"
+                    tabIndex={canEdit ? 0 : -1}
+                    aria-label={color.name}
+                    onClick={() => canEdit && setValue(color.hex)}
+                    onKeyDown={(event) => {
+                      if (!canEdit) {
+                        return;
+                      }
+
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        setValue(color.hex);
+                      }
+                    }}
+                    sx={{
+                      width: 50,
+                      height: 50,
+                      borderRadius: 1,
+                      border: "2px solid",
+                      borderColor: isSelected ? "primary.main" : "divider",
+                      backgroundColor: color.hex,
+                      cursor: canEdit ? "pointer" : "default",
+                      boxShadow: isSelected
+                        ? "0 0 0 3px rgba(0,0,0,0.08)"
+                        : "none",
+                      transition: "transform 0.12s ease, box-shadow 0.12s ease",
+                      "&:hover": canEdit
+                        ? {
+                            transform: "translateY(-1px)",
+                          }
+                        : undefined,
+                    }}
+                  />
+                );
+              })}
+            </Box>
+          </Stack>
+        )}
+
+        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+          <Box
+            component="input"
+            type="color"
+            value={normalizeHexColor(value)}
+            onChange={(event: ChangeEvent<HTMLInputElement>) =>
+              setValue(event.target.value)
+            }
+            disabled={!canEdit}
+            sx={{
+              width: 50,
+              height: 50,
+              p: 0,
+              border: "none",
+              background: "transparent",
+              cursor: canEdit ? "pointer" : "default",
+              flexShrink: 0,
+            }}
+          />
+          <TextField
+            value={value}
+            onChange={(event) => setValue(event.target.value)}
+            placeholder="#FF595A"
+            fullWidth
+            disabled={!canEdit}
+            size="small"
+          />
+        </Stack>
       </Stack>
     );
   }
@@ -1513,4 +1585,17 @@ function replaceExtension(fileName: string, extension: string): string {
 
 function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
+
+function normalizeHexColor(value: string): string {
+  if (!value) {
+    return "#ffffff";
+  }
+
+  const trimmed = value.trim();
+  if (/^#([0-9a-fA-F]{6})$/.test(trimmed)) {
+    return trimmed;
+  }
+
+  return "#ffffff";
 }

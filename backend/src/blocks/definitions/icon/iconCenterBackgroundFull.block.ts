@@ -13,6 +13,7 @@ export class IconCenterBackgroundFullBlock extends BlockDefinition {
     { key: 'iconName', label: 'Nombre del ícono (Material)', type: 'text' as const, placeholder: 'description', required: true, defaultValue: 'description' },
     { key: 'iconAsset', label: 'Ícono', type: 'image-asset' as const, assetTypes: ['ICON', 'IMAGE'] as const },
     { key: 'label', label: 'Etiqueta', type: 'text' as const, defaultValue: 'Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat.' },
+    { key: 'bgColor', label: 'Color de fondo', type: 'color' as const },
     { key: 'backgroundAsset', label: 'Fondo', type: 'image-asset' as const, assetTypes: ['IMAGE', 'SHAPE', 'KEYWORD'] as const },
     { key: 'fontSize', label: 'Tamaño de texto', type: 'font-size' as const },
     { key: 'typographyStyle', label: 'Estilo', type: 'font-style' as const },

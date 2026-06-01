@@ -26,6 +26,7 @@ export function IconCenterBackgroundFullRenderer({
   const values = parseContent(block.content);
   const {
     label = "Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat.",
+    bgColor,
   } = values;
 
   const typographySx = resolveContentTypographySx(values, "label");
@@ -60,6 +61,7 @@ export function IconCenterBackgroundFullRenderer({
           alignItems: "center",
           justifyContent: "center",
           gap: 1.5,
+          backgroundColor: bgColor,
           py: 4,
           ...bgSx,
         }}
