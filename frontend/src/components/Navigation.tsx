@@ -109,7 +109,7 @@ export function Navigation() {
                   fontSize: "0.875rem",
                 }}
               >
-                NEWSLETTER
+                NEWSLETTER AI
               </Typography>
             </Box>
           </Box>

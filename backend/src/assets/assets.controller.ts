@@ -47,12 +47,16 @@ export class AssetsController {
   @RequirePermission(Action.CONTENT_GENERATE_AI, Resource.ASSETS)
   listAssets(
     @Query('type') type?: string,
+    @Query('brandKitId') brandKitId?: string,
   ): Promise<UploadAssetsResponseDto> {
     if (type && !this.isAssetType(type)) {
       throw new BadRequestException('Debe indicar un tipo de asset valido.');
     }
 
-    return this.assetsService.listAssets(type as asset_type | undefined);
+    return this.assetsService.listAssets(
+      type as asset_type | undefined,
+      brandKitId,
+    );
   }
 
   @Get('block-previews/:previewKey')
@@ -106,6 +110,7 @@ export class AssetsController {
     @Body('type') type: string | undefined,
     @Body('name') name: string | undefined,
     @Body('description') description: string | undefined,
+    @Body('brandKitId') brandKitId: string | undefined,
     @UploadedFiles() files: UploadedAssetFile[] | undefined,
   ): Promise<UploadAssetsResponseDto> {
     if (!files?.length) {
@@ -119,6 +124,7 @@ export class AssetsController {
     return this.assetsService.uploadAssets(files, type, {
       name,
       description,
+      brandKitId,
     });
   }
 
@@ -146,8 +152,11 @@ export class AssetsController {
   @Delete(':id')
   @HttpCode(204)
   @RequirePermission(Action.CONTENT_UPLOAD, Resource.ASSETS)
-  async deleteAsset(@Param('id') id: string): Promise<void> {
-    await this.assetsService.deleteAsset(id);
+  async deleteAsset(
+    @Param('id') id: string,
+    @Query('brandKitId') brandKitId?: string,
+  ): Promise<void> {
+    await this.assetsService.deleteAsset(id, brandKitId);
   }
 
   private isAssetType(value: string | undefined): value is asset_type {

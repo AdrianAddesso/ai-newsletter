@@ -8,6 +8,7 @@ import * as AllRenderers from "./renderers";
       // BASE
         ctaAlternative: AllRenderers.CTAAlternativeRenderer,
         ctaFull: AllRenderers.CTAFullRenderer,
+        empty: AllRenderers.EmptyRenderer,
 
         // CONTENT
         labelCenterBackgroundFull: AllRenderers.LabelCenterBackgroundFullRenderer,

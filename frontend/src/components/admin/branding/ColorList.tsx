@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState, type ChangeEvent } from 'react'
 import {
   Alert,
   Box,
@@ -11,327 +11,336 @@ import {
   DialogTitle,
   IconButton,
   Stack,
-  TextField,
   Tooltip,
   Typography,
-} from "@mui/material";
+} from '@mui/material'
 import {
   Add as AddIcon,
   DeleteOutlined as DeleteIcon,
   EditOutlined as EditIcon,
-} from "@mui/icons-material";
-import { ModalDelete } from "../../ModalDelete";
+} from '@mui/icons-material'
+import type { BrandKitResourceColor } from '../../../api/brand-kits'
+import { ModalDelete } from '../../ModalDelete'
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-export interface Color {
-    id: string;
-    name: string;
-    hex: string;
-    created_at: string;
-    created_by_user_id?: string;
+export type Color = BrandKitResourceColor
+
+interface ColorDialogProps {
+  open: boolean
+  color?: Color | null
+  onClose: () => void
+  onConfirm: (data: Pick<Color, 'name' | 'hex'>) => Promise<void>
+  isSubmitting: boolean
+}
+
+function ColorDialog({
+  open,
+  color,
+  onClose,
+  onConfirm,
+  isSubmitting,
+}: ColorDialogProps) {
+  const [name, setName] = useState(color?.name ?? '')
+  const [hex, setHex] = useState(color?.hex ?? '#000000')
+
+  const isValid = name.trim() !== '' && /^#[0-9A-Fa-f]{6}$/.test(hex)
+
+  const handleSubmit = async (): Promise<void> => {
+    if (!isValid) {
+      return
     }
 
-    // ---------------------------------------------------------------------------
-    // Sub-component: Color dialog (add / edit)
-    // ---------------------------------------------------------------------------
-    interface ColorDialogProps {
-    open: boolean;
-    color?: Color | null;
-    onClose: () => void;
-    onConfirm: (data: Pick<Color, "name" | "hex">) => void;
-    }
+    await onConfirm({ name: name.trim(), hex: hex.toUpperCase() })
+  }
 
-    function ColorDialog({ open, color, onClose, onConfirm }: ColorDialogProps) {
-    const [name, setName] = useState("");
-    const [hex, setHex] = useState("#000000");
-
-    // Sync when dialog opens
-    useState(() => {
-        if (open) {
-        setName(color?.name ?? "");
-        setHex(color?.hex ?? "#000000");
-        }
-    });
-
-    // Keep form in sync with prop changes
-    useMemo(() => {
-        if (open) {
-        setName(color?.name ?? "");
-        setHex(color?.hex ?? "#000000");
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [open]);
-
-    const isValid = name.trim() !== "" && /^#[0-9A-Fa-f]{6}$/.test(hex);
-
-    const handleSubmit = () => {
-        onConfirm({ name: name.trim(), hex });
-    };
-
-    return (
-        <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
-        <DialogTitle>{color ? "Editar color" : "Nuevo color"}</DialogTitle>
-        <DialogContent dividers>
-            <Stack spacing={2.5} sx={{ pt: 1 }}>
-            {/* Color picker + hex preview */}
-            <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
-                <Box
-                component="input"
-                type="color"
-                value={hex}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setHex(e.target.value)
-                }
-                sx={{
-                    width: 48,
-                    height: 48,
-                    border: "1px solid",
-                    borderColor: "divider",
-                    borderRadius: 1,
-                    cursor: "pointer",
-                    padding: "2px",
-                    bgcolor: "transparent",
-                }}
-                />
-                <TextField
-                label="Código HEX"
-                value={hex}
-                onChange={(e) => setHex(e.target.value)}
-                size="small"
-                placeholder="#FF0000"
-                sx={{ flex: 1 }}
-                error={hex !== "" && !/^#[0-9A-Fa-f]{6}$/.test(hex)}
-                helperText={
-                    hex !== "" && !/^#[0-9A-Fa-f]{6}$/.test(hex)
-                    ? "Formato inválido. Usá #RRGGBB"
-                    : undefined
-                }
-                />
-            </Stack>
-
-            <TextField
-                label="Nombre del color"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                fullWidth
-                size="small"
-                required
-                placeholder="ej: Rojo Corporativo"
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
+      <DialogTitle>{color ? 'Editar color' : 'Nuevo color'}</DialogTitle>
+      <DialogContent dividers>
+        <Stack spacing={2.5} sx={{ pt: 1 }}>
+          <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
+            <Box
+              component="input"
+              type="color"
+              value={hex}
+              onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                setHex(event.target.value)
+              }
+              sx={{
+                width: 48,
+                height: 48,
+                border: '1px solid',
+                borderColor: 'divider',
+                borderRadius: 1,
+                cursor: 'pointer',
+                padding: '2px',
+                bgcolor: 'transparent',
+              }}
             />
-            </Stack>
-        </DialogContent>
-        <DialogActions>
-            <Button onClick={onClose}>Cancelar</Button>
-            <Button variant="contained" onClick={handleSubmit} disabled={!isValid}>
-            {color ? "Guardar cambios" : "Agregar color"}
-            </Button>
-        </DialogActions>
-        </Dialog>
-    );
-    }
-
-    // ---------------------------------------------------------------------------
-    // Main component
-    // ---------------------------------------------------------------------------
-    const INITIAL_COLORS: Color[] = [
-    { id: "1", name: "Rojo Nestle", hex: "#DC0000", created_at: "2024-01-01" },
-    { id: "2", name: "Gris Oscuro", hex: "#333333", created_at: "2024-01-01" },
-    { id: "3", name: "Blanco", hex: "#FFFFFF", created_at: "2024-01-01" },
-    {
-        id: "4",
-        name: "Azul Corporativo",
-        hex: "#004B87",
-        created_at: "2024-01-02",
-    },
-    ];
-
-    interface ColorListProps {
-    /** Optional controlled list — if provided the component is controlled */
-    colors?: Color[];
-    onChange?: (colors: Color[]) => void;
-    }
-
-    export function ColorList({
-    colors: controlledColors,
-    onChange,
-    }: ColorListProps) {
-    const [internalColors, setInternalColors] = useState<Color[]>(INITIAL_COLORS);
-    const [dialogOpen, setDialogOpen] = useState(false);
-    const [editTarget, setEditTarget] = useState<Color | null>(null);
-    const [deleteId, setDeleteId] = useState<string | null>(null);
-
-    const colors = controlledColors ?? internalColors;
-
-    const setColors = (updater: (prev: Color[]) => Color[]) => {
-        const next = updater(colors);
-        if (onChange) {
-        onChange(next);
-        } else {
-        setInternalColors(next);
-        }
-    };
-
-    const openAdd = () => {
-        setEditTarget(null);
-        setDialogOpen(true);
-    };
-
-    const openEdit = (color: Color) => {
-        setEditTarget(color);
-        setDialogOpen(true);
-    };
-
-    const handleDialogClose = () => {
-        setDialogOpen(false);
-        setEditTarget(null);
-    };
-
-    const handleConfirm = (data: Pick<Color, "name" | "hex">) => {
-        if (editTarget) {
-        setColors((prev) =>
-            prev.map((c) => (c.id === editTarget.id ? { ...c, ...data } : c)),
-        );
-        } else {
-        const newColor: Color = {
-            ...data,
-            id: String(Date.now()),
-            created_at: new Date().toISOString().split("T")[0],
-        };
-        setColors((prev) => [...prev, newColor]);
-        }
-        handleDialogClose();
-    };
-
-    const handleDelete = () => {
-        setColors((prev) => prev.filter((c) => c.id !== deleteId));
-        setDeleteId(null);
-    };
-
-    return (
-        <Card variant="outlined" sx={{ borderRadius: 2 }}>
-        <CardContent>
-            <Stack spacing={3}>
-            {/* Header */}
-            <Stack
-                direction="row"
-                sx={{ justifyContent: "space-between", alignItems: "center" }}
-            >
-                <Stack spacing={0.5}>
-                <Typography variant="subtitle1">
-                    Paleta de colores
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                    Definí los colores corporativos de este brandkit.
-                </Typography>
-                </Stack>
-                <Button
-                variant="outlined"
-                size="small"
-                startIcon={<AddIcon />}
-                onClick={openAdd}
-                >
-                Agregar color
-                </Button>
-            </Stack>
-
-            {/* Color grid */}
-            {colors.length === 0 ? (
-                <Alert severity="info">Aún no hay colores definidos.</Alert>
-            ) : (
-                <Box
+            <Box sx={{ flex: 1 }}>
+              <Typography variant="caption" color="text.secondary">
+                Codigo HEX
+              </Typography>
+              <Box
+                component="input"
+                value={hex}
+                onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                  setHex(event.target.value)
+                }
+                placeholder="#FF0000"
                 sx={{
-                    display: "grid",
-                    gap: 1.5,
-                    gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
+                  width: '100%',
+                  mt: 0.5,
+                  px: 1.5,
+                  py: 1,
+                  borderRadius: 1,
+                  border: '1px solid',
+                  borderColor:
+                    hex !== '' && !/^#[0-9A-Fa-f]{6}$/.test(hex)
+                      ? 'error.main'
+                      : 'divider',
                 }}
-                >
-                {colors.map((color) => (
-                    <Box
-                    key={color.id}
-                    sx={{
-                        border: "1px solid",
-                        borderColor: "divider",
-                        borderRadius: 2,
-                        overflow: "hidden",
-                    }}
-                    >
-                    {/* Color swatch */}
-                    <Box
-                        sx={{
-                        height: 56,
-                        bgcolor: color.hex,
-                        border:
-                            color.hex.toUpperCase() === "#FFFFFF"
-                            ? "1px solid"
-                            : "none",
-                        borderColor: "divider",
-                        }}
-                    />
-                    {/* Meta + actions */}
-                    <Stack
-                        direction="row"
-                        sx={{
-                        px: 1,
-                        py: 0.5,
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        }}
-                    >
-                        <Stack spacing={0}>
-                        <Typography variant="caption" noWrap>
-                            {color.name}
-                        </Typography>
-                        <Typography
-                            variant="caption"
-                            color="text.secondary"
-                            sx={{ fontFamily: "monospace", fontSize: "0.65rem" }}
-                        >
-                            {color.hex.toUpperCase()}
-                        </Typography>
-                        </Stack>
-                        <Stack direction="row" spacing={0}>
-                        <Tooltip title="Editar">
-                            <IconButton
-                            size="small"
-                            onClick={() => openEdit(color)}
-                            >
-                            <EditIcon sx={{ fontSize: 14 }} />
-                            </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Borrar">
-                            <IconButton
-                            size="small"
-                            color="error"
-                            onClick={() => setDeleteId(color.id)}
-                            >
-                            <DeleteIcon sx={{ fontSize: 14 }} />
-                            </IconButton>
-                        </Tooltip>
-                        </Stack>
-                    </Stack>
-                    </Box>
-                ))}
-                </Box>
-            )}
+              />
+              {hex !== '' && !/^#[0-9A-Fa-f]{6}$/.test(hex) ? (
+                <Typography variant="caption" color="error">
+                  Formato invalido. Usa #RRGGBB
+                </Typography>
+              ) : null}
+            </Box>
+          </Stack>
+
+          <Box>
+            <Typography variant="caption" color="text.secondary">
+              Nombre del color
+            </Typography>
+            <Box
+              component="input"
+              value={name}
+              onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                setName(event.target.value)
+              }
+              placeholder="ej: Rojo Corporativo"
+              sx={{
+                width: '100%',
+                mt: 0.5,
+                px: 1.5,
+                py: 1,
+                borderRadius: 1,
+                border: '1px solid',
+                borderColor: 'divider',
+              }}
+            />
+          </Box>
+        </Stack>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Cancelar</Button>
+        <Button
+          variant="contained"
+          onClick={() => void handleSubmit()}
+          disabled={!isValid || isSubmitting}
+        >
+          {color ? 'Guardar cambios' : 'Agregar color'}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  )
+}
+
+interface ColorListProps {
+  colors: Color[]
+  isLoading?: boolean
+  isDisabled?: boolean
+  onCreateColor: (data: Pick<Color, 'name' | 'hex'>) => Promise<void>
+  onUpdateColor: (colorId: string, data: Pick<Color, 'name' | 'hex'>) => Promise<void>
+  onDeleteColor: (colorId: string) => Promise<void>
+}
+
+export function ColorList({
+  colors,
+  isLoading = false,
+  isDisabled = false,
+  onCreateColor,
+  onUpdateColor,
+  onDeleteColor,
+}: ColorListProps) {
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [editTarget, setEditTarget] = useState<Color | null>(null)
+  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const openAdd = (): void => {
+    setEditTarget(null)
+    setDialogOpen(true)
+  }
+
+  const openEdit = (color: Color): void => {
+    setEditTarget(color)
+    setDialogOpen(true)
+  }
+
+  const handleDialogClose = (): void => {
+    if (isSubmitting) {
+      return
+    }
+
+    setDialogOpen(false)
+    setEditTarget(null)
+  }
+
+  const handleConfirm = async (data: Pick<Color, 'name' | 'hex'>): Promise<void> => {
+    setIsSubmitting(true)
+
+    try {
+      if (editTarget) {
+        await onUpdateColor(editTarget.id, data)
+      } else {
+        await onCreateColor(data)
+      }
+
+      setDialogOpen(false)
+      setEditTarget(null)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleDelete = async (): Promise<void> => {
+    if (!deleteId) {
+      return
+    }
+
+    setIsSubmitting(true)
+
+    try {
+      await onDeleteColor(deleteId)
+      setDeleteId(null)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  return (
+    <Card variant="outlined" sx={{ borderRadius: 2 }}>
+      <CardContent>
+        <Stack spacing={3}>
+          <Stack
+            direction="row"
+            sx={{ justifyContent: 'space-between', alignItems: 'center' }}
+          >
+            <Stack spacing={0.5}>
+              <Typography variant="subtitle1">Paleta de colores</Typography>
+              <Typography variant="body2" color="text.secondary">
+                Define los colores corporativos de este brandkit.
+              </Typography>
             </Stack>
-        </CardContent>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<AddIcon />}
+              onClick={openAdd}
+              disabled={isDisabled || isLoading}
+            >
+              Agregar color
+            </Button>
+          </Stack>
 
-        {/* Dialogs */}
-        <ColorDialog
-            open={dialogOpen}
-            color={editTarget}
-            onClose={handleDialogClose}
-            onConfirm={handleConfirm}
-        />
+          {isDisabled ? (
+            <Alert severity="info">
+              Guarda el brandkit primero para poder administrar sus colores.
+            </Alert>
+          ) : isLoading ? (
+            <Alert severity="info">Cargando colores del brandkit...</Alert>
+          ) : colors.length === 0 ? (
+            <Alert severity="info">Aun no hay colores definidos.</Alert>
+          ) : (
+            <Box
+              sx={{
+                display: 'grid',
+                gap: 1.5,
+                gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
+              }}
+            >
+              {colors.map((color) => (
+                <Box
+                  key={color.id}
+                  sx={{
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    borderRadius: 2,
+                    overflow: 'hidden',
+                  }}
+                >
+                  <Box
+                    sx={{
+                      height: 56,
+                      bgcolor: color.hex,
+                      border:
+                        color.hex.toUpperCase() === '#FFFFFF'
+                          ? '1px solid'
+                          : 'none',
+                      borderColor: 'divider',
+                    }}
+                  />
+                  <Stack
+                    direction="row"
+                    sx={{
+                      px: 1,
+                      py: 0.5,
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                    }}
+                  >
+                    <Stack spacing={0}>
+                      <Typography variant="caption" noWrap>
+                        {color.name}
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ fontFamily: 'monospace', fontSize: '0.65rem' }}
+                      >
+                        {color.hex.toUpperCase()}
+                      </Typography>
+                    </Stack>
+                    <Stack direction="row" spacing={0}>
+                      <Tooltip title="Editar">
+                        <IconButton size="small" onClick={() => openEdit(color)}>
+                          <EditIcon sx={{ fontSize: 14 }} />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Borrar">
+                        <IconButton
+                          size="small"
+                          color="error"
+                          onClick={() => setDeleteId(color.id)}
+                        >
+                          <DeleteIcon sx={{ fontSize: 14 }} />
+                        </IconButton>
+                      </Tooltip>
+                    </Stack>
+                  </Stack>
+                </Box>
+              ))}
+            </Box>
+          )}
+        </Stack>
+      </CardContent>
 
-        <ModalDelete
-            open={Boolean(deleteId)}
-            description="Esta acción eliminará el color de forma permanente."
-            onClose={() => setDeleteId(null)}
-            onConfirm={handleDelete}
-        />
-        </Card>
-    );
+      <ColorDialog
+        key={editTarget?.id ?? (dialogOpen ? 'new' : 'closed')}
+        open={dialogOpen}
+        color={editTarget}
+        onClose={handleDialogClose}
+        onConfirm={handleConfirm}
+        isSubmitting={isSubmitting}
+      />
+
+      <ModalDelete
+        open={Boolean(deleteId)}
+        description="Esta accion eliminara el color de forma permanente."
+        onClose={() => setDeleteId(null)}
+        onConfirm={() => void handleDelete()}
+      />
+    </Card>
+  )
 }

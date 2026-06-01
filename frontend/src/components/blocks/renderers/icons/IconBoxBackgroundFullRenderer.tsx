@@ -1,5 +1,6 @@
 import { Card, Typography, Box, CardMedia, Grid, Icon } from "@mui/material";
 import type { BlockInstance } from "@shared/types/block.types";
+import placeholderIconUrl from "../../../../assets/placeholders/PlaceholderIcon.svg";
 import {
   parseContent,
   resolveContentTypographySx,
@@ -15,6 +16,7 @@ interface Props {
     block: BlockInstance;
     editMode?: boolean;
     backgroundImage?: string | null;
+    iconUrl?: string | null;
     titleContent?: string | null;
     iconItems?: IconItem[];
 }
@@ -28,7 +30,8 @@ const DEFAULT_ICON_ITEMS: IconItem[] = [
 
 export function IconBoxBackgroundFullRenderer({
   block,
-  backgroundImage = "https://placehold.net/400x400.png",
+  backgroundImage = null,
+  iconUrl = placeholderIconUrl,
   titleContent = null,
   iconItems = DEFAULT_ICON_ITEMS,
 }: Props) {
@@ -96,10 +99,10 @@ export function IconBoxBackgroundFullRenderer({
                 px: 0.5,
               }}
             >
-              {item.iconUrl ? (
+              {(item.iconUrl ?? iconUrl) ? (
                 <CardMedia
                   component="img"
-                  image={item.iconUrl}
+                  image={item.iconUrl ?? iconUrl ?? undefined}
                   alt="Icon"
                   sx={{
                     width: 32,
