@@ -1,5 +1,5 @@
 import { Alert, Box, Chip, Paper, Stack, Typography } from '@mui/material'
-import { BlockRenderer } from '../../../components/blocks/BlockRenderer'
+import { BlockRenderer } from '../../../components/blocks/BlockRenderer' 
 import type {
   NewsletterBlock,
   NewsletterBlockAssetBinding,
