@@ -1,55 +1,57 @@
-import { Card, Typography, Box, CardMedia, Grid, Icon } from "@mui/material";
+import { Card, Typography, Box, CardMedia, Grid } from "@mui/material";
 import type { BlockInstance } from "@shared/types/block.types";
 import placeholderIconUrl from "../../../../assets/placeholders/PlaceholderIcon.svg";
 import {
   parseContent,
   resolveContentTypographySx,
 } from "../../../../utils/blockContent";
+import {
+  buildBackgroundImageSx,
+  resolveRenderableBackgroundImage,
+} from "../utils/backgroundImage";
 
 interface IconItem {
-    iconUrl?: string | null;
-    iconName?: string;
-    text?: string;
+  iconUrl?: string | null;
+  text?: string;
 }
 
 interface Props {
-    block: BlockInstance;
-    editMode?: boolean;
-    backgroundImage?: string | null;
-    iconUrl?: string | null;
-    titleContent?: string | null;
-    iconItems?: IconItem[];
+  block: BlockInstance;
+  editMode?: boolean;
+  backgroundImage?: string | null;
+  iconUrl?: string | null;
+  titleContent?: string | null;
+  iconItems?: IconItem[];
 }
 
 const DEFAULT_ICON_ITEMS: IconItem[] = [
-    { text: "Lorem ipsum dolor sit amet consectetur." },
-    { text: "Adipiscing elit provident blanditiis." },
-    { text: "Natus ratione necessitatibus consequuntur." },
-    { text: "Eum voluptas iure repellat voluptate." },
+  { text: "Lorem ipsum dolor sit amet consectetur." },
+  { text: "Adipiscing elit provident blanditiis." },
+  { text: "Natus ratione necessitatibus consequuntur." },
+  { text: "Eum voluptas iure repellat voluptate." },
 ];
 
 export function IconBoxBackgroundFullRenderer({
   block,
-  backgroundImage = null,
+  backgroundImage,
+  editMode = false,
   iconUrl = placeholderIconUrl,
   titleContent = null,
   iconItems = DEFAULT_ICON_ITEMS,
 }: Props) {
   const values = parseContent(block.content);
   const {
-    iconName = "description",
     label = titleContent ?? "Lorem ipsum dolor sit amet consectetur.",
     bgColor,
   } = values;
+
   const typographySx = resolveContentTypographySx(values, "label");
-  const bgSx = backgroundImage
-    ? {
-        backgroundImage: `url("${backgroundImage}")`,
-        backgroundSize: "cover",
-        backgroundRepeat: "no-repeat",
-        backgroundPosition: "center",
-      }
-    : {};
+  const resolvedBackgroundImage = resolveRenderableBackgroundImage(
+    backgroundImage,
+    editMode,
+    placeholderIconUrl,
+  );
+  const bgSx = buildBackgroundImageSx(resolvedBackgroundImage);
 
   return (
     <Card
@@ -82,53 +84,54 @@ export function IconBoxBackgroundFullRenderer({
         <Typography
           variant="body1"
           color="text.secondary"
-          sx={{ width: "90%", textAlign: "center", fontWeight: 500, ...typographySx }}
+          sx={{
+            width: "90%",
+            textAlign: "center",
+            fontWeight: 500,
+            ...typographySx,
+          }}
         >
           {label}
         </Typography>
         <Grid container sx={{ width: "90%" }}>
-          {iconItems.slice(0, 4).map((item, index) => (
-            <Grid
-              key={index}
-              size={{ xs: 6 }}
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 1,
-                py: 1,
-                px: 0.5,
-              }}
-            >
-              {(item.iconUrl ?? iconUrl) ? (
-                <CardMedia
-                  component="img"
-                  image={item.iconUrl ?? iconUrl ?? undefined}
-                  alt="Icon"
-                  sx={{
-                    width: 32,
-                    height: 32,
-                    objectFit: "contain",
-                    flexShrink: 0,
-                  }}
-                />
-              ) : (
-                <Icon
-                  fontSize="medium"
-                  color="action"
-                  sx={{ flexShrink: 0 }}
-                >
-                  {item.iconName ?? iconName}
-                </Icon>
-              )}
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{ textAlign: "left", ...typographySx }}
+          {iconItems.slice(0, 4).map((item, index) => {
+            const currentIconUrl = item.iconUrl ?? iconUrl;
+
+            return (
+              <Grid
+                key={index}
+                size={{ xs: 6 }}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                  py: 1,
+                  px: 0.5,
+                }}
               >
-                {item.text ?? label}
-              </Typography>
-            </Grid>
-          ))}
+                {currentIconUrl && (
+                  <CardMedia
+                    component="img"
+                    image={currentIconUrl}
+                    alt="Icon"
+                    sx={{
+                      width: 32,
+                      height: 32,
+                      objectFit: "contain",
+                      flexShrink: 0,
+                    }}
+                  />
+                )}
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ textAlign: "left", ...typographySx }}
+                >
+                  {item.text ?? label}
+                </Typography>
+              </Grid>
+            );
+          })}
         </Grid>
       </Box>
     </Card>
