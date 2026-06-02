@@ -59,6 +59,7 @@ type UploadStatus =
   | "error"
   | "cancelled";
 type AssetSourceTab = "global" | "brandkit";
+type BackgroundMode = "image" | "color" | "none";
 
 type Props = {
   selectedBlock: NewsletterBlock;
@@ -129,6 +130,123 @@ function supportsIndependentTypography(field: BlockEditField): boolean {
   return supportsIndependentTextSize(field);
 }
 
+function resolveBackgroundMode(
+  storedMode: string | undefined,
+  hasBackgroundAsset: boolean,
+  hasBackgroundColor: boolean,
+): BackgroundMode {
+  if (
+    storedMode === "image" ||
+    storedMode === "color" ||
+    storedMode === "none"
+  ) {
+    return storedMode;
+  }
+
+  if (hasBackgroundAsset) {
+    return "image";
+  }
+
+  if (hasBackgroundColor) {
+    return "color";
+  }
+
+  return "image";
+}
+
+function BackgroundStyleFieldEditor({
+  block,
+  backgroundAssetField,
+  backgroundColorField,
+  backgroundMode,
+  brandKitResources,
+  canEdit,
+  onUpdateBlock,
+}: {
+  block: NewsletterBlock;
+  backgroundAssetField: BlockEditField;
+  backgroundColorField: BlockEditField | undefined;
+  backgroundMode: BackgroundMode;
+  brandKitResources: BrandKitResources | null;
+  canEdit: boolean;
+  onUpdateBlock: (block: NewsletterBlock) => void;
+}) {
+  const values = parseContent<Record<string, string>>(block.content);
+  const availableModes: Array<{ value: BackgroundMode; label: string }> = [
+    { value: "image", label: "Imagen" },
+  ];
+
+  if (backgroundColorField) {
+    availableModes.push({ value: "color", label: "Color" });
+  }
+
+  availableModes.push({ value: "none", label: "Sin fondo" });
+
+  const effectiveMode: BackgroundMode =
+    availableModes.find((option) => option.value === backgroundMode)?.value ??
+    "image";
+
+  return (
+    <Stack
+      spacing={1.5}
+      sx={{
+        border: "1px solid",
+        borderColor: "divider",
+        borderRadius: 1.5,
+        p: 1.5,
+        backgroundColor: "background.paper",
+      }}
+    >
+      <Typography variant="subtitle2">{backgroundAssetField.label}</Typography>
+
+      <TextField
+        select
+        label="Tipo de fondo"
+        value={effectiveMode}
+        onChange={(event) =>
+          onUpdateBlock(
+            updateBlockValue(
+              block,
+              "backgroundMode",
+              event.target.value as BackgroundMode,
+            ),
+          )
+        }
+        fullWidth
+        disabled={!canEdit}
+      >
+        {availableModes.map((option) => (
+          <MenuItem key={option.value} value={option.value}>
+            {option.label}
+          </MenuItem>
+        ))}
+      </TextField>
+
+      {effectiveMode === "image" && (
+        <ImageAssetFieldEditor
+          block={block}
+          field={backgroundAssetField}
+          canEdit={canEdit}
+          brandKitResources={brandKitResources}
+          onUpdateBlock={onUpdateBlock}
+        />
+      )}
+
+      {effectiveMode === "color" && backgroundColorField && (
+        <FieldEditor
+          block={block}
+          field={backgroundColorField}
+          value={values[backgroundColorField.key] ?? ""}
+          brandKitResources={brandKitResources}
+          canEdit={canEdit}
+          onUpdateBlock={onUpdateBlock}
+          hideLabel
+        />
+      )}
+    </Stack>
+  );
+}
+
 export function EditPanel({
   selectedBlock,
   brandKitResources,
@@ -158,12 +276,27 @@ export function EditPanel({
   const hasTextFontFamilyControl =
     selectedBlock.editFields.some((field) => field.type === "font-family") &&
     (brandKitResources?.fonts.length ?? 0) > 0;
+  const backgroundAssetField = selectedBlock.editFields.find(
+    (field) => field.key === "backgroundAsset",
+  );
+  const iconAssetField = selectedBlock.editFields.find(
+    (field) => field.key === "iconAsset",
+  );
+  const backgroundColorField = selectedBlock.editFields.find(
+    (field) => field.key === "bgColor" || field.key === "overlayColor",
+  );
+  const backgroundMode = resolveBackgroundMode(
+    values.backgroundMode,
+    getBlockAssetBinding(selectedBlock, "backgroundAsset") !== undefined,
+    Boolean(values.bgColor?.trim() || values.overlayColor?.trim()),
+  );
 
   return (
     <Stack
       sx={{
-        height: "calc(100vh - 180px)",
-        minHeight: 0,
+        height: "100%",
+        width: "100%",
+        minHeight: "calc(100vh - 48px)",
         border: "1px solid",
         borderColor: "divider",
         borderRadius: 2,
@@ -173,8 +306,6 @@ export function EditPanel({
       <Box
         sx={{
           flex: 1,
-          minHeight: 0,
-          overflowY: "auto",
           px: 2,
           py: 2,
         }}
@@ -190,6 +321,50 @@ export function EditPanel({
             }
 
             if (field.type === "font-family") {
+              return null;
+            }
+
+            if (field.key === "iconName") {
+              return null;
+            }
+
+            if (field.key === "backgroundAsset") {
+              if (!backgroundAssetField) {
+                return null;
+              }
+
+              return (
+                <BackgroundStyleFieldEditor
+                  key="background-style"
+                  block={selectedBlock}
+                  backgroundAssetField={backgroundAssetField}
+                  backgroundColorField={backgroundColorField}
+                  backgroundMode={backgroundMode}
+                  brandKitResources={brandKitResources}
+                  canEdit={canEdit}
+                  onUpdateBlock={onUpdateBlock}
+                />
+              );
+            }
+
+            if (field.key === "iconAsset") {
+              if (!iconAssetField) {
+                return null;
+              }
+
+              return (
+                <ImageAssetFieldEditor
+                  key="icon-asset"
+                  block={selectedBlock}
+                  field={iconAssetField}
+                  canEdit={canEdit}
+                  brandKitResources={brandKitResources}
+                  onUpdateBlock={onUpdateBlock}
+                />
+              );
+            }
+
+            if (field.key === "bgColor" || field.key === "overlayColor") {
               return null;
             }
 
@@ -260,9 +435,7 @@ export function EditPanel({
             </>
           )}
 
-          <ReviewHistoryPanel
-            comments={reviewHistory}
-          />
+          <ReviewHistoryPanel comments={reviewHistory} />
         </Stack>
       </Box>
 
@@ -275,7 +448,11 @@ export function EditPanel({
           py: 2,
         }}
       >
-        <Stack direction={{ xs: "column", md: "row" }} sx={{justifyContent:"space-between"}}  spacing={1.5}>
+        <Stack
+          direction={{ xs: "column", md: "row" }}
+          sx={{ justifyContent: "space-between" }}
+          spacing={1.5}
+        >
           <Button
             variant="outlined"
             color="error"
@@ -349,28 +526,100 @@ function FieldEditor({
   }
 
   if (field.type === "color") {
+    const colorSwatches = brandKitResources?.colors ?? [];
+
     return (
-      <Stack spacing={1}>
+      <Stack spacing={1.25}>
         {!hideLabel && (
           <Typography variant="subtitle2">{field.label}</Typography>
         )}
-        <Box
-          component="input"
-          type="color"
-          value={value || "#ffffff"}
-          onChange={(event: ChangeEvent<HTMLInputElement>) =>
-            setValue(event.target.value)
-          }
-          disabled={!canEdit}
-          sx={{
-            width: "100%",
-            height: 48,
-            p: 0,
-            border: "none",
-            background: "transparent",
-            cursor: canEdit ? "pointer" : "default",
-          }}
-        />
+
+        {colorSwatches.length > 0 && (
+          <Stack spacing={0.75}>
+            <Typography variant="caption" color="text.secondary">
+              Colores del brandkit
+            </Typography>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, 50px)",
+                gap: 1,
+              }}
+            >
+              {colorSwatches.map((color) => {
+                const isSelected =
+                  normalizeHexColor(value) === normalizeHexColor(color.hex);
+
+                return (
+                  <Box
+                    key={color.id}
+                    role="button"
+                    tabIndex={canEdit ? 0 : -1}
+                    aria-label={color.name}
+                    onClick={() => canEdit && setValue(color.hex)}
+                    onKeyDown={(event) => {
+                      if (!canEdit) {
+                        return;
+                      }
+
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        setValue(color.hex);
+                      }
+                    }}
+                    sx={{
+                      width: 50,
+                      height: 50,
+                      borderRadius: 1,
+                      border: "2px solid",
+                      borderColor: isSelected ? "primary.main" : "divider",
+                      backgroundColor: color.hex,
+                      cursor: canEdit ? "pointer" : "default",
+                      boxShadow: isSelected
+                        ? "0 0 0 3px rgba(0,0,0,0.08)"
+                        : "none",
+                      transition: "transform 0.12s ease, box-shadow 0.12s ease",
+                      "&:hover": canEdit
+                        ? {
+                            transform: "translateY(-1px)",
+                          }
+                        : undefined,
+                    }}
+                  />
+                );
+              })}
+            </Box>
+          </Stack>
+        )}
+
+        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+          <Box
+            component="input"
+            type="color"
+            value={normalizeHexColor(value)}
+            onChange={(event: ChangeEvent<HTMLInputElement>) =>
+              setValue(event.target.value)
+            }
+            disabled={!canEdit}
+            sx={{
+              width: 50,
+              height: 50,
+              p: 0,
+              border: "none",
+              background: "transparent",
+              cursor: canEdit ? "pointer" : "default",
+              flexShrink: 0,
+            }}
+          />
+          <TextField
+            value={value}
+            onChange={(event) => setValue(event.target.value)}
+            placeholder="#FF595A"
+            fullWidth
+            disabled={!canEdit}
+            size="small"
+          />
+        </Stack>
       </Stack>
     );
   }
@@ -1336,4 +1585,17 @@ function replaceExtension(fileName: string, extension: string): string {
 
 function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
+
+function normalizeHexColor(value: string): string {
+  if (!value) {
+    return "#ffffff";
+  }
+
+  const trimmed = value.trim();
+  if (/^#([0-9a-fA-F]{6})$/.test(trimmed)) {
+    return trimmed;
+  }
+
+  return "#ffffff";
 }

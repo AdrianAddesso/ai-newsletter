@@ -5,6 +5,10 @@ import {
   parseContent,
   resolveContentTypographySx,
 } from "../../../../utils/blockContent";
+import {
+  buildBackgroundImageSx,
+  resolveRenderableBackgroundImage,
+} from "../utils/backgroundImage";
 
 interface Props {
   block: BlockInstance;
@@ -14,7 +18,8 @@ interface Props {
 
 export function TextLeftBackgroundFullRenderer({
   block,
-  backgroundImage = placeholderImageUrl,
+  backgroundImage,
+  editMode = false,
 }: Props) {
   const values = parseContent(block.content);
   const {
@@ -22,14 +27,12 @@ export function TextLeftBackgroundFullRenderer({
     bgColor,
   } = values;
   const typographySx = resolveContentTypographySx(values, "text");
-  const bgSx = backgroundImage
-    ? {
-        backgroundImage: `url("${backgroundImage}")`,
-        backgroundSize: "cover",
-        backgroundRepeat: "no-repeat",
-        backgroundPosition: "center",
-      }
-    : {};
+  const resolvedBackgroundImage = resolveRenderableBackgroundImage(
+    backgroundImage,
+    editMode,
+    placeholderImageUrl,
+  );
+  const bgSx = buildBackgroundImageSx(resolvedBackgroundImage);
 
   return (
     <Card

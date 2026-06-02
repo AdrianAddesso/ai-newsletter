@@ -5,6 +5,10 @@ import {
   parseContent,
   resolveContentTypographySx,
 } from "../../../../utils/blockContent";
+import {
+  buildBackgroundImageSx,
+  resolveRenderableBackgroundImage,
+} from "../utils/backgroundImage";
 
 interface Props {
   block: BlockInstance;
@@ -15,7 +19,8 @@ interface Props {
 
 export function TextLabelCenterBackgroundFullRenderer({
   block,
-  backgroundImage = placeholderImageUrl,
+  backgroundImage,
+  editMode = false,
   labelContent = null,
 }: Props) {
   const values = parseContent(block.content);
@@ -26,14 +31,12 @@ export function TextLabelCenterBackgroundFullRenderer({
   } = values;
   const textTypographySx = resolveContentTypographySx(values, "text");
   const labelTypographySx = resolveContentTypographySx(values, "label");
-  const bgSx = backgroundImage
-    ? {
-        backgroundImage: `url("${backgroundImage}")`,
-        backgroundSize: "cover",
-        backgroundRepeat: "no-repeat",
-        backgroundPosition: "center",
-      }
-    : {};
+  const resolvedBackgroundImage = resolveRenderableBackgroundImage(
+    backgroundImage,
+    editMode,
+    placeholderImageUrl,
+  );
+  const bgSx = buildBackgroundImageSx(resolvedBackgroundImage);
 
   return (
     <Card
