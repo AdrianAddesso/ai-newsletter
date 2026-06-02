@@ -29,3 +29,14 @@ export interface CreateTemplateResponse {
   };
   status: number;
 }
+
+export interface TemplateMutationResponse {
+  message: string;
+  status: number;
+  newTemplate?: {
+    payload: TemplatePayload;
+  };
+  updatedTemplate?: {
+    payload: TemplatePayload;
+  };
+}

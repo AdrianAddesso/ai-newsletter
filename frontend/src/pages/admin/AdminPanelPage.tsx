@@ -5,7 +5,6 @@ import {
   Tab,
   Tabs,
   Typography,
-  useTheme,
 } from "@mui/material";
 import {
   AutoAwesome as AiIcon,
@@ -47,8 +46,7 @@ function TabPanel({ children, value, index }: TabPanelProps) {
     // ---------------------------------------------------------------------------
     // Page
     // ---------------------------------------------------------------------------
-    export function BackofficePage() {
-    const theme = useTheme();
+export function BackofficePage() {
     const [tab, setTab] = useState(0);
 
     return (

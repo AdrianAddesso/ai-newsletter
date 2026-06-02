@@ -2,11 +2,14 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   Headers,
+  HttpCode,
+  Param,
+  Patch,
   Post,
   Query,
-  UnauthorizedException,
   UploadedFiles,
   UseInterceptors,
 } from '@nestjs/common';
@@ -15,6 +18,7 @@ import { Resource } from '../modules/auth/enum/resources';
 import { FontsService } from './fonts.service';
 import type {
   UploadedFontFile,
+  UploadedFontUpdateDto,
   UploadFontsResponseDto,
 } from './dto/upload-font.dto';
 
@@ -27,7 +31,7 @@ export class FontsController {
     @Headers('authorization') authorization: string | undefined,
     @Query('groupName') groupName?: string,
   ): Promise<UploadFontsResponseDto> {
-    this.assertAuthenticated(authorization);
+    this.fontsService.assertAuthenticatedRequest(authorization);
     return this.fontsService.listFonts(groupName);
   }
 
@@ -38,7 +42,7 @@ export class FontsController {
     @Body('groupName') groupName: string | undefined,
     @UploadedFiles() files: UploadedFontFile[] | undefined,
   ): Promise<UploadFontsResponseDto> {
-    this.assertAuthenticated(authorization);
+    this.fontsService.assertAuthenticatedRequest(authorization);
 
     if (!files?.length) {
       throw new BadRequestException('Debe cargar al menos un archivo.');
@@ -53,9 +57,23 @@ export class FontsController {
     return this.fontsService.uploadFonts(files, groupName);
   }
 
-  private assertAuthenticated(authorization: string | undefined): void {
-    if (!authorization?.startsWith('Bearer ')) {
-      throw new UnauthorizedException('Authentication is required');
-    }
+  @Patch(':id')
+  updateFont(
+    @Headers('authorization') authorization: string | undefined,
+    @Param('id') id: string,
+    @Body() body: UploadedFontUpdateDto,
+  ) {
+    this.fontsService.assertAuthenticatedRequest(authorization);
+    return this.fontsService.updateFont(id, body);
+  }
+
+  @Delete(':id')
+  @HttpCode(204)
+  async deleteFont(
+    @Headers('authorization') authorization: string | undefined,
+    @Param('id') id: string,
+  ): Promise<void> {
+    this.fontsService.assertAuthenticatedRequest(authorization);
+    await this.fontsService.deleteFont(id);
   }
 }

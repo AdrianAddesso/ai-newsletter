@@ -1,9 +1,14 @@
 import { Card, Typography, Box } from "@mui/material";
 import type { BlockInstance } from "@shared/types/block.types";
+import placeholderImageUrl from "../../../../assets/placeholders/PlaceholderImage.svg";
 import {
   parseContent,
   resolveContentTypographySx,
 } from "../../../../utils/blockContent";
+import {
+  buildBackgroundImageSx,
+  resolveRenderableBackgroundImage,
+} from "../utils/backgroundImage";
 
 interface Props {
   block: BlockInstance;
@@ -13,7 +18,8 @@ interface Props {
 
 export function TextCenterBackgroundFullRenderer({
   block,
-  backgroundImage = "https://placehold.net/400x400.png",
+  backgroundImage,
+  editMode = false,
 }: Props) {
   const values = parseContent(block.content);
   const {
@@ -21,14 +27,12 @@ export function TextCenterBackgroundFullRenderer({
     bgColor,
   } = values;
   const typographySx = resolveContentTypographySx(values, "text");
-  const bgSx = backgroundImage
-    ? {
-        backgroundImage: `url("${backgroundImage}")`,
-        backgroundSize: "cover",
-        backgroundRepeat: "no-repeat",
-        backgroundPosition: "center",
-      }
-    : {};
+  const resolvedBackgroundImage = resolveRenderableBackgroundImage(
+    backgroundImage,
+    editMode,
+    placeholderImageUrl,
+  );
+  const bgSx = buildBackgroundImageSx(resolvedBackgroundImage);
 
   return (
     <Card

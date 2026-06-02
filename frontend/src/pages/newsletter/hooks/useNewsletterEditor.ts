@@ -32,7 +32,7 @@ export function useNewsletterEditor() {
   const navigate = useNavigate()
   const { id } = useParams()
   const { user } = useAuth()
-  const { success } = useNotification()
+  const { success, error: notifyError } = useNotification()
 
   const [newsletter, setNewsletter] = useState<Newsletter | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -332,9 +332,12 @@ export function useNewsletterEditor() {
         return
       }
 
-      const response = await improveText({
-        text: currentText,
-      })
+      const response = await improveText(
+        {
+          text: currentText,
+        },
+        notifyError,
+      )
 
       updateBlocks(
         newsletter.blocks.map((block) =>
@@ -344,14 +347,14 @@ export function useNewsletterEditor() {
         ),
       )
     },
-    [newsletter, updateBlocks],
+    [newsletter, notifyError, updateBlocks],
   )
 
   const handleGenerateAll = useCallback(
     async (request: GenerateNewsletterRequest) => {
       if (!id) return
 
-      const response = await generateNewsletter(request)
+      const response = await generateNewsletter(request, notifyError)
 
       const updated = await updateNewsletter(id, {
         blocks: response.blocks,
@@ -368,7 +371,7 @@ export function useNewsletterEditor() {
 
       setShowRegenerationForm(false)
     },
-    [id],
+    [id, notifyError],
   )
 
   const handleSubmit = useCallback(async () => {

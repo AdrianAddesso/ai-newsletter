@@ -34,7 +34,7 @@ export function NewsletterPreviewModal({
     useState<Newsletter | null>(null)
 
   const [selectedBlockId,setSelectedBlockId] =
-    useState('')
+    useState<string | null>(null)
 
   useEffect(() => {
     const load = async () => {
@@ -46,9 +46,7 @@ export function NewsletterPreviewModal({
 
         setNewsletter(data)
 
-        setSelectedBlockId(
-          data.blocks?.[0]?.id ?? '',
-        )
+        setSelectedBlockId(null)
       } catch (error) {
         console.error(error)
       }
@@ -82,7 +80,7 @@ export function NewsletterPreviewModal({
         {newsletter ? (
           <NewsletterViewer
             newsletter={newsletter}
-            selectedBlockId={selectedBlockId}
+            selectedBlockId={selectedBlockId ?? undefined}
             onSelectBlock={setSelectedBlockId}
             readOnly
           />

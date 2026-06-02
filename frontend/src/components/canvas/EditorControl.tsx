@@ -62,22 +62,29 @@ export const EditorControl: React.FC = () => {
         <Box>
           <Box
             sx={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(5, 1fr)',
+              display: "grid",
+              gridTemplateColumns: "repeat(5, 1fr)",
               gap: 1.5,
             }}
-          >
-          </Box>
+          ></Box>
         </Box>
         {groupedDefinitions.map(({ type, label, blocks }) => (
           <Box key={type}>
-            <Typography variant="caption" sx={{ mb: 1.5, display: 'block', fontWeight: 600, color: 'text.secondary' }}>
+            <Typography
+              variant="caption"
+              sx={{
+                mb: 1.5,
+                display: "block",
+                fontWeight: 600,
+                color: "text.secondary",
+              }}
+            >
               {label}
             </Typography>
             <Box
               sx={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(5, 1fr)',
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(80px, 1fr))",
                 gap: 1.5,
               }}
             >
@@ -86,48 +93,51 @@ export const EditorControl: React.FC = () => {
                 return (
                   <Box
                     key={block.type}
-                    onClick={() => selectedRow && updateColumnBlock(selectedRow.id, selectedCol.id, block)}
+                    onClick={() =>
+                      selectedRow &&
+                      updateColumnBlock(selectedRow.id, selectedCol.id, block)
+                    }
                     sx={{
-                      aspectRatio: '1/1',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      border: '2px solid',
-                      borderColor: isSelected ? 'primary.main' : 'divider',
+                      aspectRatio: "1/1",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      border: "2px solid",
+                      borderColor: isSelected ? "primary.main" : "divider",
                       borderRadius: 1,
-                      cursor: 'pointer',
-                      bgcolor: isSelected ? 'primary.50' : 'background.paper',
-                      '&:hover': {
-                        borderColor: 'primary.light',
-                        bgcolor: 'action.hover'
+                      cursor: "pointer",
+                      bgcolor: isSelected ? "primary.50" : "background.paper",
+                      "&:hover": {
+                        borderColor: "primary.light",
+                        bgcolor: "action.hover",
                       },
-                      transition: 'all 0.2s ease-in-out',
-                      p: 1
+                      transition: "all 0.2s ease-in-out",
+                      p: 1,
                     }}
                   >
                     <Box
                       component="img"
                       src={previewUrls[block.previewKey]}
                       sx={{
-                        width: '100%',
-                        height: 'auto',
-                        maxHeight: '50%',
+                        width: "100%",
+                        height: "auto",
+                        maxHeight: "50%",
                         objectFit: "contain",
-                        mb: 0.5
+                        mb: 0.5,
                       }}
                     />
                     <Typography
                       variant="caption"
                       sx={{
                         fontWeight: 600,
-                        fontSize: '0.65rem',
-                        textAlign: 'center',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        width: '100%',
-                        color: isSelected ? 'primary.main' : 'text.primary'
+                        fontSize: "0.65rem",
+                        textAlign: "center",
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        width: "100%",
+                        color: isSelected ? "primary.main" : "text.primary",
                       }}
                     >
                       {block.label}
@@ -141,7 +151,9 @@ export const EditorControl: React.FC = () => {
       </Stack>
       <Divider />
       {!selectedCol.type && (
-        <Alert severity="info">Asigna un bloque a la columna seleccionada.</Alert>
+        <Alert severity="info">
+          Asigna un bloque a la columna seleccionada.
+        </Alert>
       )}
     </Stack>
   );

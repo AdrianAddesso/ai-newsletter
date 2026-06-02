@@ -15,6 +15,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ layout }) => {
       mode="readonly"
       rows={rows}
       isSkeletonView={false}
+      selectedBlockId={null}
     />
   );
 };

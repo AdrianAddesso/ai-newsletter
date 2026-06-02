@@ -1,6 +1,12 @@
 import { Card, CardMedia, Box } from "@mui/material";
 import type { BlockInstance } from "@shared/types/block.types";
+import placeholderImageUrl from "../../../../assets/placeholders/PlaceholderImage.svg";
+import PlaceholderBackground from "../../../../assets/placeholders/PlaceholderBackground.svg";
 import { parseContent } from "../../../../utils/blockContent";
+import {
+  buildBackgroundImageSx,
+  resolveRenderableBackgroundImage,
+} from "../utils/backgroundImage";
 
 interface Props {
   block: BlockInstance;
@@ -11,18 +17,17 @@ interface Props {
 
 export function ImageBackgroundFullRenderer({
   block,
-  backgroundImage = "https://placehold.net/400x400.png",
-  imageUrl = "https://placehold.net/4.png",
+  backgroundImage,
+  editMode = false,
+  imageUrl = placeholderImageUrl,
 }: Props) {
   const { altText = "Image", overlayColor } = parseContent(block.content);
-  const bgSx = backgroundImage
-    ? {
-        backgroundImage: `url("${backgroundImage}")`,
-        backgroundSize: "cover",
-        backgroundRepeat: "no-repeat",
-        backgroundPosition: "center",
-      }
-    : {};
+  const resolvedBackgroundImage = resolveRenderableBackgroundImage(
+    backgroundImage,
+    editMode,
+    PlaceholderBackground,
+  );
+  const bgSx = buildBackgroundImageSx(resolvedBackgroundImage);
 
   return (
     <Card

@@ -1,4 +1,5 @@
 import axios from 'axios'
+import type { TemplateMutationResponse } from '@shared/types/template.types'
 import type {
   NewsletterTemplate,
   TemplateGenerationField,
@@ -11,89 +12,108 @@ type TemplateApiResponse = {
   name: string
   description: string | null
   area: NewsletterTemplate['area']
-  layout: TemplateLayoutBlock[] | null
+  layout: TemplateLayoutBlock[] | string | null
   orientation: 'PORTRAIT' | 'LANDSCAPE'
-  stateCode: string
+  state?: string
+  stateCode?: string
   stateName: string
   createdAt: string
+  promptBase?: string | null
+  prompt_base?: string | null
   requiredGenerationFields: TemplateGenerationField[]
   optionalGenerationFields: TemplateGenerationField[]
 }
 
-export async function listTemplates(): Promise<NewsletterTemplate[]> {
-  const response = await axios.get<TemplateApiResponse[]>('/templates')
-
-  return response.data.map((template) => {
-    let parsedLayout = null;
-    try {
-      const rawLayout = typeof template.layout === 'string' ? JSON.parse(template.layout) : template.layout;
-      if (Array.isArray(rawLayout)) {
-        parsedLayout = rawLayout
-          .map((item: any) => ({
-            ...item,
-            block_type:
-              typeof item?.block_type === 'string' && item.block_type.trim().length > 0
-                ? item.block_type
-                : typeof item?.type === 'string' && item.type.trim().length > 0
-                  ? item.type
-                  : null,
-          }))
-          .filter(
-            (item): item is TemplateLayoutBlock =>
-              typeof item.block_type === 'string' && item.block_type.trim().length > 0,
-          );
-      } else {
-        parsedLayout = rawLayout;
-      }
-    } catch (e) {
-      console.error('Error parsing layout for template', template.id, e);
-    }
-
-    return {
-      ...template,
-      layout: parsedLayout,
-      requiredGenerationFields: template.requiredGenerationFields ?? [],
-      optionalGenerationFields:
-        template.optionalGenerationFields ?? defaultOptionalGenerationFields,
-    };
-  })
+export type TemplateDetail = NewsletterTemplate & {
+  promptBase: string
 }
 
-export async function getTemplateById(id: string): Promise<NewsletterTemplate> {
-  const response = await axios.get<TemplateApiResponse>(`/templates/${id}`)
+export type TemplateMutationPayload = {
+  name: string
+  description: string
+  promptBase: string
+  state: string
+  orientation: 'PORTRAIT' | 'LANDSCAPE'
+  area: NewsletterTemplate['area']
+  layout: Array<{
+    block_type: string | null
+    content: string | null
+    row: number
+    grid_column: number
+    display_order: number
+  }>
+}
 
-  let parsedLayout = null;
+const parseTemplateLayout = (
+  templateId: string,
+  rawLayout: TemplateApiResponse['layout'],
+): TemplateLayoutBlock[] | null => {
   try {
-    const rawLayout = typeof response.data.layout === 'string' ? JSON.parse(response.data.layout) : response.data.layout;
-    if (Array.isArray(rawLayout)) {
-      parsedLayout = rawLayout
-        .map((item: any) => ({
-          ...item,
-          block_type:
-            typeof item?.block_type === 'string' && item.block_type.trim().length > 0
-              ? item.block_type
-              : typeof item?.type === 'string' && item.type.trim().length > 0
-                ? item.type
-                : null,
-        }))
-        .filter(
-          (item): item is TemplateLayoutBlock =>
-            typeof item.block_type === 'string' && item.block_type.trim().length > 0,
-        );
-    } else {
-      parsedLayout = rawLayout;
-    }
-  } catch (e) {
-    console.error('Error parsing layout for template', id, e);
-  }
+    const parsedLayout =
+      typeof rawLayout === 'string' ? JSON.parse(rawLayout) : rawLayout
 
-  return {
-    ...response.data,
-    layout: parsedLayout,
-    requiredGenerationFields: response.data.requiredGenerationFields ?? [],
-    optionalGenerationFields:
-      response.data.optionalGenerationFields ?? defaultOptionalGenerationFields,
+    if (!Array.isArray(parsedLayout)) {
+      return parsedLayout
+    }
+
+    return parsedLayout
+      .map((item: unknown) => {
+        const block = item as Partial<TemplateLayoutBlock>
+
+        return {
+          ...block,
+          block_type:
+            typeof block?.block_type === 'string' && block.block_type.trim().length > 0
+              ? block.block_type
+              : typeof block?.type === 'string' && block.type.trim().length > 0
+                ? block.type
+                : null,
+        }
+      })
+      .filter(
+        (item): item is TemplateLayoutBlock =>
+          typeof item.block_type === 'string' && item.block_type.trim().length > 0,
+      )
+  } catch (error) {
+    console.error('Error parsing layout for template', templateId, error)
+    return null
   }
+}
+
+const normalizeTemplate = (template: TemplateApiResponse): TemplateDetail => ({
+  ...template,
+  stateCode: template.stateCode ?? template.state ?? '',
+  layout: parseTemplateLayout(template.id, template.layout),
+  promptBase: template.promptBase ?? template.prompt_base ?? '',
+  requiredGenerationFields: template.requiredGenerationFields ?? [],
+  optionalGenerationFields:
+    template.optionalGenerationFields ?? defaultOptionalGenerationFields,
+})
+
+export async function listTemplates(): Promise<NewsletterTemplate[]> {
+  const response = await axios.get<TemplateApiResponse[]>('/templates')
+  return response.data.map(normalizeTemplate)
+}
+
+export async function getTemplateById(id: string): Promise<TemplateDetail> {
+  const response = await axios.get<TemplateApiResponse>(`/templates/${id}`)
+  return normalizeTemplate(response.data)
+}
+
+export async function updateTemplate(
+  id: string,
+  payload: TemplateMutationPayload,
+): Promise<TemplateMutationResponse> {
+  const response = await axios.patch<TemplateMutationResponse>(
+    `/templates/${id}`,
+    payload,
+  )
+
+  return response.data
+}
+
+export async function deleteTemplate(id: string): Promise<void> {
+  await axios.delete(`/templates/${id}`)
 }
 
 export type TemplateAsset = {

@@ -5,6 +5,7 @@ import { AnalyticsPage } from '../../pages/AnalyticsPage'
 import { ReviewsPage } from '../../pages/ReviewsPage'
 import { ReviewNewsletterRoute } from '../../pages/ReviewNewsletterRoute'
 import TemplatesPage from '../../pages/TemplatesPage'
+import { EditTemplatePage } from '../../pages/EditTemplatePage'
 import { UsersPage } from '../../pages/UsersPage'
 import { CreateTemplate } from '../../pages/templates/CreateTemplate'
 import { BackofficePage } from "../../pages/admin/AdminPanelPage";
@@ -61,6 +62,17 @@ export const adminRoutes = (
         <ProtectedRoute allowedRoles={["ADMIN", "FUNCTIONAL"]}>
           <ProtectedLayout>
             <CreateTemplate />
+          </ProtectedLayout>
+        </ProtectedRoute>
+      }
+    />
+
+    <Route
+      path="/templates/edit/:id"
+      element={
+        <ProtectedRoute allowedRoles={["ADMIN", "FUNCTIONAL"]}>
+          <ProtectedLayout>
+            <EditTemplatePage />
           </ProtectedLayout>
         </ProtectedRoute>
       }

@@ -1,9 +1,10 @@
 import { Alert, Box, Chip, Paper, Stack, Typography } from '@mui/material'
-import { BlockRenderer } from '../../../components/blocks/BlockRenderer'
+import { BlockRenderer } from '../../../components/blocks/BlockRenderer' 
 import type {
   NewsletterBlock,
   NewsletterBlockAssetBinding,
 } from '../../../types/newsletter'
+import { parseContent } from '../../../utils/blockContent'
 
 type Props = {
   blocks: NewsletterBlock[];
@@ -25,6 +26,8 @@ export function BlockList({
       spacing={2}
       sx={{
         height: "100%", // take full height of the container
+        maxHeight: "100%",
+        overflowY: "auto",
       }}
     >
       <Stack
@@ -166,10 +169,12 @@ function groupBlocksByRow(
 function buildRendererProps(
   block: NewsletterBlock,
 ): Record<string, string | null | undefined> {
+  const values = parseContent<Record<string, string>>(block.content)
   const assetByFieldKey = new Map<string, NewsletterBlockAssetBinding>(
     block.assetBindings.map((binding) => [binding.fieldKey, binding]),
   )
   const logoAsset = assetByFieldKey.get('logoAsset')?.assetUrl
+  const iconAsset = assetByFieldKey.get('iconAsset')?.assetUrl
   const imageAsset = assetByFieldKey.get('imageAsset')?.assetUrl
   const backgroundAsset = assetByFieldKey.get('backgroundAsset')?.assetUrl
   const leftImageAsset =
@@ -178,10 +183,21 @@ function buildRendererProps(
   const rightImageAsset =
     assetByFieldKey.get('rightLogoAsset')?.assetUrl ??
     assetByFieldKey.get('rightImageAsset')?.assetUrl
+  const backgroundMode = values.backgroundMode
 
   return {
     imageUrl: imageAsset ?? logoAsset,
-    backgroundImage: backgroundAsset,
+    iconUrl: iconAsset,
+    backgroundImage:
+      backgroundMode === 'none' || backgroundMode === 'color'
+        ? null
+        : backgroundMode === 'image'
+          ? backgroundAsset ?? undefined
+          : backgroundAsset ?? (
+              values.bgColor?.trim() || values.overlayColor?.trim()
+                ? null
+                : undefined
+            ),
     leftImageUrl: leftImageAsset,
     rightImageUrl: rightImageAsset,
   }

@@ -29,11 +29,12 @@ import {
   VisibilityOutlined as ViewIcon,
 } from '@mui/icons-material'
 import { useNavigate } from 'react-router'
-import { listTemplates } from '../api/templates'
+import { deleteTemplate, listTemplates } from '../api/templates'
 import { ModalDelete } from '../components/ModalDelete'
 import SearchBar from '../components/SearchBar'
 import { useAuth } from '../contexts/AuthContext'
 import type { NewsletterTemplate } from '../types/newsletter'
+import type { UserRole } from '../users/types/users'
 import { areaLabels } from '../utils/newsletterTemplates'
 
 type StatusChipColor = 'default' | 'success' | 'warning'
@@ -50,11 +51,14 @@ type TemplateTableRow = NewsletterTemplate & {
   created_at: string
 }
 
+const canDeleteTemplate = (role: UserRole | undefined): boolean =>
+  role === 'ADMIN' || role === 'FUNCTIONAL'
+
 export function TemplatesPage() {
   const { user } = useAuth()
   const theme = useTheme()
   const navigate = useNavigate()
-  const role = user?.role ?? 'USER'
+  const role = user?.role
 
   const [templates, setTemplates] = useState<TemplateTableRow[]>([])
   const [isLoadingTemplates, setIsLoadingTemplates] = useState(true)
@@ -64,6 +68,7 @@ export function TemplatesPage() {
   const [order, setOrder] = useState<'asc' | 'desc'>('asc')
   const [limit, setLimit] = useState(5)
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   useEffect(() => {
     let mounted = true
@@ -139,9 +144,23 @@ export function TemplatesPage() {
     setOrderBy(property)
   }
 
-  const handleConfirmDelete = () => {
-    console.log('Eliminando:', deleteId)
-    setDeleteId(null)
+  const handleConfirmDelete = async () => {
+    if (!deleteId) {
+      return
+    }
+
+    setIsDeleting(true)
+    setTemplatesError(null)
+
+    try {
+      await deleteTemplate(deleteId)
+      setTemplates((current) => current.filter((template) => template.id !== deleteId))
+      setDeleteId(null)
+    } catch {
+      setTemplatesError('No se pudo eliminar la plantilla en este momento.')
+    } finally {
+      setIsDeleting(false)
+    }
   }
 
   if (isLoadingTemplates) {
@@ -269,11 +288,11 @@ export function TemplatesPage() {
                             </IconButton>
                           </Tooltip>
 
-                          {role === 'ADMIN' && (
+                          {(role === 'ADMIN' || role === 'FUNCTIONAL') && (
                             <Tooltip title="Editar">
                               <IconButton
                                 size="small"
-                                onClick={() => navigate(`/editarTemplate/${template.id}`)}
+                                onClick={() => navigate(`/templates/edit/${template.id}`)}
                               >
                                 <EditIcon fontSize="small" />
                               </IconButton>
@@ -281,22 +300,23 @@ export function TemplatesPage() {
                           )}
 
                           {role === 'ADMIN' && (
-                            <>
-                              <Tooltip title="Exportar">
-                                <IconButton size="small" color="primary">
-                                  <ExportIcon fontSize="small" />
-                                </IconButton>
-                              </Tooltip>
-                              <Tooltip title="Borrar">
-                                <IconButton
-                                  size="small"
-                                  color="error"
-                                  onClick={() => setDeleteId(template.id)}
-                                >
-                                  <DeleteIcon fontSize="small" />
-                                </IconButton>
-                              </Tooltip>
-                            </>
+                            <Tooltip title="Exportar">
+                              <IconButton size="small" color="primary">
+                                <ExportIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+
+                          {canDeleteTemplate(role) && (
+                            <Tooltip title="Borrar">
+                              <IconButton
+                                size="small"
+                                color="error"
+                                onClick={() => setDeleteId(template.id)}
+                              >
+                                <DeleteIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
                           )}
 
                           {role === 'FUNCTIONAL' && template.state_id !== 'DRAFT' && (
@@ -335,6 +355,7 @@ export function TemplatesPage() {
         description="Esta acción eliminará el template de forma permanente. No podrás recuperar la configuración del prompt base."
         onClose={() => setDeleteId(null)}
         onConfirm={handleConfirmDelete}
+        loading={isDeleting}
       />
     </Box>
   )

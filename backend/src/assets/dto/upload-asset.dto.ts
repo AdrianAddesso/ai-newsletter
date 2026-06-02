@@ -32,4 +32,5 @@ export interface UpdateAssetDto {
 export interface UploadAssetMetadataDto {
   name?: string;
   description?: string | null;
+  brandKitId?: string;
 }

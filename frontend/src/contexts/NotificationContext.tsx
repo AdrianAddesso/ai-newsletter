@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useCallback, useContext, useState, type ReactNode } from 'react'
-import { MICROSOFT_SSO_USERS, useAuth, type UserRole } from './AuthContext'
+import { useAuth, type UserRole } from './AuthContext'
 
 export type NotificationType = 'pending-review' | 'approved' | 'rejected' | 'reminder' | 'info'
 
@@ -39,9 +39,6 @@ const roleByUserId: Record<string, UserRole> = {
   '2': 'FUNCTIONAL',
   '3': 'USER',
 }
-
-const cloneNotifications = (notifications: AppNotification[]) =>
-  notifications.map((notification) => ({ ...notification }))
 
 const createDefaultNotifications = (role: UserRole, userId: string): AppNotification[] => {
   const commonNotifications: AppNotification[] = [
@@ -184,7 +181,9 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       setNotificationsByUser((prev) => {
         const currentNotifications =
           prev[userId] ?? getInitialNotificationsForUser(userId)
-        const nextNotifications = updater(cloneNotifications(currentNotifications))
+        const nextNotifications = updater(
+          currentNotifications.map((notification) => ({ ...notification })),
+        )
 
         persistNotifications(userId, nextNotifications)
 

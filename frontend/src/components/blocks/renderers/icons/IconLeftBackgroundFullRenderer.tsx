@@ -1,5 +1,10 @@
-import { Card, Typography, Box, CardMedia, Icon } from "@mui/material";
+import { Card, Typography, Box, CardMedia } from "@mui/material";
 import type { BlockInstance } from "@shared/types/block.types";
+import placeholderIconUrl from "../../../../assets/placeholders/PlaceholderIcon.svg";
+import {
+  buildBackgroundImageSx,
+  resolveRenderableBackgroundImage,
+} from "../utils/backgroundImage";
 import {
   parseContent,
   resolveContentTypographySx,
@@ -14,23 +19,23 @@ interface Props {
 
 export function IconLeftBackgroundFullRenderer({
   block,
-  backgroundImage = "https://placehold.net/400x400.png",
-  iconUrl = null,
+  backgroundImage,
+  editMode = false,
+  iconUrl = placeholderIconUrl,
 }: Props) {
   const values = parseContent(block.content);
   const {
-    iconName = "description",
     label = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+    bgColor,
   } = values;
+
   const typographySx = resolveContentTypographySx(values, "label");
-  const bgSx = backgroundImage
-    ? {
-        backgroundImage: `url("${backgroundImage}")`,
-        backgroundSize: "cover",
-        backgroundRepeat: "no-repeat",
-        backgroundPosition: "center",
-      }
-    : {};
+  const resolvedBackgroundImage = resolveRenderableBackgroundImage(
+    backgroundImage,
+    editMode,
+    placeholderIconUrl,
+  );
+  const bgSx = buildBackgroundImageSx(resolvedBackgroundImage);
 
   return (
     <Card
@@ -53,6 +58,7 @@ export function IconLeftBackgroundFullRenderer({
           flexGrow: 1,
           display: "flex",
           alignItems: "center",
+          backgroundColor: bgColor,
           py: 4,
           ...bgSx,
         }}
@@ -66,7 +72,7 @@ export function IconLeftBackgroundFullRenderer({
             gap: 1,
           }}
         >
-          {iconUrl ? (
+          {iconUrl && (
             <CardMedia
               component="img"
               image={iconUrl}
@@ -78,14 +84,6 @@ export function IconLeftBackgroundFullRenderer({
                 flexShrink: 0,
               }}
             />
-          ) : (
-            <Icon
-              fontSize="large"
-              color="action"
-              sx={{ flexShrink: 0 }}
-            >
-              {iconName}
-            </Icon>
           )}
           <Typography
             variant="body2"
