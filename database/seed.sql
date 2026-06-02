@@ -114,21 +114,24 @@ INSERT INTO public.users (
   email,
   area_id,
   role,
-  state
+  state,
+  refresh_token_version
 )
 SELECT
-  v.id::uuid,
+  COALESCE(v.id::uuid, gen_random_uuid()),
   v.name,
   v.last_name,
   v.email,
   a.id,
   v.role::user_role,
-  'ACTIVE'::user_state
+  'ACTIVE'::user_state,
+  0::integer
 FROM (
   VALUES
     ('ecbe7026-4405-4697-95de-20a855ebdcd0'::uuid, 'Admin', 'Local', 'admin@local.test', 'COMUNICACION_INTERNA', 'ADMIN'),
     ('107a3baf-5b4a-40ec-a7b9-c627e624ab97'::uuid, 'Functional', 'Local', 'functional@local.test', 'COMUNICACION_INTERNA', 'FUNCTIONAL'),
-    ('720deb80-e0a5-44e4-bb21-c2e14597126c'::uuid, 'User', 'Local', 'user@local.test', 'COMUNICACION_CORPORATIVA', 'USER')
+    ('720deb80-e0a5-44e4-bb21-c2e14597126c'::uuid, 'User', 'Local', 'user@local.test', 'COMUNICACION_CORPORATIVA', 'USER'),
+    (NULL::uuid, 'Admin', 'Local', 'nestleainewsletterort@gmail.com', 'COMUNICACION_INTERNA', 'ADMIN')
 ) AS v(id, name, last_name, email, area_name, role)
 JOIN public.areas a
   ON a.name = v.area_name::area_name
@@ -138,7 +141,8 @@ SET
   last_name = EXCLUDED.last_name,
   area_id = EXCLUDED.area_id,
   role = EXCLUDED.role,
-  state = EXCLUDED.state;
+  state = EXCLUDED.state,
+  refresh_token_version = 0;
 
 -- ========================================
 -- FONT GROUPS

@@ -342,6 +342,7 @@ model users {
   deleted_at                                         DateTime?              @db.Timestamptz(6)
   role                                               user_role              @default(USER)
   state                                              user_state             @default(ACTIVE)
+  refresh_token_version                              Int                    @default(0)
   assets_created                                     assets[]               @relation("assets_created_by_user_idTousers")
   brand_kit                                          brand_kit[]
   commentary                                         commentary[]

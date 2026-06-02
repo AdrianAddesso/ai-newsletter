@@ -210,6 +210,7 @@ CREATE TABLE public.users (
   name text NOT NULL,
   last_name text NOT NULL,
   email text NOT NULL UNIQUE,
+  refresh_token_version INT NOT NULL DEFAULT 0,
   area_id uuid,
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   role public.user_role NOT NULL DEFAULT 'USER'::user_role,

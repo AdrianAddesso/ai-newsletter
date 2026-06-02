@@ -36,14 +36,14 @@ import type {
   UpdateTemplateStatusBody,
 } from './templates.schemas';
 import { RequirePermission } from '../modules/auth/decorators/permissions.decorator';
-import { MockAuthGuard } from '../modules/auth/guards/mockup.guard';
+import { JwtGuard } from '../auth/guards/jwt.guard';
 import { PermissionsGuard } from '../modules/auth/guards/permissions.guard';
 import { Action } from '../modules/auth/enum/actions';
 import { Resource } from '../modules/auth/enum/resources';
 import { GetUser } from '../modules/auth/decorators/user.decorator';
 
 @Controller(Resource.TEMPLATES)
-@UseGuards(MockAuthGuard, PermissionsGuard)
+@UseGuards(JwtGuard, PermissionsGuard)
 export class TemplatesController {
   constructor(private readonly templatesService: TemplatesService) { }
 
