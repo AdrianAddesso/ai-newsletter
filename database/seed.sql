@@ -191,169 +191,150 @@ SET name = EXCLUDED.name;
 -- -- TEMPLATES
 -- -- ========================================
 
--- WITH desired_templates AS (
---   SELECT
---     v.name,
---     v.description,
---     a.id AS area_id,
---     v.layout,
---     v.orientation::public.template_orientation AS orientation,
---     ts.id AS state_id,
---     v.prompt_base,
---     u.id AS created_by_user_id,
---     v.created_at,
---     v.updated_at,
---     v.deleted_at
---   FROM (
---     VALUES
---       (
---         'Cultura y reconocimiento',
---         'Formato para destacar cultura, reconocimientos y acciones de engagement.',
---         'COMUNICACION_INTERNA',
---         $json${
---           "blocks": [
---             { "type": "BANNER_HERO", "content": "Título de cultura", "row": 0, "grid_column": 0, "displayOrder": 0 },
---             { "type": "TEXT_2_COLUMNS", "content": "Cuerpo del reconocimiento", "row": 1, "grid_column": 0, "displayOrder": 1 }
---           ]
---         }$json$::json,
---         'PORTRAIT',
---         $json${"promptText":"Plantilla para cultura organizacional y reconocimiento.","requiredGenerationFields":[],"optionalGenerationFields":["relevantDates","cta","linksOrSources","additionalContext"]}$json$,
---         '2026-05-10 06:20:08.60622+00'::timestamptz,
---         '2026-05-10 06:20:08.60622+00'::timestamptz,
---         NULL::timestamptz
---       ),
---       (
---         'Mensaje de liderazgo',
---         'Comunicaciones formales de liderazgo con llamado a la accion y contacto.',
---         'COMUNICACION_INTERNA',
---         $json${
---           "blocks": [
---             { "type": "BANNER_HERO", "content": "Título de liderazgo", "row": 0, "grid_column": 0, "displayOrder": 0 },
---             { "type": "TEXT_2_COLUMNS", "content": "Cuerpo del mensaje", "row": 1, "grid_column": 0, "displayOrder": 1 }
---           ]
---         }$json$::json,
---         'PORTRAIT',
---         $json${"promptText":"Plantilla para mensajes institucionales de liderazgo.","requiredGenerationFields":["contact"],"optionalGenerationFields":["relevantDates","cta","linksOrSources","additionalContext"]}$json$,
---         '2026-05-10 06:20:08.60622+00'::timestamptz,
---         '2026-05-10 06:20:08.60622+00'::timestamptz,
---         NULL::timestamptz
---       ),
---       (
---         'Resumen semanal',
---         'Plantilla breve para resumir noticias clave y proximos hitos semanales.',
---         'COMUNICACION_INTERNA',
---         $json${
---           "blocks": [
---             { "type": "BANNER_HERO", "content": "Título de resumen", "row": 0, "grid_column": 0, "displayOrder": 0 },
---             { "type": "TEXT_2_COLUMNS", "content": "Cuerpo del resumen", "row": 1, "grid_column": 0, "displayOrder": 1 }
---           ]
---         }$json$::json,
---         'PORTRAIT',
---         $json${"promptText":"Plantilla para resumenes ejecutivos semanales.","requiredGenerationFields":[],"optionalGenerationFields":["relevantDates","cta","linksOrSources","additionalContext"]}$json$,
---         '2026-05-10 06:20:08.60622+00'::timestamptz,
---         '2026-05-10 06:20:08.60622+00'::timestamptz,
---         NULL::timestamptz
---       ),
---       (
---         'Actualizacion corporativa',
---         'Comunicados internos con foco en hitos, avances y decisiones corporativas.',
---         'COMUNICACION_CORPORATIVA',
---         $json${
---           "blocks": [
---             { "type": "BANNER_HERO", "content": "Título de actualización", "row": 0, "grid_column": 0, "displayOrder": 0 },
---             { "type": "TEXT_2_COLUMNS", "content": "Cuerpo de la actualización", "row": 1, "grid_column": 0, "displayOrder": 1 }
---           ]
---         }$json$::json,
---         'PORTRAIT',
---         $json${"promptText":"Plantilla para novedades corporativas internas.","requiredGenerationFields":[],"optionalGenerationFields":["relevantDates","cta","linksOrSources","additionalContext"]}$json$,
---         '2026-05-10 06:20:08.60622+00'::timestamptz,
---         '2026-05-10 06:20:08.60622+00'::timestamptz,
---         NULL::timestamptz
---       ),
---       (
---         'Historia de equipos',
---         'Formato editorial para contar iniciativas, logros y testimonios de equipos.',
---         'COMUNICACION_CORPORATIVA',
---         $json${
---           "blocks": [
---             { "type": "BANNER_HERO", "content": "Título de historia", "row": 0, "grid_column": 0, "displayOrder": 0 },
---             { "type": "TEXT_2_COLUMNS", "content": "Cuerpo de la historia", "row": 1, "grid_column": 0, "displayOrder": 1 }
---           ]
---         }$json$::json,
---         'PORTRAIT',
---         $json${"promptText":"Plantilla para historias de equipos y reconocimiento interno.","requiredGenerationFields":["contact"],"optionalGenerationFields":["relevantDates","cta","linksOrSources","additionalContext"]}$json$,
---         '2026-05-10 06:20:08.60622+00'::timestamptz,
---         '2026-05-10 06:20:08.60622+00'::timestamptz,
---         NULL::timestamptz
---       )
---   ) AS v(
---     name,
---     description,
---     area_name,
---     layout,
---     orientation,
---     prompt_base,
---     created_at,
---     updated_at,
---     deleted_at
---   )
---   JOIN public.areas a
---     ON a.name = v.area_name::area_name
---   JOIN public.template_states ts
---     ON ts.code = 'ACTIVE'
---   JOIN public.users u
---     ON u.email = 'admin@local.test'
--- ),
--- updated_templates AS (
---   UPDATE public.templates t
---   SET
---     description = d.description,
---     area_id = d.area_id,
---     layout = d.layout,
---     orientation = d.orientation,
---     state_id = d.state_id,
---     prompt_base = d.prompt_base,
---     created_by_user_id = d.created_by_user_id,
---     created_at = d.created_at,
---     updated_at = d.updated_at,
---     deleted_at = d.deleted_at
---   FROM desired_templates d
---   WHERE t.name = d.name
---   RETURNING t.name
--- )
--- INSERT INTO public.templates (
---   id,
---   name,
---   description,
---   area_id,
---   layout,
---   orientation,
---   state_id,
---   prompt_base,
---   created_by_user_id,
---   created_at,
---   updated_at,
---   deleted_at
--- )
--- SELECT
---   gen_random_uuid(),
---   d.name,
---   d.description,
---   d.area_id,
---   d.layout,
---   d.orientation,
---   d.state_id,
---   d.prompt_base,
---   d.created_by_user_id,
---   d.created_at,
---   d.updated_at,
---   d.deleted_at
--- FROM desired_templates d
--- WHERE NOT EXISTS (
---   SELECT 1
---   FROM updated_templates ut
---   WHERE ut.name = d.name
--- );
+WITH desired_templates AS (
+  SELECT
+    v.id,
+    v.name,
+    v.description,
+    v.area_id,
+    v.layout,
+    v.orientation::public.template_orientation AS orientation,
+    v.state_id,
+    v.prompt_base,
+    v.created_by_user_id,
+    v.created_at
+  FROM (
+    VALUES
+      (
+        '11436ac7-6050-43d9-936e-e3eed2ddbcc2'::uuid,
+        'ecard 5 CI 2026',
+        'Recordatorio de fechas importantes',
+        '3d7f7eb7-c2e6-45e5-9360-b3d39b5ab274'::uuid,
+        $json$[{"type":"headerFull","content":"{\"title\":\"\",\"subtitle\":\"\",\"leftLogoAsset\":\"\",\"rightLogoAsset\":\"\",\"fontSize\":\"\",\"typographyStyle\":\"\",\"fontFamily\":\"\"}","row":0,"grid_column":0,"display_order":0,"mustFill":false},{"type":"labelLeftBackgroundFull","content":"{\"label\":\"Lorem ipsum dolor sit amet\",\"bgColor\":\"\",\"backgroundAsset\":\"\"}","row":1,"grid_column":0,"display_order":0,"mustFill":false},{"type":"textLeftBackgroundFull","content":"{\"text\":\"Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat.\",\"bgColor\":\"\",\"backgroundAsset\":\"\",\"fontSize\":\"\",\"typographyStyle\":\"\",\"fontFamily\":\"\"}","row":2,"grid_column":0,"display_order":0,"mustFill":false},{"type":"textLeftBackgroundFull","content":"{\"text\":\"Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat.\",\"bgColor\":\"\",\"backgroundAsset\":\"\",\"fontSize\":\"\",\"typographyStyle\":\"\",\"fontFamily\":\"\"}","row":3,"grid_column":0,"display_order":0,"mustFill":false},{"type":"textLeftBackgroundFull","content":"{\"text\":\"Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat.\",\"bgColor\":\"\",\"backgroundAsset\":\"\",\"fontSize\":\"\",\"typographyStyle\":\"\",\"fontFamily\":\"\"}","row":4,"grid_column":0,"display_order":0,"mustFill":false},{"type":"iconLeftBackgroundFull","content":"{\"iconName\":\"description\",\"label\":\"Lorem ipsum dolor sit amet, consectetur adipiscing elit.\",\"backgroundAsset\":\"\",\"fontSize\":\"\",\"typographyStyle\":\"\",\"fontFamily\":\"\"}","row":5,"grid_column":0,"display_order":0,"mustFill":false},{"type":"iconLeftBackgroundFull","content":"{\"iconName\":\"description\",\"label\":\"Lorem ipsum dolor sit amet, consectetur adipiscing elit.\",\"backgroundAsset\":\"\",\"fontSize\":\"\",\"typographyStyle\":\"\",\"fontFamily\":\"\"}","row":6,"grid_column":0,"display_order":0,"mustFill":false},{"type":"iconLeftBackgroundFull","content":"{\"iconName\":\"description\",\"label\":\"Lorem ipsum dolor sit amet, consectetur adipiscing elit.\",\"backgroundAsset\":\"\",\"fontSize\":\"\",\"typographyStyle\":\"\",\"fontFamily\":\"\"}","row":7,"grid_column":0,"display_order":0,"mustFill":false},{"type":"labelLeftBackgroundFull","content":"{\"label\":\"Lorem ipsum dolor sit amet\",\"bgColor\":\"\",\"backgroundAsset\":\"\"}","row":8,"grid_column":0,"display_order":0,"mustFill":false},{"type":"textDoubleCenterBackgroundFull","content":"{\"primaryText\":\"Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat.\",\"secondaryText\":\"Consequuntur eum voluptas iure repellat voluptate, nisi ipsam explicabo fugit architecto sint adipisci.\",\"bgColor\":\"\",\"backgroundAsset\":\"\",\"fontSize\":\"\",\"typographyStyle\":\"\",\"fontFamily\":\"\"}","row":9,"grid_column":0,"display_order":0,"mustFill":false},{"type":"imageFull","content":"{\"imageAsset\":\"\",\"altText\":\"Full image\"}","row":10,"grid_column":0,"display_order":0,"mustFill":false}]$json$::json,
+        'PORTRAIT',
+        'c2a19938-3071-4cef-ae98-00d06c0f75bb'::uuid,
+        NULL::text,
+        'ecbe7026-4405-4697-95de-20a855ebdcd0'::uuid,
+        '2026-06-01 21:12:58.914+00'::timestamptz
+      ),
+      (
+        '20f6f83d-78e2-41de-93ff-f3c570e1e9a5'::uuid,
+        'ecard 2 CI 2026',
+        'Recordatorio y desarrollo de recursos humano',
+        '3d7f7eb7-c2e6-45e5-9360-b3d39b5ab274'::uuid,
+        $json$[{"type":"headerLeft","content":"{\"title\":\"\",\"subtitle\":\"\",\"logoAsset\":\"\",\"fontSize\":\"\",\"typographyStyle\":\"\",\"fontFamily\":\"\"}","row":0,"grid_column":0,"display_order":0,"mustFill":false},{"type":"headerRight","content":"{\"title\":\"\",\"subtitle\":\"\",\"logoAsset\":\"\",\"fontSize\":\"\",\"typographyStyle\":\"\",\"fontFamily\":\"\"}","row":0,"grid_column":1,"display_order":1,"mustFill":false},{"type":"labelLeftBackgroundFull","content":"{\"label\":\"Lorem ipsum dolor sit amet\",\"bgColor\":\"\",\"backgroundAsset\":\"\"}","row":1,"grid_column":0,"display_order":0,"mustFill":false},{"type":"textLeftBackgroundFull","content":"{\"text\":\"Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat.\",\"bgColor\":\"\",\"backgroundAsset\":\"\",\"fontSize\":\"\",\"typographyStyle\":\"\",\"fontFamily\":\"\"}","row":2,"grid_column":0,"display_order":0,"mustFill":false},{"type":"textCenterBackgroundFull","content":"{\"text\":\"Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat.\",\"bgColor\":\"\",\"backgroundAsset\":\"\",\"fontSize\":\"\",\"typographyStyle\":\"\",\"fontFamily\":\"\"}","row":2,"grid_column":1,"display_order":1,"mustFill":false},{"type":"empty","content":"{\"bgColor\":\"\"}","row":3,"grid_column":0,"display_order":0,"mustFill":false},{"type":"imageFull","content":"{\"imageAsset\":\"\",\"altText\":\"Full image\"}","row":3,"grid_column":1,"display_order":1,"mustFill":false},{"type":"empty","content":"{\"bgColor\":\"\"}","row":3,"grid_column":2,"display_order":2,"mustFill":false},{"type":"iconCenterBackgroundFull","content":"{\"iconName\":\"description\",\"label\":\"Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat.\",\"backgroundAsset\":\"\",\"fontSize\":\"\",\"typographyStyle\":\"\",\"fontFamily\":\"\"}","row":3,"grid_column":3,"display_order":3,"mustFill":false},{"type":"iconCenterBackgroundFull","content":"{\"iconName\":\"description\",\"label\":\"Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat.\",\"backgroundAsset\":\"\",\"fontSize\":\"\",\"typographyStyle\":\"\",\"fontFamily\":\"\"}","row":3,"grid_column":4,"display_order":4,"mustFill":false},{"type":"iconCenterBackgroundFull","content":"{\"iconName\":\"description\",\"label\":\"Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat.\",\"backgroundAsset\":\"\",\"fontSize\":\"\",\"typographyStyle\":\"\",\"fontFamily\":\"\"}","row":3,"grid_column":5,"display_order":5,"mustFill":false},{"type":"imageFull","content":"{\"imageAsset\":\"\",\"altText\":\"Full image\"}","row":4,"grid_column":0,"display_order":0,"mustFill":false},{"type":"imageFull","content":"{\"imageAsset\":\"\",\"altText\":\"Full image\"}","row":4,"grid_column":1,"display_order":1,"mustFill":false},{"type":"imageFull","content":"{\"imageAsset\":\"\",\"altText\":\"Full image\"}","row":4,"grid_column":2,"display_order":2,"mustFill":false},{"type":"imageFull","content":"{\"imageAsset\":\"\",\"altText\":\"Full image\"}","row":4,"grid_column":3,"display_order":3,"mustFill":false},{"type":"empty","content":"{\"bgColor\":\"\"}","row":4,"grid_column":4,"display_order":4,"mustFill":false},{"type":"empty","content":"{\"bgColor\":\"\"}","row":4,"grid_column":5,"display_order":5,"mustFill":false},{"type":"ctaFull","content":"{\"buttonLabel\":\"Click here\",\"href\":\"\",\"bgColor\":\"\"}","row":4,"grid_column":6,"display_order":6,"mustFill":false},{"type":"empty","content":"{\"bgColor\":\"\"}","row":4,"grid_column":7,"display_order":7,"mustFill":false}]$json$::json,
+        'LANDSCAPE',
+        'c2a19938-3071-4cef-ae98-00d06c0f75bb'::uuid,
+        NULL::text,
+        'ecbe7026-4405-4697-95de-20a855ebdcd0'::uuid,
+        '2026-06-01 21:03:22.511+00'::timestamptz
+      ),
+      (
+        '637c7344-d7c8-4766-af90-6ce796b67ccc'::uuid,
+        'ecard 3 CI 2026',
+        'Ocasiones especiales',
+        '3d7f7eb7-c2e6-45e5-9360-b3d39b5ab274'::uuid,
+        $json$[{"type":"headerFull","content":"{\"title\":\"\",\"subtitle\":\"\",\"leftLogoAsset\":\"\",\"rightLogoAsset\":\"\",\"fontSize\":\"\",\"typographyStyle\":\"\",\"fontFamily\":\"\"}","row":0,"grid_column":0,"display_order":0,"mustFill":false},{"type":"labelLeftBackgroundSmall","content":"{\"label\":\"Lorem ipsum dolor sit amet\",\"bgColor\":\"\",\"backgroundAsset\":\"\"}","row":1,"grid_column":0,"display_order":0,"mustFill":false},{"type":"textLeftBackgroundFull","content":"{\"text\":\"Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat.\",\"bgColor\":\"\",\"backgroundAsset\":\"\",\"fontSize\":\"\",\"typographyStyle\":\"\",\"fontFamily\":\"\"}","row":2,"grid_column":0,"display_order":0,"mustFill":false},{"type":"textLeftBackgroundFull","content":"{\"text\":\"Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat.\",\"bgColor\":\"\",\"backgroundAsset\":\"\",\"fontSize\":\"\",\"typographyStyle\":\"\",\"fontFamily\":\"\"}","row":3,"grid_column":0,"display_order":0,"mustFill":false},{"type":"labelCenterBackgroundFull","content":"{\"label\":\"Lorem ipsum dolor sit amet\",\"bgColor\":\"\",\"backgroundAsset\":\"\"}","row":4,"grid_column":0,"display_order":0,"mustFill":false},{"type":"imageBackgroundFull","content":"{\"backgroundAsset\":\"\",\"imageAsset\":\"\",\"altText\":\"Image\",\"overlayColor\":\"\"}","row":4,"grid_column":1,"display_order":1,"mustFill":false}]$json$::json,
+        'PORTRAIT',
+        'c2a19938-3071-4cef-ae98-00d06c0f75bb'::uuid,
+        NULL::text,
+        'ecbe7026-4405-4697-95de-20a855ebdcd0'::uuid,
+        '2026-06-01 21:05:34.497+00'::timestamptz
+      ),
+      (
+        '819e7b74-7e52-438b-951e-39397074c4b6'::uuid,
+        'Todos hacemos Nestlé',
+        'Novedades de la semana',
+        '1e696888-eb43-4ddb-841f-80744e2dafbf'::uuid,
+        $json$[{"type":"textDoubleCenterBackgroundFull","content":"{\"primaryText\":\"Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat.\",\"secondaryText\":\"Consequuntur eum voluptas iure repellat voluptate, nisi ipsam explicabo fugit architecto sint adipisci.\",\"bgColor\":\"\",\"backgroundAsset\":\"\",\"fontSize\":\"\",\"typographyStyle\":\"\",\"fontFamily\":\"\"}","row":0,"grid_column":0,"display_order":0,"mustFill":false},{"type":"textLabelCenterBackgroundFull","content":"{\"label\":\"Lorem ipsum dolor sit amet\",\"text\":\"Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat.\",\"bgColor\":\"\",\"backgroundAsset\":\"\",\"fontSize\":\"\",\"typographyStyle\":\"\",\"fontFamily\":\"\"}","row":0,"grid_column":1,"display_order":1,"mustFill":false},{"type":"iconLeftBackgroundFull","content":"{\"iconName\":\"description\",\"label\":\"Lorem ipsum dolor sit amet, consectetur adipiscing elit.\",\"backgroundAsset\":\"\",\"fontSize\":\"\",\"typographyStyle\":\"\",\"fontFamily\":\"\"}","row":1,"grid_column":0,"display_order":0,"mustFill":false},{"type":"imageBackgroundFull","content":"{\"backgroundAsset\":\"\",\"imageAsset\":\"\",\"altText\":\"Image\",\"overlayColor\":\"\"}","row":2,"grid_column":0,"display_order":0,"mustFill":false},{"type":"imageBackgroundFull","content":"{\"backgroundAsset\":\"\",\"imageAsset\":\"\",\"altText\":\"Image\",\"overlayColor\":\"\"}","row":2,"grid_column":1,"display_order":1,"mustFill":false},{"type":"textCenterBackgroundFull","content":"{\"text\":\"Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat.\",\"bgColor\":\"\",\"backgroundAsset\":\"\",\"fontSize\":\"\",\"typographyStyle\":\"\",\"fontFamily\":\"\"}","row":3,"grid_column":0,"display_order":0,"mustFill":false},{"type":"textCenterBackgroundFull","content":"{\"text\":\"Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat.\",\"bgColor\":\"\",\"backgroundAsset\":\"\",\"fontSize\":\"\",\"typographyStyle\":\"\",\"fontFamily\":\"\"}","row":3,"grid_column":1,"display_order":1,"mustFill":false},{"type":"imageBackgroundFull","content":"{\"backgroundAsset\":\"\",\"imageAsset\":\"\",\"altText\":\"Image\",\"overlayColor\":\"\"}","row":4,"grid_column":0,"display_order":0,"mustFill":false},{"type":"imageBackgroundFull","content":"{\"backgroundAsset\":\"\",\"imageAsset\":\"\",\"altText\":\"Image\",\"overlayColor\":\"\"}","row":4,"grid_column":1,"display_order":1,"mustFill":false},{"type":"textCenterBackgroundFull","content":"{\"text\":\"Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat.\",\"bgColor\":\"\",\"backgroundAsset\":\"\",\"fontSize\":\"\",\"typographyStyle\":\"\",\"fontFamily\":\"\"}","row":5,"grid_column":0,"display_order":0,"mustFill":false},{"type":"textCenterBackgroundFull","content":"{\"text\":\"Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat.\",\"bgColor\":\"\",\"backgroundAsset\":\"\",\"fontSize\":\"\",\"typographyStyle\":\"\",\"fontFamily\":\"\"}","row":5,"grid_column":1,"display_order":1,"mustFill":false},{"type":"specialBoxBackgroundFull","content":"{\"title\":\"Lorem ipsum sit\",\"introText\":\"Lorem ipsum dolor sit amet, consectetur adipiscing elit.\",\"bodyText\":\"Provident blanditiis omnis natus ratione necessitatibus.\",\"closingText\":\"Consequuntur eum voluptas iure repellat voluptate nisi.\",\"bgColor\":\"\",\"backgroundAsset\":\"\",\"imageAsset\":\"\",\"fontSize\":\"\",\"typographyStyle\":\"\",\"fontFamily\":\"\"}","row":6,"grid_column":0,"display_order":0,"mustFill":false},{"type":"iconLeftBackgroundFull","content":"{\"iconName\":\"description\",\"label\":\"Lorem ipsum dolor sit amet, consectetur adipiscing elit.\",\"backgroundAsset\":\"\",\"fontSize\":\"\",\"typographyStyle\":\"\",\"fontFamily\":\"\"}","row":7,"grid_column":0,"display_order":0,"mustFill":false},{"type":"imageBackgroundFull","content":"{\"backgroundAsset\":\"\",\"imageAsset\":\"\",\"altText\":\"Image\",\"overlayColor\":\"\"}","row":8,"grid_column":0,"display_order":0,"mustFill":false},{"type":"imageBackgroundFull","content":"{\"backgroundAsset\":\"\",\"imageAsset\":\"\",\"altText\":\"Image\",\"overlayColor\":\"\"}","row":8,"grid_column":1,"display_order":1,"mustFill":false},{"type":"textCenterBackgroundFull","content":"{\"text\":\"Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat.\",\"bgColor\":\"\",\"backgroundAsset\":\"\",\"fontSize\":\"\",\"typographyStyle\":\"\",\"fontFamily\":\"\"}","row":9,"grid_column":0,"display_order":0,"mustFill":false},{"type":"textCenterBackgroundFull","content":"{\"text\":\"Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat.\",\"bgColor\":\"\",\"backgroundAsset\":\"\",\"fontSize\":\"\",\"typographyStyle\":\"\",\"fontFamily\":\"\"}","row":9,"grid_column":1,"display_order":1,"mustFill":false},{"type":"imageBackgroundFull","content":"{\"backgroundAsset\":\"\",\"imageAsset\":\"\",\"altText\":\"Image\",\"overlayColor\":\"\"}","row":10,"grid_column":0,"display_order":0,"mustFill":false},{"type":"imageBackgroundFull","content":"{\"backgroundAsset\":\"\",\"imageAsset\":\"\",\"altText\":\"Image\",\"overlayColor\":\"\"}","row":10,"grid_column":1,"display_order":1,"mustFill":false},{"type":"textCenterBackgroundFull","content":"{\"text\":\"Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat.\",\"bgColor\":\"\",\"backgroundAsset\":\"\",\"fontSize\":\"\",\"typographyStyle\":\"\",\"fontFamily\":\"\"}","row":11,"grid_column":0,"display_order":0,"mustFill":false},{"type":"textCenterBackgroundFull","content":"{\"text\":\"Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat.\",\"bgColor\":\"\",\"backgroundAsset\":\"\",\"fontSize\":\"\",\"typographyStyle\":\"\",\"fontFamily\":\"\"}","row":11,"grid_column":1,"display_order":1,"mustFill":false},{"type":"iconLeftBackgroundFull","content":"{\"iconName\":\"description\",\"label\":\"Lorem ipsum dolor sit amet, consectetur adipiscing elit.\",\"backgroundAsset\":\"\",\"fontSize\":\"\",\"typographyStyle\":\"\",\"fontFamily\":\"\"}","row":12,"grid_column":0,"display_order":0,"mustFill":false},{"type":"specialBoxBackgroundFull","content":"{\"title\":\"Lorem ipsum sit\",\"introText\":\"Lorem ipsum dolor sit amet, consectetur adipiscing elit.\",\"bodyText\":\"Provident blanditiis omnis natus ratione necessitatibus.\",\"closingText\":\"Consequuntur eum voluptas iure repellat voluptate nisi.\",\"bgColor\":\"\",\"backgroundAsset\":\"\",\"imageAsset\":\"\",\"fontSize\":\"\",\"typographyStyle\":\"\",\"fontFamily\":\"\"}","row":13,"grid_column":0,"display_order":0,"mustFill":false},{"type":"imageFull","content":"{\"imageAsset\":\"\",\"altText\":\"Full image\"}","row":14,"grid_column":0,"display_order":0,"mustFill":false},{"type":"imageFull","content":"{\"imageAsset\":\"\",\"altText\":\"Full image\"}","row":14,"grid_column":1,"display_order":1,"mustFill":false},{"type":"imageFull","content":"{\"imageAsset\":\"\",\"altText\":\"Full image\"}","row":14,"grid_column":2,"display_order":2,"mustFill":false},{"type":"imageFull","content":"{\"imageAsset\":\"\",\"altText\":\"Full image\"}","row":14,"grid_column":3,"display_order":3,"mustFill":false},{"type":"imageFull","content":"{\"imageAsset\":\"\",\"altText\":\"Full image\"}","row":14,"grid_column":4,"display_order":4,"mustFill":false},{"type":"imageFull","content":"{\"imageAsset\":\"\",\"altText\":\"Full image\"}","row":14,"grid_column":5,"display_order":5,"mustFill":false},{"type":"imageFull","content":"{\"imageAsset\":\"\",\"altText\":\"Full image\"}","row":14,"grid_column":6,"display_order":6,"mustFill":false},{"type":"imageFull","content":"{\"imageAsset\":\"\",\"altText\":\"Full image\"}","row":14,"grid_column":7,"display_order":7,"mustFill":false},{"type":"textLabelCenterBackgroundFull","content":"{\"label\":\"Lorem ipsum dolor sit amet\",\"text\":\"Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat.\",\"bgColor\":\"\",\"backgroundAsset\":\"\",\"fontSize\":\"\",\"typographyStyle\":\"\",\"fontFamily\":\"\"}","row":15,"grid_column":0,"display_order":0,"mustFill":false}]$json$::json,
+        'LANDSCAPE',
+        'c2a19938-3071-4cef-ae98-00d06c0f75bb'::uuid,
+        NULL::text,
+        'ecbe7026-4405-4697-95de-20a855ebdcd0'::uuid,
+        '2026-06-01 21:27:55.611+00'::timestamptz
+      ),
+      (
+        '9b646ca6-a92d-4e2e-9ad0-2f5d1627395d'::uuid,
+        'ecard 1 CL 2026',
+        'Bienvenida y Novedades',
+        '3d7f7eb7-c2e6-45e5-9360-b3d39b5ab274'::uuid,
+        $json$[{"type":"headerFull","content":"{\"title\":\"\",\"subtitle\":\"\",\"leftLogoAsset\":\"\",\"rightLogoAsset\":\"\",\"fontSize\":\"\",\"typographyStyle\":\"\",\"fontFamily\":\"\"}","row":0,"grid_column":0,"display_order":0,"mustFill":false},{"type":"labelLeftBackgroundFull","content":"{\"label\":\"Lorem ipsum dolor sit amet\",\"bgColor\":\"\",\"backgroundAsset\":\"\"}","row":1,"grid_column":0,"display_order":0,"mustFill":false},{"type":"empty","content":"{\"bgColor\":\"\"}","row":1,"grid_column":1,"display_order":1,"mustFill":false},{"type":"textCenterBackgroundFull","content":"{\"text\":\"Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat.\",\"bgColor\":\"\",\"backgroundAsset\":\"\",\"fontSize\":\"\",\"typographyStyle\":\"\",\"fontFamily\":\"\"}","row":2,"grid_column":0,"display_order":0,"mustFill":false},{"type":"textLeftBackgroundFull","content":"{\"text\":\"Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat.\",\"bgColor\":\"\",\"backgroundAsset\":\"\",\"fontSize\":\"\",\"typographyStyle\":\"\",\"fontFamily\":\"\"}","row":2,"grid_column":1,"display_order":1,"mustFill":false},{"type":"iconBoxBackgroundFull","content":"{\"iconName\":\"description\",\"label\":\"Lorem ipsum dolor sit amet consectetur.\",\"bgColor\":\"\",\"backgroundAsset\":\"\",\"fontSize\":\"\",\"typographyStyle\":\"\",\"fontFamily\":\"\"}","row":3,"grid_column":0,"display_order":0,"mustFill":false},{"type":"imageBackgroundFull","content":"{\"backgroundAsset\":\"\",\"imageAsset\":\"\",\"altText\":\"Image\",\"overlayColor\":\"\"}","row":3,"grid_column":1,"display_order":1,"mustFill":false}]$json$::json,
+        'LANDSCAPE',
+        'c2a19938-3071-4cef-ae98-00d06c0f75bb'::uuid,
+        NULL::text,
+        'ecbe7026-4405-4697-95de-20a855ebdcd0'::uuid,
+        '2026-06-01 20:57:38.192+00'::timestamptz
+      ),
+      (
+        'f8e8ab1d-e078-4bff-ae34-ea3a08b448e5'::uuid,
+        'ecard 4 CI 2026',
+        'Bienvenida',
+        '3d7f7eb7-c2e6-45e5-9360-b3d39b5ab274'::uuid,
+        $json$[{"type":"headerFull","content":"{\"title\":\"\",\"subtitle\":\"\",\"leftLogoAsset\":\"\",\"rightLogoAsset\":\"\",\"fontSize\":\"\",\"typographyStyle\":\"\",\"fontFamily\":\"\"}","row":0,"grid_column":0,"display_order":0,"mustFill":false},{"type":"labelLeftBackgroundSmall","content":"{\"label\":\"Lorem ipsum dolor sit amet\",\"bgColor\":\"\",\"backgroundAsset\":\"\"}","row":1,"grid_column":0,"display_order":0,"mustFill":false},{"type":"textLeftBackgroundFull","content":"{\"text\":\"Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat.\",\"bgColor\":\"\",\"backgroundAsset\":\"\",\"fontSize\":\"\",\"typographyStyle\":\"\",\"fontFamily\":\"\"}","row":2,"grid_column":0,"display_order":0,"mustFill":false},{"type":"textLeftBackgroundFull","content":"{\"text\":\"Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat.\",\"bgColor\":\"\",\"backgroundAsset\":\"\",\"fontSize\":\"\",\"typographyStyle\":\"\",\"fontFamily\":\"\"}","row":3,"grid_column":0,"display_order":0,"mustFill":false},{"type":"textLeftBackgroundFull","content":"{\"text\":\"Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat.\",\"bgColor\":\"\",\"backgroundAsset\":\"\",\"fontSize\":\"\",\"typographyStyle\":\"\",\"fontFamily\":\"\"}","row":4,"grid_column":0,"display_order":0,"mustFill":false},{"type":"iconBoxBackgroundFull","content":"{\"iconName\":\"description\",\"label\":\"Lorem ipsum dolor sit amet consectetur.\",\"bgColor\":\"\",\"backgroundAsset\":\"\",\"fontSize\":\"\",\"typographyStyle\":\"\",\"fontFamily\":\"\"}","row":5,"grid_column":0,"display_order":0,"mustFill":false},{"type":"labelCenterBackgroundFull","content":"{\"label\":\"Lorem ipsum dolor sit amet\",\"bgColor\":\"\",\"backgroundAsset\":\"\"}","row":6,"grid_column":0,"display_order":0,"mustFill":false},{"type":"textCenterBackgroundFull","content":"{\"text\":\"Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat.\",\"bgColor\":\"\",\"backgroundAsset\":\"\",\"fontSize\":\"\",\"typographyStyle\":\"\",\"fontFamily\":\"\"}","row":7,"grid_column":0,"display_order":0,"mustFill":false},{"type":"empty","content":"{\"bgColor\":\"\"}","row":8,"grid_column":0,"display_order":0,"mustFill":false},{"type":"imageFull","content":"{\"imageAsset\":\"\",\"altText\":\"Full image\"}","row":8,"grid_column":1,"display_order":1,"mustFill":false},{"type":"imageFull","content":"{\"imageAsset\":\"\",\"altText\":\"Full image\"}","row":8,"grid_column":2,"display_order":2,"mustFill":false},{"type":"empty","content":"{\"bgColor\":\"\"}","row":8,"grid_column":3,"display_order":3,"mustFill":false},{"type":"empty","content":"{\"bgColor\":\"\"}","row":8,"grid_column":4,"display_order":4,"mustFill":false},{"type":"imageFull","content":"{\"imageAsset\":\"\",\"altText\":\"Full image\"}","row":8,"grid_column":5,"display_order":5,"mustFill":false},{"type":"imageFull","content":"{\"imageAsset\":\"\",\"altText\":\"Full image\"}","row":9,"grid_column":0,"display_order":0,"mustFill":false},{"type":"imageFull","content":"{\"imageAsset\":\"\",\"altText\":\"Full image\"}","row":9,"grid_column":1,"display_order":1,"mustFill":false},{"type":"imageFull","content":"{\"imageAsset\":\"\",\"altText\":\"Full image\"}","row":9,"grid_column":2,"display_order":2,"mustFill":false},{"type":"imageFull","content":"{\"imageAsset\":\"\",\"altText\":\"Full image\"}","row":9,"grid_column":3,"display_order":3,"mustFill":false},{"type":"imageFull","content":"{\"imageAsset\":\"\",\"altText\":\"Full image\"}","row":9,"grid_column":4,"display_order":4,"mustFill":false},{"type":"imageFull","content":"{\"imageAsset\":\"\",\"altText\":\"Full image\"}","row":9,"grid_column":5,"display_order":5,"mustFill":false}]$json$::json,
+        'LANDSCAPE',
+        'c2a19938-3071-4cef-ae98-00d06c0f75bb'::uuid,
+        NULL::text,
+        'ecbe7026-4405-4697-95de-20a855ebdcd0'::uuid,
+        '2026-06-01 21:16:42.991+00'::timestamptz
+      )
+  ) AS v(
+    id,
+    name,
+    description,
+    area_id,
+    layout,
+    orientation,
+    state_id,
+    prompt_base,
+    created_by_user_id,
+    created_at
+  )
+),
+updated_templates AS (
+  UPDATE public.templates t
+  SET
+    name = d.name,
+    description = d.description,
+    area_id = d.area_id,
+    layout = d.layout,
+    orientation = d.orientation,
+    state_id = d.state_id,
+    prompt_base = d.prompt_base,
+    created_by_user_id = d.created_by_user_id,
+    created_at = d.created_at
+  FROM desired_templates d
+  WHERE t.id = d.id
+  RETURNING t.id
+)
+INSERT INTO public.templates (
+  id,
+  name,
+  description,
+  area_id,
+  layout,
+  orientation,
+  state_id,
+  prompt_base,
+  created_by_user_id,
+  created_at
+)
+SELECT
+  d.id,
+  d.name,
+  d.description,
+  d.area_id,
+  d.layout,
+  d.orientation,
+  d.state_id,
+  d.prompt_base,
+  d.created_by_user_id,
+  d.created_at
+FROM desired_templates d
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM updated_templates ut
+  WHERE ut.id = d.id
+);
 
 -- ========================================
 -- BRAND KITS
