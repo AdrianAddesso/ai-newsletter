@@ -16,9 +16,9 @@ export function useNewsletterExport() {
     const loadOptions = async () => {
       const options: ExportOption[] = [
         {
-          id:'png',
-          label:'Exportar PNG',
-          format:'PNG',
+          id:'jpg',
+          label:'Exportar JPG',
+          format:'JPG',
         },
         {
           id:'eml',

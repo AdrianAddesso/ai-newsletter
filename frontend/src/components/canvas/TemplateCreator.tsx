@@ -40,7 +40,7 @@ export const TemplateCreator: React.FC<TemplateCreatorProps> = ({
       border: '1px solid',
       borderColor: 'divider',
       boxShadow: 'none',
-      overflow: 'hidden',
+      overflow: isEditMode ? 'hidden' : 'visible',
       '& *': { boxSizing: 'border-box' }
     }}>
       {rows.map((row) => (
@@ -80,7 +80,7 @@ export const TemplateCreator: React.FC<TemplateCreatorProps> = ({
                   }
                 }}
               >
-                <Box sx={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+                <Box sx={{ flex: 1, display: 'flex', overflow: isEditMode ? 'hidden' : 'visible' }}>
                   {isEditMode && isSkeletonView ? (
                     <Box sx={{
                       flex: 1,
