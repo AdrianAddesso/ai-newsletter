@@ -4,6 +4,8 @@ services:
     platform: linux/arm64
     container_name: lumen_postgres
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -17,6 +19,8 @@ services:
     image: minio/minio
     command: server /data --console-address ":9001"
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
@@ -31,6 +35,8 @@ services:
     depends_on:
       - minio
     restart: "no"
+    env_file:
+      - .env
     entrypoint: >
       /bin/sh -c "
       until mc alias set local http://minio:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD}; do
@@ -52,6 +58,8 @@ services:
       - postgres
       - minio
       - minio-init
+    env_file:
+      - .env
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       DIRECT_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
@@ -63,6 +71,8 @@ services:
       S3_ACCESS_KEY: ${MINIO_ROOT_USER}
       S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
       S3_FORCE_PATH_STYLE: "true"
+      GENAI_URL: ${GENAI_URL}
+      GENAI_MODEL: ${GENAI_MODEL}
 
   backend:
     build:
@@ -74,11 +84,15 @@ services:
       - postgres
       - minio
       - minio-init
+    env_file:
+      - .env
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       DIRECT_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       CLIENT_ID: ${CLIENT_ID:-}
       CLIENT_SECRET: ${CLIENT_SECRET:-}
+      GENAI_URL: ${GENAI_URL}
+      GENAI_MODEL: ${GENAI_MODEL}
       S3_ENDPOINT: http://minio:9000
       S3_REGION: us-east-1
       S3_ASSETS_BUCKET: ${S3_ASSETS_BUCKET}
@@ -89,8 +103,12 @@ services:
       S3_FORCE_PATH_STYLE: "true"
   frontend:
     build:
-      context: .
-      dockerfile: frontend/Dockerfile
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL}
+    env_file:
+      - .env
     ports:
       - "5173:80"
     depends_on:
