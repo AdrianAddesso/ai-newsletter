@@ -360,3 +360,4 @@ export class NewslettersController {
     return Action.REVIEW_FINAL_APPROVE_COMMENT;
   }
 }
+

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
-
+import { parseContent } from '../../../utils/blockContent'
 import { useAuth } from '../../../contexts/AuthContext'
 import { useNotification } from '../../../hooks/useNotification'
 
@@ -27,7 +27,6 @@ import type { BrandKit, BrandKitResources } from '../../../api/brand-kits'
 
 import type { GenerateNewsletterRequest } from '../../../api/ai'
 import { updateBlockValue } from '../../../utils/newsletterBlocks'
-import { parseContent } from '../../../utils/blockContent'
 
 export function useNewsletterEditor() {
   const navigate = useNavigate()
@@ -52,9 +51,9 @@ export function useNewsletterEditor() {
 
   const exportOptions: ExportOption[] = [
     {
-      id: 'png',
-      label: 'Exportar PNG',
-      format: 'PNG',
+      id: 'jpg',
+      label: 'Exportar JPG',
+      format: 'JPG',
     },
     {
       id: 'pdf',
@@ -157,27 +156,6 @@ export function useNewsletterEditor() {
     return templates.find((template) => template.id === newsletter.templateId)
   }, [newsletter, templates])
 
-  const renderHtml = useCallback(() => {
-    if (!newsletter) return ''
-
-    return `
-      <!doctype html>
-      <html>
-        <body style="font-family:Arial,sans-serif">
-          ${newsletter.blocks.map(block => `
-            <section style="padding:24px;background:#ffffff">
-              <h2>${block.name}</h2>
-              ${Object.values(parseContent<Record<string, string>>(block.content))
-                .filter((value) => typeof value === 'string' && value.trim().length > 0)
-                .map((value) => `<p>${value}</p>`)
-                .join('')}
-            </section>
-          `).join('')}
-        </body>
-      </html>
-    `
-  }, [newsletter])
-
   const updateBlocks = useCallback((blocks: NewsletterBlock[]) => {
     if (!newsletter) return
 
@@ -223,109 +201,115 @@ export function useNewsletterEditor() {
   )
 
   const handleExport = useCallback(
-    async (format: ExportFormat) => {
-      if (!newsletter) return
+  async (format: ExportFormat) => {
+    if (!newsletter) return
 
-      setExportingFormat(format)
+    setExportingFormat(format)
 
-      try {
-        const html = newsletter.renderedHtml ?? renderHtml()
+    try {
+      const domToImage = (await import('dom-to-image-more')).default
 
-        switch (format) {
-          case 'EML': {
-            const emlContent = [
-              'X-Unsent: 1',
-              'To: ',
-              'Subject: Newsletter Nestlé',
-              'MIME-Version: 1.0',
-              'Content-Type: text/html; charset=UTF-8',
-              'Content-Transfer-Encoding: 8bit',
-              '',
-              html,
-            ].join('\r\n')
+      const exportRoot = document.querySelector<HTMLElement>(
+        '[data-newsletter-export-root]',
+      )
 
-            const blob = new Blob([emlContent], {
-              type: 'message/rfc822',
-            })
-
-            const url = URL.createObjectURL(blob)
-
-            const a = document.createElement('a')
-
-            a.href = url
-            a.download = 'newsletter.eml'
-
-            document.body.appendChild(a)
-
-            a.click()
-
-            document.body.removeChild(a)
-
-            URL.revokeObjectURL(url)
-
-            break
-          }
-
-          case 'PNG':
-          case 'PDF': {
-            const container = document.createElement('div')
-
-            container.innerHTML = html
-
-            container.style.position = 'fixed'
-            container.style.left = '-99999px'
-            container.style.top = '0'
-            container.style.width = '1200px'
-            container.style.background = '#fff'
-
-            document.body.appendChild(container)
-
-            const html2canvas = (await import('html2canvas')).default
-
-            const canvas = await html2canvas(container, {
-              scale: 2,
-              useCORS: true,
-              backgroundColor: '#ffffff',
-            })
-
-            document.body.removeChild(container)
-
-            if (format === 'PNG') {
-              const image = canvas.toDataURL('image/png')
-
-              const link = document.createElement('a')
-
-              link.href = image
-              link.download = 'newsletter.png'
-
-              link.click()
-
-              break
-            }
-
-            const { jsPDF } = await import('jspdf')
-
-            const pdf = new jsPDF({
-              orientation: 'portrait',
-              unit: 'px',
-              format: [canvas.width, canvas.height],
-            })
-
-            const image = canvas.toDataURL('image/png')
-
-            pdf.addImage(image, 'PNG', 0, 0, canvas.width, canvas.height)
-
-            pdf.save('newsletter.pdf')
-
-            break
-          }
-        }
-      } finally {
-        setExportingFormat(null)
+      if (!exportRoot) {
+        throw new Error('No se encontro el contenido visible para exportar')
       }
-    },
-    [newsletter, renderHtml],
-  )
+
+      // Esperar fuentes y render
+      if (document.fonts?.ready) await document.fonts.ready
+      await new Promise<void>((resolve) => {
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+      })
+
+      const scale = Math.max(2, window.devicePixelRatio || 1)
+      const { width, height } = exportRoot.getBoundingClientRect()
+
+      switch (format) {
+        case 'JPG': {
+          const dataUrl = await domToImage.toJpeg(exportRoot, {
+            quality: 0.92,
+            width: width * scale,
+            height: height * scale,
+            style: { transform: `scale(${scale})`, transformOrigin: 'top left' },
+            bgcolor: '#ffffff',
+          })
+          const link = document.createElement('a')
+          link.href = dataUrl
+          link.download = 'newsletter.jpg'
+          link.click()
+          break
+        }
+
+        case 'PDF': {
+          const dataUrl = await domToImage.toPng(exportRoot, {
+            width: width * scale,
+            height: height * scale,
+            style: { transform: `scale(${scale})`, transformOrigin: 'top left' },
+            bgcolor: '#ffffff',
+          })
+          const { jsPDF } = await import('jspdf')
+          const pdf = new jsPDF({
+            orientation: width >= height ? 'landscape' : 'portrait',
+            unit: 'px',
+            format: [width, height],
+            hotfixes: ['px_scaling'],
+          })
+          pdf.addImage(dataUrl, 'PNG', 0, 0, width, height)
+          pdf.save('newsletter.pdf')
+          break
+        }
+
+        case 'EML': {
+          const dataUrl = await domToImage.toPng(exportRoot, {
+            width: width * scale,
+            height: height * scale,
+            style: { transform: `scale(${scale})`, transformOrigin: 'top left' },
+            bgcolor: '#ffffff',
+          })
+          const html = `
+            <!doctype html>
+            <html>
+              <body style="margin:0;padding:0;background:#ffffff;">
+                <img
+                  src="${dataUrl}"
+                  alt="Newsletter"
+                  width="${width}"
+                  style="display:block;width:100%;max-width:${width}px;height:auto;border:0;"
+                />
+              </body>
+            </html>
+          `
+          const emlContent = [
+            'X-Unsent: 1',
+            'To: ',
+            'Subject: Newsletter Nestlé',
+            'MIME-Version: 1.0',
+            'Content-Type: text/html; charset=UTF-8',
+            'Content-Transfer-Encoding: 8bit',
+            '',
+            html,
+          ].join('\r\n')
+
+          const blob = new Blob([emlContent], { type: 'message/rfc822' })
+          const url = URL.createObjectURL(blob)
+          const a = document.createElement('a')
+          a.href = url
+          a.download = 'newsletter.eml'
+          document.body.appendChild(a)
+          a.click()
+          document.body.removeChild(a)
+          URL.revokeObjectURL(url)
+          break
+        }
+      }
+    } finally {
+      setExportingFormat(null)
+    }
+  },
+  [newsletter],
+)
 
   const handleRegenerateBlock = useCallback(
     async (blockId: string) => {

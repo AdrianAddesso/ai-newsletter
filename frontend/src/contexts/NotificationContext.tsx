@@ -141,8 +141,17 @@ const readStoredNotifications = (userId: string): AppNotification[] | null => {
   }
 }
 
-const getInitialNotificationsForUser = (userId: string) =>
-  readStoredNotifications(userId) ?? []
+const getInitialNotificationsForUser = (userId: string) => {
+  const storedNotifications = readStoredNotifications(userId)
+
+  if (storedNotifications) {
+    return storedNotifications
+  }
+
+  const role = roleByUserId[userId]
+
+  return role ? createDefaultNotifications(role, userId) : []
+}
 
 const persistNotifications = (userId: string, notifications: AppNotification[]) => {
   localStorage.setItem(getStorageKey(userId), JSON.stringify(notifications))

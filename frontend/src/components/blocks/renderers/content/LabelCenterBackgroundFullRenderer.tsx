@@ -62,10 +62,12 @@ export function LabelCenterBackgroundFullRenderer({
           label={label}
           sx={{
             maxWidth: "90%",
+            height: 'auto',
             "& .MuiChip-label": {
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
+              whiteSpace: "normal",
+              overflow: "visible",
+              textOverflow: "unset",
+              display: 'block',
               ...typographySx,
             },
           }}
