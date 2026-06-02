@@ -28,110 +28,6 @@ import type { BrandKit, BrandKitResources } from '../../../api/brand-kits'
 import type { GenerateNewsletterRequest } from '../../../api/ai'
 import { updateBlockValue } from '../../../utils/newsletterBlocks'
 
-const waitForExportRender = async (): Promise<void> => {
-  if (typeof document !== 'undefined' && document.fonts?.ready) {
-    await document.fonts.ready
-  }
-
-  await new Promise<void>((resolve) => {
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => resolve())
-    })
-  })
-}
-
-const captureExportCanvas = async (): Promise<{
-  canvas: HTMLCanvasElement
-  width: number
-  height: number
-}> => {
-  const exportRoot = document.querySelector<HTMLElement>(
-    '[data-newsletter-export-root]',
-  )
-
-  if (!exportRoot) {
-    throw new Error('No se encontro el contenido visible para exportar')
-  }
-
-  await waitForExportRender()
-
-  const html2canvas = (await import('html2canvas')).default
-  const { width, height } = exportRoot.getBoundingClientRect()
-  const normalizedWidth = Math.ceil(width)
-  const normalizedHeight = Math.ceil(height)
-
-  const canvas = await html2canvas(exportRoot, {
-    scale: Math.max(2, window.devicePixelRatio || 1),
-    useCORS: true,
-    backgroundColor: '#ffffff',
-    width: normalizedWidth,
-    height: normalizedHeight,
-    windowWidth: document.documentElement.clientWidth,
-    windowHeight: document.documentElement.clientHeight,
-    scrollX: 0,
-    scrollY: -window.scrollY,
-    
-    onclone: (clonedDocument) => {
-      const root = clonedDocument.querySelector<HTMLElement>(
-        '[data-newsletter-export-root]',
-      )
-      if (!root) return
-
-      // Fix Typography
-       root.querySelectorAll<HTMLElement>('.MuiTypography-root').forEach((node) => {
-        node.style.overflow = 'visible'
-        node.style.lineHeight = node.style.lineHeight || '1.2'
-      })
-
-      // Reemplazar Chip por div simple
-      root.querySelectorAll<HTMLElement>('.MuiChip-root').forEach((chip) => {
-        const label = chip.querySelector<HTMLElement>('.MuiChip-label')
-        const text = label?.textContent ?? ''
-        const computedBg = window.getComputedStyle(chip).backgroundColor
-        const computedColor = window.getComputedStyle(chip).color
-
-        const replacement = clonedDocument.createElement('div')
-        replacement.textContent = text
-        replacement.style.cssText = `
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          padding: 6px 16px;
-          border-radius: 16px;;
-          background-color: ${computedBg};
-          color: ${computedColor};
-          font-size: 0.8125rem;
-          font-family: inherit;
-          font-weight: 400;
-          white-space: normal;
-          word-break: break-word;
-          max-width: 90%;
-          box-sizing: border-box;
-          border: none;
-          box-shadow: 0 0 0 2px rgba(0,0,0,0.25);
-        `
-
-        chip.parentNode?.replaceChild(replacement, chip)
-      })
-
-      root.querySelectorAll<HTMLElement>('*').forEach((node) => {
-        const computed = window.getComputedStyle(node)
-        if (computed.overflow === 'hidden') {
-          node.style.setProperty('overflow', 'visible', 'important')
-        }
-      })  
-      
-    },
-
-  })
-
-  return {
-    canvas,
-    width: normalizedWidth,
-    height: normalizedHeight,
-  }
-}
-
 export function useNewsletterEditor() {
   const navigate = useNavigate()
   const { id } = useParams()
@@ -305,103 +201,115 @@ export function useNewsletterEditor() {
   )
 
   const handleExport = useCallback(
-    async (format: ExportFormat) => {
-      if (!newsletter) return
+  async (format: ExportFormat) => {
+    if (!newsletter) return
 
-      setExportingFormat(format)
+    setExportingFormat(format)
 
-      try {
-        switch (format) {
-          case 'EML': {
-            const { canvas, width } = await captureExportCanvas()
-            const imageData = canvas.toDataURL('image/png')
-            const html = `
-              <!doctype html>
-              <html>
-                <body style="margin:0;padding:0;background:#ffffff;">
-                  <img
-                    src="${imageData}"
-                    alt="Newsletter"
-                    width="${width}"
-                    style="display:block;width:100%;max-width:${width}px;height:auto;border:0;outline:none;text-decoration:none;"
-                  />
-                </body>
-              </html>
-            `
-            const emlContent = [
-              'X-Unsent: 1',
-              'To: ',
-              'Subject: Newsletter Nestlé',
-              'MIME-Version: 1.0',
-              'Content-Type: text/html; charset=UTF-8',
-              'Content-Transfer-Encoding: 8bit',
-              '',
-              html,
-            ].join('\r\n')
+    try {
+      const domToImage = (await import('dom-to-image-more')).default
 
-            const blob = new Blob([emlContent], {
-              type: 'message/rfc822',
-            })
+      const exportRoot = document.querySelector<HTMLElement>(
+        '[data-newsletter-export-root]',
+      )
 
-            const url = URL.createObjectURL(blob)
-
-            const a = document.createElement('a')
-
-            a.href = url
-            a.download = 'newsletter.eml'
-
-            document.body.appendChild(a)
-
-            a.click()
-
-            document.body.removeChild(a)
-
-            URL.revokeObjectURL(url)
-
-            break
-          }
-
-          case 'JPG':
-          case 'PDF': {
-            const { canvas, width, height } = await captureExportCanvas()
-
-            if (format === 'JPG') {
-              const image = canvas.toDataURL('image/jpeg', 0.92)
-
-              const link = document.createElement('a')
-
-              link.href = image
-              link.download = 'newsletter.jpg'
-
-              link.click()
-
-              break
-            }
-
-            const { jsPDF } = await import('jspdf')
-
-            const pdf = new jsPDF({
-              orientation: width >= height ? 'landscape' : 'portrait',
-              unit: 'px',
-              format: [width, height],
-              hotfixes: ['px_scaling'],
-            })
-
-            const image = canvas.toDataURL('image/png')
-
-            pdf.addImage(image, 'PNG', 0, 0, width, height)
-
-            pdf.save('newsletter.pdf')
-
-            break
-          }
-        }
-      } finally {
-        setExportingFormat(null)
+      if (!exportRoot) {
+        throw new Error('No se encontro el contenido visible para exportar')
       }
-    },
-    [newsletter],
-  )
+
+      // Esperar fuentes y render
+      if (document.fonts?.ready) await document.fonts.ready
+      await new Promise<void>((resolve) => {
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+      })
+
+      const scale = Math.max(2, window.devicePixelRatio || 1)
+      const { width, height } = exportRoot.getBoundingClientRect()
+
+      switch (format) {
+        case 'JPG': {
+          const dataUrl = await domToImage.toJpeg(exportRoot, {
+            quality: 0.92,
+            width: width * scale,
+            height: height * scale,
+            style: { transform: `scale(${scale})`, transformOrigin: 'top left' },
+            bgcolor: '#ffffff',
+          })
+          const link = document.createElement('a')
+          link.href = dataUrl
+          link.download = 'newsletter.jpg'
+          link.click()
+          break
+        }
+
+        case 'PDF': {
+          const dataUrl = await domToImage.toPng(exportRoot, {
+            width: width * scale,
+            height: height * scale,
+            style: { transform: `scale(${scale})`, transformOrigin: 'top left' },
+            bgcolor: '#ffffff',
+          })
+          const { jsPDF } = await import('jspdf')
+          const pdf = new jsPDF({
+            orientation: width >= height ? 'landscape' : 'portrait',
+            unit: 'px',
+            format: [width, height],
+            hotfixes: ['px_scaling'],
+          })
+          pdf.addImage(dataUrl, 'PNG', 0, 0, width, height)
+          pdf.save('newsletter.pdf')
+          break
+        }
+
+        case 'EML': {
+          const dataUrl = await domToImage.toPng(exportRoot, {
+            width: width * scale,
+            height: height * scale,
+            style: { transform: `scale(${scale})`, transformOrigin: 'top left' },
+            bgcolor: '#ffffff',
+          })
+          const html = `
+            <!doctype html>
+            <html>
+              <body style="margin:0;padding:0;background:#ffffff;">
+                <img
+                  src="${dataUrl}"
+                  alt="Newsletter"
+                  width="${width}"
+                  style="display:block;width:100%;max-width:${width}px;height:auto;border:0;"
+                />
+              </body>
+            </html>
+          `
+          const emlContent = [
+            'X-Unsent: 1',
+            'To: ',
+            'Subject: Newsletter Nestlé',
+            'MIME-Version: 1.0',
+            'Content-Type: text/html; charset=UTF-8',
+            'Content-Transfer-Encoding: 8bit',
+            '',
+            html,
+          ].join('\r\n')
+
+          const blob = new Blob([emlContent], { type: 'message/rfc822' })
+          const url = URL.createObjectURL(blob)
+          const a = document.createElement('a')
+          a.href = url
+          a.download = 'newsletter.eml'
+          document.body.appendChild(a)
+          a.click()
+          document.body.removeChild(a)
+          URL.revokeObjectURL(url)
+          break
+        }
+      }
+    } finally {
+      setExportingFormat(null)
+    }
+  },
+  [newsletter],
+)
 
   const handleRegenerateBlock = useCallback(
     async (blockId: string) => {
