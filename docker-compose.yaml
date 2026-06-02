@@ -2,7 +2,6 @@ services:
   postgres:
     image: postgres:16
     platform: linux/arm64
-    container_name: lumen_postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
