@@ -172,11 +172,11 @@ describe('AssetsService', () => {
 
     expect(prisma.assets.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: {
+        where: expect.objectContaining({
           type: 'SHAPE',
           deleted_at: null,
-        },
-      }),
+          OR: [{ source: 'SYSTEM' }, { from_brand: false }],
+        }),
     );
   });
 
