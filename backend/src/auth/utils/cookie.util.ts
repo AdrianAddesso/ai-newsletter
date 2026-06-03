@@ -15,7 +15,7 @@ export function setAuthCookies(
   const commonOpts = {
     httpOnly: true,
     secure: isSecure,
-    sameSite: sameSite as any,
+    sameSite: sameSite as boolean | 'lax' | 'strict' | 'none',
     path: '/'
   };
 
@@ -37,7 +37,7 @@ export function clearAuthCookies(res: Response, configService: ConfigService) {
   const opts = {
     httpOnly: true,
     secure: isSecure,
-    sameSite: sameSite as any,
+    sameSite: sameSite as boolean | 'lax' | 'strict' | 'none',
     path: '/'
   };
 

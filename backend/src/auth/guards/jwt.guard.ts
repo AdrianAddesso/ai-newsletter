@@ -2,6 +2,7 @@ import { Injectable, CanActivate, ExecutionContext, UnauthorizedException, Forbi
 import { ConfigService } from '@nestjs/config';
 import { verifyToken } from '../utils/jwt.util';
 import { PrismaService } from '../../prisma/prisma.service';
+import { Request } from 'express';
 
 @Injectable()
 export class JwtGuard implements CanActivate {
@@ -11,7 +12,8 @@ export class JwtGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest();
+    const httpContext = context.switchToHttp();
+    const request = httpContext.getRequest<Request>();
     const token = request.cookies?.accessToken as string;
 
     if (!token) {

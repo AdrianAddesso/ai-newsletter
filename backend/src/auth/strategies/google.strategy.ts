@@ -1,6 +1,6 @@
 ﻿import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { Strategy } from 'passport-google-oauth20';
+import { Strategy, Profile } from 'passport-google-oauth20';
 import { ConfigService } from '@nestjs/config';
 import { isDomainAllowed } from '../utils/domain.util';
 
@@ -15,8 +15,8 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     });
   }
 
-  async validate(accessToken: string, refreshToken: string, profile: any): Promise<{ email: string, error?: string }> {
-    const { emails } = await profile;
+  async validate(accessToken: string, refreshToken: string, profile: Profile): Promise<{ email: string, error?: string }> {
+    const { emails } = profile;
     const email = emails?.[0]?.value;
 
     if (!email) {
@@ -25,12 +25,12 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
 
     const allowedDomains = this.configService.get<string>('AUTH_ALLOWED_EMAIL_DOMAINS') || '';
 
-    if (!isDomainAllowed(email as string, allowedDomains)) {
-      return { email: email as string, error: 'Domain not allowed' };
+    if (!isDomainAllowed(email, allowedDomains)) {
+      return { email: email, error: 'Domain not allowed' };
     }
 
     return {
-      email: email as string
+      email: email
     };
   }
 }

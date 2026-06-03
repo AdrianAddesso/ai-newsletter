@@ -6,6 +6,16 @@ import type { Request, Response } from 'express';
 import { setAuthCookies, clearAuthCookies } from './utils/cookie.util';
 import { JwtGuard } from './guards/jwt.guard';
 
+type GoogleUser = {
+  id: string;
+  email: string;
+  name: string;
+  last_name: string;
+  role: string;
+  state: string;
+  area_id: string;
+}
+
 @Controller('auth')
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
@@ -27,7 +37,7 @@ export class AuthController {
     const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:5173';
 
     try {
-      const user = req.user as any;
+      const user = req.user as GoogleUser & { error?: string };
 
       if (user.error) {
         return res.redirect(`${frontendUrl}/auth/callback`);
@@ -38,6 +48,7 @@ export class AuthController {
       return res.redirect(`${frontendUrl}/dashboard`);
       
     } catch (error: any) {
+      this.logger.error('Error during Google authentication callback', error);
       return res.redirect(`${frontendUrl}/auth/callback`);
     }
   }
@@ -58,23 +69,28 @@ export class AuthController {
 
   @Get('me')
   @UseGuards(JwtGuard)
-  getMe(@Req() req: any){
-    
+  getMe(@Req() req: Request){
+
+    const user = req.user as GoogleUser;
+
     return {
-      id: req.user?.id,
-      email: req.user?.email,
-      name: req.user?.name,
-      lastName: req.user?.last_name,
-      role: req.user?.role,
-      state: req.user?.state,
-      areaId: req.user?.area_id,
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      lastName: user.last_name,
+      role: user.role,
+      state: user.state,
+      areaId: user.area_id,
     };
   }
 
   @Post('logout')
   @UseGuards(JwtGuard)
-  async logout(@Req() req: any, @Res() res: Response) {
-    await this.authService.logout(req.user?.id);
+  async logout(@Req() req: Request, @Res() res: Response) {
+
+    const user = req.user as GoogleUser;
+    
+    await this.authService.logout(user.id);
 
     clearAuthCookies(res, this.configService);
 

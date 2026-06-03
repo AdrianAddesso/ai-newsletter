@@ -52,13 +52,13 @@ export function LoginPage() {
       <Container maxWidth="sm">
         <Stack spacing={4}>
           <Card elevation={8} sx={{ border: "1px solid", borderColor: "divider", p: { xs: 3, md: 4 } }}>
-            <Stack spacing={3} sx={{ textAlign: "center" }}>
+            <Stack spacing={3} sx={{ textAlign: "center", justifyContent: "center", alignItems: "center" }}>
               <Typography variant="h4" sx={{ fontWeight: "bold" }}>
                 Bienvenido a Newsletters AI
               </Typography>
               {errorMessage && <Alert severity="error">{errorMessage}</Alert>}
               <Button
-                fullWidth
+                sx={{ alignItems: "center", justifyContent: "center", justifyItems: "center"}}
                 variant="contained"
                 color="primary"
                 size="large"
