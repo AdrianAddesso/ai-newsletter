@@ -64,6 +64,7 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       DIRECT_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       S3_ENDPOINT: http://minio:9000
+      S3_PUBLIC_ENDPOINT: http://localhost:${MINIO_API_PORT:-9000}
       S3_REGION: us-east-1
       S3_ASSETS_BUCKET: ${S3_ASSETS_BUCKET}
       S3_FONTS_BUCKET: ${S3_FONTS_BUCKET}
@@ -94,6 +95,7 @@ services:
       GENAI_URL: ${GENAI_URL}
       GENAI_MODEL: ${GENAI_MODEL}
       S3_ENDPOINT: http://minio:9000
+      S3_PUBLIC_ENDPOINT: http://localhost:${MINIO_API_PORT:-9000}
       S3_REGION: us-east-1
       S3_ASSETS_BUCKET: ${S3_ASSETS_BUCKET}
       S3_FONTS_BUCKET: ${S3_FONTS_BUCKET}

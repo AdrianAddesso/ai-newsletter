@@ -41,6 +41,7 @@ Complete these values in `.env.deploy`:
 - `MINIO_ROOT_PASSWORD`
 - `MINIO_API_PORT`
 - `MINIO_CONSOLE_PORT`
+- `S3_PUBLIC_ENDPOINT`
 - `S3_REGION`
 - `S3_ASSETS_BUCKET`
 - `S3_FONTS_BUCKET`
@@ -105,6 +106,7 @@ Open:
 
 - `http://localhost:${FRONTEND_PORT}`
 - or `http://SERVER:${FRONTEND_PORT}`
+- `S3_PUBLIC_ENDPOINT`
 - `http://localhost:${MINIO_CONSOLE_PORT}`
 - or `http://SERVER:${MINIO_CONSOLE_PORT}`
 
@@ -112,6 +114,10 @@ The frontend serves the SPA and proxies:
 
 - browser request `/api/health`
 - internal upstream `http://backend:3000/health`
+
+The backend also signs MinIO object URLs for the browser with `S3_PUBLIC_ENDPOINT`.
+For local testing, set it to `http://localhost:${MINIO_API_PORT}`.
+For a remote server, set it to the public host that the browser can reach, for example `http://SERVER:${MINIO_API_PORT}`.
 
 Validate MinIO:
 
@@ -137,5 +143,6 @@ docker compose -f docker-compose.deploy.yml --env-file .env.deploy --profile see
 - Buckets are created automatically by `minio-init`.
 - Buckets are private by default.
 - The frontend image must be published after building it with `VITE_API_URL=/api`.
+- `S3_ENDPOINT` stays internal to Docker as `http://minio:9000`; `S3_PUBLIC_ENDPOINT` is the browser-facing MinIO URL used in signed asset previews.
 - `assets-seed` uploads the catalog from `backend/assets` and reflects it into PostgreSQL.
 - PostgreSQL stores metadata only; binary content stays in MinIO.
