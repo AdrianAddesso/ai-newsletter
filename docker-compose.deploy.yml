@@ -99,16 +99,10 @@ services:
       S3_FORCE_PATH_STYLE: "true"
 
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-      args:
-        VITE_API_URL: ${VITE_API_URL}
+    image: ${DOCKERHUB_USERNAME}/ai-newsletter-frontend:${APP_VERSION}
     restart: unless-stopped
     depends_on:
       - backend
-    env_file:
-      - .env.deploy
     ports:
       - "${FRONTEND_PORT}:80"
 
