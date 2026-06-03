@@ -178,12 +178,10 @@ export class AssetsService {
             ? {
                 type,
                 deleted_at: null,
-                from_brand: false,
               }
             : {
                 type: { not: asset_type.BLOCK as asset_type },
                 deleted_at: null,
-                from_brand: false,
               },
         orderBy: [{ type: 'asc' }, { name: 'asc' }],
         select: {
