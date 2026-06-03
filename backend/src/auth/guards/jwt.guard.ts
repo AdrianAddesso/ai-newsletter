@@ -12,7 +12,7 @@ export class JwtGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
-    const token = request.cookies?.accessToken;
+    const token = request.cookies?.accessToken as string;
 
     if (!token) {
       throw new UnauthorizedException('No auth token found');

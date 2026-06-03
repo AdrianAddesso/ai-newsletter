@@ -25,17 +25,18 @@ export class AuthController {
   @UseGuards(AuthGuard('google'))
   async googleAuthRedirect(@Req() req: Request, @Res() res: Response) {
     const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:5173';
+
     try {
       const user = req.user as any;
 
       if (user.error) {
-
         return res.redirect(`${frontendUrl}/auth/callback`);
       }
 
       const tokens = await this.authService.handleGoogleAuth(user);
       setAuthCookies(res, tokens.accessToken, tokens.refreshToken, this.configService);
       return res.redirect(`${frontendUrl}/dashboard`);
+      
     } catch (error: any) {
       return res.redirect(`${frontendUrl}/auth/callback`);
     }
