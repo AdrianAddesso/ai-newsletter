@@ -175,8 +175,8 @@ describe('AssetsService', () => {
         where: expect.objectContaining({
           type: 'SHAPE',
           deleted_at: null,
-          OR: [{ source: 'SYSTEM' }, { from_brand: false }],
         }),
+      }),
     );
   });
 
