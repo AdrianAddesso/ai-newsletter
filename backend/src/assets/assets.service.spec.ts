@@ -57,6 +57,9 @@ function createService() {
       findFirst: jest.fn().mockResolvedValue(null),
       update: updateAssetMock,
     },
+    brand_kit: {
+      findFirst: jest.fn().mockResolvedValue({ id: 'brand-kit-id' }),
+    },
   } as unknown as PrismaService;
 
   const storageService = {
@@ -149,7 +152,7 @@ describe('AssetsService', () => {
   });
 
   it('lists persisted assets with signed urls', async () => {
-    const { service } = createService();
+    const { service, prisma } = createService();
 
     await expect(service.listAssets('SHAPE')).resolves.toEqual({
       assets: [
@@ -166,6 +169,36 @@ describe('AssetsService', () => {
         },
       ],
     });
+
+    expect(prisma.assets.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          type: 'SHAPE',
+          deleted_at: null,
+        },
+      }),
+    );
+  });
+
+  it('keeps brand kit filtering when a brand kit id is provided', async () => {
+    const { service, prisma } = createService();
+
+    await service.listAssets('SHAPE', 'brand-kit-id');
+
+    expect(prisma.assets.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          deleted_at: null,
+          type: 'SHAPE',
+          brandkit_assets: {
+            some: {
+              brand_kit_id: 'brand-kit-id',
+              deleted_at: null,
+            },
+          },
+        },
+      }),
+    );
   });
 
   it('excludes block assets from list responses', async () => {
