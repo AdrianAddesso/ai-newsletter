@@ -10,12 +10,14 @@ jest.mock('@aws-sdk/s3-request-presigner', () => ({
 describe('StorageService', () => {
   let service: StorageService;
   let sendMock: jest.SpyInstance;
+  let getSignedUrlMock: jest.Mock;
 
   beforeEach(() => {
     const configService = {
       get: (key: string) =>
         ({
           S3_ENDPOINT: 'http://localhost:9000',
+          S3_PUBLIC_ENDPOINT: 'http://public-minio.example:9000',
           S3_REGION: 'us-east-1',
           S3_ASSETS_BUCKET: 'ai-newsletter-assets',
           S3_FONTS_BUCKET: 'ai-newsletter-fonts',
@@ -30,7 +32,8 @@ describe('StorageService', () => {
     sendMock = jest
       .spyOn(S3Client.prototype, 'send')
       .mockResolvedValue({} as never);
-    (getSignedUrl as jest.Mock).mockResolvedValue(
+    getSignedUrlMock = getSignedUrl as jest.Mock;
+    getSignedUrlMock.mockResolvedValue(
       'http://localhost:9000/ai-newsletter-assets/ai-assets/test.png?signature=fake',
     );
   });
@@ -66,5 +69,18 @@ describe('StorageService', () => {
         'ai-assets/test.png',
       ),
     ).resolves.toContain('signature=fake');
+  });
+
+  it('signs browser-facing urls with the public endpoint when configured', async () => {
+    await service.getSignedUrl(
+      'ai-newsletter-assets',
+      'ai-assets/test.png',
+    );
+
+    const signedUrlClient = getSignedUrlMock.mock.calls[0]?.[0] as S3Client;
+    const endpoint = await signedUrlClient.config.endpoint?.();
+
+    expect(endpoint?.hostname).toBe('public-minio.example');
+    expect(endpoint?.port).toBe(9000);
   });
 });
