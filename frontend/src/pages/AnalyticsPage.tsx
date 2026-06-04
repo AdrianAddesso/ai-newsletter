@@ -143,7 +143,7 @@ export function AnalyticsPage(): JSX.Element {
   }
 
     const handleExport = (): void => {
-    const headers = ["Título", "Estado anterior", "Nuevo estado", "Fecha"];
+    const headers = ["Titulo", "Estado anterior", "Nuevo estado", "Fecha"];
     const rows = filteredAndSortedLogs.map((log) => [
         log.newsletter_name,
         stateLabels[log.previous_state],
@@ -157,7 +157,9 @@ export function AnalyticsPage(): JSX.Element {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "reporte.csv";
+    const now = new Date();
+    const timestamp = `${now.getDate()}-${now.getMonth() + 1}-${now.getFullYear()}_${now.getHours()}:${String(now.getMinutes()).padStart(2, "0")}`;
+    a.download = `Reporte-del-historial-newsletters-${timestamp}.csv`;
     a.click();
     URL.revokeObjectURL(url);
     };
