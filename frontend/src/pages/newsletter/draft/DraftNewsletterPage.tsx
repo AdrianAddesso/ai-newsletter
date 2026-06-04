@@ -1,3 +1,4 @@
+import type { GenerateNewsletterRequest } from '../../../api/ai'
 import { useNewsletterEditor } from '../hooks/useNewsletterEditor'
 
 import { NewsletterViewer } from '../viewer/NewsletterViewer'
@@ -7,7 +8,6 @@ import { NewsletterEditTabs } from '../editor/NewsletterEditTabs'
 
 import { EditPanel } from '../components/EditPanel'
 import { GenerationForm } from '../components/GenerationForm'
-import type { GenerateNewsletterRequest } from '../../../api/ai'
 
 type Props = {
   vm: ReturnType<typeof useNewsletterEditor>
@@ -36,8 +36,8 @@ export function DraftNewsletterPage({ vm }: Props) {
             <GenerationForm
               selectedTemplate={vm.selectedTemplate}
               selectedBrandKitId={vm.newsletter.brandKitId ?? ''}
-              isGenerating={false}
-              aiError={null}
+              isGenerating={vm.isGeneratingAll}
+              aiError={vm.aiError}
               initialValues={
                 vm.newsletter.generationContent?.originalContent
                   ? requestToFormValues(vm.newsletter.generationContent.originalContent)
@@ -45,6 +45,7 @@ export function DraftNewsletterPage({ vm }: Props) {
               }
               onGenerate={vm.handleGenerateAll}
               onCancel={() => vm.setShowRegenerationForm(false)}
+              cancelLabel="Volver"
             />
           ) : vm.showRegenerationForm ? (
             null
@@ -62,8 +63,8 @@ export function DraftNewsletterPage({ vm }: Props) {
                 }
                 isSubmitting={false}
                 isSavingDraft={vm.isSavingDraft}
-                isRegeneratingBlock={false}
-                aiError={null}
+                isRegeneratingBlock={vm.regeneratingBlockId === vm.selectedBlock.id}
+                aiError={vm.aiError}
                 onUpdateBlock={(updatedBlock) => {
                   if (!vm.newsletter) return
 
@@ -75,9 +76,7 @@ export function DraftNewsletterPage({ vm }: Props) {
                 }}
                 onSaveDraft={vm.saveDraft}
                 onRegenerateBlock={vm.handleRegenerateBlock}
-                onRegenerateAll={() =>
-                  vm.setShowRegenerationForm(true)
-                }
+                onRegenerateAll={() => vm.setShowRegenerationForm(true)}
                 onSubmit={vm.handleSubmit}
                 onCancel={() => {
                   void (async () => {

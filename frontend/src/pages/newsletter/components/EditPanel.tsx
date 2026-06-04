@@ -4,6 +4,7 @@ import {
   Alert,
   Box,
   Button,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -419,10 +420,15 @@ export function EditPanel({
                   color="secondary"
                   disabled={isRegeneratingBlock}
                   onClick={() => void onRegenerateBlock(selectedBlock.id)}
+                  startIcon={
+                    isRegeneratingBlock ? (
+                      <CircularProgress size={18} color="inherit" />
+                    ) : undefined
+                  }
                 >
                   {isRegeneratingBlock
-                    ? "Regenerando bloque..."
-                    : "Regenerar este bloque con IA"}
+                    ? "Regenerando contenido de este bloque..."
+                    : "Regenerar contenido de este bloque"}
                 </Button>
               )}
               <Button

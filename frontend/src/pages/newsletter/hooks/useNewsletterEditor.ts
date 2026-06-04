@@ -40,6 +40,9 @@ export function useNewsletterEditor() {
   const [selectedBlockId, setSelectedBlockIdState] = useState('')
   const [showRegenerationForm, setShowRegenerationForm] = useState(false)
   const [isSavingDraft, setIsSavingDraft] = useState(false)
+  const [isGeneratingAll, setIsGeneratingAll] = useState(false)
+  const [regeneratingBlockId, setRegeneratingBlockId] = useState<string | null>(null)
+  const [aiError, setAiError] = useState<string | null>(null)
 
   const [templates, setTemplates] = useState<NewsletterTemplate[]>([])
   const [brandKits, setBrandKits] = useState<BrandKit[]>([])
@@ -332,20 +335,33 @@ export function useNewsletterEditor() {
         return
       }
 
-      const response = await improveText(
-        {
-          text: currentText,
-        },
-        notifyError,
-      )
+      setAiError(null)
+      setRegeneratingBlockId(blockId)
 
-      updateBlocks(
-        newsletter.blocks.map((block) =>
-          block.id === blockId
-            ? updateBlockValue(block, editableTextField.key, response.improvedText)
-            : block,
-        ),
-      )
+      try {
+        const response = await improveText(
+          {
+            text: currentText,
+          },
+          notifyError,
+        )
+
+        updateBlocks(
+          newsletter.blocks.map((block) =>
+            block.id === blockId
+              ? updateBlockValue(block, editableTextField.key, response.improvedText)
+              : block,
+          ),
+        )
+      } catch (error) {
+        const message =
+          getApiErrorMessage(error) ??
+          'No se pudo regenerar el contenido de este bloque.'
+
+        setAiError(message)
+      } finally {
+        setRegeneratingBlockId(null)
+      }
     },
     [newsletter, notifyError, updateBlocks],
   )
@@ -354,22 +370,33 @@ export function useNewsletterEditor() {
     async (request: GenerateNewsletterRequest) => {
       if (!id) return
 
-      const response = await generateNewsletter(request, notifyError)
+      setAiError(null)
+      setIsGeneratingAll(true)
 
-      const updated = await updateNewsletter(id, {
-        blocks: response.blocks,
-        generationRequest: request,
-        generationContent: {
-          aiContent: response,
-          originalContent: request,
-        },
-      })
+      try {
+        const response = await generateNewsletter(request, notifyError)
 
-      setNewsletter(updated)
+        const updated = await updateNewsletter(id, {
+          blocks: response.blocks,
+          generationRequest: request,
+          generationContent: {
+            aiContent: response,
+            originalContent: request,
+          },
+        })
 
-      setSelectedBlockIdState(updated.blocks[0]?.id ?? '')
+        setNewsletter(updated)
+        setSelectedBlockIdState(updated.blocks[0]?.id ?? '')
+        setShowRegenerationForm(false)
+      } catch (error) {
+        const message =
+          getApiErrorMessage(error) ??
+          'No se pudo generar el contenido del newsletter en este momento.'
 
-      setShowRegenerationForm(false)
+        setAiError(message)
+      } finally {
+        setIsGeneratingAll(false)
+      }
     },
     [id, notifyError],
   )
@@ -402,6 +429,9 @@ export function useNewsletterEditor() {
     setSelectedBlockId: setSelectedBlockIdState,
     showRegenerationForm,
     setShowRegenerationForm,
+    isGeneratingAll,
+    regeneratingBlockId,
+    aiError,
     templates,
     selectedTemplate,
     brandKits,
@@ -421,4 +451,38 @@ export function useNewsletterEditor() {
     navigate,
     isApproved: newsletter?.state === 'APPROVED',
   }
+}
+
+function getApiErrorMessage(error: unknown): string | null {
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'response' in error
+  ) {
+    const response = error.response
+
+    if (
+      typeof response === 'object' &&
+      response !== null &&
+      'data' in response
+    ) {
+      const data = response.data
+
+      if (
+        typeof data === 'object' &&
+        data !== null &&
+        'message' in data &&
+        typeof data.message === 'string' &&
+        data.message.trim()
+      ) {
+        return data.message.trim()
+      }
+    }
+  }
+
+  if (error instanceof Error && error.message.trim()) {
+    return error.message.trim()
+  }
+
+  return null
 }
