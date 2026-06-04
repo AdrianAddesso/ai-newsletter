@@ -21,7 +21,7 @@ export class JwtGuard implements CanActivate {
     }
 
     try {
-      const secret = this.configService.get<string>('JWT_ACCESS_SECRET') || '';
+      const secret = this.configService.get<string>('JWT_ACCESS_SECRET') as string;
       const payload = await verifyToken(token, secret);
       
       const user = await this.prisma.users.findUnique({

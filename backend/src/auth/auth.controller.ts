@@ -6,7 +6,7 @@ import type { Request, Response } from 'express';
 import { setAuthCookies, clearAuthCookies } from './utils/cookie.util';
 import { JwtGuard } from './guards/jwt.guard';
 
-type GoogleUser = {
+type currentUser = {
   id: string;
   email: string;
   name: string;
@@ -34,10 +34,10 @@ export class AuthController {
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
   async googleAuthRedirect(@Req() req: Request, @Res() res: Response) {
-    const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:5173';
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL');
 
     try {
-      const user = req.user as GoogleUser & { error?: string };
+      const user = req.user as currentUser & { error?: string };
 
       if (user.error) {
         return res.redirect(`${frontendUrl}/auth/callback`);
@@ -71,7 +71,7 @@ export class AuthController {
   @UseGuards(JwtGuard)
   getMe(@Req() req: Request){
 
-    const user = req.user as GoogleUser;
+    const user = req.user as currentUser;
 
     return {
       id: user.id,
@@ -88,7 +88,7 @@ export class AuthController {
   @UseGuards(JwtGuard)
   async logout(@Req() req: Request, @Res() res: Response) {
 
-    const user = req.user as GoogleUser;
+    const user = req.user as currentUser;
     
     await this.authService.logout(user.id);
 

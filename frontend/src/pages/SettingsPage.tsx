@@ -10,25 +10,26 @@ import {
   useTheme,
 } from '@mui/material'
 import { useNavigate } from 'react-router'
+
 import { useAuth } from '../contexts/AuthContext'
 import { useNotification } from '../hooks/useNotification'
 
-export function SettingsPage() {
-  const { user, refreshToken, logout } = useAuth()
+export function SettingsPage(): React.JSX.Element {
+  const { user, refreshSession, logout } = useAuth()
   const { error, success } = useNotification()
   const navigate = useNavigate()
   const theme = useTheme()
 
-  const handleSave = () => {
+  const handleSave = (): void => {
     success('Cambios guardados correctamente')
   }
 
-  const handleRefreshSession = async () => {
+  const handleRefreshSession = async (): Promise<void> => {
     try {
-      await refreshToken()
-      success('Sesion renovada correctamente')
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'No se pudo renovar la sesion'
+      await refreshSession()
+      success('Sesión renovada correctamente')
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'No se pudo renovar la sesión'
       error(message)
       setTimeout(() => {
         navigate('/login', { replace: true })
@@ -36,8 +37,8 @@ export function SettingsPage() {
     }
   }
 
-  const handleLogout = () => {
-    logout()
+  const handleLogout = (): void => {
+    void logout()
     navigate('/login', { replace: true })
   }
 

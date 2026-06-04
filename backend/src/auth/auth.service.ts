@@ -38,7 +38,7 @@ export class AuthService {
       throw new UnauthorizedException('No refresh token provided');
     }
 
-    const secret = this.configService.get<string>('JWT_REFRESH_SECRET') || 'refresh-secret';
+    const secret = this.configService.get<string>('JWT_REFRESH_SECRET') || "";
     
     let payload = null as JWTPayload | null;
     

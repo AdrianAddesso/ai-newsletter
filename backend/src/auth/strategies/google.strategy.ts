@@ -8,14 +8,14 @@ import { isDomainAllowed } from '../utils/domain.util';
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   constructor(private configService: ConfigService) {
     super({
-      clientID: configService.get<string>('GOOGLE_OAUTH_CLIENT_ID') || 'mock',
-      clientSecret: configService.get<string>('GOOGLE_OAUTH_CLIENT_SECRET') || 'mock',
-      callbackURL: configService.get<string>('GOOGLE_OAUTH_REDIRECT_URI') || 'http://localhost:3000/auth/google/callback',
+      clientID: configService.get<string>('GOOGLE_OAUTH_CLIENT_ID') as string,
+      clientSecret: configService.get<string>('GOOGLE_OAUTH_CLIENT_SECRET') as string,
+      callbackURL: configService.get<string>('GOOGLE_OAUTH_REDIRECT_URI'),
       scope: ['email', 'profile'],
     });
   }
 
-  async validate(accessToken: string, refreshToken: string, profile: Profile): Promise<{ email: string, error?: string }> {
+  validate(accessToken: string, refreshToken: string, profile: Profile): { email: string, error?: string } {
     const { emails } = profile;
     const email = emails?.[0]?.value;
 
