@@ -158,7 +158,7 @@ export function ModalEdit({
 
                         {/* Área */}
                         <Controller
-                            name="area"
+                            name="areaId"
                             control={control}
                             render={({ field }) => (
                                 <FormControl fullWidth>
