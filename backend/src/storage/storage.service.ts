@@ -11,6 +11,7 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 @Injectable()
 export class StorageService {
   private client: S3Client | null = null;
+  private signedUrlClient: S3Client | null = null;
 
   constructor(private readonly configService: ConfigService) {}
 
@@ -41,7 +42,7 @@ export class StorageService {
 
   async getSignedUrl(bucket: string, key: string): Promise<string> {
     return getSignedUrl(
-      this.getClient(),
+      this.getSignedUrlClient(),
       new GetObjectCommand({
         Bucket: bucket,
         Key: key,
@@ -87,6 +88,26 @@ export class StorageService {
     });
 
     return this.client;
+  }
+
+  private getSignedUrlClient(): S3Client {
+    if (this.signedUrlClient) {
+      return this.signedUrlClient;
+    }
+
+    this.signedUrlClient = new S3Client({
+      endpoint:
+        this.readOptionalEnv('S3_PUBLIC_ENDPOINT') ??
+        this.readRequiredEnv('S3_ENDPOINT'),
+      region: this.readRequiredEnv('S3_REGION'),
+      forcePathStyle: this.readBooleanEnv('S3_FORCE_PATH_STYLE'),
+      credentials: {
+        accessKeyId: this.readRequiredEnv('S3_ACCESS_KEY'),
+        secretAccessKey: this.readRequiredEnv('S3_SECRET_KEY'),
+      },
+    });
+
+    return this.signedUrlClient;
   }
 
   getAssetsBucket(): string {
