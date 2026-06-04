@@ -55,6 +55,14 @@ const validateDate = (value: string): string | null =>
     ? 'Debe ser una fecha valida.'
     : null
 
+const requiredBaseFields: Array<keyof FormValues> = [
+  'topic',
+  'objective',
+  'audience',
+  'keyMessages',
+  'tone',
+]
+
 type Props = {
   selectedTemplate: NewsletterTemplate
   selectedBrandKitId: string
@@ -94,6 +102,29 @@ export function GenerationForm({
     ...selectedTemplate.requiredGenerationFields,
     ...selectedTemplate.optionalGenerationFields,
   ])
+
+  const allRequiredFields = new Set<keyof FormValues>([
+    ...requiredBaseFields,
+    ...visibleFields,
+  ])
+
+  const isFieldComplete = (field: keyof FormValues): boolean => {
+    if (field === 'keyMessages' || field === 'linksOrSources') {
+      return splitLines(form[field]).length > 0
+    }
+
+    return form[field].trim().length > 0
+  }
+
+  const hasInvalidOptionalValues =
+    validateLinks(form.linksOrSources) !== null ||
+    validateDate(form.relevantDates) !== null
+
+  const isGenerateDisabled =
+    isGenerating ||
+    !selectedBrandKitId.trim() ||
+    [...allRequiredFields].some((field) => !isFieldComplete(field)) ||
+    hasInvalidOptionalValues
 
   const update = (field: keyof FormValues, value: string): void => {
     setForm((current) => ({ ...current, [field]: value }))
@@ -330,7 +361,7 @@ export function GenerationForm({
         <Button
           sx={{ flex: 1 }}
           variant="contained"
-          disabled={isGenerating}
+          disabled={isGenerateDisabled}
           onClick={() => void submit()}
         >
           {isGenerating ? "Generando..." : "Generar"}
