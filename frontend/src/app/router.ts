@@ -14,9 +14,7 @@ export const routes = {
     detail: (id: string) => `/reviews/${id}`,
   },
 
-  users: '/users',
-  //settings: '/settings',
+  users: '/admin/users',
   backoffice: '/admin',
   brandkit: '/admin/brandkit',
-  demo: '/demo',
 }
