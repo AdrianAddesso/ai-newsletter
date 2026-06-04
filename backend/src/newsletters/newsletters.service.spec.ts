@@ -188,6 +188,27 @@ describe('NewsLettersService', () => {
     });
   });
 
+  it('marks newsletters as deleted with deleted_at', async () => {
+    prisma.newsletters.findFirst.mockResolvedValue({ id: 'newsletter-id' });
+    prisma.newsletters.update.mockResolvedValue({
+      id: 'newsletter-id',
+      deleted_at: new Date('2026-06-03T12:00:00.000Z'),
+    });
+
+    await service.delete('newsletter-id');
+
+    expect(prisma.newsletters.findFirst).toHaveBeenCalledWith({
+      where: { id: 'newsletter-id', deleted_at: null },
+      select: { id: true },
+    });
+    expect(prisma.newsletters.update).toHaveBeenCalledWith({
+      where: { id: 'newsletter-id' },
+      data: {
+        deleted_at: expect.any(Date) as Date,
+      },
+    });
+  });
+
   it('clears active comments for blocks changed while the newsletter is in CHANGES_REQUESTED', async () => {
     prisma.__tx.newsletter_blocks.findMany.mockResolvedValue([
       {

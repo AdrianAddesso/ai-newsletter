@@ -364,6 +364,15 @@ export class NewsLettersService {
   }
 
   async delete(id: string) {
+    const newsletter = await this.prisma.newsletters.findFirst({
+      where: { id, deleted_at: null },
+      select: { id: true },
+    });
+
+    if (!newsletter) {
+      throw new NotFoundException(`Newsletter ${id} no encontrado`);
+    }
+
     return this.prisma.newsletters.update({
       where: { id },
       data: { deleted_at: new Date() },
