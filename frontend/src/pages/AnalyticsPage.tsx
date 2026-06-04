@@ -142,9 +142,25 @@ export function AnalyticsPage(): JSX.Element {
     }))
   }
 
-  const route = (): void => {
-    navigate('#')
-  }
+    const handleExport = (): void => {
+    const headers = ["Título", "Estado anterior", "Nuevo estado", "Fecha"];
+    const rows = filteredAndSortedLogs.map((log) => [
+        log.newsletter_name,
+        stateLabels[log.previous_state],
+        stateLabels[log.new_state],
+        new Date(log.created_at).toLocaleDateString(),
+    ]);
+
+    const csvContent = [headers, ...rows].map((row) => row.join(",")).join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "reporte.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+    };
 
   const handleOpenComments = (event: MouseEvent, comments: string | null): void => {
     event.stopPropagation()
@@ -153,18 +169,25 @@ export function AnalyticsPage(): JSX.Element {
   }
 
   return (
-    <Box sx={{ py: 4, px: 3, bgcolor: 'background.default' }}>
+    <Box sx={{ py: 4, px: 3, bgcolor: "background.default" }}>
       <Container maxWidth="lg" disableGutters>
         <Stack spacing={4}>
           <Stack
-            direction={{ xs: 'column', md: 'row' }}
+            direction={{ xs: "column", md: "row" }}
             spacing={2}
-            sx={{ justifyContent: 'space-between', alignItems: { xs: 'flex-start', md: 'center' } }}
+            sx={{
+              justifyContent: "space-between",
+              alignItems: { xs: "flex-start", md: "center" },
+            }}
           >
             <Stack spacing={1}>
               <Typography variant="h2">Historial de estados</Typography>
               {selectedNewsletter ? (
-                <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  sx={{ alignItems: "center" }}
+                >
                   <Typography variant="body1" color="text.secondary">
                     Viendo métricas para:
                   </Typography>
@@ -181,42 +204,90 @@ export function AnalyticsPage(): JSX.Element {
                 </Typography>
               )}
             </Stack>
-
           </Stack>
 
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(4, 1fr)' }, gap: 2 }}>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: {
+                xs: "1fr",
+                sm: "1fr 1fr",
+                md: "repeat(4, 1fr)",
+              },
+              gap: 2,
+            }}
+          >
             {metrics.map((metric) => (
-              <Card key={metric.label} elevation={0} sx={{ border: '1px solid', borderColor: 'divider', p: 2.5 }}>
+              <Card
+                key={metric.label}
+                elevation={0}
+                sx={{ border: "1px solid", borderColor: "divider", p: 2.5 }}
+              >
                 <Stack spacing={1}>
-                  <Typography variant="body2" color="text.secondary">{metric.label}</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {metric.label}
+                  </Typography>
                   <Typography variant="h4">{metric.value}</Typography>
                 </Stack>
               </Card>
             ))}
           </Box>
 
-          <Card elevation={0} sx={{ border: '1px solid', borderColor: 'divider', p: 2.5 }}>
-            <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 2 }}>
+          <Card
+            elevation={0}
+            sx={{ border: "1px solid", borderColor: "divider", p: 2.5 }}
+          >
+            <Typography
+              variant="subtitle2"
+              color="text.secondary"
+              sx={{ mb: 2 }}
+            >
               Distribución de estados (%)
             </Typography>
 
-            <Box sx={{ display: 'flex', width: '100%', height: 16, borderRadius: 1, overflow: 'hidden', mb: 2 }}>
+            <Box
+              sx={{
+                display: "flex",
+                width: "100%",
+                height: 16,
+                borderRadius: 1,
+                overflow: "hidden",
+                mb: 2,
+              }}
+            >
               {statusSegments.map((segment) => (
                 <Box
                   key={segment.id}
                   sx={{
                     width: `${segment.percentage}%`,
                     bgcolor: segment.color,
-                    transition: 'width 0.3s ease-in-out',
+                    transition: "width 0.3s ease-in-out",
                   }}
                 />
               ))}
             </Box>
 
-            <Stack direction="row" spacing={3} useFlexGap sx={{ flexWrap: 'wrap' }}>
+            <Stack
+              direction="row"
+              spacing={3}
+              useFlexGap
+              sx={{ flexWrap: "wrap" }}
+            >
               {statusSegments.map((segment) => (
-                <Stack key={`legend-${segment.id}`} direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-                  <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: segment.color }} />
+                <Stack
+                  key={`legend-${segment.id}`}
+                  direction="row"
+                  spacing={1}
+                  sx={{ alignItems: "center" }}
+                >
+                  <Box
+                    sx={{
+                      width: 12,
+                      height: 12,
+                      borderRadius: "50%",
+                      bgcolor: segment.color,
+                    }}
+                  />
                   <Typography variant="body2" color="text.secondary">
                     {segment.label} ({segment.percentage.toFixed(1)}%)
                   </Typography>
@@ -225,28 +296,28 @@ export function AnalyticsPage(): JSX.Element {
             </Stack>
           </Card>
 
-          <Card elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
+          <Card
+            elevation={0}
+            sx={{ border: "1px solid", borderColor: "divider" }}
+          >
             <Box
               sx={{
                 p: 2,
-                borderBottom: '1px solid',
-                borderColor: 'divider',
-                display: 'flex',
-                flexDirection: { xs: 'column', sm: 'row' },
-                justifyContent: 'flex-end',
-                alignItems: { xs: 'stretch', sm: 'center' },
+                borderBottom: "1px solid",
+                borderColor: "divider",
+                display: "flex",
+                flexDirection: { xs: "column", sm: "row" },
+                justifyContent: "flex-end",
+                alignItems: { xs: "stretch", sm: "center" },
                 gap: 2,
               }}
             >
-              <SearchBar
-                value={filterText}
-                onChange={setFilterText}
-              />
+              <SearchBar value={filterText} onChange={setFilterText} />
               <Button
                 variant="contained"
                 startIcon={<DownloadIcon />}
-                onClick={route}
-                sx={{ whiteSpace: 'nowrap' }}
+                onClick={handleExport}
+                sx={{ whiteSpace: "nowrap" }}
               >
                 Exportar Reporte
               </Button>
@@ -259,7 +330,11 @@ export function AnalyticsPage(): JSX.Element {
                       <TableCell key={key}>
                         <TableSortLabel
                           active={sortConfig.key === key}
-                          direction={sortConfig.key === key ? sortConfig.direction : 'asc'}
+                          direction={
+                            sortConfig.key === key
+                              ? sortConfig.direction
+                              : "asc"
+                          }
                           onClick={() => handleSort(key)}
                         >
                           {label}
@@ -274,29 +349,51 @@ export function AnalyticsPage(): JSX.Element {
                     <TableRow
                       key={log.id}
                       hover
-                      onClick={() => setSelectedNewsletter({ id: log.newsletter_id, name: log.newsletter_name })}
+                      onClick={() =>
+                        setSelectedNewsletter({
+                          id: log.newsletter_id,
+                          name: log.newsletter_name,
+                        })
+                      }
                       selected={selectedNewsletter?.id === log.newsletter_id}
-                      sx={{ cursor: 'pointer' }}
+                      sx={{ cursor: "pointer" }}
                     >
                       <TableCell>
-                        <Typography sx={{ fontWeight: "bold"}}>
+                        <Typography sx={{ fontWeight: "bold" }}>
                           {log.newsletter_name}
-                        </Typography></TableCell>
+                        </Typography>
+                      </TableCell>
                       <TableCell>{stateLabels[log.previous_state]}</TableCell>
                       <TableCell>
                         <Chip
                           label={stateLabels[log.new_state]}
                           size="small"
-                          color={log.new_state === 'APPROVED' ? 'success' : log.new_state === 'DISCARDED' ? 'error' : 'default'}
+                          color={
+                            log.new_state === "APPROVED"
+                              ? "success"
+                              : log.new_state === "DISCARDED"
+                                ? "error"
+                                : "default"
+                          }
                         />
                       </TableCell>
-                      <TableCell>{new Date(log.created_at).toLocaleDateString()}</TableCell>
+                      <TableCell>
+                        {new Date(log.created_at).toLocaleDateString()}
+                      </TableCell>
                       <TableCell align="center">
                         {log.all_commentaries ? (
-                          <Button size="small" variant="outlined" onClick={(event) => handleOpenComments(event, log.all_commentaries)}>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            onClick={(event) =>
+                              handleOpenComments(event, log.all_commentaries)
+                            }
+                          >
                             Ver
                           </Button>
-                        ) : '-'}
+                        ) : (
+                          "-"
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -305,7 +402,15 @@ export function AnalyticsPage(): JSX.Element {
             </TableContainer>
 
             {visibleRows < filteredAndSortedLogs.length && (
-              <Box sx={{ p: 2, display: 'flex', justifyContent: 'center', borderTop: '1px solid', borderColor: 'divider' }}>
+              <Box
+                sx={{
+                  p: 2,
+                  display: "flex",
+                  justifyContent: "center",
+                  borderTop: "1px solid",
+                  borderColor: "divider",
+                }}
+              >
                 <Button onClick={() => setVisibleRows((prev) => prev + 5)}>
                   Cargar más
                 </Button>
@@ -315,10 +420,15 @@ export function AnalyticsPage(): JSX.Element {
         </Stack>
       </Container>
 
-      <Dialog open={modalOpen} onClose={() => setModalOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>Comentarios de revisión</DialogTitle>
         <DialogContent dividers>
-          <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
+          <Typography variant="body1" sx={{ whiteSpace: "pre-wrap" }}>
             {currentComments}
           </Typography>
         </DialogContent>
@@ -327,5 +437,5 @@ export function AnalyticsPage(): JSX.Element {
         </DialogActions>
       </Dialog>
     </Box>
-  )
+  );
 }
