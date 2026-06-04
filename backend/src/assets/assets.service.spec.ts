@@ -184,7 +184,7 @@ describe('AssetsService', () => {
           mimetype: 'application/pdf',
           size: 1200,
           buffer: Buffer.from('fake'),
-        } as UploadedAssetFile,
+        },
       ], 'IMAGE'),
     ).rejects.toBeInstanceOf(BadRequestException);
   });

@@ -126,7 +126,7 @@ describe('FontsService', () => {
             mimetype: 'application/pdf',
             size: 1200,
             buffer: Buffer.from('fake'),
-          } as UploadedFontFile,
+          },
         ],
         'Lumen',
       ),
