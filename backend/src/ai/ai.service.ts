@@ -16,7 +16,11 @@ import {
   parseBlockValues,
 } from '../blocks/newsletter-blocks';
 import { PrismaService } from '../prisma/prisma.service';
-import { GenerationConfig, GenAIGenerateContentSuccess } from './ai.types';
+import {
+  GenAIGenerateContentResponse,
+  GenAIGenerateContentSuccess,
+  GenerationConfig,
+} from './ai.types';
 import { AiConfigResponseDto, UpdateAiConfigDto } from './dto/ai-config.dto';
 import {
   GenerateNewsletterRequestDto,
@@ -628,14 +632,13 @@ export class AiService {
       );
     }
 
-    const responseBody = (await response
-      .json()
-      .catch(() => null)) as GenAIGenerateContentSuccess | null;
+    const rawResponseBody = (await response.json().catch(() => null)) as unknown;
+    const responseBody = this.normalizeGenerateContentResponse(rawResponseBody);
 
     if (!response.ok) {
       throw this.createProviderException(
         response.status,
-        this.extractErrorMessage(responseBody, response.status),
+        this.extractErrorMessage(rawResponseBody, response.status),
         publicMessage,
         operation,
       );
@@ -1007,18 +1010,33 @@ export class AiService {
   }
 
   private extractErrorMessage(
-    responseBody: GenAIGenerateContentSuccess | null,
+    responseBody: unknown,
     responseStatus: number,
   ): string {
-    if (typeof responseBody?.error === 'string' && responseBody.error.trim()) {
-      return responseBody.error.trim();
-    }
+    const responseBodies = Array.isArray(responseBody)
+      ? responseBody
+      : [responseBody];
 
-    if (
-      typeof responseBody?.error === 'object' &&
-      responseBody.error?.message?.trim()
-    ) {
-      return responseBody.error.message.trim();
+    for (const entry of responseBodies) {
+      if (!entry || typeof entry !== 'object' || !('error' in entry)) {
+        continue;
+      }
+
+      const error = (entry as { error?: unknown }).error;
+
+      if (typeof error === 'string' && error.trim()) {
+        return error.trim();
+      }
+
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'message' in error &&
+        typeof (error as { message?: unknown }).message === 'string' &&
+        (error as { message: string }).message.trim()
+      ) {
+        return (error as { message: string }).message.trim();
+      }
     }
 
     return `GenAI returned status ${responseStatus}.`;
@@ -1032,8 +1050,9 @@ export class AiService {
   ): string {
     const candidateText = responseBody?.candidates
       ?.flatMap((candidate) => candidate.content?.parts ?? [])
-      .map((part) => part.text?.trim() ?? '')
-      .find((text) => text.length > 0);
+      .map((part) => part.text ?? '')
+      .join('')
+      .trim();
 
     if (candidateText) {
       return candidateText;
@@ -1063,5 +1082,51 @@ export class AiService {
       providerStatus,
       provider: 'genai',
     });
+  }
+
+  private normalizeGenerateContentResponse(
+    responseBody: unknown,
+  ): GenAIGenerateContentSuccess | null {
+    if (!responseBody) {
+      return null;
+    }
+
+    if (Array.isArray(responseBody)) {
+      return this.mergeChunkedGenerateContentResponse(responseBody);
+    }
+
+    return this.isGenerateContentSuccess(responseBody) ? responseBody : null;
+  }
+
+  private mergeChunkedGenerateContentResponse(
+    responseBody: GenAIGenerateContentResponse,
+  ): GenAIGenerateContentSuccess | null {
+    if (!Array.isArray(responseBody)) {
+      return responseBody;
+    }
+
+    const candidates = responseBody.flatMap((chunk) =>
+      this.isGenerateContentSuccess(chunk) ? (chunk.candidates ?? []) : [],
+    );
+    const firstError = responseBody.find(
+      (chunk) => this.isGenerateContentSuccess(chunk) && chunk.error,
+    );
+
+    if (candidates.length === 0 && !firstError) {
+      return null;
+    }
+
+    return {
+      candidates,
+      error: this.isGenerateContentSuccess(firstError)
+        ? firstError.error
+        : undefined,
+    };
+  }
+
+  private isGenerateContentSuccess(
+    value: unknown,
+  ): value is GenAIGenerateContentSuccess {
+    return typeof value === 'object' && value !== null;
   }
 }
