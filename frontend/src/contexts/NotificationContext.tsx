@@ -1,6 +1,12 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useCallback, useContext, useState, type ReactNode } from 'react'
-import { useAuth, type UserRole } from './AuthContext'
+import { createContext, useCallback, useContext, useState, useEffect, type ReactNode } from 'react'
+import { useAuth, } from './AuthContext'
+import {
+  getNotifications,
+  markAsRead as markAsReadApi,
+  markAllAsRead as markAllAsReadApi,
+  deleteNotification as deleteNotificationApi,
+} from '../api/notifications'
 
 export type NotificationType = 'pending-review' | 'approved' | 'rejected' | 'reminder' | 'info'
 
@@ -16,7 +22,6 @@ export interface AppNotification {
 }
 
 type NewNotification = Omit<AppNotification, 'id' | 'timestamp' | 'isRead'>
-type NotificationsByUser = Record<string, AppNotification[]>
 
 interface NotificationContextType {
   notifications: AppNotification[]
@@ -27,135 +32,10 @@ interface NotificationContextType {
   markAllAsRead: () => void
   removeNotification: (id: string) => void
   clearAll: () => void
+  isLoading: boolean
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined)
-
-const STORAGE_PREFIX = 'ai-newsletter:notifications'
-const initialNotificationBaseTime = Date.now()
-
-const roleByUserId: Record<string, UserRole> = {
-  '1': 'ADMIN',
-  '2': 'FUNCTIONAL',
-  '3': 'USER',
-}
-
-const createDefaultNotifications = (role: UserRole, userId: string): AppNotification[] => {
-  const commonNotifications: AppNotification[] = [
-    {
-      id: `${userId}-welcome`,
-      type: 'info',
-      title: 'Sesion iniciada',
-      message: 'Tu sesion Microsoft esta activa',
-      timestamp: initialNotificationBaseTime - 10 * 60 * 1000,
-      isRead: true,
-      actionPath: '/settings',
-    },
-  ]
-
-  if (role === 'ADMIN') {
-    return [
-      {
-        id: `${userId}-pending-review`,
-        type: 'pending-review',
-        title: 'Nuevo newsletter pendiente',
-        message: 'Hay un newsletter nuevo esperando aprobacion final',
-        timestamp: initialNotificationBaseTime - 5 * 60 * 1000,
-        isRead: false,
-        actionPath: '/reviews',
-      },
-      {
-        id: `${userId}-user-alert`,
-        type: 'reminder',
-        title: 'Gestion de usuarios',
-        message: 'Hay permisos de usuario para revisar',
-        timestamp: initialNotificationBaseTime - 90 * 60 * 1000,
-        isRead: false,
-        actionPath: '/users',
-      },
-      ...commonNotifications,
-    ]
-  }
-
-  if (role === 'FUNCTIONAL') {
-    return [
-      {
-        id: `${userId}-review-queue`,
-        type: 'pending-review',
-        title: 'Revision pendiente',
-        message: 'Tenes newsletters asignados para revisar',
-        timestamp: initialNotificationBaseTime - 15 * 60 * 1000,
-        isRead: false,
-        actionPath: '/reviews',
-      },
-      {
-        id: `${userId}-deadline`,
-        type: 'reminder',
-        title: 'Recordatorio',
-        message: 'La revision de marzo vence hoy',
-        timestamp: initialNotificationBaseTime - 2 * 60 * 60 * 1000,
-        isRead: false,
-        actionPath: '/reviews',
-      },
-      ...commonNotifications,
-    ]
-  }
-
-  return [
-    {
-      id: `${userId}-approved`,
-      type: 'approved',
-      title: 'Newsletter aprobado',
-      message: "Newsletter 'Marzo 2024' fue aprobado",
-      timestamp: initialNotificationBaseTime - 2 * 60 * 60 * 1000,
-      isRead: false,
-      actionPath: '/campaigns',
-    },
-    {
-      id: `${userId}-draft`,
-      type: 'info',
-      title: 'Borrador guardado',
-      message: 'Tu ultimo borrador se guardo correctamente',
-      timestamp: initialNotificationBaseTime - 24 * 60 * 60 * 1000,
-      isRead: true,
-      actionPath: '/dashboard',
-    },
-    ...commonNotifications,
-  ]
-}
-
-const getStorageKey = (userId: string) => `${STORAGE_PREFIX}:${userId}`
-
-const readStoredNotifications = (userId: string): AppNotification[] | null => {
-  const storedNotifications = localStorage.getItem(getStorageKey(userId))
-
-  if (!storedNotifications) {
-    return null
-  }
-
-  try {
-    const parsedNotifications = JSON.parse(storedNotifications) as AppNotification[]
-    return Array.isArray(parsedNotifications) ? parsedNotifications : null
-  } catch {
-    return null
-  }
-}
-
-const getInitialNotificationsForUser = (userId: string) => {
-  const storedNotifications = readStoredNotifications(userId)
-
-  if (storedNotifications) {
-    return storedNotifications
-  }
-
-  const role = roleByUserId[userId]
-
-  return role ? createDefaultNotifications(role, userId) : []
-}
-
-const persistNotifications = (userId: string, notifications: AppNotification[]) => {
-  localStorage.setItem(getStorageKey(userId), JSON.stringify(notifications))
-}
 
 const createRuntimeNotification = (notification: NewNotification): AppNotification => ({
   ...notification,
@@ -166,35 +46,36 @@ const createRuntimeNotification = (notification: NewNotification): AppNotificati
 
 export function NotificationProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth()
-  const [notificationsByUser, setNotificationsByUser] = useState<NotificationsByUser>({})
+  const [notifications, setNotifications] = useState<AppNotification[]>([])
+  const [isLoading, setIsLoading] = useState(false)
 
-  const notifications = user
-    ? notificationsByUser[user.id] ?? getInitialNotificationsForUser(user.id)
-    : []
   const unreadCount = notifications.filter((notification) => !notification.isRead).length
 
-  const updateUserNotifications = useCallback(
-    (
-      userId: string,
-      updater: (notifications: AppNotification[]) => AppNotification[],
-    ) => {
-      setNotificationsByUser((prev) => {
-        const currentNotifications =
-          prev[userId] ?? getInitialNotificationsForUser(userId)
-        const nextNotifications = updater(
-          currentNotifications.map((notification) => ({ ...notification })),
-        )
+  // Load notifications from API when user changes
+  useEffect(() => {
+    if (!user) {
+      return
+    }
 
-        persistNotifications(userId, nextNotifications)
+    const loadNotifications = async () => {
+      setIsLoading(true)
+      try {
+        const fetchedNotifications = await getNotifications(20)
+        setNotifications(fetchedNotifications)
+      } catch (error) {
+        console.error('Error loading notifications:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
 
-        return {
-          ...prev,
-          [userId]: nextNotifications,
-        }
-      })
-    },
-    [],
-  )
+    loadNotifications()
+
+    // Poll for new notifications every 30 seconds
+    const interval = setInterval(loadNotifications, 30000)
+
+    return () => clearInterval(interval)
+  }, [user])
 
   const addNotification = useCallback(
     (notification: NewNotification) => {
@@ -203,73 +84,83 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       }
 
       const newNotification = createRuntimeNotification(notification)
-
-      updateUserNotifications(user.id, (prev) => [newNotification, ...prev])
-
-      return newNotification.id
-    },
-    [updateUserNotifications, user],
-  )
-
-  const addNotificationForUser = useCallback(
-    (userId: string, notification: NewNotification) => {
-      const newNotification = createRuntimeNotification(notification)
-
-      updateUserNotifications(userId, (prev) => [
-        newNotification,
-        ...prev,
-      ])
+      setNotifications((prev) => [newNotification, ...prev])
 
       return newNotification.id
     },
-    [updateUserNotifications],
+    [user],
   )
+
+  const addNotificationForUser = useCallback((userId: string, notification: NewNotification) => {
+    const newNotification = createRuntimeNotification(notification)
+    setNotifications((prev) => [newNotification, ...prev])
+
+    return newNotification.id
+  }, [])
 
   const markAsRead = useCallback(
-    (id: string) => {
-      if (!user) {
-        return
-      }
-
-      updateUserNotifications(user.id, (prev) =>
+    async (id: string) => {
+      // Optimistic update
+      setNotifications((prev) =>
         prev.map((notification) =>
           notification.id === id ? { ...notification, isRead: true } : notification,
         ),
       )
+
+      // Call API
+      try {
+        await markAsReadApi(id)
+      } catch (error) {
+        console.error('Error marking notification as read:', error)
+        // Revert optimistic update on error
+        setNotifications((prev) =>
+          prev.map((notification) =>
+            notification.id === id ? { ...notification, isRead: false } : notification,
+          ),
+        )
+      }
     },
-    [updateUserNotifications, user],
+    [],
   )
 
-  const markAllAsRead = useCallback(() => {
-    if (!user) {
-      return
-    }
+  const markAllAsRead = useCallback(async () => {
+    // Optimistic update
+    setNotifications((prev) => prev.map((notification) => ({ ...notification, isRead: true })))
 
-    updateUserNotifications(user.id, (prev) =>
-      prev.map((notification) => ({ ...notification, isRead: true })),
-    )
-  }, [updateUserNotifications, user])
+    try {
+      await markAllAsReadApi()
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error)
+      // Reload notifications on error
+      if (user) {
+        const fetchedNotifications = await getNotifications(20)
+        setNotifications(fetchedNotifications)
+      }
+    }
+  }, [user])
 
   const removeNotification = useCallback(
-    (id: string) => {
-      if (!user) {
-        return
-      }
+    async (id: string) => {
+      // Optimistic update
+      setNotifications((prev) => prev.filter((notification) => notification.id !== id))
 
-      updateUserNotifications(user.id, (prev) =>
-        prev.filter((notification) => notification.id !== id),
-      )
+      try {
+        await deleteNotificationApi(id)
+      } catch (error) {
+        console.error('Error deleting notification:', error)
+        // Reload notifications on error
+        if (user) {
+          const fetchedNotifications = await getNotifications(20)
+          setNotifications(fetchedNotifications)
+        }
+      }
     },
-    [updateUserNotifications, user],
+    [user],
   )
 
   const clearAll = useCallback(() => {
-    if (!user) {
-      return
-    }
-
-    updateUserNotifications(user.id, () => [])
-  }, [updateUserNotifications, user])
+    setNotifications([])
+  }, [])
 
   const value: NotificationContextType = {
     notifications,
@@ -280,6 +171,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     markAllAsRead,
     removeNotification,
     clearAll,
+    isLoading,
   }
 
   return <NotificationContext.Provider value={value}>{children}</NotificationContext.Provider>

@@ -11,6 +11,7 @@ import {
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import type {
   CreateNewsletterBody,
   NewsletterEditableBlock,
@@ -86,7 +87,8 @@ export class NewsLettersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly storageService: StorageService,
-  ) {}
+    private readonly notificationsService: NotificationsService,
+  ) { }
 
   async getAll(page: number = 1, limit: number = 10) {
     const skip = (page - 1) * limit;
@@ -184,9 +186,9 @@ export class NewsLettersService {
     );
     const template = body.templateId
       ? await this.prisma.templates.findFirst({
-          where: { id: body.templateId, deleted_at: null },
-          select: { id: true, area_id: true },
-        })
+        where: { id: body.templateId, deleted_at: null },
+        select: { id: true, area_id: true },
+      })
       : null;
 
     if (body.templateId && !template) {
@@ -215,6 +217,14 @@ export class NewsLettersService {
 
       return created;
     });
+
+    // Notify reviewers and admins about the new newsletter
+    try {
+      await this.notificationsService.notifyNewNewsletter(newsletter.id);
+    } catch (error) {
+      // Log error but don't fail the operation
+      console.error('Error sending notifications for new newsletter:', error);
+    }
 
     return this.getById(newsletter.id);
   }
@@ -395,6 +405,17 @@ export class NewsLettersService {
         },
       });
     });
+
+    // Trigger notifications for state changes
+    try {
+      await this.notificationsService.notifyNewsletterStateChange(
+        id,
+        body.state,
+      );
+    } catch (error) {
+      // Log error but don't fail the operation
+      console.error('Error sending notifications:', error);
+    }
 
     return this.getById(id);
   }
@@ -966,27 +987,38 @@ export class NewsLettersService {
         return [];
       }
 
-      return parsed.flatMap((entry) => {
+      return parsed.flatMap((entry: unknown) => {
         if (
-          !entry ||
           typeof entry !== 'object' ||
-          Array.isArray(entry) ||
-          typeof entry.blockId !== 'string' ||
-          typeof entry.content !== 'string'
+          entry === null ||
+          Array.isArray(entry)
         ) {
-          return [];
+          return []
         }
 
-        const normalizedContent = entry.content.trim();
+        const comment = entry as {
+          blockId?: unknown
+          content?: unknown
+        }
+
+        if (
+          typeof comment.blockId !== 'string' ||
+          typeof comment.content !== 'string'
+        ) {
+          return []
+        }
+
+        const normalizedContent =
+          comment.content.trim()
 
         if (!normalizedContent) {
-          return [];
+          return []
         }
 
         return [{
-          blockId: entry.blockId,
+          blockId: comment.blockId,
           content: normalizedContent,
-        }];
+        }]
       });
     } catch {
       return [];
