@@ -10,6 +10,7 @@ import {
   Post,
   Query,
   Req,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import { NewsLettersService } from './newsletters.service';
@@ -56,6 +57,7 @@ import { PermissionCacheService } from '../modules/auth/services/permission-cach
 import { PrismaService } from '../prisma/prisma.service';
 import { newsletter_state } from '@prisma/client';
 import { Role } from '../modules/auth/enum/roles';
+import type { Response } from 'express';
 
 type AuthenticatedRequest = {
   user?: {
@@ -98,6 +100,25 @@ export class NewslettersController {
     body: CreateNewsletterBody,
   ) {
     return this.newslettersService.create(body, request.user?.id);
+  }
+
+  @Get(':id/export/eml')
+  async exportEml(
+    @Param(new ZodValidationPipe(idParamSchema)) params: IdParam,
+    @Res() response: Response,
+  ) {
+    await this.assertNewsletterApprovedForExport(params.id);
+
+
+    const exported = await this.newslettersService.exportEml(params.id);
+
+    response.set({
+      'Content-Type': 'message/rfc822',
+      'Content-Disposition': `attachment; filename="${exported.filename}"`,
+      'Content-Length': exported.content.length.toString(),
+    });
+
+    response.send(exported.content);
   }
 
   @Get(':id')
@@ -280,6 +301,37 @@ export class NewslettersController {
       newsletterId,
       Action.REVIEW_FINAL_APPROVE_COMMENT,
     );
+  }
+
+  private async assertNewsletterApprovedForExport(
+    newsletterId: string,
+  ): Promise<void> {
+    const newsletter = await this.prisma.newsletters.findFirst({
+      where: {
+        id: newsletterId,
+        deleted_at: null,
+      },
+      select: {
+        id: true,
+        state: true,
+      },
+    });
+
+    if (!newsletter) {
+      throw new NotFoundException({
+        message: `No se encontro el newsletter con ID ${newsletterId}`,
+        error: 'Recurso no encontrado',
+        statusCode: 404,
+      });
+    }
+
+    if (newsletter.state !== newsletter_state.APPROVED) {
+      throw new ForbiddenException({
+        message: 'Solo se pueden exportar newsletters aprobados',
+        error: 'Newsletter no aprobado',
+        statusCode: 403,
+      });
+    }
   }
 
   private async assertActionPermission(
