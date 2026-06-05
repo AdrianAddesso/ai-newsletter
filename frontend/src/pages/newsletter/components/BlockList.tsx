@@ -41,7 +41,7 @@ export function BlockList({
           borderRadius: 2,
         }}
       >
-        <Typography variant="h5">Bloques de la plantilla</Typography>
+        <Typography variant="h5">Newsletter</Typography>
         {readOnly && <Chip label="Solo lectura" />}
       </Stack>
       <Stack

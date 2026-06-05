@@ -27,10 +27,10 @@ export function ApprovedNewsletterPage({
       spacing={3}
       sx={{ p:3 }}
     >
-      <Box sx={{ flex:1 }}>
-        <div data-newsletter-export-root>
-          <ApprovedNewsletterViewer blocks={newsletter.blocks} />
-        </div>
+      <Box sx={{ flex:1, minWidth:0, }}>
+          <Box sx={{ maxWidth: 1000, mx: 'auto', }}>
+            <ApprovedNewsletterViewer blocks={newsletter.blocks} />
+          </Box>
       </Box>
 
       <Box sx={{ width:{ lg:380 } }}>
