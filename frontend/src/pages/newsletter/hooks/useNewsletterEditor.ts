@@ -64,11 +64,11 @@ export function useNewsletterEditor() {
       label: 'Exportar PDF',
       format:'PDF' as ExportFormat,
     },
-    {
-      id: 'eml',
-      label: 'Exportar EML',
-      format: 'EML',
-    },
+    //{
+    //  id: 'eml',
+    //  label: 'Exportar EML',
+    //  format: 'EML',
+    //},
   ]
 
   useEffect(() => {
