@@ -28,6 +28,7 @@ import {
   parseBlockValues,
 } from '../blocks/newsletter-blocks';
 import { Role } from '../modules/auth/enum/roles';
+import { NotificationsService } from '../notifications/notifications.service'
 
 const uuidPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -95,7 +96,8 @@ export class NewsLettersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly storageService: StorageService,
-  ) {}
+    private readonly notificationsService: NotificationsService,
+  ) { }
 
   async getAll(page: number = 1, limit: number = 10) {
     const skip = (page - 1) * limit;
@@ -193,9 +195,9 @@ export class NewsLettersService {
     );
     const template = body.templateId
       ? await this.prisma.templates.findFirst({
-          where: { id: body.templateId, deleted_at: null },
-          select: { id: true, area_id: true },
-        })
+        where: { id: body.templateId, deleted_at: null },
+        select: { id: true, area_id: true },
+      })
       : null;
 
     if (body.templateId && !template) {
@@ -413,6 +415,10 @@ export class NewsLettersService {
         },
       });
     });
+    await this.notificationsService.notifyNewsletterStateChange(
+      id,
+      body.state,
+    )
 
     return this.getById(id);
   }
@@ -561,6 +567,11 @@ export class NewsLettersService {
       });
     });
 
+    await this.notificationsService.notifyNewsletterStateChange(
+      id,
+      newsletter_state.APPROVED,
+    )
+
     return this.getById(id);
   }
 
@@ -614,7 +625,7 @@ export class NewsLettersService {
     return `Desde export newsletter con ID ${id}`;
   }
 
-    async exportEml(id: string): Promise<{ filename: string; content: Buffer }> {
+  async exportEml(id: string): Promise<{ filename: string; content: Buffer }> {
     const newsletter = await this.getById(id);
     const attachments = await this.buildEmailInlineAttachments(
       newsletter.blocks,
@@ -714,14 +725,14 @@ export class NewsLettersService {
       assetByField.get('logoAsset') ??
       assetByField.get('leftLogoAsset') ??
       assetByField.get('rightLogoAsset');
-      
+
     const imageCid = imageBinding
       ? cidByAssetId.get(imageBinding.assetId)
       : undefined;
 
     const imageUrl = imageCid
       ? `cid:${imageCid}`
-      : imageBinding?.assetUrl ?? '';    
+      : imageBinding?.assetUrl ?? '';
 
     if (block.type === 'ctaFull' || block.type === 'ctaAlternative') {
       const buttonLabel = values.buttonLabel ?? values.label ?? 'call to action';
@@ -756,11 +767,10 @@ export class NewsLettersService {
               padding="0"
               fluid-on-mobile="true"
             />
-            ${
-              text
-                ? `<mj-text padding="16px">${this.escapeHtml(text)}</mj-text>`
-                : ''
-            }
+            ${text
+          ? `<mj-text padding="16px">${this.escapeHtml(text)}</mj-text>`
+          : ''
+        }
           </mj-column>
         </mj-section>
       `;
@@ -775,7 +785,7 @@ export class NewsLettersService {
     `;
   }
 
-    private async buildEmailInlineAttachments(
+  private async buildEmailInlineAttachments(
     blocks: NewsletterBlockDto[],
   ): Promise<{
     files: EmailInlineAttachment[];
@@ -844,7 +854,7 @@ export class NewsLettersService {
   }
 
   private buildEmlMessage(
-    subject: string, 
+    subject: string,
     html: string,
     attachments: EmailInlineAttachment[] = [],
   ): Promise<Buffer> {

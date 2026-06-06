@@ -97,6 +97,12 @@ export class NotificationsService {
         // Notificaciones según el estado
         const notificationsToCreate: CreateNotificationDto[] = []
 
+        console.log({
+            creator: newsletter.created_by_user_id,
+            approver: newsletter.approved_by_user_id,
+            state: newState,
+        })
+
         switch (newState) {
             case 'IN_REVIEW':
             case 'RESUBMITTED':
@@ -118,7 +124,7 @@ export class NotificationsService {
                         title: 'Newsletter Aprobado',
                         message: `Tu newsletter "${newsletter.title}" ha sido aprobado y está listo para exportar.`,
                         type: 'APPROVED',
-                        actionPath: `/dashboard`,
+                        actionPath: `/exportarNewsletter/${newsletterId}`,
                         newsletterId,
                     })
                 }
@@ -184,24 +190,6 @@ export class NotificationsService {
         )
     }
 
-    private createNotificationsForReviewers(
-        newsletterId: string,
-        title: string,
-        message: string,
-        actionPath: string,
-    ): CreateNotificationDto[] {
-        return [
-            {
-                userId: '', // Se asignará al obtener los IDs
-                title,
-                message,
-                type: 'PENDING_REVIEW',
-                actionPath,
-                newsletterId,
-            },
-        ]
-    }
-
     async notifyReviewersAndAdmins(
         newsletterId: string,
         title: string,
@@ -232,7 +220,7 @@ export class NotificationsService {
         await Promise.all(notificationsToCreate.map(notif => this.createNotification(notif)))
     }
 
-    private mapToDto( notification: notifications,): NotificationDto {
+    private mapToDto(notification: notifications,): NotificationDto {
         return {
             id: notification.id,
             userId: notification.user_id,
