@@ -5,7 +5,6 @@ import { ProtectedRoute } from '../../components/ProtectedRoute'
 import { DashboardPage } from '../../pages/DashboardPage'
 import CreateNewsletterPage from '../../pages/CreateNewsletterPage'
 import EditNewsletterPage from '../../pages/EditNewsletterPage'
-import { SettingsPage } from '../../pages/SettingsPage'
 import { TemplateLibraryPage } from '../../pages/TemplateLibraryPage'
 import { ApprovedNewsletterRoute } from '../../pages/newsletter/approved/ApprovedNewsletterRoute'
 
@@ -63,23 +62,12 @@ export const protectedRoutes = (
             }
         />
 
-         <Route
+        <Route
             path="/exportarNewsletter/:id"
             element={
                 <ProtectedRoute>
                     <ProtectedLayout>
                         <ApprovedNewsletterRoute />
-                    </ProtectedLayout>
-                </ProtectedRoute>
-            }
-        />
-
-        <Route
-            path="/settings"
-            element={
-                <ProtectedRoute>
-                    <ProtectedLayout>
-                        <SettingsPage />
                     </ProtectedLayout>
                 </ProtectedRoute>
             }

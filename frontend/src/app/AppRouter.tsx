@@ -2,13 +2,14 @@ import { Box } from '@mui/material'
 
 import {
     BrowserRouter as Router,
+    Navigate,
+    Route,
     Routes,
 } from 'react-router'
 
 import { NotificationManager } from '../components/NotificationManager'
 import { useNotification } from '../hooks/useNotification'
 import { adminRoutes } from './routes/AdminRoutes'
-import { devRoutes } from './routes/DevRoutes'
 import { protectedRoutes } from './routes/ProtectedRoutes'
 import { publicRoutes } from './routes/PublicRoutes'
 
@@ -28,7 +29,7 @@ export function AppRouter() {
 
                     {adminRoutes}
 
-                    {devRoutes}
+                    <Route path="*" element={<Navigate to="/dashboard" replace />} />
                 </Routes>
             </Router>
 
