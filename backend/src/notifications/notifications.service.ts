@@ -1,9 +1,10 @@
 import { Injectable, BadRequestException } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service'
 import type { CreateNotificationDto, NotificationDto } from './notifications.types'
-import type { newsletter_state } from '@prisma/client'
+import { newsletter_state } from '@prisma/client'
 import { user_role } from '@prisma/client'
 import type { notifications } from '@prisma/client'
+import { NotificationType } from '@shared/enums/notification-type.enum'
 
 @Injectable()
 export class NotificationsService {
@@ -104,8 +105,8 @@ export class NotificationsService {
         })
 
         switch (newState) {
-            case 'IN_REVIEW':
-            case 'RESUBMITTED':
+            case newsletter_state.IN_REVIEW:
+            case newsletter_state.RESUBMITTED:
                 // Notificar a revisores y admins
                 await this.notifyReviewersAndAdmins(
                     newsletterId,
@@ -116,42 +117,42 @@ export class NotificationsService {
 
                 return
 
-            case 'APPROVED':
+            case newsletter_state.APPROVED:
                 // Notificar al creador que fue aprobado
                 if (newsletter.users_newsletters_created_by_user_idTousers?.id) {
                     notificationsToCreate.push({
                         userId: newsletter.users_newsletters_created_by_user_idTousers.id,
                         title: 'Newsletter Aprobado',
                         message: `Tu newsletter "${newsletter.title}" ha sido aprobado y está listo para exportar.`,
-                        type: 'APPROVED',
+                        type: NotificationType.APPROVED,
                         actionPath: `/exportarNewsletter/${newsletterId}`,
                         newsletterId,
                     })
                 }
                 break
 
-            case 'CHANGES_REQUESTED':
+            case newsletter_state.CHANGES_REQUESTED:
                 // Notificar al creador que debe hacer cambios
                 if (newsletter.users_newsletters_created_by_user_idTousers?.id) {
                     notificationsToCreate.push({
                         userId: newsletter.users_newsletters_created_by_user_idTousers.id,
                         title: 'Cambios Solicitados',
                         message: `Se han solicitado cambios en tu newsletter "${newsletter.title}". Por favor revísalos.`,
-                        type: 'REJECTED',
+                        type: NotificationType.REJECTED,
                         actionPath: `/editarNewsletter/${newsletterId}`,
                         newsletterId,
                     })
                 }
                 break
 
-            case 'DISCARDED':
+            case newsletter_state.DISCARDED:
                 // Notificar al creador que fue descartado
                 if (newsletter.users_newsletters_created_by_user_idTousers?.id) {
                     notificationsToCreate.push({
                         userId: newsletter.users_newsletters_created_by_user_idTousers.id,
                         title: 'Newsletter Descartado',
                         message: `Tu newsletter "${newsletter.title}" ha sido descartado.`,
-                        type: 'REJECTED',
+                        type: NotificationType.REJECTED,
                         actionPath: `/dashboard`,
                         newsletterId,
                     })
@@ -212,7 +213,7 @@ export class NotificationsService {
             userId: user.id,
             title,
             message,
-            type: 'PENDING_REVIEW',
+            type: NotificationType.PENDING_REVIEW,
             actionPath,
             newsletterId,
         }))

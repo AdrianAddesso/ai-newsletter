@@ -1,5 +1,9 @@
 import axios from 'axios'
 import type { AppNotification } from '../contexts/NotificationContext'
+import {
+  NotificationType,
+  type NotificationType as NotificationTypeValue,
+} from '@shared/enums/notification-type.enum'
 
 const API_BASE = '/notifications'
 
@@ -7,7 +11,7 @@ export type NotificationDto = {
   id: string
   userId: string
   newsletterId: string | null
-  type: 'PENDING_REVIEW' | 'APPROVED' | 'REJECTED' | 'REMINDER' | 'INFO' | 'NEW_NEWSLETTER'
+  type: NotificationTypeValue
   title: string
   message: string
   actionPath: string | null
@@ -17,12 +21,12 @@ export type NotificationDto = {
 }
 
 const notificationTypeMap: Record<NotificationDto['type'], AppNotification['type']> = {
-  PENDING_REVIEW: 'pending-review',
-  APPROVED: 'approved',
-  REJECTED: 'rejected',
-  REMINDER: 'reminder',
-  INFO: 'info',
-  NEW_NEWSLETTER: 'pending-review',
+  [NotificationType.PENDING_REVIEW]: 'pending-review',
+  [NotificationType.APPROVED]: 'approved',
+  [NotificationType.REJECTED]: 'rejected',
+  [NotificationType.REMINDER]: 'reminder',
+  [NotificationType.INFO]: 'info',
+  [NotificationType.NEW_NEWSLETTER]: 'pending-review',
 }
 
 function mapToAppNotification(dto: NotificationDto): AppNotification {

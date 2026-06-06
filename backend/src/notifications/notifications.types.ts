@@ -1,10 +1,10 @@
-import type { notification_type } from '@prisma/client'
+import type { NotificationType } from '@shared/enums/notification-type.enum'
 
 export type CreateNotificationDto = {
   userId: string
   title: string
   message: string
-  type: notification_type
+  type: NotificationType
   actionPath?: string
   newsletterId?: string
 }
@@ -13,7 +13,7 @@ export type NotificationDto = {
   id: string
   userId: string
   newsletterId: string | null
-  type: notification_type
+  type: NotificationType
   title: string
   message: string
   actionPath: string | null
