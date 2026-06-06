@@ -140,6 +140,21 @@ BEGIN
 END
 $$;
 
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'notification_type') THEN
+        CREATE TYPE public.notification_type AS ENUM (
+            'PENDING_REVIEW',
+            'APPROVED',
+            'REJECTED',
+            'REMINDER',
+            'INFO',
+            'NEW_NEWSLETTER'
+        );
+    END IF;
+END
+$$;
+
 -- =========================
 -- BASE TABLES
 -- =========================
@@ -462,6 +477,21 @@ CREATE TABLE public.ai_config (
     CONSTRAINT ai_config_type_key   UNIQUE (type)
 );
 
+CREATE TABLE public.notifications (
+    id uuid NOT NULL DEFAULT gen_random_uuid(),
+    user_id uuid NOT NULL,
+    newsletter_id uuid,
+    type public.notification_type NOT NULL,
+    title text NOT NULL,
+    message text NOT NULL,
+    action_path text,
+    is_read boolean NOT NULL DEFAULT false,
+    created_at timestamp with time zone NOT NULL DEFAULT now(),
+    updated_at timestamp with time zone NOT NULL DEFAULT now(),
+
+    CONSTRAINT notifications_pkey PRIMARY KEY (id)
+);
+
 -- =========================
 -- FOREIGN KEYS
 -- =========================
@@ -698,6 +728,20 @@ ALTER TABLE public.role_permissions
     ON UPDATE NO ACTION
     ON DELETE CASCADE;
 
+ALTER TABLE public.notifications
+    ADD CONSTRAINT notifications_user_id_fkey
+    FOREIGN KEY (user_id)
+    REFERENCES public.users(id)
+    ON UPDATE NO ACTION
+    ON DELETE CASCADE;
+
+ALTER TABLE public.notifications
+    ADD CONSTRAINT notifications_newsletter_id_fkey
+    FOREIGN KEY (newsletter_id)
+    REFERENCES public.newsletters(id)
+    ON UPDATE NO ACTION
+    ON DELETE CASCADE;
+
 -- =========================
 -- INDEXES
 -- =========================
@@ -816,6 +860,18 @@ CREATE INDEX prompt_commands_type_idx
 
 CREATE INDEX ai_config_type_idx
     ON public.ai_config(type);
+
+CREATE INDEX notifications_user_id_idx
+    ON public.notifications(user_id);
+
+CREATE INDEX notifications_newsletter_id_idx
+    ON public.notifications(newsletter_id);
+
+CREATE INDEX notifications_is_read_idx
+    ON public.notifications(is_read);
+
+CREATE INDEX notifications_created_at_idx
+    ON public.notifications(created_at);
 
 -- =========================
 -- ROW LEVEL SECURITY
