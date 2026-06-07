@@ -25,20 +25,6 @@ interface LoginFormErrors {
   password?: string;
 }
 
-const getSafeRedirectPath = (search: string) => {
-  const redirectPath = new URLSearchParams(search).get("redirect");
-
-  if (
-    !redirectPath ||
-    !redirectPath.startsWith("/") ||
-    redirectPath.startsWith("/login")
-  ) {
-    return "/dashboard";
-  }
-
-  return redirectPath;
-};
-
 const validateLoginForm = (
   email: string,
   password: string,
@@ -67,7 +53,7 @@ export function LoginPage() {
   const { login, isAuthenticated } = useAuth();
   const { error: notifyError, success: notifySuccess } = useNotification();
 
-  const redirectPath = getSafeRedirectPath(location.search);
+  const redirectPath = "/dashboard";
   const [email, setEmail] = useState(MICROSOFT_SSO_USERS[0].email);
   const [password, setPassword] = useState("password123");
   const [formErrors, setFormErrors] = useState<LoginFormErrors>({});
