@@ -59,7 +59,7 @@ export const adminRoutes = (
     <Route
       path="/templates/create"
       element={
-        <ProtectedRoute allowedRoles={["ADMIN", "FUNCTIONAL"]}>
+        <ProtectedRoute allowedRoles={["ADMIN"]}>
           <ProtectedLayout>
             <CreateTemplate />
           </ProtectedLayout>
