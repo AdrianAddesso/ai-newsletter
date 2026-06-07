@@ -112,7 +112,7 @@ export class NotificationsService {
                     newsletterId,
                     `Newsletter "${newsletter.title}" está en revisión`,
                     `El newsletter "${newsletter.title}" de ${creatorName} está esperando tu revisión.`,
-                    '/reviews',
+                    `/reviewNewsletter/${newsletterId}`,
                 )
 
                 return
@@ -187,7 +187,7 @@ export class NotificationsService {
             newsletterId,
             `Nuevo newsletter: ${newsletter.title}`,
             `${creatorName} ha creado un nuevo newsletter "${newsletter.title}".`,
-            '/reviews',
+            `/reviewNewsletter/${newsletterId}`,
         )
     }
 
