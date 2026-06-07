@@ -95,12 +95,39 @@ export class NotificationsService {
             ? `${newsletter.users_newsletters_created_by_user_idTousers.name} ${newsletter.users_newsletters_created_by_user_idTousers.last_name}`
             : 'Anónimo'
 
+        const latestStateLog = await this.prisma.newsletter_state_log.findFirst({
+            where: {
+                newsletter_id: newsletterId,
+                new_state: newState,
+            },
+            orderBy: {
+                created_at: 'desc',
+            },
+            include: {
+                users: {
+                    select: {
+                        name: true,
+                        last_name: true,
+                    },
+                },
+            },
+        })
+
+        const reviewerName = latestStateLog?.users
+            ? `${latestStateLog.users.name} ${latestStateLog.users.last_name}`
+            : 'Un revisor'
+
+        const approverName = newsletter.users_newsletters_approved_by_user_idTousers
+            ? `${newsletter.users_newsletters_approved_by_user_idTousers.name} ${newsletter.users_newsletters_approved_by_user_idTousers.last_name}`
+            : 'Un revisor'
+
         // Notificaciones según el estado
         const notificationsToCreate: CreateNotificationDto[] = []
 
         console.log({
-            creator: newsletter.created_by_user_id,
-            approver: newsletter.approved_by_user_id,
+            creator: creatorName,
+            reviewer: reviewerName,
+            approver: approverName,
             state: newState,
         })
 
@@ -123,7 +150,7 @@ export class NotificationsService {
                     notificationsToCreate.push({
                         userId: newsletter.users_newsletters_created_by_user_idTousers.id,
                         title: 'Newsletter Aprobado',
-                        message: `Tu newsletter "${newsletter.title}" ha sido aprobado y está listo para exportar.`,
+                        message: `Tu newsletter "${newsletter.title}" ha sido aprobado por ${approverName} y está listo para exportar.`,
                         type: NotificationType.APPROVED,
                         actionPath: `/exportarNewsletter/${newsletterId}`,
                         newsletterId,
@@ -137,7 +164,7 @@ export class NotificationsService {
                     notificationsToCreate.push({
                         userId: newsletter.users_newsletters_created_by_user_idTousers.id,
                         title: 'Cambios Solicitados',
-                        message: `Se han solicitado cambios en tu newsletter "${newsletter.title}". Por favor revísalos.`,
+                        message: `${reviewerName} solicitó cambios en tu newsletter "${newsletter.title}". Por favor revísalos.`,
                         type: NotificationType.REJECTED,
                         actionPath: `/editarNewsletter/${newsletterId}`,
                         newsletterId,
@@ -151,9 +178,9 @@ export class NotificationsService {
                     notificationsToCreate.push({
                         userId: newsletter.users_newsletters_created_by_user_idTousers.id,
                         title: 'Newsletter Descartado',
-                        message: `Tu newsletter "${newsletter.title}" ha sido descartado.`,
+                        message: `${reviewerName} descartó tu newsletter "${newsletter.title}".`,
                         type: NotificationType.REJECTED,
-                        actionPath: `/dashboard`,
+                        actionPath: '/dashboard',
                         newsletterId,
                     })
                 }

@@ -559,6 +559,7 @@ export class NewsLettersService {
         where: { id },
         data: {
           state: newsletter_state.APPROVED,
+          approved_by_user_id: payload.reviewedByUserId ?? null,
         },
       });
 
