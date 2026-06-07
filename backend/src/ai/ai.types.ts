@@ -1,7 +1,7 @@
-interface GenerateContentCandidate {
+export interface GenerateContentCandidate {
   content?: {
     parts?: Array<{
-        text?: string;
+      text?: string;
     }>;
   };
 }
@@ -10,6 +10,12 @@ export interface GenAIGenerateContentSuccess {
   candidates?: GenerateContentCandidate[];
   error?: string | { message?: string };
 }
+
+export type GenAIGenerateContentChunk = GenAIGenerateContentSuccess;
+
+export type GenAIGenerateContentResponse =
+  | GenAIGenerateContentSuccess
+  | GenAIGenerateContentChunk[];
 
 export interface GenerationConfig {
   temperature: number;

@@ -22,6 +22,10 @@ export type NewsletterAssetBindingDto = {
   assetName: string | null;
   assetUrl: string | null;
   assetType: BlockAssetType;
+  bucket?: string;
+  objectKey?: string;
+  fileName?: string | null;
+  mimeType?: string | null;
   keywordText?: string | null;
 };
 

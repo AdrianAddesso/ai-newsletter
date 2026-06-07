@@ -11,6 +11,8 @@ import {
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
+import MailComposer from 'nodemailer/lib/mail-composer';
+import { renderMjml } from './utils/renderMjml';
 import type {
   CreateNewsletterBody,
   NewsletterEditableBlock,
@@ -77,6 +79,13 @@ type ReviewLogRecord = Prisma.newsletter_state_logGetPayload<{
 type StoredReviewComment = {
   blockId: string;
   content: string;
+};
+
+type EmailInlineAttachment = {
+  filename: string;
+  content: Buffer;
+  cid: string;
+  contentType?: string;
 };
 
 @Injectable()
@@ -364,6 +373,15 @@ export class NewsLettersService {
   }
 
   async delete(id: string) {
+    const newsletter = await this.prisma.newsletters.findFirst({
+      where: { id, deleted_at: null },
+      select: { id: true },
+    });
+
+    if (!newsletter) {
+      throw new NotFoundException(`Newsletter ${id} no encontrado`);
+    }
+
     return this.prisma.newsletters.update({
       where: { id },
       data: { deleted_at: new Date() },
@@ -594,6 +612,283 @@ export class NewsLettersService {
 
   getExports(id: string) {
     return `Desde export newsletter con ID ${id}`;
+  }
+
+    async exportEml(id: string): Promise<{ filename: string; content: Buffer }> {
+    const newsletter = await this.getById(id);
+    const attachments = await this.buildEmailInlineAttachments(
+      newsletter.blocks,
+    );
+    const mjml = this.buildNewsletterEmailMjml(
+      newsletter.title || 'Newsletter',
+      newsletter.blocks,
+      attachments.cidByAssetId,
+    );
+    const html = await renderMjml(mjml);
+    const content = await this.buildEmlMessage(
+      newsletter.title || 'Newsletter Nestle',
+      html,
+      attachments.files,
+    );
+
+    return {
+      filename: `${this.toSafeFilename(newsletter.title || 'newsletter')}.eml`,
+      content,
+    };
+  }
+
+  private buildNewsletterEmailMjml(
+    title: string,
+    blocks: NewsletterBlockDto[],
+    cidByAssetId: Map<string, string>,
+  ): string {
+    const rows = this.groupEmailBlocksByRow(blocks);
+
+    const body = rows
+      .map((rowBlocks) => {
+        const columns = rowBlocks
+          .map((block) => this.renderEmailBlock(block, cidByAssetId))
+          .join('\n');
+
+        return `
+          <mj-section padding="0">
+            ${columns}
+          </mj-section>
+        `;
+      })
+      .join('\n');
+
+    return `
+      <mjml>
+        <mj-head>
+          <mj-title>${this.escapeHtml(title)}</mj-title>
+          <mj-preview>${this.escapeHtml(title)}</mj-preview>
+          <mj-attributes>
+            <mj-all font-family="Arial, sans-serif" />
+            <mj-text color="#30261D" font-size="16px" line-height="1.4" />
+          </mj-attributes>
+        </mj-head>
+        <mj-body background-color="#ffffff" width="960px">
+          ${body}
+        </mj-body>
+      </mjml>
+    `;
+  }
+
+  private groupEmailBlocksByRow(
+    blocks: NewsletterBlockDto[],
+  ): NewsletterBlockDto[][] {
+    const rows = new Map<number, NewsletterBlockDto[]>();
+
+    for (const block of blocks) {
+      rows.set(block.row, [...(rows.get(block.row) ?? []), block]);
+    }
+
+    return Array.from(rows.entries())
+      .sort(([leftRow], [rightRow]) => leftRow - rightRow)
+      .map(([, rowBlocks]) =>
+        rowBlocks.sort(
+          (left, right) => left.gridColumn - right.gridColumn,
+        ),
+      );
+  }
+
+  private renderEmailBlock(block: NewsletterBlockDto, cidByAssetId: Map<string, string>): string {
+    const values = parseBlockValues(block.content);
+    const assetByField = new Map(
+      block.assetBindings.map((binding) => [binding.fieldKey, binding]),
+    );
+
+    const bgColor = this.escapeHtml(values.bgColor ?? '#ffffff');
+    const text =
+      values.text ??
+      values.title ??
+      values.subtitle ??
+      values.label ??
+      values.bodyText ??
+      '';
+
+    const imageBinding =
+      assetByField.get('imageAsset') ??
+      assetByField.get('backgroundAsset') ??
+      assetByField.get('logoAsset') ??
+      assetByField.get('leftLogoAsset') ??
+      assetByField.get('rightLogoAsset');
+      
+    const imageCid = imageBinding
+      ? cidByAssetId.get(imageBinding.assetId)
+      : undefined;
+
+    const imageUrl = imageCid
+      ? `cid:${imageCid}`
+      : imageBinding?.assetUrl ?? '';    
+
+    if (block.type === 'ctaFull' || block.type === 'ctaAlternative') {
+      const buttonLabel = values.buttonLabel ?? values.label ?? 'call to action';
+      const href = values.href ?? '';
+      const buttonColor = values.buttonColor ?? values.bgColor ?? '#FF595A';
+      const buttonTextColor = values.buttonTextColor ?? values.textColor ?? '#ffffff';
+
+      return `
+        <mj-section background-color="${bgColor}" padding="16px">
+          <mj-column>
+            <mj-button
+              href="${this.escapeHtml(href)}"
+              background-color="${this.escapeHtml(buttonColor)}"
+              color="${this.escapeHtml(buttonTextColor)}"
+              border-radius="8px"
+              font-weight="700"
+              padding="12px 24px"
+            >
+              ${this.escapeHtml(buttonLabel)}
+            </mj-button>
+          </mj-column>
+        </mj-section>
+      `;
+    }
+
+    if (imageUrl) {
+      return `
+        <mj-section background-color="${bgColor}" padding="0">
+          <mj-column>
+            <mj-image
+              src="${this.escapeHtml(imageUrl)}"
+              padding="0"
+              fluid-on-mobile="true"
+            />
+            ${
+              text
+                ? `<mj-text padding="16px">${this.escapeHtml(text)}</mj-text>`
+                : ''
+            }
+          </mj-column>
+        </mj-section>
+      `;
+    }
+
+    return `
+      <mj-section background-color="${bgColor}" padding="16px">
+        <mj-column>
+          <mj-text>${this.escapeHtml(text)}</mj-text>
+        </mj-column>
+      </mj-section>
+    `;
+  }
+
+    private async buildEmailInlineAttachments(
+    blocks: NewsletterBlockDto[],
+  ): Promise<{
+    files: EmailInlineAttachment[];
+    cidByAssetId: Map<string, string>;
+  }> {
+    const cidByAssetId = new Map<string, string>();
+    const files: EmailInlineAttachment[] = [];
+    const uniqueBindings = new Map<
+      string,
+      NewsletterBlockDto['assetBindings'][number]
+    >();
+
+    for (const block of blocks) {
+      for (const binding of block.assetBindings) {
+        if (!binding.bucket || !binding.objectKey) {
+          continue;
+        }
+
+        if (!uniqueBindings.has(binding.assetId)) {
+          uniqueBindings.set(binding.assetId, binding);
+        }
+      }
+    }
+
+    let index = 0;
+
+    for (const binding of uniqueBindings.values()) {
+      try {
+        const content = await this.storageService.getObjectBuffer(
+          binding.bucket!,
+          binding.objectKey!,
+        );
+        const cid = `newsletter-asset-${index}@nestle-ai-newsletter`;
+        const filename =
+          binding.fileName ||
+          `${binding.assetName || `asset-${index}`}.${this.extensionFromMimeType(binding.mimeType)}`;
+
+        cidByAssetId.set(binding.assetId, cid);
+        files.push({
+          filename,
+          content,
+          cid,
+          contentType: binding.mimeType ?? undefined,
+        });
+
+        index += 1;
+      } catch {
+        continue;
+      }
+    }
+
+    return {
+      files,
+      cidByAssetId,
+    };
+  }
+
+  private extensionFromMimeType(mimeType: string | null | undefined): string {
+    if (mimeType === 'image/png') return 'png';
+    if (mimeType === 'image/jpeg') return 'jpg';
+    if (mimeType === 'image/gif') return 'gif';
+    if (mimeType === 'image/svg+xml') return 'svg';
+    if (mimeType === 'image/webp') return 'webp';
+
+    return 'bin';
+  }
+
+  private buildEmlMessage(
+    subject: string, 
+    html: string,
+    attachments: EmailInlineAttachment[] = [],
+  ): Promise<Buffer> {
+    const mail = new MailComposer({
+      from: '',
+      to: '',
+      subject,
+      html,
+      text: subject,
+      headers: {
+        'X-Unsent': '1',
+      },
+      attachments,
+    });
+
+    return new Promise((resolve, reject) => {
+      mail.compile().build((error, message) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+
+        resolve(message);
+      });
+    });
+  }
+
+  private toSafeFilename(value: string): string {
+    const sanitized = value
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/gi, '-')
+      .replace(/^-+|-+$/g, '');
+
+    return sanitized || 'newsletter';
+  }
+
+  private escapeHtml(value: string): string {
+    return value
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
   private async replaceBlocks(
@@ -857,6 +1152,10 @@ export class NewsLettersService {
           ),
           assetType:
             assetBlock.assets.type as NewsletterBlockDto['assetBindings'][number]['assetType'],
+          bucket: assetBlock.assets.bucket,
+          objectKey: assetBlock.assets.object_key,
+          fileName: assetBlock.assets.file_name,
+          mimeType: assetBlock.assets.mime_type,
           keywordText: assetBlock.keyword_text,
         };
       }),

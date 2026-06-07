@@ -32,7 +32,7 @@ export function ApprovedNewsletterExport({
         Listo para publicación
       </Typography>
 
-      {exportOptions.map((opt) => (
+      {/*{exportOptions.map((opt) => (
         <Button
           key={opt.id}
           variant="contained"
@@ -44,6 +44,42 @@ export function ApprovedNewsletterExport({
             : opt.label}
         </Button>
       ))}
+      */}
+
+      {exportOptions.map((opt) => {
+        const isEml = opt.format === 'EML'
+
+        return (
+          <Button
+            key={opt.id}
+            variant="contained"
+            disabled={isEml || exportingFormat !== null}
+            onClick={() => {
+              if (isEml) return
+
+              void onExport(opt.format)
+            }}
+            sx={
+              isEml
+                ? {
+                    bgcolor: 'grey.400',
+                    color: 'grey.700',
+                    '&.Mui-disabled': {
+                      bgcolor: 'grey.300',
+                      color: 'grey.600',
+                    },
+                  }
+                : undefined
+            }
+          >
+            {isEml
+              ? 'Exportar EML'
+              : exportingFormat === opt.format
+                ? 'Exportando...'
+                : opt.label}
+          </Button>
+  )
+})}        
     </Stack>
   )
 }

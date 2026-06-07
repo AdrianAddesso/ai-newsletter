@@ -79,7 +79,7 @@ export const adminRoutes = (
     />
 
     <Route
-      path="/users"
+      path="/admin/users"
       element={
         <ProtectedRoute allowedRoles={["ADMIN"]}>
           <ProtectedLayout>

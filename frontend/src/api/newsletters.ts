@@ -147,3 +147,16 @@ export async function approveNewsletterReview(
 
   return response.data
 }
+
+export async function exportNewsletterEml(
+  newsletterId: string,
+): Promise<Blob> {
+  const response = await axios.get<Blob>(
+    `${API_BASE}/${newsletterId}/export/eml`,
+    {
+      responseType: 'blob',
+    },
+  )
+
+  return response.data
+}

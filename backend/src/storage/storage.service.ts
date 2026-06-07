@@ -72,6 +72,29 @@ export class StorageService {
     return body.transformToString('utf-8');
   }
 
+  async getObjectBuffer(bucket: string, key: string): Promise<Buffer> {
+    const response = await this.getClient().send(
+      new GetObjectCommand({
+        Bucket: bucket,
+        Key: key,
+      }),
+    );
+
+    const body = response.Body as
+      | {
+          transformToByteArray: () => Promise<Uint8Array>;
+        }
+      | undefined;
+
+    if (!body) {
+      throw new Error(`Object ${bucket}/${key} has no body.`);
+    }
+
+    const bytes = await body.transformToByteArray();
+
+    return Buffer.from(bytes);
+  }
+
   private getClient(): S3Client {
     if (this.client) {
       return this.client;

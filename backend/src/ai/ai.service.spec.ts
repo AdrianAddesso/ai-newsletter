@@ -4,6 +4,7 @@ import { ai_config_type } from '@prisma/client';
 import type { area_name } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AiService } from './ai.service';
+import { GenAIGenerateContentResponse } from './ai.types';
 
 type ConfigValues = Record<string, string | undefined>;
 
@@ -105,18 +106,45 @@ function makePromptCommandRows(type: ai_config_type) {
 }
 
 function mockAiProviderResponse(text: string): void {
+  mockAiProviderJsonResponse({
+    candidates: [
+      {
+        content: {
+          parts: [{ text }],
+        },
+      },
+    ],
+  });
+}
+
+function mockAiProviderChunkedResponse(chunks: string[]): void {
+  mockAiProviderJsonResponse(
+    chunks.map((text) => ({
+      candidates: [
+        {
+          content: {
+            parts: [{ text }],
+          },
+        },
+      ],
+    })),
+  );
+}
+
+function mockAiProviderJsonResponse(
+  body: GenAIGenerateContentResponse,
+): void {
   global.fetch = jest.fn().mockResolvedValue({
     ok: true,
-    json: () =>
-      Promise.resolve({
-        candidates: [
-          {
-            content: {
-              parts: [{ text }],
-            },
-          },
-        ],
-      }),
+    json: () => Promise.resolve(body),
+  }) as typeof fetch;
+}
+
+function mockAiProviderErrorResponse(status: number, error: unknown): void {
+  global.fetch = jest.fn().mockResolvedValue({
+    ok: false,
+    status,
+    json: () => Promise.resolve(error),
   }) as typeof fetch;
 }
 
@@ -191,6 +219,24 @@ describe('AiService', () => {
 
     await expect(service.improveText({ text: 'Texto original' })).rejects.toBeInstanceOf(
       ServiceUnavailableException,
+    );
+  });
+
+  it('improves text with chunked GenAI gateway responses', async () => {
+    const service = createService(configuredEnv);
+    mockPrisma.prompt_commands.findMany.mockResolvedValue(
+      makePromptCommandRows(ai_config_type.REGENERATE),
+    );
+    mockPrisma.ai_config.findFirst.mockResolvedValue(
+      makeAiConfigRow(ai_config_type.REGENERATE),
+    );
+    mockAiProviderChunkedResponse(['Texto ', 'mejorado']);
+
+    await expect(service.improveText({ text: 'Texto original' })).resolves.toEqual(
+      {
+        originalText: 'Texto original',
+        improvedText: 'Texto mejorado',
+      },
     );
   });
 
@@ -278,6 +324,107 @@ describe('AiService', () => {
       topP: 0.8,
       topK: 20,
       maxOutputTokens: 4000,
+    });
+  });
+
+  it('generates newsletter blocks from chunked GenAI gateway responses', async () => {
+    const service = createService(configuredEnv);
+
+    mockPrisma.templates.findFirst.mockResolvedValue({
+      id: 'weekly-brief',
+      layout: [
+        {
+          block_type: 'headerLeft',
+          row: 0,
+          grid_column: 0,
+          display_order: 0,
+        },
+      ],
+    });
+    mockPrisma.brand_kit.findFirst.mockResolvedValue({
+      id: 'lumen-corporate',
+      name: 'Lumen Corporate',
+      brandkit_assets: [],
+      color_palette: [],
+      font_groups: null,
+    });
+    mockPrisma.ai_config.findFirst.mockResolvedValue(
+      makeAiConfigRow(ai_config_type.CREATE),
+    );
+    mockPrisma.prompt_commands.findMany.mockResolvedValue(
+      makePromptCommandRows(ai_config_type.CREATE),
+    );
+    mockAiProviderChunkedResponse([
+      '{"blocks":[{"blockId":"headerLeft-0-0-0-0","values":{"title":"Nuevo ',
+      'titulo generado"}}]}',
+    ]);
+
+    const result = await service.generateNewsletter({
+      area: corporateArea,
+      templateId: 'weekly-brief',
+      brandKitId: 'lumen-corporate',
+      topic: 'Seguridad',
+      objective: 'Informar avances',
+      audience: 'Equipo interno',
+      keyMessages: ['Mensaje clave'],
+      tone: 'Claro',
+      linksOrSources: [],
+      assetIds: [],
+    });
+
+    expect(result.blocks).toHaveLength(1);
+    expect(JSON.parse(result.blocks[0]?.content ?? '{}')).toMatchObject({
+      title: 'Nuevo titulo generado',
+    });
+  });
+
+  it('falls back to user content when GenAI returns 404', async () => {
+    const service = createService(configuredEnv);
+
+    mockPrisma.templates.findFirst.mockResolvedValue({
+      id: 'weekly-brief',
+      layout: [
+        {
+          block_type: 'headerLeft',
+          row: 0,
+          grid_column: 0,
+          display_order: 0,
+        },
+      ],
+    });
+    mockPrisma.brand_kit.findFirst.mockResolvedValue({
+      id: 'lumen-corporate',
+      name: 'Lumen Corporate',
+      brandkit_assets: [],
+      color_palette: [],
+      font_groups: null,
+    });
+    mockPrisma.ai_config.findFirst.mockResolvedValue(
+      makeAiConfigRow(ai_config_type.CREATE),
+    );
+    mockPrisma.prompt_commands.findMany.mockResolvedValue(
+      makePromptCommandRows(ai_config_type.CREATE),
+    );
+    mockAiProviderErrorResponse(404, {
+      error: 'Not Found',
+    });
+
+    const result = await service.generateNewsletter({
+      area: corporateArea,
+      templateId: 'weekly-brief',
+      brandKitId: 'lumen-corporate',
+      topic: 'Seguridad',
+      objective: 'Informar avances',
+      audience: 'Equipo interno',
+      keyMessages: ['Mensaje clave'],
+      tone: 'Claro',
+      linksOrSources: [],
+      assetIds: [],
+    });
+
+    expect(result.blocks).toHaveLength(1);
+    expect(JSON.parse(result.blocks[0]?.content ?? '{}')).toMatchObject({
+      title: 'Seguridad',
     });
   });
 });

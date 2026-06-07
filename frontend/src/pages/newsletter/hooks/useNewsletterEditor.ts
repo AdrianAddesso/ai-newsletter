@@ -5,6 +5,7 @@ import { useAuth } from '../../../contexts/AuthContext'
 import { useNotification } from '../../../hooks/useNotification'
 
 import {
+  exportNewsletterEml,
   getNewsletter,
   updateNewsletter,
   updateNewsletterStatus,
@@ -40,6 +41,9 @@ export function useNewsletterEditor() {
   const [selectedBlockId, setSelectedBlockIdState] = useState('')
   const [showRegenerationForm, setShowRegenerationForm] = useState(false)
   const [isSavingDraft, setIsSavingDraft] = useState(false)
+  const [isGeneratingAll, setIsGeneratingAll] = useState(false)
+  const [regeneratingBlockId, setRegeneratingBlockId] = useState<string | null>(null)
+  const [aiError, setAiError] = useState<string | null>(null)
 
   const [templates, setTemplates] = useState<NewsletterTemplate[]>([])
   const [brandKits, setBrandKits] = useState<BrandKit[]>([])
@@ -60,11 +64,11 @@ export function useNewsletterEditor() {
       label: 'Exportar PDF',
       format:'PDF' as ExportFormat,
     },
-    {
-      id: 'eml',
-      label: 'Exportar EML',
-      format: 'EML',
-    },
+    //{
+    //  id: 'eml',
+    //  label: 'Exportar EML',
+    //  format: 'EML',
+    //},
   ]
 
   useEffect(() => {
@@ -200,11 +204,85 @@ export function useNewsletterEditor() {
     [id, newsletter],
   )
 
+    const escapeCssString = (value: string): string =>
+    value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')
+
+  const createExportFontStyle = (): HTMLStyleElement | null => {
+    if (!brandKitResources?.fonts.length) {
+      return null
+    }
+
+    const css = brandKitResources.fonts
+      .map((font) => {
+        const family = escapeCssString(font.name)
+        const url = escapeCssString(font.url)
+
+        return `
+          @font-face {
+            font-family: "${family}";
+            src: url("${url}");
+            font-display: swap;
+          }
+        `
+      })
+      .join('\n')
+
+    const style = document.createElement('style')
+    style.setAttribute('data-newsletter-export-fonts', 'true')
+    style.textContent = css
+
+    document.head.appendChild(style)
+
+    return style
+  }
+
+    const getExportLinkArea = (
+    exportRoot: HTMLElement,
+  ): {
+    href: string
+    x: number
+    y: number
+    width: number
+    height: number
+  } | null => {
+    const link = exportRoot.querySelector<HTMLAnchorElement>('a[href]')
+
+    if (!link?.href) {
+      return null
+    }
+
+    const rootRect = exportRoot.getBoundingClientRect()
+    const linkRect = link.getBoundingClientRect()
+
+    return {
+      href: link.href,
+      x: linkRect.left - rootRect.left,
+      y: linkRect.top - rootRect.top,
+      width: linkRect.width,
+      height: linkRect.height,
+    }
+  }
+
+  const downloadBlob = (blob: Blob, filename: string): void => {
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+
+    a.href = url
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+
+    URL.revokeObjectURL(url)
+  }
+
   const handleExport = useCallback(
   async (format: ExportFormat) => {
     if (!newsletter) return
 
     setExportingFormat(format)
+
+    const exportFontStyle = createExportFontStyle()
 
     try {
       const domToImage = (await import('dom-to-image-more')).default
@@ -225,6 +303,7 @@ export function useNewsletterEditor() {
 
       const scale = Math.max(2, window.devicePixelRatio || 1)
       const { width, height } = exportRoot.getBoundingClientRect()
+      const exportLinkArea = getExportLinkArea(exportRoot)
 
       switch (format) {
         case 'JPG': {
@@ -257,58 +336,34 @@ export function useNewsletterEditor() {
             hotfixes: ['px_scaling'],
           })
           pdf.addImage(dataUrl, 'PNG', 0, 0, width, height)
+
+          if (exportLinkArea) {
+            pdf.link(
+              exportLinkArea.x,
+              exportLinkArea.y,
+              exportLinkArea.width,
+              exportLinkArea.height,
+              { url: exportLinkArea.href },
+            )
+          }
+
           pdf.save('newsletter.pdf')
           break
         }
 
         case 'EML': {
-          const dataUrl = await domToImage.toPng(exportRoot, {
-            width: width * scale,
-            height: height * scale,
-            style: { transform: `scale(${scale})`, transformOrigin: 'top left' },
-            bgcolor: '#ffffff',
-          })
-          const html = `
-            <!doctype html>
-            <html>
-              <body style="margin:0;padding:0;background:#ffffff;">
-                <img
-                  src="${dataUrl}"
-                  alt="Newsletter"
-                  width="${width}"
-                  style="display:block;width:100%;max-width:${width}px;height:auto;border:0;"
-                />
-              </body>
-            </html>
-          `
-          const emlContent = [
-            'X-Unsent: 1',
-            'To: ',
-            'Subject: Newsletter Nestlé',
-            'MIME-Version: 1.0',
-            'Content-Type: text/html; charset=UTF-8',
-            'Content-Transfer-Encoding: 8bit',
-            '',
-            html,
-          ].join('\r\n')
+          const blob = await exportNewsletterEml(newsletter.id)
 
-          const blob = new Blob([emlContent], { type: 'message/rfc822' })
-          const url = URL.createObjectURL(blob)
-          const a = document.createElement('a')
-          a.href = url
-          a.download = 'newsletter.eml'
-          document.body.appendChild(a)
-          a.click()
-          document.body.removeChild(a)
-          URL.revokeObjectURL(url)
-          break
+          downloadBlob(blob, 'newsletter.eml')
+          break          
         }
       }
     } finally {
+      exportFontStyle?.remove()
       setExportingFormat(null)
     }
   },
-  [newsletter],
+  [newsletter, brandKitResources],
 )
 
   const handleRegenerateBlock = useCallback(
@@ -332,20 +387,33 @@ export function useNewsletterEditor() {
         return
       }
 
-      const response = await improveText(
-        {
-          text: currentText,
-        },
-        notifyError,
-      )
+      setAiError(null)
+      setRegeneratingBlockId(blockId)
 
-      updateBlocks(
-        newsletter.blocks.map((block) =>
-          block.id === blockId
-            ? updateBlockValue(block, editableTextField.key, response.improvedText)
-            : block,
-        ),
-      )
+      try {
+        const response = await improveText(
+          {
+            text: currentText,
+          },
+          notifyError,
+        )
+
+        updateBlocks(
+          newsletter.blocks.map((block) =>
+            block.id === blockId
+              ? updateBlockValue(block, editableTextField.key, response.improvedText)
+              : block,
+          ),
+        )
+      } catch (error) {
+        const message =
+          getApiErrorMessage(error) ??
+          'No se pudo regenerar el contenido de este bloque.'
+
+        setAiError(message)
+      } finally {
+        setRegeneratingBlockId(null)
+      }
     },
     [newsletter, notifyError, updateBlocks],
   )
@@ -354,22 +422,33 @@ export function useNewsletterEditor() {
     async (request: GenerateNewsletterRequest) => {
       if (!id) return
 
-      const response = await generateNewsletter(request, notifyError)
+      setAiError(null)
+      setIsGeneratingAll(true)
 
-      const updated = await updateNewsletter(id, {
-        blocks: response.blocks,
-        generationRequest: request,
-        generationContent: {
-          aiContent: response,
-          originalContent: request,
-        },
-      })
+      try {
+        const response = await generateNewsletter(request, notifyError)
 
-      setNewsletter(updated)
+        const updated = await updateNewsletter(id, {
+          blocks: response.blocks,
+          generationRequest: request,
+          generationContent: {
+            aiContent: response,
+            originalContent: request,
+          },
+        })
 
-      setSelectedBlockIdState(updated.blocks[0]?.id ?? '')
+        setNewsletter(updated)
+        setSelectedBlockIdState(updated.blocks[0]?.id ?? '')
+        setShowRegenerationForm(false)
+      } catch (error) {
+        const message =
+          getApiErrorMessage(error) ??
+          'No se pudo generar el contenido del newsletter en este momento.'
 
-      setShowRegenerationForm(false)
+        setAiError(message)
+      } finally {
+        setIsGeneratingAll(false)
+      }
     },
     [id, notifyError],
   )
@@ -402,6 +481,9 @@ export function useNewsletterEditor() {
     setSelectedBlockId: setSelectedBlockIdState,
     showRegenerationForm,
     setShowRegenerationForm,
+    isGeneratingAll,
+    regeneratingBlockId,
+    aiError,
     templates,
     selectedTemplate,
     brandKits,
@@ -421,4 +503,38 @@ export function useNewsletterEditor() {
     navigate,
     isApproved: newsletter?.state === 'APPROVED',
   }
+}
+
+function getApiErrorMessage(error: unknown): string | null {
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'response' in error
+  ) {
+    const response = error.response
+
+    if (
+      typeof response === 'object' &&
+      response !== null &&
+      'data' in response
+    ) {
+      const data = response.data
+
+      if (
+        typeof data === 'object' &&
+        data !== null &&
+        'message' in data &&
+        typeof data.message === 'string' &&
+        data.message.trim()
+      ) {
+        return data.message.trim()
+      }
+    }
+  }
+
+  if (error instanceof Error && error.message.trim()) {
+    return error.message.trim()
+  }
+
+  return null
 }

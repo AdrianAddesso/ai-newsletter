@@ -27,13 +27,15 @@ import { ModalDelete } from '../ModalDelete';
 import { TableSortLabel } from '@mui/material';
 import Tooltip from "@mui/material/Tooltip";
 import { useNavigate } from 'react-router';
-import { getAllNewsletters } from '../../api/newsletters';
+import { deleteNewsletter, getAllNewsletters } from '../../api/newsletters';
 import { NewsletterPreviewModal } from '../../pages/newsletter/viewer/NewsletterPreviewModal'
+import { useAuth } from '../../contexts/AuthContext'
 
 interface NewsletterRow {
   id: string;
   title: string;
   autor: string;
+  creatorUserId: string;
   state: NewsletterStatus;
   language: string;
   reviewer: string;
@@ -72,14 +74,15 @@ const getStatusColor = (status: NewsletterStatus) => {
 
 export function NewslettersTable({ search, filter, userRole, }: Props) {
   const [data, setData] = useState<NewsletterRow[]>([]);
-  //const [data, setData] = useState<NewsletterRow[]>([]);
   const [visibleCount, setVisibleCount] = useState(5);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const navigate = useNavigate();
   const [orderBy, setOrderBy] = useState<keyof NewsletterRow>('updated_at');
   const [order, setOrder] = useState<'asc' | 'desc'>('desc');
   const [previewOpen, setPreviewOpen] = useState(false)
   const [previewNewsletterId, setPreviewNewsletterId] = useState<string | null>(null)
+  const { user } = useAuth()
 
   const handleSort = (property: keyof NewsletterRow) => {
     const isAsc = orderBy === property && order === 'asc';
@@ -103,6 +106,23 @@ export function NewslettersTable({ search, filter, userRole, }: Props) {
     setPreviewOpen(true)
   }
 
+  const handleDelete = async (): Promise<void> => {
+    if (!deleteId) {
+      return
+    }
+
+    try {
+      setIsDeleting(true)
+      await deleteNewsletter(deleteId)
+      setData((prev) => prev.filter((newsletter) => newsletter.id !== deleteId))
+      setDeleteId(null)
+    } catch (error) {
+      console.error('Error deleting newsletter:', error)
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
   useEffect(() => {
     const loadNewsletters = async () => {
       try {
@@ -111,6 +131,7 @@ export function NewslettersTable({ search, filter, userRole, }: Props) {
           id: n.id,
           title: n.title || 'Sin título',
           autor: n.authorName || n.creatorUserId,
+          creatorUserId: n.creatorUserId,
           state: n.state as NewsletterStatus,
           language: n.language,
           reviewer: '—',
@@ -246,13 +267,21 @@ export function NewslettersTable({ search, filter, userRole, }: Props) {
             {visibleData.map((n) => {
               const isPrivilegedUser =
                 userRole === 'ADMIN' || userRole === 'FUNCTIONAL'
+              const isOwner = user?.id === n.creatorUserId
 
-              const canEdit = editableStatuses.has(n.state)
+              const canEditByState = editableStatuses.has(n.state)
+              const canEdit = canEditByState && (isPrivilegedUser || isOwner)
 
               const canDelete = isPrivilegedUser
 
               const canExport =
                 n.state === NewsletterStatus.APPROVED
+
+              const editTooltip = !canEditByState
+                ? 'Solo se puede editar borradores o newsletters con cambios solicitados'
+                : !isPrivilegedUser && !isOwner
+                  ? 'Solo podes editar newsletters propios'
+                  : 'Editar'
 
               return (
                 <TableRow key={n.id} hover>
@@ -309,11 +338,7 @@ export function NewslettersTable({ search, filter, userRole, }: Props) {
                       </Tooltip>
 
                       <Tooltip
-                        title={
-                          canEdit
-                            ? 'Editar'
-                            : 'Solo se puede editar borradores o newsletters con cambios solicitados'
-                        }
+                        title={editTooltip}
                         arrow
                       >
                         <span>
@@ -356,10 +381,10 @@ export function NewslettersTable({ search, filter, userRole, }: Props) {
       <ModalDelete
         open={!!deleteId}
         onClose={() => setDeleteId(null)}
-        onConfirm={() => {
-          setData((prev) => prev.filter((n) => n.id !== deleteId));
-          setDeleteId(null);
-        }}
+        title="¿Confirmar eliminación?"
+        description="Esta acción ocultará el newsletter de la lista activa."
+        onConfirm={() => void handleDelete()}
+        loading={isDeleting}
       />
 
       {/* Modal preview */}

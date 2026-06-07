@@ -229,7 +229,7 @@ export function Navigation() {
                 <MenuItem
                   onClick={() => {
                     handleMenuClose();
-                    navigate("/users");
+                    navigate("/admin/users");
                   }}
                 >
                   <ListItemIcon>

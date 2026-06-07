@@ -1,4 +1,5 @@
 import axios, { isAxiosError } from "axios";
+import { AiConfigType } from "@shared/enums/ai-config-type.enum";
 import type { AreaName, NewsletterBlock } from "../types/newsletter";
 
 export type ImproveTextRequest = {
@@ -31,7 +32,6 @@ export type GenerateNewsletterResponse = {
   blocks: NewsletterBlock[];
 };
 
-import { AiConfigType } from "@shared/enums/ai-config-type.enum";
 export type { AiConfigType };
 
 export type AiConfig = {
@@ -96,7 +96,7 @@ export async function improveText(
     );
     return response.data;
   } catch (error) {
-    handleNoResponseError(error, notifyError);
+    handleAiRequestError(error, notifyError);
     throw error;
   }
 }
@@ -112,7 +112,7 @@ export async function generateNewsletter(
     );
     return response.data;
   } catch (error) {
-    handleNoResponseError(error, notifyError);
+    handleAiRequestError(error, notifyError);
     throw error;
   }
 }
@@ -175,19 +175,44 @@ export async function deletePromptCommand(id: string): Promise<void> {
   await axios.delete(`/ai/prompt-commands/${id}`);
 }
 
-/**
- * Helper to handle missing API responses
- */
-function handleNoResponseError(
+function handleAiRequestError(
   error: unknown,
   notifyError?: (message: string) => void,
-) {
-  if (isAxiosError(error) && !error.response) {
-    console.error("No response from API:", error.message);
-    if (notifyError) {
-      notifyError(
-        "El servidor no responde. Verifica tu conexión o intenta más tarde.",
-      );
-    }
+): void {
+  if (!isAxiosError(error)) {
+    return;
   }
+
+  if (!error.response) {
+    console.error("No response from API:", error.message);
+    notifyError?.(
+      "El servidor no responde. Verifica tu conexión o intenta más tarde.",
+    );
+    return;
+  }
+
+  const serverMessage = extractAxiosErrorMessage(error);
+  if (serverMessage) {
+    notifyError?.(serverMessage);
+  }
+}
+
+function extractAxiosErrorMessage(error: unknown): string | null {
+  if (!isAxiosError(error)) {
+    return null;
+  }
+
+  const responseData = error.response?.data;
+
+  if (
+    responseData &&
+    typeof responseData === "object" &&
+    "message" in responseData &&
+    typeof responseData.message === "string" &&
+    responseData.message.trim()
+  ) {
+    return responseData.message.trim();
+  }
+
+  return null;
 }
