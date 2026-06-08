@@ -31,6 +31,16 @@ export const protectedRoutes = (
       }
     />
     <Route
+      path="/crearNewsletter/:templateId"
+      element={
+        <ProtectedRoute>
+          <ProtectedLayout>
+            <CreateNewsletterPage />
+          </ProtectedLayout>
+        </ProtectedRoute>
+      }
+    />
+    <Route
       path="/templates/biblioteca"
       element={
         <ProtectedRoute allowedRoles={["ADMIN", "USER"]}>
