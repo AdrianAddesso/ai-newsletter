@@ -5,16 +5,6 @@ import type {
 } from '@shared/types/block.types';
 
 export abstract class BlockDefinition {
-  private static readonly universalEditFields: BlockEditField[] = [
-    {
-      key: 'url',
-      label: 'URL',
-      type: 'url',
-      placeholder: 'https://',
-      defaultValue: '',
-    },
-  ];
-
   abstract readonly type: string;
   abstract readonly category: BlockContentType;
   abstract readonly label: string;
@@ -27,34 +17,17 @@ export abstract class BlockDefinition {
   readonly editFields: BlockEditField[] = [];
 
   /**
-   * Block-specific fields plus universal fields shared by every block.
-   * Avoids rewriting every concrete definition while keeping the registry pattern intact.
-   */
-  private get resolvedEditFields(): BlockEditField[] {
-    const hasUniversalUrlField = this.editFields.some((field) => field.key === 'url');
-
-    if (hasUniversalUrlField) {
-      return this.editFields;
-    }
-
-    return [...this.editFields, ...BlockDefinition.universalEditFields];
-  }
-
-  /**
    * Serialized default content derived from editFields.
    * Returns null when the block has no editable fields.
    */
   get defaultContent(): string | null {
-    if (this.resolvedEditFields.length === 0) {
+    if (this.editFields.length === 0) {
       return null;
     }
 
     return JSON.stringify(
       Object.fromEntries(
-        this.resolvedEditFields.map((field) => [
-          field.key,
-          field.defaultValue ?? '',
-        ]),
+        this.editFields.map((field) => [field.key, field.defaultValue ?? '']),
       ),
     );
   }
@@ -70,7 +43,7 @@ export abstract class BlockDefinition {
       defaultContent: this.defaultContent,
       mustFill: this.mustFill,
       layout: this.layout,
-      editFields: this.resolvedEditFields,
+      editFields: this.editFields,
     };
   }
 }
