@@ -220,14 +220,16 @@ export function TemplatesPage() {
             <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
               <SearchBar value={search} onChange={setSearch} />
 
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={() => navigate('/templates/create')}
-                sx={{ whiteSpace: 'nowrap' }}
-              >
-                Nuevo Template
-              </Button>
+              {role === 'ADMIN' && (
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={() => navigate('/templates/create')}
+                  sx={{ whiteSpace: 'nowrap' }}
+                >
+                  Nuevo Template
+                </Button>
+              )}
             </Stack>
           </Stack>
 
