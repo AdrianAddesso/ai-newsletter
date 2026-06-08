@@ -1,9 +1,23 @@
 import { Alert, Box, CircularProgress } from '@mui/material'
 import { useNewsletterEditor } from './newsletter/hooks/useNewsletterEditor'
 import { ReviewNewsletterPage } from './newsletter/review/ReviewNewsletterPage'
+import { useEffect } from 'react'
 
 export function ReviewNewsletterRoute() {
   const vm = useNewsletterEditor()
+
+  const { newsletter, navigate } = vm
+
+  useEffect(() => {
+    if (
+      newsletter &&
+      newsletter.state !== 'IN_REVIEW' &&
+      newsletter.state !== 'RESUBMITTED'
+    ) {
+      alert('Newsletter is no longer available for review')
+      navigate('/reviews')
+    }
+  }, [newsletter, navigate])
 
   if (vm.isLoading) {
     return (

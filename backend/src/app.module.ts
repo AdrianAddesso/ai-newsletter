@@ -13,6 +13,7 @@ import { AssetsModule } from './assets/assets.module';
 import { FontsModule } from './fonts/fonts.module';
 import { BlockModule } from './blocks/block.module';
 import { UsersModule } from './users/users.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { UsersModule } from './users/users.module';
     FontsModule,
     BlockModule,
     UsersModule,
+    NotificationsModule,
     ConfigModule.forRoot({
       isGlobal: true, // no tener que importarlo en cada módulo
     }),

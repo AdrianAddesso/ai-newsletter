@@ -80,8 +80,12 @@ export function DraftNewsletterPage({ vm }: Props) {
                 onSubmit={vm.handleSubmit}
                 onCancel={() => {
                   void (async () => {
-                    await vm.transitionState('DISCARDED')
-                    vm.navigate('/dashboard')
+                    try {
+                      await vm.transitionState('DISCARDED')
+                      vm.navigate('/dashboard')
+                    } catch (error) {
+                      console.error(error)
+                    }
                   })()
                 }}
               />
