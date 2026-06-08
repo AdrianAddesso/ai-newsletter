@@ -378,16 +378,20 @@ export class NewsLettersService {
     const newsletter = await this.prisma.newsletters.findFirst({
       where: { id, deleted_at: null },
       select: { id: true },
-    });
+    })
 
     if (!newsletter) {
-      throw new NotFoundException(`Newsletter ${id} no encontrado`);
+      throw new NotFoundException(`Newsletter ${id} no encontrado`)
     }
 
-    return this.prisma.newsletters.update({
+    await this.prisma.newsletters.update({
       where: { id },
       data: { deleted_at: new Date() },
-    });
+    })
+
+    await this.notificationsService.notifyNewsletterDeleted(id)
+
+    return { success: true }
   }
 
   async updateStatus(id: string, body: UpdateNewsletterStatusBody) {
@@ -582,48 +586,48 @@ export class NewsLettersService {
   }
 
   async discardNewsletter(
-  id: string,
-  payload: {
-    reviewedByUserId?: string
-  },
-) {
-  await this.prisma.$transaction(async (tx) => {
-    const newsletter = await tx.newsletters.findFirst({
-      where: { id, deleted_at: null },
-      select: {
-        id: true,
-        state: true,
-      },
+    id: string,
+    payload: {
+      reviewedByUserId?: string
+    },
+  ) {
+    await this.prisma.$transaction(async (tx) => {
+      const newsletter = await tx.newsletters.findFirst({
+        where: { id, deleted_at: null },
+        select: {
+          id: true,
+          state: true,
+        },
+      })
+
+      if (!newsletter) {
+        throw new NotFoundException('No se encontro el newsletter solicitado.')
+      }
+
+      await tx.newsletters.update({
+        where: { id },
+        data: {
+          state: newsletter_state.DISCARDED,
+        },
+      })
+
+      await tx.newsletter_state_log.create({
+        data: {
+          newsletter_id: id,
+          previous_state: newsletter.state,
+          new_state: newsletter_state.DISCARDED,
+          reviewed_by_user_id: payload.reviewedByUserId ?? null,
+        },
+      })
     })
 
-    if (!newsletter) {
-      throw new NotFoundException('No se encontro el newsletter solicitado.')
-    }
+    await this.notificationsService.notifyNewsletterStateChange(
+      id,
+      newsletter_state.DISCARDED,
+    )
 
-    await tx.newsletters.update({
-      where: { id },
-      data: {
-        state: newsletter_state.DISCARDED,
-      },
-    })
-
-    await tx.newsletter_state_log.create({
-      data: {
-        newsletter_id: id,
-        previous_state: newsletter.state,
-        new_state: newsletter_state.DISCARDED,
-        reviewed_by_user_id: payload.reviewedByUserId ?? null,
-      },
-    })
-  })
-
-  await this.notificationsService.notifyNewsletterStateChange(
-    id,
-    newsletter_state.DISCARDED,
-  )
-
-  return this.getById(id)
-}
+    return this.getById(id)
+  }
 
   async addLog(
     id: string,

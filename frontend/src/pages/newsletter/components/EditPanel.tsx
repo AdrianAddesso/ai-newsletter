@@ -415,22 +415,22 @@ export function EditPanel({
               {selectedBlock.editFields.some(
                 (field) => field.type === "text" || field.type === "textarea",
               ) && (
-                <Button
-                  variant="outlined"
-                  color="secondary"
-                  disabled={isRegeneratingBlock}
-                  onClick={() => void onRegenerateBlock(selectedBlock.id)}
-                  startIcon={
-                    isRegeneratingBlock ? (
-                      <CircularProgress size={18} color="inherit" />
-                    ) : undefined
-                  }
-                >
-                  {isRegeneratingBlock
-                    ? "Regenerando contenido de este bloque..."
-                    : "Regenerar contenido de este bloque"}
-                </Button>
-              )}
+                  <Button
+                    variant="outlined"
+                    color="secondary"
+                    disabled={isRegeneratingBlock}
+                    onClick={() => void onRegenerateBlock(selectedBlock.id)}
+                    startIcon={
+                      isRegeneratingBlock ? (
+                        <CircularProgress size={18} color="inherit" />
+                      ) : undefined
+                    }
+                  >
+                    {isRegeneratingBlock
+                      ? "Regenerando contenido de este bloque..."
+                      : "Regenerar contenido de este bloque"}
+                  </Button>
+                )}
               <Button
                 variant="outlined"
                 color="secondary"
@@ -465,7 +465,7 @@ export function EditPanel({
             onClick={onCancel}
             disabled={isSubmitting}
           >
-            Cancelar
+            Descartar newsletter
           </Button>
           {canEdit && (
             <Button
@@ -587,8 +587,8 @@ function FieldEditor({
                       transition: "transform 0.12s ease, box-shadow 0.12s ease",
                       "&:hover": canEdit
                         ? {
-                            transform: "translateY(-1px)",
-                          }
+                          transform: "translateY(-1px)",
+                        }
                         : undefined,
                     }}
                   />
@@ -907,8 +907,8 @@ function ImageAssetFieldEditor({
     (getBlockAssetBinding(block, field.key)?.assetType as
       | SelectableAssetType
       | undefined) ??
-      allowedTypes[0] ??
-      "IMAGE",
+    allowedTypes[0] ??
+    "IMAGE",
   );
   const [globalAssets, setGlobalAssets] = useState<UploadedAsset[]>([]);
   const [isLoadingAssets, setIsLoadingAssets] = useState(false);
@@ -970,7 +970,7 @@ function ImageAssetFieldEditor({
         setAssetListError(
           axios.isAxiosError(error)
             ? (error.response?.data?.message ??
-                "No se pudieron obtener los assets.")
+              "No se pudieron obtener los assets.")
             : "No se pudieron obtener los assets.",
         );
         setGlobalAssets([]);
@@ -1349,22 +1349,22 @@ function ImageAssetFieldEditor({
             )}
             {(uploadStatus === "compressing" ||
               uploadStatus === "uploading") && (
-              <Stack spacing={1}>
-                <Typography variant="caption">
-                  {uploadStatus === "compressing"
-                    ? "Comprimiendo imagen..."
-                    : `Subiendo asset ${uploadProgress}%`}
-                </Typography>
-                <LinearProgress
-                  variant={
-                    uploadStatus === "uploading"
-                      ? "determinate"
-                      : "indeterminate"
-                  }
-                  value={uploadProgress}
-                />
-              </Stack>
-            )}
+                <Stack spacing={1}>
+                  <Typography variant="caption">
+                    {uploadStatus === "compressing"
+                      ? "Comprimiendo imagen..."
+                      : `Subiendo asset ${uploadProgress}%`}
+                  </Typography>
+                  <LinearProgress
+                    variant={
+                      uploadStatus === "uploading"
+                        ? "determinate"
+                        : "indeterminate"
+                    }
+                    value={uploadProgress}
+                  />
+                </Stack>
+              )}
             {uploadStatus === "cancelled" && (
               <Alert severity="warning">Carga cancelada.</Alert>
             )}
@@ -1492,13 +1492,13 @@ function resolveAssetPreviewUrl(
   asset:
     | Pick<UploadedAsset, "id" | "url" | "type" | "svgTemplate" | "keywordText">
     | Pick<
-        BrandKitResourceAsset,
-        "id" | "url" | "type" | "svgTemplate" | "keywordText"
-      >
+      BrandKitResourceAsset,
+      "id" | "url" | "type" | "svgTemplate" | "keywordText"
+    >
     | Pick<
-        NewsletterBlock["assetBindings"][number],
-        "assetId" | "assetUrl" | "assetType" | "keywordText"
-      >,
+      NewsletterBlock["assetBindings"][number],
+      "assetId" | "assetUrl" | "assetType" | "keywordText"
+    >,
   keywordTextOverride?: string | null,
 ): string | null {
   const assetType = "assetType" in asset ? asset.assetType : asset.type;

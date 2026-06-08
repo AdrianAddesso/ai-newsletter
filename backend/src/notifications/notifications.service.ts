@@ -248,6 +248,29 @@ export class NotificationsService {
         await Promise.all(notificationsToCreate.map(notif => this.createNotification(notif)))
     }
 
+    async notifyNewsletterDeleted(newsletterId: string): Promise<void> {
+        const newsletter = await this.prisma.newsletters.findUnique({
+            where: { id: newsletterId },
+            select: {
+                title: true,
+                created_by_user_id: true,
+            },
+        })
+
+        if (!newsletter?.created_by_user_id) {
+            return
+        }
+
+        await this.createNotification({
+            userId: newsletter.created_by_user_id,
+            title: 'Newsletter Eliminado',
+            message: `El newsletter "${newsletter.title}" fue eliminado.`,
+            type: NotificationType.INFO,
+            actionPath: '/dashboard',
+            newsletterId,
+        })
+    }
+
     private mapToDto(notification: notifications,): NotificationDto {
         return {
             id: notification.id,
