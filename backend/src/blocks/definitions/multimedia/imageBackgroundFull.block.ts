@@ -14,5 +14,6 @@ export class ImageBackgroundFullBlock extends BlockDefinition {
     { key: 'imageAsset', label: 'Imagen', type: 'image-asset' as const, required: true, assetTypes: ['IMAGE'] as const },
     { key: 'altText', label: 'Texto alternativo', type: 'text' as const, defaultValue: 'Image' },
     { key: 'overlayColor', label: 'Color de overlay', type: 'color' as const },
+    { key: 'href', label: 'URL de destino', type: 'url' as const, placeholder: 'https://' },
   ];
 }
