@@ -236,32 +236,35 @@ export function useNewsletterEditor() {
     return style
   }
 
-    const getExportLinkArea = (
-    exportRoot: HTMLElement,
-  ): {
-    href: string
-    x: number
-    y: number
-    width: number
-    height: number
-  } | null => {
-    const link = exportRoot.querySelector<HTMLAnchorElement>('a[href]')
+  const getExportLinkAreas = (
+  exportRoot: HTMLElement,
+): Array<{
+  href: string
+  x: number
+  y: number
+  width: number
+  height: number
+}> => {
+  const links = Array.from(
+    exportRoot.querySelectorAll<HTMLAnchorElement>('a[href]'),
+  )
 
-    if (!link?.href) {
-      return null
-    }
+  const rootRect = exportRoot.getBoundingClientRect()
 
-    const rootRect = exportRoot.getBoundingClientRect()
-    const linkRect = link.getBoundingClientRect()
+  return links
+    .filter((link) => Boolean(link.href))
+    .map((link) => {
+      const linkRect = link.getBoundingClientRect()
 
-    return {
-      href: link.href,
-      x: linkRect.left - rootRect.left,
-      y: linkRect.top - rootRect.top,
-      width: linkRect.width,
-      height: linkRect.height,
-    }
-  }
+      return {
+        href: link.href,
+        x: linkRect.left - rootRect.left,
+        y: linkRect.top - rootRect.top,
+        width: linkRect.width,
+        height: linkRect.height,
+      }
+    })
+}
 
   const downloadBlob = (blob: Blob, filename: string): void => {
     const url = URL.createObjectURL(blob)
@@ -303,7 +306,7 @@ export function useNewsletterEditor() {
 
       const scale = Math.max(2, window.devicePixelRatio || 1)
       const { width, height } = exportRoot.getBoundingClientRect()
-      const exportLinkArea = getExportLinkArea(exportRoot)
+      const exportLinkAreas = getExportLinkAreas(exportRoot)
 
       switch (format) {
         case 'JPG': {
@@ -337,15 +340,15 @@ export function useNewsletterEditor() {
           })
           pdf.addImage(dataUrl, 'PNG', 0, 0, width, height)
 
-          if (exportLinkArea) {
+          exportLinkAreas.forEach((exportLinkArea) => {
             pdf.link(
-              exportLinkArea.x,
-              exportLinkArea.y,
-              exportLinkArea.width,
-              exportLinkArea.height,
+            exportLinkArea.x,
+            exportLinkArea.y,
+            exportLinkArea.width,
+            exportLinkArea.height,
               { url: exportLinkArea.href },
             )
-          }
+          })
 
           pdf.save('newsletter.pdf')
           break

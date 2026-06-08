@@ -29,9 +29,11 @@ import {
 } from '../blocks/newsletter-blocks';
 import { Role } from '../modules/auth/enum/roles';
 import { NotificationsService } from '../notifications/notifications.service'
+import { renderNewsletterEmailBlock } from './email-renderers';
 
-const uuidPattern =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const defaultHeaderLogoObjectKey = 'assets/logos/nestle/nestle_isotype.png';
+const defaultHeaderLogoCid = 'newsletter-default-header-logo@nestle-ai-newsletter';
 
 type ReviewRequestUser = {
   id?: string;
@@ -712,7 +714,12 @@ export class NewsLettersService {
     const body = rows
       .map((rowBlocks) => {
         const columns = rowBlocks
-          .map((block) => this.renderEmailBlock(block, cidByAssetId))
+          .map((block) => 
+            renderNewsletterEmailBlock(block, {
+              cidByAssetId,
+              fallback: this.renderEmailBlock.bind(this),
+            }),
+          )
           .join('\n');
 
         return `
@@ -889,6 +896,23 @@ export class NewsLettersService {
       } catch {
         continue;
       }
+    }
+
+        try {
+      const bucket = this.storageService.getAssetsBucket();
+      const content = await this.storageService.getObjectBuffer(
+        bucket,
+        defaultHeaderLogoObjectKey,
+      );
+
+      files.push({
+        filename: 'nestle_isotype.png',
+        content,
+        cid: defaultHeaderLogoCid,
+        contentType: 'image/png',
+      });
+    } catch {
+      // Si el logo default no existe en storage, el EML queda sin fallback de header.
     }
 
     return {

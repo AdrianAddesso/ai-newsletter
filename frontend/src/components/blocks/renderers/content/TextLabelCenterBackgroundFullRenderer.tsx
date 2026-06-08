@@ -71,7 +71,7 @@ export function TextLabelCenterBackgroundFullRenderer({
         <Typography
           variant="body2"
           color="text.secondary"
-          sx={{ width: "90%", textAlign: "left", ...textTypographySx }}
+          sx={{ width: "90%", textAlign: "center", ...textTypographySx }}
         >
           {text}
         </Typography>
