@@ -28,6 +28,7 @@ export function TextDoubleCenterBackgroundFullRenderer({
     primaryText = "Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat.",
     secondaryText = secondaryContent ?? "Consequuntur eum voluptas iure repellat voluptate, nisi ipsam explicabo fugit architecto sint adipisci.",
     bgColor,
+    href = "",
   } = values;
   const primaryTypographySx = resolveContentTypographySx(values, "primaryText");
   const secondaryTypographySx = resolveContentTypographySx(values, "secondaryText");

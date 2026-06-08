@@ -21,7 +21,7 @@ export function ImageBackgroundFullRenderer({
   editMode = false,
   imageUrl = placeholderImageUrl,
 }: Props) {
-  const { altText = "Image", overlayColor } = parseContent(block.content);
+  const { altText = "Image", overlayColor, href = "" } = parseContent(block.content);
   const resolvedBackgroundImage = resolveRenderableBackgroundImage(
     backgroundImage,
     editMode,

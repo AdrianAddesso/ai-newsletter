@@ -18,5 +18,6 @@ export class IconLeftBackgroundFullBlock extends BlockDefinition {
     { key: 'fontSize', label: 'Tamaño de texto', type: 'font-size' as const },
     { key: 'typographyStyle', label: 'Estilo', type: 'font-style' as const },
     { key: 'fontFamily', label: 'Tipografía', type: 'font-family' as const },
+    { key: 'href', label: 'URL de destino', type: 'url' as const, placeholder: 'https://' },
   ];
 }

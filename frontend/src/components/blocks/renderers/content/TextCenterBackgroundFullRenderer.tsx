@@ -25,6 +25,7 @@ export function TextCenterBackgroundFullRenderer({
   const {
     text = "Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat.",
     bgColor,
+    href = "",
   } = values;
   const typographySx = resolveContentTypographySx(values, "text");
   const resolvedBackgroundImage = resolveRenderableBackgroundImage(

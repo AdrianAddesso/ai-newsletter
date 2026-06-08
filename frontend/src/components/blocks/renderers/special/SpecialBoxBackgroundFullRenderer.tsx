@@ -45,6 +45,7 @@ export function SpecialBoxBackgroundFullRenderer({
     placeholderImageUrl,
   );
   const bgSx = buildBackgroundImageSx(resolvedBackgroundImage);
+  const { href = "" } = values;
 
   return (
     <Card
