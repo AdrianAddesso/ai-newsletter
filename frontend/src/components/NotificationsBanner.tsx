@@ -15,9 +15,11 @@ import {
   type Theme,
 } from '@mui/material'
 import NotificationsIcon from '@mui/icons-material/Notifications' //pnpm add @mui/icons-material
+import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone'
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router'
 import { useAppNotifications, type AppNotification } from '../contexts/NotificationContext'
+import HighlightOffIcon from '@mui/icons-material/HighlightOff'
 
 // 1. Lógica de iniciales limpia
 const getNotificationIconLabel = (type: string) => {
@@ -139,8 +141,11 @@ export function NotificationsBanner() {
               },
             }}
           >
-            {/* Se corrigió el color para usar la paleta del tema */}
-            <NotificationsIcon sx={{ fontSize: 20, color: theme.palette.error.main }} />
+            {unreadCount > 0 ? (
+              <NotificationsIcon sx={{ fontSize: 20, color: theme.palette.error.main }} />
+            ) : (
+              <NotificationsNoneIcon />
+            )}
           </Badge>
           <Typography variant="body2" sx={{ fontWeight: 500 }}>
             Notificaciones
@@ -311,9 +316,7 @@ export function NotificationsBanner() {
                         '&:hover': { opacity: 1 },
                       }}
                     >
-                      <Typography variant="caption" aria-hidden="true">
-                        ✕
-                      </Typography>
+                      <HighlightOffIcon fontSize="small" />
                     </IconButton>
                   </ListItem>
                 )

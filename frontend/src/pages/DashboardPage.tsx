@@ -8,7 +8,7 @@ import { useAuth } from '../contexts/AuthContext'
 export function DashboardPage() {
   const { user } = useAuth()
   const userRole = user?.role ?? 'USER'
-  const canCreateNewsletter = userRole === 'ADMIN' || userRole === 'FUNCTIONAL' || userRole === 'USER'
+  const canCreateNewsletter = userRole === 'ADMIN' || userRole === 'USER'
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<'ALL' | 'PENDING'>('ALL')
 

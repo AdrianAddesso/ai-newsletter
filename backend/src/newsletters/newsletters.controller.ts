@@ -404,7 +404,8 @@ export class NewslettersController {
   private getStatusAction(nextState: newsletter_state): Action {
     if (
       nextState === newsletter_state.IN_REVIEW ||
-      nextState === newsletter_state.RESUBMITTED
+      nextState === newsletter_state.RESUBMITTED ||
+      nextState === newsletter_state.DISCARDED
     ) {
       return Action.REVIEW_REQUEST_PREVIEW;
     }

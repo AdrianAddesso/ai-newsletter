@@ -7,6 +7,10 @@ import {
   Chip,
   CircularProgress,
   Container,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   IconButton,
   Stack,
   Table,
@@ -25,12 +29,13 @@ import {
   CheckCircleOutlined as ReviewIcon,
   DeleteOutlined as DeleteIcon,
   EditOutlined as EditIcon,
-  FileDownloadOutlined as ExportIcon,
   VisibilityOutlined as ViewIcon,
 } from '@mui/icons-material'
 import { useNavigate } from 'react-router'
 import { deleteTemplate, listTemplates } from '../api/templates'
 import { ModalDelete } from '../components/ModalDelete'
+import { TemplateCreator } from '../components/canvas/TemplateCreator'
+import { mapLayoutItemsToRows } from '../utils/canvas.utils'
 import SearchBar from '../components/SearchBar'
 import { useAuth } from '../contexts/AuthContext'
 import type { NewsletterTemplate } from '../types/newsletter'
@@ -69,6 +74,7 @@ export function TemplatesPage() {
   const [limit, setLimit] = useState(5)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [previewTemplate, setPreviewTemplate] = useState<TemplateTableRow | null>(null)
 
   useEffect(() => {
     let mounted = true
@@ -138,6 +144,14 @@ export function TemplatesPage() {
       })
   }, [templates, search, order, orderBy])
 
+  const previewRows = useMemo(() => {
+    if (!previewTemplate?.layout) {
+      return []
+    }
+
+    return mapLayoutItemsToRows(previewTemplate.layout)
+  }, [previewTemplate])
+
   const handleRequestSort = (property: keyof TemplateTableRow) => {
     const isAsc = orderBy === property && order === 'asc'
     setOrder(isAsc ? 'desc' : 'asc')
@@ -206,14 +220,16 @@ export function TemplatesPage() {
             <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
               <SearchBar value={search} onChange={setSearch} />
 
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={() => navigate('/templates/create')}
-                sx={{ whiteSpace: 'nowrap' }}
-              >
-                Nuevo Template
-              </Button>
+              {role === 'ADMIN' && (
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={() => navigate('/templates/create')}
+                  sx={{ whiteSpace: 'nowrap' }}
+                >
+                  Nuevo Template
+                </Button>
+              )}
             </Stack>
           </Stack>
 
@@ -283,7 +299,7 @@ export function TemplatesPage() {
                           sx={{ justifyContent: 'flex-end' }}
                         >
                           <Tooltip title="Vista previa">
-                            <IconButton size="small" onClick={() => navigate('#')}>
+                            <IconButton size="small" onClick={() => setPreviewTemplate(template)}>
                               <ViewIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>
@@ -295,14 +311,6 @@ export function TemplatesPage() {
                                 onClick={() => navigate(`/templates/edit/${template.id}`)}
                               >
                                 <EditIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                          )}
-
-                          {role === 'ADMIN' && (
-                            <Tooltip title="Exportar">
-                              <IconButton size="small" color="primary">
-                                <ExportIcon fontSize="small" />
                               </IconButton>
                             </Tooltip>
                           )}
@@ -349,6 +357,27 @@ export function TemplatesPage() {
           )}
         </Stack>
       </Container>
+
+      <Dialog
+        open={Boolean(previewTemplate)}
+        onClose={() => setPreviewTemplate(null)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>{previewTemplate?.name ?? 'Vista previa'}</DialogTitle>
+        <DialogContent dividers sx={{ bgcolor: 'grey.100' }}>
+          {previewRows.length > 0 ? (
+            <TemplateCreator mode="readonly" rows={previewRows} />
+          ) : (
+            <Alert severity="info">
+              Este template no tiene bloques configurados para previsualizar.
+            </Alert>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPreviewTemplate(null)}>Cerrar</Button>
+        </DialogActions>
+      </Dialog>
 
       <ModalDelete
         open={Boolean(deleteId)}

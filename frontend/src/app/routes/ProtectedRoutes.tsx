@@ -9,79 +9,68 @@ import { TemplateLibraryPage } from '../../pages/TemplateLibraryPage'
 import { ApprovedNewsletterRoute } from '../../pages/newsletter/approved/ApprovedNewsletterRoute'
 
 export const protectedRoutes = (
-    <>
-        <Route
-            path="/dashboard"
-            element={
-                <ProtectedRoute>
-                    <ProtectedLayout>
-                        <DashboardPage />
-                    </ProtectedLayout>
-                </ProtectedRoute>
-            }
-        />
-        <Route
-            path="/templates/biblioteca"
-            element={
-                <ProtectedRoute>
-                    <ProtectedLayout>
-                        <TemplateLibraryPage />
-                    </ProtectedLayout>
-                </ProtectedRoute>
-            }
-        />
-        <Route
-            path="/crearNewsletter"
-            element={
-                <ProtectedRoute>
-                    <ProtectedLayout>
-                        <CreateNewsletterPage />
-                    </ProtectedLayout>
-                </ProtectedRoute>
-            }
-        />
-        <Route
-            path="/crearNewsletter/:templateId"
-            element={
-                <ProtectedRoute>
-                    <ProtectedLayout>
-                        <CreateNewsletterPage />
-                    </ProtectedLayout>
-                </ProtectedRoute>
-            }
-        />
+  <>
+    <Route
+      path="/dashboard"
+      element={
+        <ProtectedRoute>
+          <ProtectedLayout>
+            <DashboardPage />
+          </ProtectedLayout>
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/crearNewsletter"
+      element={
+        <ProtectedRoute>
+          <ProtectedLayout>
+            <CreateNewsletterPage />
+          </ProtectedLayout>
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/crearNewsletter/:templateId"
+      element={
+        <ProtectedRoute>
+          <ProtectedLayout>
+            <CreateNewsletterPage />
+          </ProtectedLayout>
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/templates/biblioteca"
+      element={
+        <ProtectedRoute allowedRoles={["ADMIN", "USER"]}>
+          <ProtectedLayout>
+            <TemplateLibraryPage />
+          </ProtectedLayout>
+        </ProtectedRoute>
+      }
+    />
 
-        <Route
-            path="/editarNewsletter/:id"
-            element={
-                <ProtectedRoute>
-                    <ProtectedLayout>
-                        <EditNewsletterPage />
-                    </ProtectedLayout>
-                </ProtectedRoute>
-            }
-        />
+    <Route
+      path="/editarNewsletter/:id"
+      element={
+        <ProtectedRoute>
+          <ProtectedLayout>
+            <EditNewsletterPage />
+          </ProtectedLayout>
+        </ProtectedRoute>
+      }
+    />
 
-        <Route
-            path="/exportarNewsletter/:id"
-            element={
-                <ProtectedRoute>
-                    <ProtectedLayout>
-                        <ApprovedNewsletterRoute />
-                    </ProtectedLayout>
-                </ProtectedRoute>
-            }
-        />
-
-        <Route
-            path="/templates/biblioteca"
-            element={
-                <ProtectedRoute>
-                    <ProtectedLayout>
-                        <TemplateLibraryPage />
-                    </ProtectedLayout>
-                </ProtectedRoute>
-            }
-        />
-    </>
-)
+    <Route
+      path="/exportarNewsletter/:id"
+      element={
+        <ProtectedRoute>
+          <ProtectedLayout>
+            <ApprovedNewsletterRoute />
+          </ProtectedLayout>
+        </ProtectedRoute>
+      }
+    />
+  </>
+);
