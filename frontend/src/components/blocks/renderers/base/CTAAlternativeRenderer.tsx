@@ -12,7 +12,7 @@ interface Props {
 
 export function CTAAlternativeRenderer({ block }: Props) {
   const values = parseContent(block.content);
-  const { buttonLabel = "Click here", href = "" } = values;
+  const { buttonLabel = "Click here", href = "", bgColor } = values;
   const typographySx = resolveContentTypographySx(values, "buttonLabel");
 
   return (
@@ -23,6 +23,7 @@ export function CTAAlternativeRenderer({ block }: Props) {
         borderRadius: 0,
         height: "100%",
         display: "flex",
+        backgroundColor: bgColor,
         transition: "all 0.15s ease-in-out",
         "&:hover": {
           boxShadow: "0 8px 24px rgba(0,0,0,0.1)",
@@ -32,18 +33,18 @@ export function CTAAlternativeRenderer({ block }: Props) {
     >
       <CardActions sx={{ flexGrow: 1, p: 1.5, justifyContent: "center" }}>
         <Button
-            variant="outlined"
-            size="small"
-            disableElevation
-            href={href || undefined}
-            sx={{
-                borderRadius: 1.5,
-                textTransform: "none",
-                minWidth: "100px", // Added minimum width
-                ...typographySx,
-            }}
-            >
-            {buttonLabel}
+          variant="outlined"
+          size="small"
+          disableElevation
+          href={href || undefined}
+          sx={{
+            borderRadius: 1.5,
+            textTransform: "none",
+            minWidth: "100px", // Added minimum width
+            ...typographySx,
+          }}
+        >
+          {buttonLabel}
         </Button>
       </CardActions>
     </Card>

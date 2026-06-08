@@ -19,7 +19,7 @@ export function HeaderRightRenderer({
   imageUrl,
 }: Props) {
   const values = parseContent(block.content);
-  const { title = "", subtitle = "" } = values;
+  const { title = "", subtitle = "", href = "" } = values;
   const titleTypographySx = resolveContentTypographySx(values, "title");
   const subtitleTypographySx = resolveContentTypographySx(values, "subtitle");
   const previewUrls = useBlockPreviewUrls([nestleIsotypeStorageKey], "LOGO");

@@ -28,6 +28,7 @@ export function TextLabelCenterBackgroundFullRenderer({
     label = labelContent ?? "Lorem ipsum dolor sit amet",
     text = "Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat.",
     bgColor,
+    href = "",
   } = values;
   const textTypographySx = resolveContentTypographySx(values, "text");
   const labelTypographySx = resolveContentTypographySx(values, "label");
