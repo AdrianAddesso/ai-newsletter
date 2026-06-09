@@ -1,55 +1,62 @@
-import axios from "axios";
-import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
-import {
-  Alert,
-  Box,
-  Button,
-  CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Divider,
-  FormControl,
-  InputLabel,
-  LinearProgress,
-  MenuItem,
-  Pagination,
-  Select,
-  Stack,
-  Tab,
-  Tabs,
-  TextField,
-  Typography,
-  type SelectChangeEvent,
-} from "@mui/material";
-import type { BlockAssetType, BlockEditField } from "@shared/types/block.types";
-import {
-  listAssets,
-  uploadAsset,
-  type AssetType,
-  type UploadedAsset,
-} from "../../../api/assets";
-import type {
-  BrandKitResourceAsset,
-  BrandKitResources,
-} from "../../../api/brand-kits";
-import type {
-  BlockReviewComment,
-  NewsletterBlock,
-  NewsletterState,
-} from "../../../types/newsletter";
-import { parseContent } from "../../../utils/blockContent";
-import {
-  getBlockAssetBinding,
-  removeBlockAssetBinding,
-  setBlockAssetBinding,
-  updateBlockValue,
-  updateBlockValues,
-} from "../../../utils/newsletterBlocks";
-import { buildKeywordSvgMarkup } from "../utils/keywordSvg";
-import { AssetImageCard } from "./AssetImageCard";
-import { ReviewHistoryPanel } from "./ReviewHistoryPanel";
+    import axios from "axios";
+    import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
+    import {
+    Alert,
+    Box,
+    Button,
+    CircularProgress,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    Divider,
+    FormControl,
+    InputLabel,
+    LinearProgress,
+    MenuItem,
+    Pagination,
+    Select,
+    Stack,
+    Tab,
+    Tabs,
+    TextField,
+    Typography,
+    type SelectChangeEvent,
+    } from "@mui/material";
+    import type { BlockAssetType, BlockEditField } from "@shared/types/block.types";
+    import {
+    listAssets,
+    uploadAsset,
+    type AssetType,
+    type UploadedAsset,
+    } from "../../../api/assets";
+    import type {
+    BrandKitResourceAsset,
+    BrandKitResources,
+    } from "../../../api/brand-kits";
+    import type {
+    BlockReviewComment,
+    NewsletterBlock,
+    NewsletterState,
+    } from "../../../types/newsletter";
+    import { parseContent } from "../../../utils/blockContent";
+    import {
+    getBlockAssetBinding,
+    removeBlockAssetBinding,
+    setBlockAssetBinding,
+    updateBlockValue,
+    updateBlockValues,
+    } from "../../../utils/newsletterBlocks";
+    import { buildKeywordSvgMarkup } from "../utils/keywordSvg";
+    import { AssetImageCard } from "./AssetImageCard";
+    import { ReviewHistoryPanel } from "./ReviewHistoryPanel";
+    import DeleteIcon from "@mui/icons-material/Delete";
+    import SaveIcon from "@mui/icons-material/Save";
+    import SendIcon from "@mui/icons-material/Send";
+    import UploadIcon from "@mui/icons-material/Upload";
+    import ToggleButton from "@mui/material/ToggleButton";
+    import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
+
 
 type SelectableAssetType = Exclude<AssetType, "BLOCK">;
 type UploadStatus =
@@ -411,34 +418,40 @@ export function EditPanel({
           )}
 
           {canEdit && (
-            <>
-              {selectedBlock.editFields.some(
-                (field) => field.type === "text" || field.type === "textarea",
-              ) && (
-                  <Button
-                    variant="outlined"
-                    color="secondary"
-                    disabled={isRegeneratingBlock}
-                    onClick={() => void onRegenerateBlock(selectedBlock.id)}
-                    startIcon={
-                      isRegeneratingBlock ? (
-                        <CircularProgress size={18} color="inherit" />
-                      ) : undefined
-                    }
-                  >
-                    {isRegeneratingBlock
-                      ? "Regenerando contenido de este bloque..."
-                      : "Regenerar contenido de este bloque"}
-                  </Button>
-                )}
+            <Stack
+              direction="row"
+              spacing={2}
+              sx={{ width: "550px", alignSelf: "end" }}
+            >
               <Button
                 variant="outlined"
                 color="secondary"
+                sx={{ flex: 1 }}
                 onClick={onRegenerateAll}
               >
-                Regenerar todo el contenido
+                Regenerar todo
               </Button>
-            </>
+              {selectedBlock.editFields.some(
+                (field) => field.type === "text" || field.type === "textarea",
+              ) && (
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  disabled={isRegeneratingBlock}
+                  onClick={() => void onRegenerateBlock(selectedBlock.id)}
+                  sx={{ flex: 1 }}
+                  startIcon={
+                    isRegeneratingBlock ? (
+                      <CircularProgress size={18} color="inherit" />
+                    ) : undefined
+                  }
+                >
+                  {isRegeneratingBlock
+                    ? "Regenerando contenido de este bloque..."
+                    : "Regenerar contenido de este bloque"}
+                </Button>
+              )}
+            </Stack>
           )}
 
           <ReviewHistoryPanel comments={reviewHistory} />
@@ -457,31 +470,36 @@ export function EditPanel({
         <Stack
           direction={{ xs: "column", md: "row" }}
           sx={{ justifyContent: "space-between" }}
-          spacing={1.5}
+          spacing="2%"
         >
           <Button
             variant="outlined"
-            color="error"
+            color="inherit"
             onClick={onCancel}
             disabled={isSubmitting}
+            startIcon={<DeleteIcon />}
+            sx={{ flex: 1 }}
           >
-            Descartar newsletter
+            Descartar
           </Button>
           {canEdit && (
             <Button
-              variant="contained"
-              color="inherit"
+              variant="outlined"
+              color="error"
               disabled={isSavingDraft}
               onClick={() => void onSaveDraft()}
+              startIcon={<SaveIcon />}
+              sx={{ flex: 2 }}
             >
-              {isSavingDraft ? "Guardando..." : "Guardar borrador"}
+              {isSavingDraft ? "Guardando..." : "Guardar"}
             </Button>
           )}
           <Button
             variant="contained"
             onClick={onSubmit}
             disabled={isSubmitting || !canEdit}
-            sx={{ ml: { md: "auto" } }}
+            startIcon={<SendIcon />}
+            sx={{ flex: 2 }}
           >
             {isSubmitting ? "Enviando..." : submitLabel}
           </Button>
@@ -841,7 +859,7 @@ function TextFontFamilyFieldEditor({
       }}
       fullWidth
       disabled={!canEdit}
-      sx={{ minWidth: 240 }}
+      sx={{ width:"50%" }}
     >
       <MenuItem value="">
         <em>Usar default</em>
@@ -886,7 +904,7 @@ function TextSizeFieldEditor({
       label="Tamaño de texto"
       fullWidth
       disabled={!canEdit}
-      sx={{ minWidth: 180, maxWidth: 180 }}
+      sx={{ width:"50%" }}
     >
        {fontSizeOptions.map((option) => (
         <MenuItem key={option.value} value={option.value}>
@@ -1181,107 +1199,117 @@ function ImageAssetFieldEditor({
       <Box
         sx={{ border: "1px solid", borderColor: "divider", borderRadius: 1 }}
       >
-        <Tabs
-          value={sourceTab}
-          onChange={(_event, nextValue: AssetSourceTab) =>
-            setSourceTab(nextValue)
-          }
-          variant="fullWidth"
-        >
-          <Tab value="global" label="Assets globales" />
-          {hasBrandKitAssets && (
-            <Tab value="brandkit" label="Assets de brandkit" />
-          )}
-        </Tabs>
-
         <Box sx={{ p: 2 }}>
-          {sourceTab === "global" ? (
-            <Stack spacing={2}>
-              <Stack direction="row" spacing={1}>
-                <FormControl
-                  fullWidth
+          <Stack spacing={2}>
+            <Stack direction="row" sx={{ alignItems: "center", gap: "5%" }}>
+              <FormControl
+                sx={{ flex: 2 }}
+                size="small"
+                disabled={!canEdit || allowedTypes.length <= 1}
+              >
+                <InputLabel id={`${field.key}-global-type-label`}>
+                  Tipo
+                </InputLabel>
+                <Select
+                  labelId={`${field.key}-global-type-label`}
+                  label="Tipo"
+                  value={globalAssetType}
+                  onChange={(event: SelectChangeEvent<SelectableAssetType>) =>
+                    setGlobalAssetType(
+                      event.target.value as SelectableAssetType,
+                    )
+                  }
+                >
+                  {allowedTypes.map((type) => (
+                    <MenuItem key={type} value={type}>
+                      {assetTypeLabels[type]}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              {hasBrandKitAssets && (
+                <ToggleButtonGroup
+                  value={sourceTab}
+                  exclusive
                   size="small"
-                  disabled={!canEdit || allowedTypes.length <= 1}
+                  onChange={(_event, nextValue: AssetSourceTab | null) => {
+                    if (nextValue !== null) setSourceTab(nextValue);
+                  }}
+                  sx={{ flex: 1 }}
                 >
-                  <InputLabel id={`${field.key}-global-type-label`}>
-                    Tipo
-                  </InputLabel>
-                  <Select
-                    labelId={`${field.key}-global-type-label`}
-                    label="Tipo"
-                    value={globalAssetType}
-                    onChange={(event: SelectChangeEvent<SelectableAssetType>) =>
-                      setGlobalAssetType(
-                        event.target.value as SelectableAssetType,
-                      )
-                    }
+                  <ToggleButton value="global" sx={{ flex: 1 }}>
+                    Todos
+                  </ToggleButton>
+                  <ToggleButton value="brandkit" sx={{ flex: 1 }}>
+                    Brandkit
+                  </ToggleButton>
+                </ToggleButtonGroup>
+              )}
+            </Stack>
+
+            {sourceTab === "global" ? (
+              <>
+                {assetListError && (
+                  <Alert severity="error">{assetListError}</Alert>
+                )}
+                {isLoadingAssets && (
+                  <Alert severity="info">Cargando assets globales...</Alert>
+                )}
+
+                <AssetGrid
+                  assets={globalAssets}
+                  selectedAssetId={selectedBinding?.assetId ?? null}
+                  selectedKeywordText={selectedBinding?.keywordText ?? null}
+                  canEdit={canEdit}
+                  onSelect={handleSelectUploadedAsset}
+                  gridKey={`global-${field.key}-${globalAssetType}`}
+                />
+
+                <Divider />
+
+                <Stack spacing={1.5}>
+                  <Button
+                    variant="contained"
+                    disabled={!canEdit}
+                    onClick={() => setIsUploadDialogOpen(true)}
+                    startIcon={<UploadIcon />}
+                    sx={{ width: "250px", alignSelf: "end" }}
                   >
-                    {allowedTypes.map((type) => (
-                      <MenuItem key={type} value={type}>
-                        {assetTypeLabels[type]}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Stack>
-
-              {assetListError && (
-                <Alert severity="error">{assetListError}</Alert>
-              )}
-              {isLoadingAssets && (
-                <Alert severity="info">Cargando assets globales...</Alert>
-              )}
-
-              <AssetGrid
-                assets={globalAssets}
-                selectedAssetId={selectedBinding?.assetId ?? null}
-                selectedKeywordText={selectedBinding?.keywordText ?? null}
-                canEdit={canEdit}
-                onSelect={handleSelectUploadedAsset}
-                gridKey={`global-${field.key}-${globalAssetType}`}
-              />
-
-              <Divider />
-
-              <Stack spacing={1.5}>
-                <Button
-                  variant="outlined"
-                  disabled={!canEdit}
-                  onClick={() => setIsUploadDialogOpen(true)}
-                >
-                  Subir asset nuevo
-                </Button>
-                {uploadStatus === "success" && (
-                  <Alert severity="success">
-                    Asset subido y asignado al bloque.
+                    Subir asset nuevo
+                  </Button>
+                  {uploadStatus === "success" && (
+                    <Alert severity="success">
+                      Asset subido y asignado al bloque.
+                    </Alert>
+                  )}
+                </Stack>
+              </>
+            ) : (
+              <>
+                {brandKitResources ? (
+                  <>
+                    <Typography variant="subtitle2">
+                      Assets de {brandKitResources.brandKit.name}
+                    </Typography>
+                    <AssetGrid
+                      assets={brandKitAssets}
+                      selectedAssetId={selectedBinding?.assetId ?? null}
+                      selectedKeywordText={selectedBinding?.keywordText ?? null}
+                      canEdit={canEdit}
+                      onSelect={handleSelectUploadedAsset}
+                      gridKey={`brandkit-${field.key}`}
+                    />
+                  </>
+                ) : (
+                  <Alert severity="info">
+                    Este newsletter no tiene un brandkit cargado para
+                    seleccionar assets.
                   </Alert>
                 )}
-              </Stack>
-            </Stack>
-          ) : (
-            <Stack spacing={2}>
-              {brandKitResources ? (
-                <>
-                  <Typography variant="subtitle2">
-                    Assets de {brandKitResources.brandKit.name}
-                  </Typography>
-                  <AssetGrid
-                    assets={brandKitAssets}
-                    selectedAssetId={selectedBinding?.assetId ?? null}
-                    selectedKeywordText={selectedBinding?.keywordText ?? null}
-                    canEdit={canEdit}
-                    onSelect={handleSelectUploadedAsset}
-                    gridKey={`brandkit-${field.key}`}
-                  />
-                </>
-              ) : (
-                <Alert severity="info">
-                  Este newsletter no tiene un brandkit cargado para seleccionar
-                  assets.
-                </Alert>
-              )}
-            </Stack>
-          )}
+              </>
+            )}
+          </Stack>
         </Box>
       </Box>
 
@@ -1359,22 +1387,22 @@ function ImageAssetFieldEditor({
             )}
             {(uploadStatus === "compressing" ||
               uploadStatus === "uploading") && (
-                <Stack spacing={1}>
-                  <Typography variant="caption">
-                    {uploadStatus === "compressing"
-                      ? "Comprimiendo imagen..."
-                      : `Subiendo asset ${uploadProgress}%`}
-                  </Typography>
-                  <LinearProgress
-                    variant={
-                      uploadStatus === "uploading"
-                        ? "determinate"
-                        : "indeterminate"
-                    }
-                    value={uploadProgress}
-                  />
-                </Stack>
-              )}
+              <Stack spacing={1}>
+                <Typography variant="caption">
+                  {uploadStatus === "compressing"
+                    ? "Comprimiendo imagen..."
+                    : `Subiendo asset ${uploadProgress}%`}
+                </Typography>
+                <LinearProgress
+                  variant={
+                    uploadStatus === "uploading"
+                      ? "determinate"
+                      : "indeterminate"
+                  }
+                  value={uploadProgress}
+                />
+              </Stack>
+            )}
             {uploadStatus === "cancelled" && (
               <Alert severity="warning">Carga cancelada.</Alert>
             )}
