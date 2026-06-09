@@ -347,6 +347,20 @@ export function GenerationForm({
           />
         </Stack>
       )}
+    
+        <Stack spacing={2}>
+          
+          <TextField
+            label="Contexto adicional"
+            value={form.additionalContext}
+            onChange={(event: ChangeEvent<HTMLInputElement>) =>
+              update('additionalContext', event.target.value)
+            }
+            multiline
+            minRows={3}
+            fullWidth
+          />
+        </Stack>
 
       <Divider />
 
