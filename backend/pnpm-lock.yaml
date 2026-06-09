@@ -888,6 +888,17 @@ packages:
     resolution: {integrity: sha512-Z7C/xXCiGWsg0KuKsHTKJxbWhpI3Vs5GwLfOean7MGyVFGqdRgBbAjOCh6u4bbjPc/8MJ2pZmK/0DLdCbivLDA==}
     engines: {node: '>=8'}
 
+  '@mui/icons-material@9.0.1':
+    resolution: {integrity: sha512-5PRpQjVLTNLyV/2J9J53Yz4R0tVbodG0BQDN2zQI1QBG1OPYM25ar+4N20eyFOfJT6zKglLzsnU70+zdVLaTkw==}
+    engines: {node: '>=14.0.0'}
+    peerDependencies:
+      '@mui/material': ^9.0.1
+      '@types/react': ^17.0.0 || ^18.0.0 || ^19.0.0
+      react: ^17.0.0 || ^18.0.0 || ^19.0.0
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+
   '@napi-rs/wasm-runtime@1.1.4':
     resolution: {integrity: sha512-3NQNNgA1YSlJb/kMH1ildASP9HW7/7kYnRI2szWJaofaS1hWmbGI4H+d3+22aGzXXN9IJ+n+GiFVcGipJP18ow==}
     peerDependencies:
@@ -9615,6 +9626,7 @@ snapshots:
       - lightningcss
       - postcss
       - uglify-js
+  
 
   whatwg-encoding@3.1.1:
     dependencies:
