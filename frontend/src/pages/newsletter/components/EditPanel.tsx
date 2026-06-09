@@ -56,6 +56,8 @@
     import UploadIcon from "@mui/icons-material/Upload";
     import ToggleButton from "@mui/material/ToggleButton";
     import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
+    import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
+    import RefreshIcon from "@mui/icons-material/Refresh"; 
 
 
 type SelectableAssetType = Exclude<AssetType, "BLOCK">;
@@ -428,6 +430,7 @@ export function EditPanel({
                 color="secondary"
                 sx={{ flex: 1 }}
                 onClick={onRegenerateAll}
+                startIcon={<AutoFixHighIcon />}
               >
                 Regenerar todo
               </Button>
@@ -443,12 +446,14 @@ export function EditPanel({
                   startIcon={
                     isRegeneratingBlock ? (
                       <CircularProgress size={18} color="inherit" />
-                    ) : undefined
+                    ) : (
+                      <RefreshIcon />
+                    )
                   }
                 >
                   {isRegeneratingBlock
-                    ? "Regenerando contenido de este bloque..."
-                    : "Regenerar contenido de este bloque"}
+                    ? "Regenerando contenido..."
+                    : "Regenerar este bloque"}
                 </Button>
               )}
             </Stack>
