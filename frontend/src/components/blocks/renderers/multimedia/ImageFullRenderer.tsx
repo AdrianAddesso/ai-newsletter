@@ -13,7 +13,7 @@ export function ImageFullRenderer({
   block,
   imageUrl = placeholderImageUrl,
 }: Props) {
-  const { altText = "Full image" } = parseContent(block.content);
+  const { altText = "Full image", href = "" } = parseContent(block.content);
 
   return (
     <Card

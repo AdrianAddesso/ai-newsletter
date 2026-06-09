@@ -22,6 +22,7 @@ export function LabelTextLabelCenterFullRenderer({
     topLabel = topLabelContent ?? "Lorem ipsum dolor sit amet",
     bodyText = "Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat.",
     bottomLabel = bottomLabelContent ?? "Consectetur adipiscing elit",
+    href = "",
   } = values;
   const topLabelTypographySx = resolveContentTypographySx(values, "topLabel");
   const bodyTypographySx = resolveContentTypographySx(values, "bodyText");

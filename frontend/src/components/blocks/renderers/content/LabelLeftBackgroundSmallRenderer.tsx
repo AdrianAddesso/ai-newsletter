@@ -22,7 +22,7 @@ export function LabelLeftBackgroundSmallRenderer({
   editMode = false,
 }: Props) {
   const values = parseContent(block.content);
-  const { label = "Lorem ipsum dolor sit amet", bgColor } = values;
+  const { label = "Lorem ipsum dolor sit amet", bgColor, href = "" } = values;
   const typographySx = resolveContentTypographySx(values, "label");
   const resolvedBackgroundImage = resolveRenderableBackgroundImage(
     backgroundImage,

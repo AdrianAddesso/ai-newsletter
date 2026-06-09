@@ -12,5 +12,6 @@ export class ImageFullBlock extends BlockDefinition {
   readonly editFields = [
     { key: 'imageAsset', label: 'Imagen', type: 'image-asset' as const, required: true, assetTypes: ['IMAGE'] as const },
     { key: 'altText', label: 'Texto alternativo', type: 'text' as const, defaultValue: 'Full image' },
+    { key: 'href', label: 'URL de destino', type: 'url' as const, placeholder: 'https://' },
   ];
 }

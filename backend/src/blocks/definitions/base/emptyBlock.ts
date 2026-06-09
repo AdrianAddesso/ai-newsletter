@@ -11,5 +11,6 @@ export class EmptyBlock extends BlockDefinition {
   readonly layout = { minCols: 1, minRows: 1, resizable: true };
   readonly editFields = [
     { key: 'bgColor', label: 'Color de fondo', type: 'color' as const },
+    { key: 'href', label: 'URL de destino', type: 'url' as const, placeholder: 'https://' },
   ];
 }
