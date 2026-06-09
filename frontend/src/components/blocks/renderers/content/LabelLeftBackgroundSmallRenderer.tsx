@@ -62,11 +62,14 @@ export function LabelLeftBackgroundSmallRenderer({
             label={label}
             size="small"
             sx={{
-              maxWidth: "100%",
+              maxWidth: "none",
+              width: "fit-content",
+              height: "auto",
               "& .MuiChip-label": {
                 whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
+                overflow: "visible",
+                textOverflow: "unset",
+                display: "block",
                 ...typographySx,
               },
             }}

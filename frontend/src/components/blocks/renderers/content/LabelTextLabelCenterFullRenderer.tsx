@@ -72,11 +72,14 @@ export function LabelTextLabelCenterFullRenderer({
         <Chip
           label={topLabel}
           sx={{
-            maxWidth: "90%",
+            maxWidth: "none",
+            width: "fit-content",
+            height: "auto",
             "& .MuiChip-label": {
               whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
+              overflow: "visible",
+              textOverflow: "unset",
+              display: "block",
               ...topLabelTypographySx,
             },
           }}
@@ -91,11 +94,14 @@ export function LabelTextLabelCenterFullRenderer({
         <Chip
           label={bottomLabel}
           sx={{
-            maxWidth: "90%",
+            maxWidth: "none",
+            width: "fit-content",
+            height: "auto",
             "& .MuiChip-label": {
               whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
+              overflow: "visible",
+              textOverflow: "unset",
+              display: "block",
               ...bottomLabelTypographySx,
             },
           }}

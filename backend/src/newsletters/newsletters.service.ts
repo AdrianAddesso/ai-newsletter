@@ -32,8 +32,6 @@ import { NotificationsService } from '../notifications/notifications.service'
 import { renderNewsletterEmailBlock } from './email-renderers';
 
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const defaultHeaderLogoObjectKey = 'assets/logos/nestle/nestle_isotype.png';
-const defaultHeaderLogoCid = 'newsletter-default-header-logo@nestle-ai-newsletter';
 
 type ReviewRequestUser = {
   id?: string;
@@ -89,6 +87,11 @@ type EmailInlineAttachment = {
   content: Buffer;
   cid: string;
   contentType?: string;
+};
+
+type EmailBlockSnapshotInput = {
+  blockId: string;
+  dataUrl: string;
 };
 
 @Injectable()
@@ -294,6 +297,7 @@ export class NewsLettersService {
       area: newsletter.areas?.name ?? null,
       creatorUserId: newsletter.created_by_user_id ?? '',
       state: newsletter.state,
+      format: newsletter.format,
       templateId: newsletter.template_id ?? '',
       brandKitId: newsletter.brand_kit_id ?? '',
       blocks,
@@ -681,15 +685,17 @@ export class NewsLettersService {
     return `Desde export newsletter con ID ${id}`;
   }
 
-  async exportEml(id: string): Promise<{ filename: string; content: Buffer }> {
+  async exportEml(id: string, snapshots: EmailBlockSnapshotInput[] = [],): Promise<{ filename: string; content: Buffer }> {
     const newsletter = await this.getById(id);
     const attachments = await this.buildEmailInlineAttachments(
       newsletter.blocks,
+      snapshots,
     );
     const mjml = this.buildNewsletterEmailMjml(
       newsletter.title || 'Newsletter',
       newsletter.blocks,
       attachments.cidByAssetId,
+      attachments.snapshotCidByBlockId,
     );
     const html = await renderMjml(mjml);
     const content = await this.buildEmlMessage(
@@ -708,6 +714,7 @@ export class NewsLettersService {
     title: string,
     blocks: NewsletterBlockDto[],
     cidByAssetId: Map<string, string>,
+    snapshotCidByBlockId: Map<string, string>,
   ): string {
     const rows = this.groupEmailBlocksByRow(blocks);
 
@@ -717,6 +724,7 @@ export class NewsLettersService {
           .map((block) => 
             renderNewsletterEmailBlock(block, {
               cidByAssetId,
+              snapshotCidByBlockId,
               fallback: this.renderEmailBlock.bind(this),
             }),
           )
@@ -848,16 +856,40 @@ export class NewsLettersService {
 
   private async buildEmailInlineAttachments(
     blocks: NewsletterBlockDto[],
+    snapshots: EmailBlockSnapshotInput[] = [],
   ): Promise<{
     files: EmailInlineAttachment[];
     cidByAssetId: Map<string, string>;
+    snapshotCidByBlockId: Map<string, string>;
   }> {
     const cidByAssetId = new Map<string, string>();
+    const snapshotCidByBlockId = new Map<string, string>();
     const files: EmailInlineAttachment[] = [];
     const uniqueBindings = new Map<
       string,
       NewsletterBlockDto['assetBindings'][number]
     >();
+
+    let snapshotIndex = 0;
+    for (const snapshot of snapshots) {
+      const parsedSnapshot = this.dataUrlToBuffer(snapshot.dataUrl);
+
+      if (!parsedSnapshot) {
+        continue;
+      }
+    
+      const cid = `newsletter-block-snapshot-${snapshotIndex}@nestle-ai-newsletter`;
+
+      snapshotCidByBlockId.set(snapshot.blockId, cid);
+      files.push({
+        filename: `block-${snapshot.blockId}.png`,
+        content: parsedSnapshot.content,
+        cid,
+        contentType: parsedSnapshot.contentType,
+      });
+
+      snapshotIndex += 1;
+    }
 
     for (const block of blocks) {
       for (const binding of block.assetBindings) {
@@ -898,26 +930,25 @@ export class NewsLettersService {
       }
     }
 
-        try {
-      const bucket = this.storageService.getAssetsBucket();
-      const content = await this.storageService.getObjectBuffer(
-        bucket,
-        defaultHeaderLogoObjectKey,
-      );
-
-      files.push({
-        filename: 'nestle_isotype.png',
-        content,
-        cid: defaultHeaderLogoCid,
-        contentType: 'image/png',
-      });
-    } catch {
-      // Si el logo default no existe en storage, el EML queda sin fallback de header.
-    }
-
     return {
       files,
       cidByAssetId,
+      snapshotCidByBlockId,
+    };
+  }
+
+  private dataUrlToBuffer(
+    dataUrl: string,
+  ): { content: Buffer; contentType: string } | null {
+    const match = dataUrl.match(/^data:(image\/png|image\/jpeg);base64,(.+)$/);
+
+    if (!match) {
+      return null;
+    }
+
+    return {
+      contentType: match[1],
+      content: Buffer.from(match[2], 'base64'),
     };
   }
 

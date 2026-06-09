@@ -28,9 +28,19 @@ export function ApprovedNewsletterPage({
       sx={{ p:3 }}
     >
       <Box sx={{ flex:1, minWidth:0, }}>
-          <Box sx={{ maxWidth: 1000, mx: 'auto', }}>
-            <ApprovedNewsletterViewer blocks={newsletter.blocks} />
+        <Box
+          sx={{
+            width: '100%',
+            overflowX: 'auto',
+          }}
+        >
+          <Box sx={{ width: 'fit-content', mx: 'auto' }}>
+            <ApprovedNewsletterViewer
+              blocks={newsletter.blocks}
+              format={newsletter.format}
+            />
           </Box>
+        </Box>
       </Box>
 
       <Box sx={{ width:{ lg:380 } }}>

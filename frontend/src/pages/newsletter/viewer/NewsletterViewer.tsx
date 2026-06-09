@@ -31,6 +31,7 @@ export function NewsletterViewer({
       selectedBlockId={selectedBlockId ?? ''}
       onSelectBlock={onSelectBlock ?? (() => {})}
       readOnly={readOnly}
+      format={newsletter.format}
     />
   )
 }

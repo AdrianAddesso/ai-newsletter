@@ -64,11 +64,11 @@ export function useNewsletterEditor() {
       label: 'Exportar PDF',
       format:'PDF' as ExportFormat,
     },
-    //{
-    //  id: 'eml',
-    //  label: 'Exportar EML',
-    //  format: 'EML',
-    //},
+    {
+      id: 'eml',
+      label: 'Exportar EML',
+      format: 'EML',
+    },
   ]
 
   useEffect(() => {
@@ -266,6 +266,50 @@ export function useNewsletterEditor() {
     })
 }
 
+  const baseExportBlockTypes = new Set(['ctaFull', 'ctaAlternative', 'empty'])
+
+  const shouldSnapshotBlock = (blockType: string): boolean =>
+    !baseExportBlockTypes.has(blockType)
+
+  const buildNewsletterBlockSnapshots = async (
+  exportRoot: HTMLElement,
+  domToImage: typeof import('dom-to-image-more').default,
+): Promise<Array<{ blockId: string; dataUrl: string }>> => {
+  const blockElements = Array.from(
+    exportRoot.querySelectorAll<HTMLElement>('[data-newsletter-block-id]'),
+  )
+
+  const snapshots: Array<{ blockId: string; dataUrl: string }> = []
+
+  for (const blockElement of blockElements) {
+    const blockId = blockElement.dataset.newsletterBlockId
+    const blockType = blockElement.dataset.newsletterBlockType ?? ''
+
+    if (!blockId || !shouldSnapshotBlock(blockType)) {
+      continue
+    }
+
+    const { width, height } = blockElement.getBoundingClientRect()
+
+    if (width <= 0 || height <= 0) {
+      continue
+    }
+
+    const dataUrl = await domToImage.toPng(blockElement, {
+      width,
+      height,
+      bgcolor: '#ffffff',
+    })
+
+    snapshots.push({
+      blockId,
+      dataUrl,
+    })
+  }
+
+  return snapshots
+}
+
   const downloadBlob = (blob: Blob, filename: string): void => {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -355,7 +399,12 @@ export function useNewsletterEditor() {
         }
 
         case 'EML': {
-          const blob = await exportNewsletterEml(newsletter.id)
+          const snapshots = await buildNewsletterBlockSnapshots(
+            exportRoot,
+            domToImage,
+          )
+
+          const blob = await exportNewsletterEml(newsletter.id, snapshots)
 
           downloadBlob(blob, 'newsletter.eml')
           break          

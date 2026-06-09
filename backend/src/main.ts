@@ -3,6 +3,7 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { createServer } from 'node:net';
+import { json, urlencoded } from 'express';
 
 const allowedOrigins = new Set(
   (process.env.CORS_ALLOWED_ORIGINS ?? '')
@@ -23,6 +24,9 @@ async function bootstrap() {
   }
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  
+  app.use(json({ limit: '25mb' }));
+  app.use(urlencoded({ extended: true, limit: '25mb' }));
 
   app.enableCors({
     origin(

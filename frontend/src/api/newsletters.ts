@@ -148,11 +148,20 @@ export async function approveNewsletterReview(
   return response.data
 }
 
+export type NewsletterBlockSnapshotPayload = {
+  blockId: string
+  dataUrl: string
+}
+
 export async function exportNewsletterEml(
   newsletterId: string,
+  snapshots: NewsletterBlockSnapshotPayload[] = [],
 ): Promise<Blob> {
-  const response = await axios.get<Blob>(
+  const response = await axios.post<Blob>(
     `${API_BASE}/${newsletterId}/export/eml`,
+    {
+      snapshots,
+    },
     {
       responseType: 'blob',
     },

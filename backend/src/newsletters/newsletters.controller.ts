@@ -35,6 +35,7 @@ import {
   updateNewsletterCommentBodySchema,
   updateNewsletterExportBodySchema,
   updateNewsletterStatusBodySchema,
+  exportNewsletterEmlBodySchema,
 } from './newsletters.schemas';
 import type {
   ApproveNewsletterReviewBody,
@@ -46,6 +47,7 @@ import type {
   UpdateNewsletterCommentBody,
   UpdateNewsletterExportBody,
   UpdateNewsletterStatusBody,
+  ExportNewsletterEmlBody,
 } from './newsletters.schemas';
 import { MockAuthGuard } from '../modules/auth/guards/mockup.guard';
 import { PermissionsGuard } from '../modules/auth/guards/permissions.guard';
@@ -102,15 +104,19 @@ export class NewslettersController {
     return this.newslettersService.create(body, request.user?.id);
   }
 
-  @Get(':id/export/eml')
+  @Post(':id/export/eml')
   async exportEml(
     @Param(new ZodValidationPipe(idParamSchema)) params: IdParam,
+    @Body(new ZodValidationPipe(exportNewsletterEmlBodySchema))
+    body: ExportNewsletterEmlBody,
     @Res() response: Response,
   ) {
     await this.assertNewsletterApprovedForExport(params.id);
 
-
-    const exported = await this.newslettersService.exportEml(params.id);
+    const exported = await this.newslettersService.exportEml(
+      params.id,
+      body.snapshots,
+    );
 
     response.set({
       'Content-Type': 'message/rfc822',
@@ -120,6 +126,8 @@ export class NewslettersController {
 
     response.send(exported.content);
   }
+
+  @Get(':id')
 
   @Get(':id')
   getById(@Param(new ZodValidationPipe(idParamSchema)) params: IdParam) {

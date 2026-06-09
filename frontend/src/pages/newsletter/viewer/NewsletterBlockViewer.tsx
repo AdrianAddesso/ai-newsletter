@@ -2,6 +2,7 @@ import { BlockList } from '../components/BlockList'
 
 import type {
   NewsletterBlock,
+  NewsletterFormat,
 } from '../../../types/newsletter'
 
 type Props = {
@@ -9,6 +10,7 @@ type Props = {
   selectedBlockId: string
   onSelectBlock: (id: string) => void
   readOnly?: boolean
+  format?: NewsletterFormat
 }
 
 export function NewsletterBlockViewer({
@@ -16,6 +18,7 @@ export function NewsletterBlockViewer({
   selectedBlockId,
   onSelectBlock,
   readOnly = false,
+  format,
 }: Props) {
   return (
     <BlockList
@@ -23,6 +26,7 @@ export function NewsletterBlockViewer({
       selectedBlockId={selectedBlockId}
       onSelectBlock={onSelectBlock}
       readOnly={readOnly}
+      format={format}
     />
   )
 }
