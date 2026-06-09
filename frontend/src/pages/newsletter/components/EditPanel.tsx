@@ -106,12 +106,12 @@ const compressibleMimeTypes = new Set([
   "image/webp",
 ]);
 const fontSizeOptions = [
-  { label: "XS", value: "0.75rem" },
-  { label: "S", value: "0.875rem" },
-  { label: "M", value: "1rem" },
-  { label: "L", value: "1.25rem" },
-  { label: "XL", value: "1.5rem" },
-  { label: "XXL", value: "2rem" },
+  { label: "9pts", value: "0.75rem" },
+  { label: "11pts", value: "0.875rem" },
+  { label: "12pts (Normal)", value: "1rem" },
+  { label: "15pts (Heading 3)", value: "1.25rem" },
+  { label: "18pts (Heading 2)", value: "1.5rem" },
+  { label: "24pts (Heading 1)", value: "2rem" },
 ];
 const assetsPerPage = 6;
 
@@ -640,12 +640,9 @@ function FieldEditor({
         disabled={!canEdit}
         sx={compact ? { minWidth: 180, maxWidth: 180 } : undefined}
       >
-        <MenuItem value="">
-          <em>Usar default</em>
-        </MenuItem>
         {fontSizeOptions.map((option) => (
           <MenuItem key={option.value} value={option.value}>
-            {option.label} · {option.value}
+            {option.label}
           </MenuItem>
         ))}
       </TextField>
@@ -690,7 +687,15 @@ function FieldEditor({
         </MenuItem>
         {fontOptions.map((font) => (
           <MenuItem key={font.id} value={font.name}>
-            {font.name} · {font.style}
+            {font.style}
+            <Typography
+              component="span"
+              variant="body2"
+              color="text.secondary"
+              sx={{ fontStyle: "italic", ml: 1 }}
+            >
+              ({font.name})
+            </Typography>
           </MenuItem>
         ))}
       </TextField>
@@ -843,7 +848,15 @@ function TextFontFamilyFieldEditor({
       </MenuItem>
       {fontOptions.map((font) => (
         <MenuItem key={font.id} value={font.name}>
-          {font.name} · {font.style}
+          {font.style}
+          <Typography
+            component="span"
+            variant="body2"
+            color="text.secondary"
+            sx={{ fontStyle: "italic", ml: 1 }}
+          >
+            ({font.name})
+          </Typography>
         </MenuItem>
       ))}
     </TextField>
@@ -875,12 +888,9 @@ function TextSizeFieldEditor({
       disabled={!canEdit}
       sx={{ minWidth: 180, maxWidth: 180 }}
     >
-      <MenuItem value="">
-        <em>Usar default</em>
-      </MenuItem>
-      {fontSizeOptions.map((option) => (
+       {fontSizeOptions.map((option) => (
         <MenuItem key={option.value} value={option.value}>
-          {option.label} · {option.value}
+          {option.label}
         </MenuItem>
       ))}
     </TextField>
