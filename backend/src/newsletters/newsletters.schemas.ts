@@ -175,6 +175,8 @@ const newsletterBlockSnapshotSchema = z
   .object({
     blockId: requiredStringFieldSchema,
     dataUrl: requiredStringFieldSchema,
+    width: z.number().positive(),
+    height: z.number().positive(),
   })
   .strict();
 

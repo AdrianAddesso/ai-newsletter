@@ -7,7 +7,14 @@ import {
 
 type RenderNewsletterEmailBlockOptions = {
   cidByAssetId: Map<string, string>;
-  snapshotCidByBlockId?: Map<string, string>;
+  snapshotByBlockId?: Map<
+    string,
+    {
+      cid: string;
+      width: number;
+      height: number;
+    }
+  >;
   fallback: (
     block: NewsletterBlockDto,
     cidByAssetId: Map<string, string>,
@@ -24,7 +31,7 @@ export function renderNewsletterEmailBlock(
 
   if (shouldRenderBlockAsSnapshot(block)) {
     const snapshotEmail = renderSnapshotEmail(block, {
-      snapshotCidByBlockId: options.snapshotCidByBlockId ?? new Map(),
+      snapshotByBlockId: options.snapshotByBlockId ?? new Map(),
     });
 
     if (snapshotEmail) {

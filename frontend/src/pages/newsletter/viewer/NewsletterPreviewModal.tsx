@@ -1,6 +1,7 @@
 import { useEffect,useState } from 'react'
 
 import {
+  Box,
   CircularProgress,
   Dialog,
   DialogContent,
@@ -90,13 +91,15 @@ export function NewsletterPreviewModal({
         }}
       >
         {newsletter ? (
-          <NewsletterViewer
-            newsletter={newsletter}
-            selectedBlockId={selectedBlockId ?? undefined}
-            onSelectBlock={setSelectedBlockId}
-            readOnly
-          />
-        ) : (
+            <Box sx={{ width: 'fit-content', mx: 'auto' }}>
+              <NewsletterViewer
+                newsletter={newsletter}
+                selectedBlockId={selectedBlockId ?? undefined}
+                onSelectBlock={setSelectedBlockId}
+                readOnly
+              />
+            </Box>
+          ) : (
           <Stack
             sx={{
               py:8,

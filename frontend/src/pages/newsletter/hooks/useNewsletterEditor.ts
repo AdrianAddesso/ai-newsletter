@@ -245,25 +245,37 @@ export function useNewsletterEditor() {
   width: number
   height: number
 }> => {
-  const links = Array.from(
-    exportRoot.querySelectorAll<HTMLAnchorElement>('a[href]'),
-  )
-
   const rootRect = exportRoot.getBoundingClientRect()
 
-  return links
-    .filter((link) => Boolean(link.href))
-    .map((link) => {
-      const linkRect = link.getBoundingClientRect()
+  const createLinkArea = (element: HTMLElement, href: string) => {
+    const linkRect = element.getBoundingClientRect()
 
-      return {
-        href: link.href,
-        x: linkRect.left - rootRect.left,
-        y: linkRect.top - rootRect.top,
-        width: linkRect.width,
-        height: linkRect.height,
-      }
-    })
+    return {
+      href,
+      x: linkRect.left - rootRect.left,
+      y: linkRect.top - rootRect.top,
+      width: linkRect.width,
+      height: linkRect.height,
+    }
+  }
+
+  const anchorLinkAreas = Array.from(
+    exportRoot.querySelectorAll<HTMLAnchorElement>('a[href]'),
+  )
+    .filter((link) => Boolean(link.href))
+    .map((link) => createLinkArea(link, link.href))
+
+  const blockLinkAreas = Array.from(
+    exportRoot.querySelectorAll<HTMLElement>('[data-newsletter-block-href]'),
+  )
+    .map((blockElement) => ({
+      element: blockElement,
+      href: blockElement.dataset.newsletterBlockHref?.trim() ?? '',
+    }))
+    .filter(({ href }) => Boolean(href))
+    .map(({ element, href }) => createLinkArea(element, href))
+
+  return [...anchorLinkAreas, ...blockLinkAreas]
 }
 
   const baseExportBlockTypes = new Set(['ctaFull', 'ctaAlternative', 'empty'])
@@ -274,12 +286,12 @@ export function useNewsletterEditor() {
   const buildNewsletterBlockSnapshots = async (
   exportRoot: HTMLElement,
   domToImage: typeof import('dom-to-image-more').default,
-): Promise<Array<{ blockId: string; dataUrl: string }>> => {
+): Promise<Array<{ blockId: string; dataUrl: string; width: number; height: number }>> => {
   const blockElements = Array.from(
     exportRoot.querySelectorAll<HTMLElement>('[data-newsletter-block-id]'),
   )
 
-  const snapshots: Array<{ blockId: string; dataUrl: string }> = []
+  const snapshots: Array<{ blockId: string; dataUrl: string; width: number; height: number }> = []
 
   for (const blockElement of blockElements) {
     const blockId = blockElement.dataset.newsletterBlockId
@@ -304,6 +316,8 @@ export function useNewsletterEditor() {
     snapshots.push({
       blockId,
       dataUrl,
+      width,
+      height,
     })
   }
 

@@ -119,6 +119,7 @@ export function BlockList({
                   <Box
                     data-newsletter-block-id={block.id}
                     data-newsletter-block-type={block.type ?? ''}
+                    data-newsletter-block-href={getBlockHref(block) || undefined}
                     sx={{
                       pointerEvents: "none",
                       display: "flex",
@@ -212,4 +213,10 @@ function buildRendererProps(
     leftImageUrl: leftImageAsset,
     rightImageUrl: rightImageAsset,
   }
+}
+
+function getBlockHref(block: NewsletterBlock): string {
+  const values = parseContent<Record<string, string>>(block.content)
+
+  return values.href?.trim() ?? ''
 }

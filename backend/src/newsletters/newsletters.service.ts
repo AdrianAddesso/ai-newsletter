@@ -92,6 +92,8 @@ type EmailInlineAttachment = {
 type EmailBlockSnapshotInput = {
   blockId: string;
   dataUrl: string;
+  width: number;
+  height: number;
 };
 
 @Injectable()
@@ -693,9 +695,10 @@ export class NewsLettersService {
     );
     const mjml = this.buildNewsletterEmailMjml(
       newsletter.title || 'Newsletter',
+      newsletter.format,
       newsletter.blocks,
       attachments.cidByAssetId,
-      attachments.snapshotCidByBlockId,
+      attachments.snapshotByBlockId,
     );
     const html = await renderMjml(mjml);
     const content = await this.buildEmlMessage(
@@ -712,11 +715,20 @@ export class NewsLettersService {
 
   private buildNewsletterEmailMjml(
     title: string,
+    format: 'PORTRAIT' | 'LANDSCAPE',
     blocks: NewsletterBlockDto[],
     cidByAssetId: Map<string, string>,
-    snapshotCidByBlockId: Map<string, string>,
+    snapshotByBlockId: Map<
+      string,
+      {
+        cid: string;
+        width: number;
+        height: number;
+      }
+    >,
   ): string {
     const rows = this.groupEmailBlocksByRow(blocks);
+    const emailWidth = format === 'LANDSCAPE' ? 1400 : 700;
 
     const body = rows
       .map((rowBlocks) => {
@@ -724,7 +736,7 @@ export class NewsLettersService {
           .map((block) => 
             renderNewsletterEmailBlock(block, {
               cidByAssetId,
-              snapshotCidByBlockId,
+              snapshotByBlockId,
               fallback: this.renderEmailBlock.bind(this),
             }),
           )
@@ -748,7 +760,7 @@ export class NewsLettersService {
             <mj-text color="#30261D" font-size="16px" line-height="1.4" />
           </mj-attributes>
         </mj-head>
-        <mj-body background-color="#ffffff" width="960px">
+        <mj-body background-color="#ffffff" width="${emailWidth}px">
           ${body}
         </mj-body>
       </mjml>
@@ -860,10 +872,24 @@ export class NewsLettersService {
   ): Promise<{
     files: EmailInlineAttachment[];
     cidByAssetId: Map<string, string>;
-    snapshotCidByBlockId: Map<string, string>;
+    snapshotByBlockId: Map<
+      string,
+      {
+        cid: string;
+        width: number;
+        height: number;
+      }
+    >;
   }> {
     const cidByAssetId = new Map<string, string>();
-    const snapshotCidByBlockId = new Map<string, string>();
+    const snapshotByBlockId = new Map<
+      string,
+      {
+        cid: string;
+        width: number;
+        height: number;
+      }
+    >();
     const files: EmailInlineAttachment[] = [];
     const uniqueBindings = new Map<
       string,
@@ -880,7 +906,11 @@ export class NewsLettersService {
     
       const cid = `newsletter-block-snapshot-${snapshotIndex}@nestle-ai-newsletter`;
 
-      snapshotCidByBlockId.set(snapshot.blockId, cid);
+      snapshotByBlockId.set(snapshot.blockId, {
+        cid,
+        width: snapshot.width,
+        height: snapshot.height,
+      });
       files.push({
         filename: `block-${snapshot.blockId}.png`,
         content: parsedSnapshot.content,
@@ -933,7 +963,7 @@ export class NewsLettersService {
     return {
       files,
       cidByAssetId,
-      snapshotCidByBlockId,
+      snapshotByBlockId,
     };
   }
 

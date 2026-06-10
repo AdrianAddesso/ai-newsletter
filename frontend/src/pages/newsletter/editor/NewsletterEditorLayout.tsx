@@ -32,8 +32,9 @@ export function NewsletterEditorLayout({
           maxHeight: 'calc(100vh - 48px)',
           overflowY: 'auto',
         }}
-      >
-        {left}
+      > <Box sx={{ width: 'fit-content', mx: 'auto' }}>
+          {left}
+      </Box>
       </Box>
 
       <Box

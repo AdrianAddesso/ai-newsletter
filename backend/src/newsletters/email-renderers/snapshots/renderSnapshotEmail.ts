@@ -2,16 +2,23 @@ import type { NewsletterBlockDto } from '../../../blocks/newsletter-blocks';
 import { parseBlockValues } from '../../../blocks/newsletter-blocks';
 
 type RenderSnapshotEmailOptions = {
-  snapshotCidByBlockId: Map<string, string>;
+  snapshotByBlockId: Map<
+    string,
+    {
+      cid: string;
+      width: number;
+      height: number;
+    }
+  >;
 };
 
 export function renderSnapshotEmail(
   block: NewsletterBlockDto,
   options: RenderSnapshotEmailOptions,
 ): string | null {
-  const snapshotCid = options.snapshotCidByBlockId.get(block.id);
+  const snapshot = options.snapshotByBlockId.get(block.id);
 
-  if (!snapshotCid) {
+  if (!snapshot) {
     return null;
   }
 
@@ -21,8 +28,9 @@ export function renderSnapshotEmail(
   return `
     <mj-column padding="0">
       <mj-image
-        src="cid:${escapeHtml(snapshotCid)}"
+        src="cid:${escapeHtml(snapshot.cid)}"
         ${href ? `href="${escapeHtml(href)}"` : ''}
+        width="${Math.round(snapshot.width)}px"
         padding="0"
         fluid-on-mobile="true"
       />

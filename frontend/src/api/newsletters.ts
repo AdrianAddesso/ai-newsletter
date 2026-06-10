@@ -151,6 +151,8 @@ export async function approveNewsletterReview(
 export type NewsletterBlockSnapshotPayload = {
   blockId: string
   dataUrl: string
+  width: number
+  height: number
 }
 
 export async function exportNewsletterEml(
