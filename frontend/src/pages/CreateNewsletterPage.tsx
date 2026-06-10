@@ -207,9 +207,10 @@ function CreateNewsletterPage() {
       >
         <Box
           sx={{
+            order: { xs: 2, lg: 1 },
             p: { xs: 2, md: 3 },
             borderRight: { lg: "1px solid" },
-            borderBottom: { xs: "1px solid", lg: "none" },
+            borderTop: { xs: "1px solid", lg: "none" },
             borderColor: "divider",
             minWidth: 0,
           }}
@@ -223,7 +224,7 @@ function CreateNewsletterPage() {
           />
         </Box>
 
-        <Box sx={{ p: { xs: 2, md: 3 }, minWidth: 0 }}>
+        <Box sx={{ p: { xs: 2, md: 3 }, minWidth: 0, order: { xs: 1, lg: 2 } }}>
           <Stack spacing={2}>
             <Typography variant="h4">Crear newsletter</Typography>
             {templatesError && <Alert severity="error">{templatesError}</Alert>}

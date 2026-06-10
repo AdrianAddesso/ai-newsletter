@@ -126,10 +126,38 @@ export function BrandkitList() {
           </Typography>
         </Stack>
 
-        <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
-          <SearchBar value={search} onChange={setSearch} />
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={1.5}
+          sx={{
+            width: { xs: '100%', sm: 'auto' },
+            alignItems: { xs: 'stretch', sm: 'center' },
+          }}
+        >
+          <Box sx={{ width: { xs: '100%', sm: 280 } }}>
+            <SearchBar value={search} onChange={setSearch} />
+          </Box>
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<RefreshIcon />}
+            onClick={() => void loadBrandKits()}
+            sx={{
+              display: { xs: 'inline-flex', sm: 'none' },
+              width: '100%',
+            }}
+          >
+            Actualizar lista
+          </Button>
           <Tooltip title="Actualizar lista">
-            <IconButton size="small" onClick={() => void loadBrandKits()}>
+            <IconButton
+              size="small"
+              onClick={() => void loadBrandKits()}
+              sx={{
+                display: { xs: 'none', sm: 'inline-flex' },
+                alignSelf: { xs: 'flex-end', sm: 'center' },
+              }}
+            >
               <RefreshIcon fontSize="small" />
             </IconButton>
           </Tooltip>
@@ -138,7 +166,7 @@ export function BrandkitList() {
             size="small"
             startIcon={<AddIcon />}
             onClick={() => navigate('/admin/brandkit')}
-            sx={{ whiteSpace: 'nowrap' }}
+            sx={{ whiteSpace: 'nowrap', width: { xs: '100%', sm: 'auto' } }}
           >
             Nuevo Brandkit
           </Button>
@@ -154,8 +182,12 @@ export function BrandkitList() {
           No hay brandkits que coincidan con la busqueda.
         </Alert>
       ) : (
-        <TableContainer component={Card} variant="outlined" sx={{ borderRadius: 2 }}>
-          <Table>
+        <TableContainer
+          component={Card}
+          variant="outlined"
+          sx={{ borderRadius: 2, overflowX: 'auto' }}
+        >
+          <Table sx={{ minWidth: 720 }}>
             <TableHead sx={{ bgcolor: 'action.hover' }}>
               <TableRow>
                 <TableCell>
@@ -209,7 +241,11 @@ export function BrandkitList() {
                     {new Date(brandKit.updated_at).toLocaleDateString('es-AR')}
                   </TableCell>
                   <TableCell align="right">
-                    <Stack direction="row" spacing={0.5} sx={{ justifyContent: 'flex-end' }}>
+                    <Stack
+                      direction="row"
+                      spacing={0.5}
+                      sx={{ justifyContent: 'flex-end', flexWrap: 'wrap' }}
+                    >
                       <Tooltip title="Editar">
                         <IconButton
                           size="small"

@@ -15,105 +15,91 @@ import {
   TableRow,
   Tooltip,
   Typography,
-} from '@mui/material'
+} from "@mui/material";
 
-import {
-  Add,
-  DeleteOutlined,
-} from '@mui/icons-material'
+import { Add, DeleteOutlined } from "@mui/icons-material";
 
-import EditIcon from '@mui/icons-material/Edit'
+import EditIcon from "@mui/icons-material/Edit";
 
-import {
-  useMemo,
-  useState,
-} from 'react'
+import { useMemo, useState } from "react";
 
-import SearchBar from '../components/SearchBar'
-import { ModalDelete } from '../components/ModalDelete'
+import SearchBar from "../components/SearchBar";
+import { ModalDelete } from "../components/ModalDelete";
 
-import { useUsers } from '../users/hooks/useUsers'
+import { useUsers } from "../users/hooks/useUsers";
 
-import { exportUsers } from '../users/utils/exportUsers'
+import { exportUsers } from "../users/utils/exportUsers";
 
-import { UserFormModal } from '../users/components/UserFormModal'
+import { UserFormModal } from "../users/components/UserFormModal";
 
-import type { User } from '../users/types/users'
+import type { User } from "../users/types/users";
 
 export function UsersPage() {
-  const {
-    users,
-    loading,
-    error,
-    createUser,
-    updateUser,
-    deleteUser,
-  } = useUsers()
+  const { users, loading, error, createUser, updateUser, deleteUser } =
+    useUsers();
 
-  const [search,setSearch] =
-    useState('')
+  const [search, setSearch] = useState("");
 
-  const [deleteId,setDeleteId] =
-    useState<string | null>(null)
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const [editingUser,setEditingUser] =
-    useState<User | null>(null)
+  const [editingUser, setEditingUser] = useState<User | null>(null);
 
-  const [creating,setCreating] =
-    useState(false)
+  const [creating, setCreating] = useState(false);
 
   const filteredUsers = useMemo(() => {
-    return users.filter(user =>
+    return users.filter((user) =>
       `${user.name} ${user.last_name} ${user.email}`
         .toLowerCase()
         .includes(search.toLowerCase()),
-    )
-  }, [users,search])
+    );
+  }, [users, search]);
 
   if (loading) {
     return (
       <Box
         sx={{
-          display:'flex',
-          justifyContent:'center',
-          py:10,
+          display: "flex",
+          justifyContent: "center",
+          py: 10,
         }}
       >
         <CircularProgress />
       </Box>
-    )
+    );
   }
 
   return (
-    <Box sx={{ py:4 }}>
+    <Box sx={{ py: 4 }}>
       <Container maxWidth="lg">
         <Stack spacing={3}>
-          {error && (
-            <Alert severity="error">
-              {error}
-            </Alert>
-          )}
+          {error && <Alert severity="error">{error}</Alert>}
 
-          <Stack
-            direction="row"
+          <Box
             sx={{
-              justifyContent:'space-between',
-              alignItems:'center',
+              display: "flex",
+              flexDirection: {
+                xs: "column",
+                sm: "row",
+              },
+              justifyContent: "space-between",
+              alignItems: { xs: "stretch", sm: "flex-start" },
+              gap: 2,
             }}
           >
-            <Typography variant="h4">
-              Usuarios
-            </Typography>
+            <Typography variant="h4">Usuarios</Typography>
 
             <Stack
-              direction="row"
+              direction={{ xs: "column", sm: "row" }}
               spacing={2}
+              sx={{
+                width: { xs: "100%", sm: "auto" },
+                alignItems: "stretch",
+              }}
             >
               <Button
                 variant="contained"
-                onClick={() =>
-                  exportUsers(users)
-                }
+                onClick={() => exportUsers(users)}
+                sx={{ width: { xs: "100%", sm: "auto" }, whiteSpace: "nowrap" }}
               >
                 Exportar lista
               </Button>
@@ -121,14 +107,13 @@ export function UsersPage() {
               <Button
                 variant="contained"
                 startIcon={<Add />}
-                onClick={() =>
-                  setCreating(true)
-                }
+                onClick={() => setCreating(true)}
+                sx={{ width: { xs: "100%", sm: "auto" }, whiteSpace: "nowrap" }}
               >
                 Nuevo usuario
               </Button>
             </Stack>
-          </Stack>
+          </Box>
 
           <SearchBar
             value={search}
@@ -136,71 +121,45 @@ export function UsersPage() {
             placeholder="Buscar usuario"
           />
 
-          <TableContainer
-            component={Card}
-          >
-            <Table>
+          <TableContainer component={Card} sx={{ overflowX: "auto" }}>
+            <Table sx={{ minWidth: 760 }}>
               <TableHead>
                 <TableRow>
-                  <TableCell>
-                    Nombre
-                  </TableCell>
+                  <TableCell>Nombre</TableCell>
 
-                  <TableCell>
-                    Apellido
-                  </TableCell>
+                  <TableCell>Apellido</TableCell>
 
-                  <TableCell>
-                    Email
-                  </TableCell>
+                  <TableCell>Email</TableCell>
 
-                  <TableCell>
-                    Rol
-                  </TableCell>
+                  <TableCell>Rol</TableCell>
 
-                  <TableCell>
-                    Estado
-                  </TableCell>
+                  <TableCell>Estado</TableCell>
 
-                  <TableCell>
-                    Acciones
-                  </TableCell>
+                  <TableCell>Acciones</TableCell>
                 </TableRow>
               </TableHead>
 
               <TableBody>
-                {filteredUsers.map(user => (
-                  <TableRow
-                    key={user.id}
-                  >
-                    <TableCell>
-                      {user.name}
-                    </TableCell>
+                {filteredUsers.map((user) => (
+                  <TableRow key={user.id}>
+                    <TableCell>{user.name}</TableCell>
+
+                    <TableCell>{user.last_name}</TableCell>
+
+                    <TableCell>{user.email}</TableCell>
+
+                    <TableCell>{user.role}</TableCell>
+
+                    <TableCell>{user.state}</TableCell>
 
                     <TableCell>
-                      {user.last_name}
-                    </TableCell>
-
-                    <TableCell>
-                      {user.email}
-                    </TableCell>
-
-                    <TableCell>
-                      {user.role}
-                    </TableCell>
-
-                    <TableCell>
-                      {user.state}
-                    </TableCell>
-
-                    <TableCell>
-                      <Stack direction="row">
+                      <Stack
+                        direction="row"
+                        spacing={0.5}
+                        sx={{ flexWrap: "wrap" }}
+                      >
                         <Tooltip title="Editar">
-                          <IconButton
-                            onClick={() =>
-                              setEditingUser(user)
-                            }
-                          >
+                          <IconButton onClick={() => setEditingUser(user)}>
                             <EditIcon />
                           </IconButton>
                         </Tooltip>
@@ -208,9 +167,7 @@ export function UsersPage() {
                         <Tooltip title="Eliminar">
                           <IconButton
                             color="error"
-                            onClick={() =>
-                              setDeleteId(user.id)
-                            }
+                            onClick={() => setDeleteId(user.id)}
                           >
                             <DeleteOutlined />
                           </IconButton>
@@ -228,9 +185,7 @@ export function UsersPage() {
       <UserFormModal
         open={creating}
         user={null}
-        onClose={() =>
-          setCreating(false)
-        }
+        onClose={() => setCreating(false)}
         onSubmit={createUser}
       />
 
@@ -238,32 +193,23 @@ export function UsersPage() {
         key={editingUser?.id}
         open={Boolean(editingUser)}
         user={editingUser}
-        onClose={() =>
-          setEditingUser(null)
-        }
-        onSubmit={payload =>
-          editingUser
-            ? updateUser(
-                editingUser.id,
-                payload,
-              )
-            : Promise.resolve()
+        onClose={() => setEditingUser(null)}
+        onSubmit={(payload) =>
+          editingUser ? updateUser(editingUser.id, payload) : Promise.resolve()
         }
       />
 
       <ModalDelete
         open={Boolean(deleteId)}
-        onClose={() =>
-          setDeleteId(null)
-        }
+        onClose={() => setDeleteId(null)}
         onConfirm={() => {
-          if (!deleteId) return
+          if (!deleteId) return;
 
-          void deleteUser(deleteId)
+          void deleteUser(deleteId);
 
-          setDeleteId(null)
+          setDeleteId(null);
         }}
       />
     </Box>
-  )
+  );
 }

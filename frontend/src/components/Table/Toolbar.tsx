@@ -60,7 +60,10 @@ export function Toolbar({
         <Stack
           direction={{ xs: "column", sm: "row" }}
           spacing={1.5}
-          sx={{ alignItems: { xs: "stretch", sm: "center" } }}
+          sx={{
+            alignItems: { xs: "stretch", sm: "center" },
+            width: { xs: "100%", md: "auto" },
+          }}
         >
           {/*TOGGLE */}
           <ToggleButtonGroup
@@ -71,6 +74,12 @@ export function Toolbar({
               if (value !== null) {
                 onFilterChange(value);
               }
+            }}
+            sx={{
+              width: { xs: "100%", sm: "auto" },
+              "& .MuiToggleButton-root": {
+                flex: { xs: 1, sm: "initial" },
+              },
             }}
           >
             <ToggleButton value="ALL">Todos</ToggleButton>
@@ -96,7 +105,7 @@ export function Toolbar({
                 ),
               },
             }}
-            sx={{ minWidth: { xs: "100%", sm: 220 } }}
+            sx={{ minWidth: { xs: "100%", sm: 220 }, width: { xs: "100%", sm: "auto" } }}
           />
 
           {canCreateNewsletter && (
@@ -104,7 +113,7 @@ export function Toolbar({
               variant="contained"
               startIcon={<AddIcon />}
               onClick={route} // Uses your existing route function
-              sx={{ whiteSpace: "nowrap" }}
+              sx={{ whiteSpace: "nowrap", width: { xs: "100%", sm: "auto" } }}
             >
               Nuevo Newsletter
             </Button>
