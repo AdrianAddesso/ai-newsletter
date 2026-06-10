@@ -419,45 +419,29 @@ export function EditPanel({
             </Alert>
           )}
 
-          {canEdit && (
-            <Stack
-              direction="row"
-              spacing={2}
-              sx={{ width: "550px", alignSelf: "end" }}
-            >
+          {canEdit &&
+            selectedBlock.editFields.some(
+              (field) => field.type === "text" || field.type === "textarea",
+            ) && (
               <Button
-                variant="outlined"
+                variant="contained"
                 color="secondary"
-                sx={{ flex: 1 }}
-                onClick={onRegenerateAll}
-                startIcon={<AutoFixHighIcon />}
+                disabled={isRegeneratingBlock}
+                onClick={() => void onRegenerateBlock(selectedBlock.id)}
+                sx={{ alignSelf: "flex-end" }}
+                startIcon={
+                  isRegeneratingBlock ? (
+                    <CircularProgress size={18} color="inherit" />
+                  ) : (
+                    <RefreshIcon />
+                  )
+                }
               >
-                Regenerar todo
+                {isRegeneratingBlock
+                  ? "Regenerando contenido..."
+                  : "Regenerar este bloque"}
               </Button>
-              {selectedBlock.editFields.some(
-                (field) => field.type === "text" || field.type === "textarea",
-              ) && (
-                <Button
-                  variant="contained"
-                  color="secondary"
-                  disabled={isRegeneratingBlock}
-                  onClick={() => void onRegenerateBlock(selectedBlock.id)}
-                  sx={{ flex: 1 }}
-                  startIcon={
-                    isRegeneratingBlock ? (
-                      <CircularProgress size={18} color="inherit" />
-                    ) : (
-                      <RefreshIcon />
-                    )
-                  }
-                >
-                  {isRegeneratingBlock
-                    ? "Regenerando contenido..."
-                    : "Regenerar este bloque"}
-                </Button>
-              )}
-            </Stack>
-          )}
+            )}
 
           <ReviewHistoryPanel comments={reviewHistory} />
         </Stack>
@@ -487,6 +471,17 @@ export function EditPanel({
           >
             Descartar
           </Button>
+          {canEdit && (
+            <Button
+              variant="outlined"
+              color="secondary"
+              onClick={onRegenerateAll}
+              startIcon={<AutoFixHighIcon />}
+              sx={{ flex: 2 }}
+            >
+              Regenerar todo
+            </Button>
+          )}
           {canEdit && (
             <Button
               variant="outlined"
