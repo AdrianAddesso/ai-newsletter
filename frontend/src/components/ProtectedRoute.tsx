@@ -22,7 +22,7 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
 
   if (!isAuthenticated) {
     const redirectPath = `${location.pathname}${location.search}`
-    return <Navigate to={`/login?redirect=${encodeURIComponent(redirectPath)}`} replace />
+    return <Navigate to="/login" replace state={{ redirectPath }} />
   }
 
   if (allowedRoles && (!user || !allowedRoles.includes(user.role))) {

@@ -3,6 +3,9 @@ import { Reflector } from "@nestjs/core";
 import { AuthorizationService } from "../services/authorization.service";
 import { PrismaService } from "../../../prisma/prisma.service";
 import { PermissionCacheService } from "../services/permission-cache.service";
+import { Request } from "express";
+import { Role } from "../enum/roles";
+import { PrismaEntityModel } from "../types/auth-user.type";
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
@@ -17,10 +20,12 @@ export class PermissionsGuard implements CanActivate {
         const metadata = this.reflector.get<{ action: string; entity: string }>('permissions_metadata', context.getHandler());
         if (!metadata) return true;
 
-        const request = context.switchToHttp().getRequest();
-        const user = request.user;
+        const httpContext = context.switchToHttp();
+        const request = httpContext.getRequest<Request>();
 
-        const prismaModel = this.prisma[metadata.entity];
+        const user = request.user as { id: string, role: Role };
+
+        const prismaModel = this.prisma[metadata.entity] as unknown as PrismaEntityModel;
 
         if (!prismaModel) {
             throw new InternalServerErrorException(
@@ -50,12 +55,13 @@ export class PermissionsGuard implements CanActivate {
             });
         }
 
-        let resource = null;
+        const resourceId = request.params.id as string;
 
-        const resourceId = request.params.id;
+        let resource: unknown = null;
+        
+        if (resourceId) {
 
-        if (resourceId && metadata.entity) {
-            resource = await (prismaModel as any).findUnique({ where: { id: resourceId } });
+            resource = await prismaModel.findUnique({ where: { id: resourceId }});
 
             if (!resource) {
                 throw new NotFoundException({

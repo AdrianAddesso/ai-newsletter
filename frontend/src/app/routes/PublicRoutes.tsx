@@ -1,6 +1,7 @@
 import { Route } from 'react-router'
 
 import { LoginPage } from '../../pages/LoginPage'
+import { AuthCallbackPage } from '../../pages/AuthCallbackPage'
 
 export const publicRoutes = (
   <>
@@ -10,9 +11,13 @@ export const publicRoutes = (
     />
 
     <Route
+      path="/auth/callback"
+      element={<AuthCallbackPage />}
+    />
+
+    <Route
       path="/"
       element={<LoginPage />}
     />
-
   </>
-)
+)

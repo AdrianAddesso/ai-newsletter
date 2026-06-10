@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { GUARDS_METADATA } from '@nestjs/common/constants';
 import { AiController } from './ai.controller';
 import { AiService } from './ai.service';
-import { MockAuthGuard } from '../modules/auth/guards/mockup.guard';
+import { JwtGuard } from '../auth/guards/jwt.guard';
 
 describe('AiController', () => {
   let controller: AiController;
@@ -33,12 +33,12 @@ describe('AiController', () => {
     expect(controller).toBeDefined();
   });
 
-  it('applies MockAuthGuard at controller level', () => {
+  it('applies JwtGuard at controller level', () => {
     const guards = Reflect.getMetadata(GUARDS_METADATA, AiController) as Array<
       new (...args: unknown[]) => unknown
     >;
 
-    expect(guards).toContain(MockAuthGuard);
+    expect(guards).toContain(JwtGuard);
   });
 
   it('delegates generate newsletter requests to the service', async () => {
