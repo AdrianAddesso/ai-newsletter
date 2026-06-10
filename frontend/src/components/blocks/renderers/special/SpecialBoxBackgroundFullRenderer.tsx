@@ -89,11 +89,14 @@ export function SpecialBoxBackgroundFullRenderer({
               label={title}
               sx={{
                 alignSelf: "flex-start",
-                maxWidth: "100%",
+                maxWidth: "none",
+                width: "fit-content",
+                height: "auto",
                 "& .MuiChip-label": {
                   whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
+                  overflow: "visible",
+                  textOverflow: "unset",
+                  display: "block",
                   ...titleTypographySx,
                 },
               }}
@@ -101,21 +104,21 @@ export function SpecialBoxBackgroundFullRenderer({
             <Typography
               variant="body2"
               color="text.secondary"
-              sx={{ textAlign: "center", ...introTypographySx }}
+              sx={{ width: "100%", textAlign: "left", ...introTypographySx }}
             >
               {introText}
             </Typography>
             <Typography
               variant="body2"
               color="text.secondary"
-              sx={{ textAlign: "center", ...bodyTypographySx }}
+              sx={{ width: "100%", textAlign: "left", ...bodyTypographySx }}
             >
               {bodyText}
             </Typography>
             <Typography
               variant="body2"
               color="text.secondary"
-              sx={{ textAlign: "center", ...closingTypographySx }}
+              sx={{ width: "100%", textAlign: "left", ...closingTypographySx }}
             >
               {closingText}
             </Typography>

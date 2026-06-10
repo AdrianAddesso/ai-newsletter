@@ -10,6 +10,7 @@ export type NewsletterState =
   | 'APPROVED'
   | 'DISCARDED'
 
+export type NewsletterFormat = 'PORTRAIT' | 'LANDSCAPE'
 export type AreaName = 'COMUNICACION_INTERNA' | 'COMUNICACION_CORPORATIVA'
 export type TemplateGenerationField =
   | 'relevantDates'
@@ -135,6 +136,7 @@ export type Newsletter = {
   area: AreaName | null
   creatorUserId: string
   state: NewsletterState
+  format: NewsletterFormat
   templateId: string
   brandKitId: string
   blocks: NewsletterBlock[]

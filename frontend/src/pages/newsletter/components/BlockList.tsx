@@ -3,6 +3,7 @@ import { BlockRenderer } from '../../../components/blocks/BlockRenderer'
 import type {
   NewsletterBlock,
   NewsletterBlockAssetBinding,
+  NewsletterFormat,
 } from '../../../types/newsletter'
 import { parseContent } from '../../../utils/blockContent'
 
@@ -11,6 +12,7 @@ type Props = {
   selectedBlockId: string;
   onSelectBlock: (id: string) => void;
   readOnly?: boolean;
+  format?: NewsletterFormat;
 };
 
 export function BlockList({
@@ -18,8 +20,10 @@ export function BlockList({
   selectedBlockId,
   onSelectBlock,
   readOnly = false,
+  format = 'PORTRAIT',
 }: Props) {
   const rows = groupBlocksByRow(blocks)
+  const exportWidth = format === 'LANDSCAPE' ? 1400 : 700
 
   return (
     <Stack
@@ -52,6 +56,9 @@ export function BlockList({
           p: 3,
           borderRadius: 2,
           minHeight: 240,
+          width: exportWidth,
+          maxWidth: "100%",
+          mx: "auto",
         }}
       >
         {rows.map((row) => (
@@ -74,6 +81,8 @@ export function BlockList({
               return (
                 <Paper
                   key={block.id}
+                  //data-newsletter-block-id={block.id}
+                  //data-newsletter-block-type={block.type ?? ''}
                   component={readOnly ? 'div' : 'button'}
                   square
                   elevation={0}
@@ -108,6 +117,9 @@ export function BlockList({
                   }}
                 >
                   <Box
+                    data-newsletter-block-id={block.id}
+                    data-newsletter-block-type={block.type ?? ''}
+                    data-newsletter-block-href={getBlockHref(block) || undefined}
                     sx={{
                       pointerEvents: "none",
                       display: "flex",
@@ -201,4 +213,10 @@ function buildRendererProps(
     leftImageUrl: leftImageAsset,
     rightImageUrl: rightImageAsset,
   }
+}
+
+function getBlockHref(block: NewsletterBlock): string {
+  const values = parseContent<Record<string, string>>(block.content)
+
+  return values.href?.trim() ?? ''
 }

@@ -29,9 +29,9 @@ import {
 } from '../blocks/newsletter-blocks';
 import { Role } from '../modules/auth/enum/roles';
 import { NotificationsService } from '../notifications/notifications.service'
+import { renderNewsletterEmailBlock } from './email-renderers';
 
-const uuidPattern =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 type ReviewRequestUser = {
   id?: string;
@@ -87,6 +87,13 @@ type EmailInlineAttachment = {
   content: Buffer;
   cid: string;
   contentType?: string;
+};
+
+type EmailBlockSnapshotInput = {
+  blockId: string;
+  dataUrl: string;
+  width: number;
+  height: number;
 };
 
 @Injectable()
@@ -292,6 +299,7 @@ export class NewsLettersService {
       area: newsletter.areas?.name ?? null,
       creatorUserId: newsletter.created_by_user_id ?? '',
       state: newsletter.state,
+      format: newsletter.format,
       templateId: newsletter.template_id ?? '',
       brandKitId: newsletter.brand_kit_id ?? '',
       blocks,
@@ -679,15 +687,18 @@ export class NewsLettersService {
     return `Desde export newsletter con ID ${id}`;
   }
 
-  async exportEml(id: string): Promise<{ filename: string; content: Buffer }> {
+  async exportEml(id: string, snapshots: EmailBlockSnapshotInput[] = [],): Promise<{ filename: string; content: Buffer }> {
     const newsletter = await this.getById(id);
     const attachments = await this.buildEmailInlineAttachments(
       newsletter.blocks,
+      snapshots,
     );
     const mjml = this.buildNewsletterEmailMjml(
       newsletter.title || 'Newsletter',
+      newsletter.format,
       newsletter.blocks,
       attachments.cidByAssetId,
+      attachments.snapshotByBlockId,
     );
     const html = await renderMjml(mjml);
     const content = await this.buildEmlMessage(
@@ -704,15 +715,31 @@ export class NewsLettersService {
 
   private buildNewsletterEmailMjml(
     title: string,
+    format: 'PORTRAIT' | 'LANDSCAPE',
     blocks: NewsletterBlockDto[],
     cidByAssetId: Map<string, string>,
+    snapshotByBlockId: Map<
+      string,
+      {
+        cid: string;
+        width: number;
+        height: number;
+      }
+    >,
   ): string {
     const rows = this.groupEmailBlocksByRow(blocks);
+    const emailWidth = format === 'LANDSCAPE' ? 1400 : 700;
 
     const body = rows
       .map((rowBlocks) => {
         const columns = rowBlocks
-          .map((block) => this.renderEmailBlock(block, cidByAssetId))
+          .map((block) => 
+            renderNewsletterEmailBlock(block, {
+              cidByAssetId,
+              snapshotByBlockId,
+              fallback: this.renderEmailBlock.bind(this),
+            }),
+          )
           .join('\n');
 
         return `
@@ -733,7 +760,7 @@ export class NewsLettersService {
             <mj-text color="#30261D" font-size="16px" line-height="1.4" />
           </mj-attributes>
         </mj-head>
-        <mj-body background-color="#ffffff" width="960px">
+        <mj-body background-color="#ffffff" width="${emailWidth}px">
           ${body}
         </mj-body>
       </mjml>
@@ -841,16 +868,58 @@ export class NewsLettersService {
 
   private async buildEmailInlineAttachments(
     blocks: NewsletterBlockDto[],
+    snapshots: EmailBlockSnapshotInput[] = [],
   ): Promise<{
     files: EmailInlineAttachment[];
     cidByAssetId: Map<string, string>;
+    snapshotByBlockId: Map<
+      string,
+      {
+        cid: string;
+        width: number;
+        height: number;
+      }
+    >;
   }> {
     const cidByAssetId = new Map<string, string>();
+    const snapshotByBlockId = new Map<
+      string,
+      {
+        cid: string;
+        width: number;
+        height: number;
+      }
+    >();
     const files: EmailInlineAttachment[] = [];
     const uniqueBindings = new Map<
       string,
       NewsletterBlockDto['assetBindings'][number]
     >();
+
+    let snapshotIndex = 0;
+    for (const snapshot of snapshots) {
+      const parsedSnapshot = this.dataUrlToBuffer(snapshot.dataUrl);
+
+      if (!parsedSnapshot) {
+        continue;
+      }
+    
+      const cid = `newsletter-block-snapshot-${snapshotIndex}@nestle-ai-newsletter`;
+
+      snapshotByBlockId.set(snapshot.blockId, {
+        cid,
+        width: snapshot.width,
+        height: snapshot.height,
+      });
+      files.push({
+        filename: `block-${snapshot.blockId}.png`,
+        content: parsedSnapshot.content,
+        cid,
+        contentType: parsedSnapshot.contentType,
+      });
+
+      snapshotIndex += 1;
+    }
 
     for (const block of blocks) {
       for (const binding of block.assetBindings) {
@@ -894,6 +963,22 @@ export class NewsLettersService {
     return {
       files,
       cidByAssetId,
+      snapshotByBlockId,
+    };
+  }
+
+  private dataUrlToBuffer(
+    dataUrl: string,
+  ): { content: Buffer; contentType: string } | null {
+    const match = dataUrl.match(/^data:(image\/png|image\/jpeg);base64,(.+)$/);
+
+    if (!match) {
+      return null;
+    }
+
+    return {
+      contentType: match[1],
+      content: Buffer.from(match[2], 'base64'),
     };
   }
 
