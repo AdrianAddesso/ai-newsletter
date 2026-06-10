@@ -167,10 +167,19 @@ export function TemplateLibraryPage() {
                 </Typography>
             </Stack>
 
-            <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+            <Stack
+                direction={{ xs: "column", sm: "row" }}
+                spacing={2}
+                sx={{ alignItems: { xs: "stretch", sm: "center" } }}
+            >
+                <Box sx={{ width: { xs: "100%", sm: 280 } }}>
                 <SearchBar value={search} onChange={setSearch} />
+                </Box>
 
-                <FormControl size="small" sx={{ minWidth: 160 }}>
+                <FormControl
+                size="small"
+                sx={{ minWidth: { xs: "100%", sm: 160 }, width: { xs: "100%", sm: "auto" } }}
+                >
                 <InputLabel>Área</InputLabel>
                 <Select
                     value={areaFilter}
@@ -189,7 +198,10 @@ export function TemplateLibraryPage() {
                 </Select>
                 </FormControl>
 
-                <FormControl size="small" sx={{ minWidth: 160 }}>
+                <FormControl
+                size="small"
+                sx={{ minWidth: { xs: "100%", sm: 160 }, width: { xs: "100%", sm: "auto" } }}
+                >
                 <InputLabel>Orientación</InputLabel>
                 <Select
                     value={orientationFilter}

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Box,
@@ -23,71 +23,72 @@ import {
   Tooltip,
   Typography,
   useTheme,
-} from '@mui/material'
+} from "@mui/material";
 import {
   Add as AddIcon,
   CheckCircleOutlined as ReviewIcon,
   DeleteOutlined as DeleteIcon,
   EditOutlined as EditIcon,
   VisibilityOutlined as ViewIcon,
-} from '@mui/icons-material'
-import { useNavigate } from 'react-router'
-import { deleteTemplate, listTemplates } from '../api/templates'
-import { ModalDelete } from '../components/ModalDelete'
-import { TemplateCreator } from '../components/canvas/TemplateCreator'
-import { mapLayoutItemsToRows } from '../utils/canvas.utils'
-import SearchBar from '../components/SearchBar'
-import { useAuth } from '../contexts/AuthContext'
-import type { NewsletterTemplate } from '../types/newsletter'
-import type { UserRole } from '../users/types/users'
-import { areaLabels } from '../utils/newsletterTemplates'
+} from "@mui/icons-material";
+import { useNavigate } from "react-router";
+import { deleteTemplate, listTemplates } from "../api/templates";
+import { ModalDelete } from "../components/ModalDelete";
+import { TemplateCreator } from "../components/canvas/TemplateCreator";
+import { mapLayoutItemsToRows } from "../utils/canvas.utils";
+import SearchBar from "../components/SearchBar";
+import { useAuth } from "../contexts/AuthContext";
+import type { NewsletterTemplate } from "../types/newsletter";
+import type { UserRole } from "../users/types/users";
+import { areaLabels } from "../utils/newsletterTemplates";
 
-type StatusChipColor = 'default' | 'success' | 'warning'
+type StatusChipColor = "default" | "success" | "warning";
 
 const STATE_COLOR_MAP: Record<string, StatusChipColor> = {
-  ACTIVE: 'success',
-  DRAFT: 'warning',
-}
+  ACTIVE: "success",
+  DRAFT: "warning",
+};
 
 type TemplateTableRow = NewsletterTemplate & {
-  area_id: NewsletterTemplate['area']
-  state_id: string
-  state_name: string
-  created_at: string
-}
+  area_id: NewsletterTemplate["area"];
+  state_id: string;
+  state_name: string;
+  created_at: string;
+};
 
 const canDeleteTemplate = (role: UserRole | undefined): boolean =>
-  role === 'ADMIN' || role === 'FUNCTIONAL'
+  role === "ADMIN" || role === "FUNCTIONAL";
 
 export function TemplatesPage() {
-  const { user } = useAuth()
-  const theme = useTheme()
-  const navigate = useNavigate()
-  const role = user?.role
+  const { user } = useAuth();
+  const theme = useTheme();
+  const navigate = useNavigate();
+  const role = user?.role;
 
-  const [templates, setTemplates] = useState<TemplateTableRow[]>([])
-  const [isLoadingTemplates, setIsLoadingTemplates] = useState(true)
-  const [templatesError, setTemplatesError] = useState<string | null>(null)
-  const [search, setSearch] = useState('')
-  const [orderBy, setOrderBy] = useState<keyof TemplateTableRow>('name')
-  const [order, setOrder] = useState<'asc' | 'desc'>('asc')
-  const [limit, setLimit] = useState(5)
-  const [deleteId, setDeleteId] = useState<string | null>(null)
-  const [isDeleting, setIsDeleting] = useState(false)
-  const [previewTemplate, setPreviewTemplate] = useState<TemplateTableRow | null>(null)
+  const [templates, setTemplates] = useState<TemplateTableRow[]>([]);
+  const [isLoadingTemplates, setIsLoadingTemplates] = useState(true);
+  const [templatesError, setTemplatesError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [orderBy, setOrderBy] = useState<keyof TemplateTableRow>("name");
+  const [order, setOrder] = useState<"asc" | "desc">("asc");
+  const [limit, setLimit] = useState(5);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [previewTemplate, setPreviewTemplate] =
+    useState<TemplateTableRow | null>(null);
 
   useEffect(() => {
-    let mounted = true
+    let mounted = true;
 
     const loadTemplates = async () => {
-      setIsLoadingTemplates(true)
-      setTemplatesError(null)
+      setIsLoadingTemplates(true);
+      setTemplatesError(null);
 
       try {
-        const data = await listTemplates()
+        const data = await listTemplates();
 
         if (!mounted) {
-          return
+          return;
         }
 
         setTemplates(
@@ -98,84 +99,86 @@ export function TemplatesPage() {
             state_name: template.stateName,
             created_at: template.createdAt,
           })),
-        )
+        );
       } catch {
         if (mounted) {
-          setTemplates([])
-          setTemplatesError('No se pudieron obtener las plantillas disponibles.')
+          setTemplates([]);
+          setTemplatesError(
+            "No se pudieron obtener las plantillas disponibles.",
+          );
         }
       } finally {
         if (mounted) {
-          setIsLoadingTemplates(false)
+          setIsLoadingTemplates(false);
         }
       }
-    }
+    };
 
-    void loadTemplates()
+    void loadTemplates();
 
     return () => {
-      mounted = false
-    }
-  }, [])
+      mounted = false;
+    };
+  }, []);
 
   const filteredTemplates = useMemo(() => {
     return [...templates]
       .filter((template) =>
         [
           template.name,
-          template.description ?? '',
+          template.description ?? "",
           template.area_id,
           template.state_name,
           template.created_at,
-        ].some((value) =>
-          value.toLowerCase().includes(search.toLowerCase()),
-        ),
+        ].some((value) => value.toLowerCase().includes(search.toLowerCase())),
       )
       .sort((left, right) => {
-        const leftValue = String(left[orderBy] ?? '')
-        const rightValue = String(right[orderBy] ?? '')
+        const leftValue = String(left[orderBy] ?? "");
+        const rightValue = String(right[orderBy] ?? "");
 
         if (leftValue === rightValue) {
-          return 0
+          return 0;
         }
 
-        const result = leftValue < rightValue ? -1 : 1
-        return order === 'asc' ? result : -result
-      })
-  }, [templates, search, order, orderBy])
+        const result = leftValue < rightValue ? -1 : 1;
+        return order === "asc" ? result : -result;
+      });
+  }, [templates, search, order, orderBy]);
 
   const previewRows = useMemo(() => {
     if (!previewTemplate?.layout) {
-      return []
+      return [];
     }
 
-    return mapLayoutItemsToRows(previewTemplate.layout)
-  }, [previewTemplate])
+    return mapLayoutItemsToRows(previewTemplate.layout);
+  }, [previewTemplate]);
 
   const handleRequestSort = (property: keyof TemplateTableRow) => {
-    const isAsc = orderBy === property && order === 'asc'
-    setOrder(isAsc ? 'desc' : 'asc')
-    setOrderBy(property)
-  }
+    const isAsc = orderBy === property && order === "asc";
+    setOrder(isAsc ? "desc" : "asc");
+    setOrderBy(property);
+  };
 
   const handleConfirmDelete = async () => {
     if (!deleteId) {
-      return
+      return;
     }
 
-    setIsDeleting(true)
-    setTemplatesError(null)
+    setIsDeleting(true);
+    setTemplatesError(null);
 
     try {
-      await deleteTemplate(deleteId)
-      setTemplates((current) => current.filter((template) => template.id !== deleteId))
-      setDeleteId(null)
+      await deleteTemplate(deleteId);
+      setTemplates((current) =>
+        current.filter((template) => template.id !== deleteId),
+      );
+      setDeleteId(null);
     } catch {
-      setTemplatesError('No se pudo eliminar la plantilla en este momento.')
+      setTemplatesError("No se pudo eliminar la plantilla en este momento.");
     } finally {
-      setIsDeleting(false)
+      setIsDeleting(false);
     }
-  }
+  };
 
   if (isLoadingTemplates) {
     return (
@@ -183,16 +186,16 @@ export function TemplatesPage() {
         sx={{
           py: theme.nestle?.page?.sectionPaddingY || 4,
           px: theme.nestle?.page?.sectionPaddingX || 2,
-          bgcolor: 'background.default',
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+          bgcolor: "background.default",
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
         }}
       >
         <CircularProgress />
       </Box>
-    )
+    );
   }
 
   return (
@@ -200,15 +203,26 @@ export function TemplatesPage() {
       sx={{
         py: theme.nestle?.page?.sectionPaddingY || 4,
         px: theme.nestle?.page?.sectionPaddingX || 2,
-        bgcolor: 'background.default',
-        minHeight: '100vh',
+        bgcolor: "background.default",
+        minHeight: "100vh",
       }}
     >
       <Container maxWidth="lg" disableGutters>
         <Stack spacing={4}>
           <Stack
-            direction="row"
-            sx={{ justifyContent: 'space-between', alignItems: 'flex-end' }}
+            sx={{
+              display: "flex",
+              flexDirection: {
+                xs: "column",
+                md: "row",
+              },
+              gap: 2,
+              justifyContent: "space-between",
+              alignItems: {
+                xs: "flex-start",
+                md: "center",
+              },
+            }}
           >
             <Stack spacing={1}>
               <Typography variant="h2">Templates</Typography>
@@ -217,20 +231,28 @@ export function TemplatesPage() {
               </Typography>
             </Stack>
 
-            <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
+            <Box
+              sx={{
+                width: { xs: "100%", md: "auto" },
+                display: "flex",
+                flexDirection: { xs: "column", md: "row" },
+                gap: 2,
+                alignItems: { xs: "stretch", md: "center" },
+              }}
+            >
               <SearchBar value={search} onChange={setSearch} />
 
-              {role === 'ADMIN' && (
+              {role === "ADMIN" && (
                 <Button
                   variant="contained"
                   startIcon={<AddIcon />}
-                  onClick={() => navigate('/templates/create')}
-                  sx={{ whiteSpace: 'nowrap' }}
+                  onClick={() => navigate("/templates/create")}
+                  sx={{ whiteSpace: "nowrap" }}
                 >
                   Nuevo Template
                 </Button>
               )}
-            </Stack>
+            </Box>
           </Stack>
 
           {templatesError && <Alert severity="error">{templatesError}</Alert>}
@@ -240,15 +262,19 @@ export function TemplatesPage() {
               No hay plantillas disponibles en este momento.
             </Alert>
           ) : (
-            <TableContainer component={Card} variant="outlined" sx={{ borderRadius: 2 }}>
+            <TableContainer
+              component={Card}
+              variant="outlined"
+              sx={{ borderRadius: 2 }}
+            >
               <Table>
-                <TableHead sx={{ bgcolor: 'action.hover' }}>
+                <TableHead sx={{ bgcolor: "action.hover" }}>
                   <TableRow>
                     <TableCell>
                       <TableSortLabel
-                        active={orderBy === 'name'}
-                        direction={orderBy === 'name' ? order : 'asc'}
-                        onClick={() => handleRequestSort('name')}
+                        active={orderBy === "name"}
+                        direction={orderBy === "name" ? order : "asc"}
+                        onClick={() => handleRequestSort("name")}
                       >
                         Título
                       </TableSortLabel>
@@ -257,9 +283,9 @@ export function TemplatesPage() {
                     <TableCell>Estado</TableCell>
                     <TableCell>
                       <TableSortLabel
-                        active={orderBy === 'created_at'}
-                        direction={orderBy === 'created_at' ? order : 'asc'}
-                        onClick={() => handleRequestSort('created_at')}
+                        active={orderBy === "created_at"}
+                        direction={orderBy === "created_at" ? order : "asc"}
+                        onClick={() => handleRequestSort("created_at")}
                       >
                         Creado
                       </TableSortLabel>
@@ -271,12 +297,14 @@ export function TemplatesPage() {
                   {filteredTemplates.slice(0, limit).map((template) => (
                     <TableRow key={template.id} hover>
                       <TableCell>
-                        <Typography variant="subtitle2">{template.name}</Typography>
+                        <Typography variant="subtitle2">
+                          {template.name}
+                        </Typography>
                         <Typography
                           variant="caption"
                           color="text.secondary"
                           noWrap
-                          sx={{ maxWidth: 200, display: 'block' }}
+                          sx={{ maxWidth: 200, display: "block" }}
                         >
                           {template.description}
                         </Typography>
@@ -286,7 +314,9 @@ export function TemplatesPage() {
                         <Chip
                           size="small"
                           label={template.state_name}
-                          color={STATE_COLOR_MAP[template.state_id] ?? 'default'}
+                          color={
+                            STATE_COLOR_MAP[template.state_id] ?? "default"
+                          }
                         />
                       </TableCell>
                       <TableCell>
@@ -296,19 +326,24 @@ export function TemplatesPage() {
                         <Stack
                           direction="row"
                           spacing={0.5}
-                          sx={{ justifyContent: 'flex-end' }}
+                          sx={{ justifyContent: "flex-end" }}
                         >
                           <Tooltip title="Vista previa">
-                            <IconButton size="small" onClick={() => setPreviewTemplate(template)}>
+                            <IconButton
+                              size="small"
+                              onClick={() => setPreviewTemplate(template)}
+                            >
                               <ViewIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>
 
-                          {(role === 'ADMIN' || role === 'FUNCTIONAL') && (
+                          {(role === "ADMIN" || role === "FUNCTIONAL") && (
                             <Tooltip title="Editar">
                               <IconButton
                                 size="small"
-                                onClick={() => navigate(`/templates/edit/${template.id}`)}
+                                onClick={() =>
+                                  navigate(`/templates/edit/${template.id}`)
+                                }
                               >
                                 <EditIcon fontSize="small" />
                               </IconButton>
@@ -327,11 +362,16 @@ export function TemplatesPage() {
                             </Tooltip>
                           )}
 
-                          {role === 'FUNCTIONAL' && template.state_id !== 'DRAFT' && (
-                            <Button size="small" startIcon={<ReviewIcon />} variant="outlined">
-                              Revisar
-                            </Button>
-                          )}
+                          {role === "FUNCTIONAL" &&
+                            template.state_id !== "DRAFT" && (
+                              <Button
+                                size="small"
+                                startIcon={<ReviewIcon />}
+                                variant="outlined"
+                              >
+                                Revisar
+                              </Button>
+                            )}
                         </Stack>
                       </TableCell>
                     </TableRow>
@@ -343,9 +383,9 @@ export function TemplatesPage() {
                 <Box
                   sx={{
                     p: 2,
-                    textAlign: 'center',
-                    borderTop: '1px solid',
-                    borderColor: 'divider',
+                    textAlign: "center",
+                    borderTop: "1px solid",
+                    borderColor: "divider",
                   }}
                 >
                   <Button onClick={() => setLimit((current) => current + 5)}>
@@ -364,8 +404,8 @@ export function TemplatesPage() {
         maxWidth="md"
         fullWidth
       >
-        <DialogTitle>{previewTemplate?.name ?? 'Vista previa'}</DialogTitle>
-        <DialogContent dividers sx={{ bgcolor: 'grey.100' }}>
+        <DialogTitle>{previewTemplate?.name ?? "Vista previa"}</DialogTitle>
+        <DialogContent dividers sx={{ bgcolor: "grey.100" }}>
           {previewRows.length > 0 ? (
             <TemplateCreator mode="readonly" rows={previewRows} />
           ) : (
@@ -387,7 +427,7 @@ export function TemplatesPage() {
         loading={isDeleting}
       />
     </Box>
-  )
+  );
 }
 
-export default TemplatesPage
+export default TemplatesPage;

@@ -241,16 +241,39 @@ const filtered = useMemo(() => {
         )}
 
         <Stack
-          direction="row"
+          direction={{ xs: "column", sm: "row" }}
           spacing={1.5}
-          sx={{ alignItems: "center", ml: compact ? 0 : "auto" }}
+          sx={{
+            width: { xs: "100%", sm: "auto" },
+            alignItems: { xs: "stretch", sm: "center" },
+            ml: compact ? 0 : { xs: 0, sm: "auto" },
+          }}
         >
-          <SearchBar value={search} onChange={setSearch} />
+          <Box sx={{ width: { xs: "100%", sm: 280 } }}>
+            <SearchBar value={search} onChange={setSearch} />
+          </Box>
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<RefreshIcon />}
+            onClick={() => void fetchAssets()}
+            disabled={isLoading}
+            sx={{
+              display: { xs: "inline-flex", sm: "none" },
+              width: "100%",
+            }}
+          >
+            Actualizar lista
+          </Button>
           <Tooltip title="Actualizar lista">
             <IconButton
               size="small"
               onClick={() => void fetchAssets()}
               disabled={isLoading}
+              sx={{
+                display: { xs: "none", sm: "inline-flex" },
+                alignSelf: { xs: "flex-end", sm: "center" },
+              }}
             >
               <RefreshIcon fontSize="small" />
             </IconButton>
@@ -260,7 +283,7 @@ const filtered = useMemo(() => {
             size="small"
             startIcon={<AddIcon />}
             onClick={openAdd}
-            sx={{ whiteSpace: "nowrap" }}
+            sx={{ whiteSpace: "nowrap", width: { xs: "100%", sm: "auto" } }}
           >
             Nuevo asset
           </Button>
@@ -283,7 +306,7 @@ const filtered = useMemo(() => {
         <TableContainer
           component={Card}
           variant="outlined"
-          sx={{ borderRadius: 2 }}
+          sx={{ borderRadius: 2, overflowX: "auto" }}
         >
           <Table sx={{ tableLayout: "fixed", minWidth: 880 }}>
                 <TableHead sx={{ bgcolor: "action.hover" }}>
@@ -383,7 +406,7 @@ const filtered = useMemo(() => {
                     <Stack
                       direction="row"
                       spacing={0.5}
-                      sx={{ justifyContent: "flex-end" }}
+                      sx={{ justifyContent: "flex-end", flexWrap: "wrap" }}
                     >
                       <Tooltip title="Editar">
                         <IconButton

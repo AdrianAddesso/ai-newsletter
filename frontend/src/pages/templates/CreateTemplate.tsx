@@ -55,10 +55,11 @@ export function CreateTemplate() {
           bgcolor: "white",
           borderBottom: "1px solid",
           borderColor: "divider",
-          px: 3,
+          px: { xs: 2, md: 3 },
           py: 1.5,
           display: "flex",
-          alignItems: "center",
+          alignItems: { xs: "flex-start", sm: "center" },
+          flexWrap: "wrap",
           gap: 2,
         }}
       >
@@ -77,21 +78,24 @@ export function CreateTemplate() {
       <Box
         sx={{
           display: "flex",
+          flexDirection: { xs: "column", md: "row" },
           gap: 2,
           p: 2,
-          height: "calc(100vh - 64px - 65px)",
+          height: { xs: "auto", md: "calc(100vh - 64px - 65px)" },
         }}
       >
         <Paper
           elevation={0}
           sx={{
             flex: 2,
+            order: { xs: 2, md: 1 },
             border: "1px solid",
             borderColor: "divider",
             borderRadius: 2,
             display: "flex",
             flexDirection: "column",
             overflow: "hidden",
+            minHeight: { xs: 420, md: 0 },
           }}
         >
           <Box
@@ -118,7 +122,7 @@ export function CreateTemplate() {
               {isSkeletonView ? "Diseño de Estructura" : "Edición de Contenido"}
             </Typography>
           </Box>
-          <Box sx={{ flex: 1, overflow: "auto", p: 4, bgcolor: "#E5E5E5" }}>
+          <Box sx={{ flex: 1, overflow: "auto", p: { xs: 2, md: 4 }, bgcolor: "#E5E5E5" }}>
             <Template />
           </Box>
         </Paper>
@@ -126,12 +130,14 @@ export function CreateTemplate() {
           elevation={0}
           sx={{
             flex: 1,
+            order: { xs: 1, md: 2 },
             border: "1px solid",
             borderColor: "divider",
             borderRadius: 2,
             display: "flex",
             flexDirection: "column",
             overflow: "hidden",
+            minHeight: { xs: 0, md: 0 },
           }}
         >
           <Box sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
