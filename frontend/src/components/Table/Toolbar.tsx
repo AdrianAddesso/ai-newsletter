@@ -1,26 +1,21 @@
 import {
   Box,
   Button,
-  InputAdornment,
-  Paper,
   Stack,
-  TextField,
   ToggleButton,
   ToggleButtonGroup,
   Typography,
-} from '@mui/material'
-import { useNavigate } from 'react-router'
-import SearchIcon from '@mui/icons-material/Search'
-import theme from '../../styles/appMuiTheme'
+} from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
+import { useNavigate } from "react-router";
+import SearchBar from "../SearchBar";
 
 interface ToolbarProps {
-  canCreateNewsletter?: boolean
-  search: string
-  onSearchChange: (value: string) => void
-
-  filter: 'ALL' | 'PENDING'
-  onFilterChange: (value: 'ALL' | 'PENDING') => void
+  canCreateNewsletter?: boolean;
+  search: string;
+  onSearchChange: (value: string) => void;
+  filter: "ALL" | "PENDING";
+  onFilterChange: (value: "ALL" | "PENDING") => void;
 }
 
 export function Toolbar({
@@ -30,98 +25,84 @@ export function Toolbar({
   filter,
   onFilterChange,
 }: ToolbarProps) {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   const route = () => {
-    navigate('/templates/biblioteca')
-  }
+    navigate("/templates/biblioteca");
+  };
 
   return (
-    <Paper
-      elevation={0}
+    <Stack
       sx={{
-        border: "1px solid",
-        borderColor: "divider",
-        p: 2,
+        display: "flex",
+        flexDirection: {
+          xs: "column",
+          md: "row",
+        },
+        gap: 2,
+        justifyContent: "space-between",
+        alignItems: {
+          xs: "flex-start",
+          md: "center",
+        },
       }}
     >
-      <Stack
-        direction={{ xs: "column", md: "row" }}
-        spacing={2}
+      <Stack spacing={1}>
+        <Typography variant="h2">Newsletters</Typography>
+        <Typography variant="body1" color="text.secondary">
+          Gestioná tus newsletters y seguí su estado de revisión.
+        </Typography>
+      </Stack>
+
+      <Box
         sx={{
+          width: { xs: "100%", md: "auto" },
+          display: "flex",
+          flexDirection: { xs: "column", md: "row" },
+          gap: 2,
           alignItems: { xs: "stretch", md: "center" },
-          justifyContent: "space-between",
         }}
       >
-        <Box>
-          <Typography variant="h4">Newsletters</Typography>
-        </Box>
-
-        <Stack
-          direction={{ xs: "column", sm: "row" }}
-          spacing={1.5}
+        <ToggleButtonGroup
+          exclusive
+          size="small"
+          value={filter}
+          onChange={(_, value) => {
+            if (value !== null) {
+              onFilterChange(value);
+            }
+          }}
           sx={{
-            alignItems: { xs: "stretch", sm: "center" },
             width: { xs: "100%", md: "auto" },
+            "& .MuiToggleButton-root": {
+              flex: { xs: 1, md: "initial" },
+            },
           }}
         >
-          {/*TOGGLE */}
-          <ToggleButtonGroup
-            exclusive
-            size="small"
-            value={filter}
-            onChange={(_, value) => {
-              if (value !== null) {
-                onFilterChange(value);
-              }
-            }}
-            sx={{
-              width: { xs: "100%", sm: "auto" },
-              "& .MuiToggleButton-root": {
-                flex: { xs: 1, sm: "initial" },
-              },
-            }}
-          >
-            <ToggleButton value="ALL">Todos</ToggleButton>
-            <ToggleButton value="PENDING">Pendientes</ToggleButton>
-          </ToggleButtonGroup>
-          {/*BUSCADOR */}
-          <TextField
-            size="small"
-            placeholder="Buscar"
-            value={search}
-            onChange={(e) => onSearchChange(e.target.value)}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon
-                      sx={{
-                        fontSize: 20,
-                        color: theme.palette.error.main,
-                      }}
-                    />
-                  </InputAdornment>
-                ),
-              },
-            }}
-            sx={{ minWidth: { xs: "100%", sm: 220 }, width: { xs: "100%", sm: "auto" } }}
-          />
+          <ToggleButton value="ALL">Todos</ToggleButton>
+          <ToggleButton value="PENDING">Pendientes</ToggleButton>
+        </ToggleButtonGroup>
 
+        <Box sx={{ display:"flex", flexDirection: { xs: "column", md: "row" }, width: "100%", gap:2}}>
+          <SearchBar
+            value={search}
+            onChange={onSearchChange}
+            placeholder="Buscar newsletter"
+          />
           {canCreateNewsletter && (
             <Button
               variant="contained"
               startIcon={<AddIcon />}
-              onClick={route} // Uses your existing route function
-              sx={{ whiteSpace: "nowrap", width: { xs: "100%", sm: "auto" } }}
+              onClick={route}
+              sx={{ whiteSpace: "nowrap", width: { xs: "100%", md: "auto" } }}
             >
               Nuevo Newsletter
             </Button>
           )}
-        </Stack>
-      </Stack>
-    </Paper>
+        </Box>
+      </Box>
+    </Stack>
   );
 }
 
-export default Toolbar
+export default Toolbar;
