@@ -34,12 +34,12 @@ import {
   type PromptCommandResponseDto,
   type UpdatePromptCommandDto,
 } from './dto/prompt-commands.dto';
-import { MockAuthGuard } from '../modules/auth/guards/mockup.guard';
+import { JwtGuard } from '../auth/guards/jwt.guard';
 import { Resource } from '../modules/auth/enum/resources';
 import { ZodValidationPipe } from '../common/zod/zod-validation.pipe';
 
 @Controller(Resource.AI)
-@UseGuards(MockAuthGuard)
+@UseGuards(JwtGuard)
 export class AiController {
     constructor(private readonly aiService: AiService) {}
 

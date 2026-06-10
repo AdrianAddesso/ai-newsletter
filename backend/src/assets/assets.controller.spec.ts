@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException } from '@nestjs/common';
 import { asset_type } from '@prisma/client';
-import { MockAuthGuard } from '../modules/auth/guards/mockup.guard';
+import { JwtGuard } from '../auth/guards/jwt.guard';
 import { PermissionsGuard } from '../modules/auth/guards/permissions.guard';
 import { AssetsController } from './assets.controller';
 import { AssetsService } from './assets.service';
@@ -25,7 +25,7 @@ describe('AssetsController', () => {
         },
       ],
     })
-      .overrideGuard(MockAuthGuard)
+      .overrideGuard(JwtGuard)
       .useValue({ canActivate: jest.fn().mockReturnValue(true) })
       .overrideGuard(PermissionsGuard)
       .useValue({ canActivate: jest.fn().mockReturnValue(true) })

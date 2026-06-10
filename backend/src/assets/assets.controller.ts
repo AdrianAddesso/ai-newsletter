@@ -18,7 +18,7 @@ import { asset_type } from '@prisma/client';
 import { RequirePermission } from '../modules/auth/decorators/permissions.decorator';
 import { Action } from '../modules/auth/enum/actions';
 import { Resource } from '../modules/auth/enum/resources';
-import { MockAuthGuard } from '../modules/auth/guards/mockup.guard';
+import { JwtGuard } from '../auth/guards/jwt.guard';
 import { PermissionsGuard } from '../modules/auth/guards/permissions.guard';
 import { AssetsService } from './assets.service';
 import type {
@@ -39,7 +39,7 @@ const allowedAssetMimeTypes = new Set([
 ]);
 
 @Controller(Resource.ASSETS)
-@UseGuards(MockAuthGuard, PermissionsGuard)
+@UseGuards(JwtGuard, PermissionsGuard)
 export class AssetsController {
   constructor(private readonly assetsService: AssetsService) {}
 

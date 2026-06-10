@@ -5,9 +5,9 @@ import { Role } from '../enum/roles';
 
 type User = {
   id: string,
-  permissions: Action[],
+  permissions?: Action[],
   role: Role,
-  area_id: string
+  area_id?: string
 }
 
 type Newsletter = {
@@ -57,10 +57,6 @@ export class AuthorizationService {
 
   private isOwner(user: User, resource: Newsletter): boolean {
     return user.id === resource.created_by_user_id;
-  }
-
-  private isSameArea(user: User, resource: Newsletter): boolean {
-    return user.area_id === resource.area_id;
   }
 
   private isSuperAdmin(user: User): boolean {
