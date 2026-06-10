@@ -22,15 +22,20 @@ export function NewsletterEditorLayout({
     >
       <Box
         sx={{
+          order: { xs: 2, lg: 1 },
           p: 3,
           borderRight: {
             lg: '1px solid',
           },
+          borderTop: {
+            xs: '1px solid',
+            lg: 'none',
+          },
           borderColor: 'divider',
           minWidth: 0,
-          minHeight: 'calc(100vh - 48px)',
-          maxHeight: 'calc(100vh - 48px)',
-          overflowY: 'auto',
+          minHeight: { xs: 'auto', lg: 'calc(100vh - 48px)' },
+          maxHeight: { xs: 'none', lg: 'calc(100vh - 48px)' },
+          overflowY: { xs: 'visible', lg: 'auto' },
         }}
       > <Box sx={{ width: 'fit-content', mx: 'auto' }}>
           {left}
@@ -41,6 +46,7 @@ export function NewsletterEditorLayout({
         sx={{
           p: 3,
           minWidth: 0,
+          order: { xs: 1, lg: 2 },
         }}
       >
         {right}

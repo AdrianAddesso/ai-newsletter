@@ -5,3 +5,7 @@ export interface AuthUser {
   role: user_role
   area: string
 }
+
+export interface PrismaEntityModel {
+  findUnique: (args: { where: { id: string } }) => Promise<unknown>
+}

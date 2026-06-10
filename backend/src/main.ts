@@ -4,6 +4,7 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { createServer } from 'node:net';
 import { json, urlencoded } from 'express';
+import cookieParser from 'cookie-parser';
 
 const allowedOrigins = new Set(
   (process.env.CORS_ALLOWED_ORIGINS ?? '')
@@ -46,6 +47,8 @@ async function bootstrap() {
     },
     credentials: true,
   });
+
+  app.use(cookieParser());
 
   app.useGlobalPipes(
     new ValidationPipe({

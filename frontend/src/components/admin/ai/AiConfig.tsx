@@ -102,9 +102,9 @@
             <TableContainer
             component={Card}
             variant="outlined"
-            sx={{ borderRadius: 2 }}
+            sx={{ borderRadius: 2, overflowX: "auto" }}
             >
-            <Table>
+            <Table sx={{ minWidth: 760 }}>
                 <TableHead sx={{ bgcolor: "action.hover" }}>
                 <TableRow>
                     <TableCell>Nombre</TableCell>
@@ -140,7 +140,7 @@
                         <Stack
                         direction="row"
                         spacing={0.5}
-                        sx={{ alignItems: "center" }}
+                        sx={{ alignItems: "center", justifyContent: "flex-end", flexWrap: "wrap" }}
                         >
                         <Tooltip title="Editar">
                             <IconButton
@@ -286,8 +286,34 @@
             </Typography>
           </Stack>
 
-          <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
-            <SearchBar value={search} onChange={setSearch} />
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={1}
+            sx={{
+              width: { xs: "100%", sm: "auto" },
+              alignItems: { xs: "stretch", sm: "center" },
+            }}
+          >
+            <Box sx={{ width: { xs: "100%", sm: 280 } }}>
+              <SearchBar value={search} onChange={setSearch} />
+            </Box>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<RefreshIcon />}
+              onClick={() => {
+                setLoading(true);
+                setError(null);
+                void fetchCommands();
+              }}
+              disabled={loading}
+              sx={{
+                display: { xs: "inline-flex", sm: "none" },
+                width: "100%",
+              }}
+            >
+              Actualizar lista
+            </Button>
             <Tooltip title="Actualizar lista">
               <IconButton
                 size="small"
@@ -297,6 +323,10 @@
                   void fetchCommands();
                 }}
                 disabled={loading}
+                sx={{
+                  display: { xs: "none", sm: "inline-flex" },
+                  alignSelf: { xs: "flex-end", sm: "center" },
+                }}
               >
                 <RefreshIcon fontSize="small" />
               </IconButton>
@@ -309,7 +339,7 @@
                 setEditTarget(null);
                 setModalOpen(true);
               }}
-              sx={{ whiteSpace: "nowrap" }}
+              sx={{ whiteSpace: "nowrap", width: { xs: "100%", sm: "auto" } }}
             >
               Nueva instrucción
             </Button>
@@ -334,9 +364,9 @@
           <TableContainer
             component={Card}
             variant="outlined"
-            sx={{ borderRadius: 2 }}
+            sx={{ borderRadius: 2, overflowX: "auto" }}
           >
-            <Table>
+            <Table sx={{ minWidth: 860 }}>
                 <TableHead sx={{ bgcolor: "action.hover" }}>
                     <TableRow>
                     <TableCell>
@@ -401,7 +431,7 @@
                       <Stack
                         direction="row"
                         spacing={0.5}
-                        sx={{ alignItems: "center" }}
+                        sx={{ alignItems: "center", justifyContent: "flex-end", flexWrap: "wrap" }}
                       >
                         <Tooltip title="Editar">
                           <IconButton

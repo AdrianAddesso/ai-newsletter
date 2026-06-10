@@ -9,13 +9,13 @@ import {
   Query,
 } from '@nestjs/common'
 import { NotificationsService } from './notifications.service'
-import { MockAuthGuard } from '../modules/auth/guards/mockup.guard'
+import { JwtGuard } from '../auth/guards/jwt.guard';
 import { GetUser } from '../modules/auth/decorators/user.decorator'
 import type { NotificationDto } from './notifications.types'
 import type { AuthUser } from '../modules/auth/types/auth-user.type'
 
 @Controller('notifications')
-@UseGuards(MockAuthGuard)
+@UseGuards(JwtGuard)
 export class NotificationsController {
   constructor(private readonly notificationsService: NotificationsService) {}
 

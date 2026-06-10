@@ -8,4 +8,5 @@ export const apiBaseUrl = (
 
 export function configureAxiosBaseUrl() {
   axios.defaults.baseURL = apiBaseUrl
+  axios.defaults.withCredentials = true
 }

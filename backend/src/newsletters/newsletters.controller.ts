@@ -49,7 +49,7 @@ import type {
   UpdateNewsletterStatusBody,
   ExportNewsletterEmlBody,
 } from './newsletters.schemas';
-import { MockAuthGuard } from '../modules/auth/guards/mockup.guard';
+import { JwtGuard } from '../auth/guards/jwt.guard';
 import { PermissionsGuard } from '../modules/auth/guards/permissions.guard';
 import { RequirePermission } from '../modules/auth/decorators/permissions.decorator';
 import { Action } from '../modules/auth/enum/actions';
@@ -71,7 +71,7 @@ type AuthenticatedRequest = {
 };
 
 @Controller(Resource.NEWSLETTERS)
-@UseGuards(MockAuthGuard, PermissionsGuard)
+@UseGuards(JwtGuard, PermissionsGuard)
 export class NewslettersController {
   constructor(
     private readonly newslettersService: NewsLettersService,

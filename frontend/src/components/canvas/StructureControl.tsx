@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   Box,
   Button,
@@ -12,18 +12,35 @@ import {
   FormControl,
   InputLabel,
   Select,
-  MenuItem
-} from '@mui/material';
-import { useTemplateStore } from '../../stores/templates.store';
-import AddIcon from '@mui/icons-material/Add';
-import RemoveIcon from '@mui/icons-material/Remove';
-import DeleteIcon from '@mui/icons-material/Delete';
-import { CropLandscape, CropPortrait } from '@mui/icons-material';
-import { AreaName, AreaNameLabel } from '../../../../packages/shared/src/enums/area-name.enum';
-import { enumToOptions } from '../../../../packages/shared/src/utils/enum-to-options';
+  MenuItem,
+} from "@mui/material";
+import { useTemplateStore } from "../../stores/templates.store";
+import AddIcon from "@mui/icons-material/Add";
+import RemoveIcon from "@mui/icons-material/Remove";
+import DeleteIcon from "@mui/icons-material/Delete";
+import { CropLandscape, CropPortrait } from "@mui/icons-material";
+import {
+  AreaName,
+  AreaNameLabel,
+} from "../../../../packages/shared/src/enums/area-name.enum";
+import { enumToOptions } from "../../../../packages/shared/src/utils/enum-to-options";
 
-export const StructureControl: React.FC<{ onConfirm: () => void }> = ({ onConfirm }) => {
-  const { layoutMode, setMode, rows, addRow, removeRow, addColumn, removeColumn, setTemplateDetails, name, description, promptBase, area } = useTemplateStore();
+export const StructureControl: React.FC<{ onConfirm: () => void }> = ({
+  onConfirm,
+}) => {
+  const {
+    layoutMode,
+    setMode,
+    rows,
+    addRow,
+    removeRow,
+    addColumn,
+    removeColumn,
+    setTemplateDetails,
+    name,
+    description,
+    area,
+  } = useTemplateStore();
 
   return (
     <Stack spacing={3}>
@@ -67,25 +84,27 @@ export const StructureControl: React.FC<{ onConfirm: () => void }> = ({ onConfir
             onChange={(e) => setTemplateDetails(e.target.value)}
           />
           <TextField
-                label="Descripción"
-                fullWidth
-                multiline
-                rows={4} // Adjust this number for your desired height
-                required
-                error={description.length > 0 &&(description.length < 5 || description.length > 200)}
-                helperText={description.length > 0 &&(description.length < 5 || description.length > 200)
-                    ? "Debe tener entre 5 y 200 caracteres": ""
-                }
-                value={description}
-                onChange={(e) =>
-                setTemplateDetails(undefined, e.target.value, undefined)
-                }
-          />
-          <FormControl
-            size="small"
+            label="Descripción"
             fullWidth
+            multiline
+            rows={4} // Adjust this number for your desired height
             required
-          >
+            error={
+              description.length > 0 &&
+              (description.length < 5 || description.length > 200)
+            }
+            helperText={
+              description.length > 0 &&
+              (description.length < 5 || description.length > 200)
+                ? "Debe tener entre 5 y 200 caracteres"
+                : ""
+            }
+            value={description}
+            onChange={(e) =>
+              setTemplateDetails(undefined, e.target.value, undefined)
+            }
+          />
+          <FormControl size="small" fullWidth required>
             <InputLabel>Area</InputLabel>
             <Select
               value={area}
@@ -178,7 +197,7 @@ export const StructureControl: React.FC<{ onConfirm: () => void }> = ({ onConfir
           fullWidth
           startIcon={<AddIcon />}
           onClick={addRow}
-          sx={{ maxWidth: "50%", alignSelf: "center", marginLeft: "25%" }}
+          sx={{ alignSelf: "center" }}
         >
           Añadir Fila
         </Button>
@@ -197,7 +216,6 @@ export const StructureControl: React.FC<{ onConfirm: () => void }> = ({ onConfir
           area.length === 0
         }
         sx={{
-          maxWidth: "50%",
           mt: 2,
           bgcolor: "brand.red",
           "&:hover": { bgcolor: "#e04040" },
