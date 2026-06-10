@@ -39,7 +39,7 @@ import type {
 } from './brand-kit.schemas';
 import { RequirePermission } from '../modules/auth/decorators/permissions.decorator';
 import { Action } from '../modules/auth/enum/actions';
-import { MockAuthGuard } from '../modules/auth/guards/mockup.guard';
+import { JwtGuard } from '../auth/guards/jwt.guard';
 import { PermissionsGuard } from '../modules/auth/guards/permissions.guard';
 import { Resource } from '../modules/auth/enum/resources';
 import { FontsService } from '../fonts/fonts.service';
@@ -58,7 +58,7 @@ import type {
 const maxUploadFiles = 5;
 
 @Controller('brand-kit')
-@UseGuards(MockAuthGuard, PermissionsGuard)
+@UseGuards(JwtGuard, PermissionsGuard)
 export class BrandKitController {
   constructor(
     private readonly brandKitService: BrandKitService,

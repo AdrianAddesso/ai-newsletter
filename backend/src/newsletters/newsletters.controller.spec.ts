@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NewslettersController } from './newsletters.controller';
 import { NewsLettersService } from './newsletters.service';
-import { MockAuthGuard } from '../modules/auth/guards/mockup.guard';
+import { JwtGuard } from '../auth/guards/jwt.guard';
 import { PermissionsGuard } from '../modules/auth/guards/permissions.guard';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthorizationService } from '../modules/auth/services/authorization.service';
@@ -58,7 +58,7 @@ describe('NewslettersController', () => {
         { provide: PermissionCacheService, useValue: permissionCacheService },
       ],
     })
-      .overrideGuard(MockAuthGuard)
+      .overrideGuard(JwtGuard)
       .useValue({ canActivate: jest.fn(() => true) })
       .overrideGuard(PermissionsGuard)
       .useValue({ canActivate: jest.fn(() => true) })
