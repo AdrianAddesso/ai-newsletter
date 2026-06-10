@@ -64,11 +64,11 @@ export function useNewsletterEditor() {
       label: 'Exportar PDF',
       format:'PDF' as ExportFormat,
     },
-    //{
-    //  id: 'eml',
-    //  label: 'Exportar EML',
-    //  format: 'EML',
-    //},
+    {
+      id: 'eml',
+      label: 'Exportar EML',
+      format: 'EML',
+    },
   ]
 
   useEffect(() => {
@@ -236,32 +236,93 @@ export function useNewsletterEditor() {
     return style
   }
 
-    const getExportLinkArea = (
-    exportRoot: HTMLElement,
-  ): {
-    href: string
-    x: number
-    y: number
-    width: number
-    height: number
-  } | null => {
-    const link = exportRoot.querySelector<HTMLAnchorElement>('a[href]')
+  const getExportLinkAreas = (
+  exportRoot: HTMLElement,
+): Array<{
+  href: string
+  x: number
+  y: number
+  width: number
+  height: number
+}> => {
+  const rootRect = exportRoot.getBoundingClientRect()
 
-    if (!link?.href) {
-      return null
-    }
-
-    const rootRect = exportRoot.getBoundingClientRect()
-    const linkRect = link.getBoundingClientRect()
+  const createLinkArea = (element: HTMLElement, href: string) => {
+    const linkRect = element.getBoundingClientRect()
 
     return {
-      href: link.href,
+      href,
       x: linkRect.left - rootRect.left,
       y: linkRect.top - rootRect.top,
       width: linkRect.width,
       height: linkRect.height,
     }
   }
+
+  const anchorLinkAreas = Array.from(
+    exportRoot.querySelectorAll<HTMLAnchorElement>('a[href]'),
+  )
+    .filter((link) => Boolean(link.href))
+    .map((link) => createLinkArea(link, link.href))
+
+  const blockLinkAreas = Array.from(
+    exportRoot.querySelectorAll<HTMLElement>('[data-newsletter-block-href]'),
+  )
+    .map((blockElement) => ({
+      element: blockElement,
+      href: blockElement.dataset.newsletterBlockHref?.trim() ?? '',
+    }))
+    .filter(({ href }) => Boolean(href))
+    .map(({ element, href }) => createLinkArea(element, href))
+
+  return [...anchorLinkAreas, ...blockLinkAreas]
+}
+
+  const baseExportBlockTypes = new Set(['ctaFull', 'ctaAlternative', 'empty'])
+
+  const shouldSnapshotBlock = (blockType: string): boolean =>
+    !baseExportBlockTypes.has(blockType)
+
+  const buildNewsletterBlockSnapshots = async (
+  exportRoot: HTMLElement,
+  domToImage: typeof import('dom-to-image-more').default,
+): Promise<Array<{ blockId: string; dataUrl: string; width: number; height: number }>> => {
+  const blockElements = Array.from(
+    exportRoot.querySelectorAll<HTMLElement>('[data-newsletter-block-id]'),
+  )
+
+  const snapshots: Array<{ blockId: string; dataUrl: string; width: number; height: number }> = []
+
+  for (const blockElement of blockElements) {
+    const blockId = blockElement.dataset.newsletterBlockId
+    const blockType = blockElement.dataset.newsletterBlockType ?? ''
+
+    if (!blockId || !shouldSnapshotBlock(blockType)) {
+      continue
+    }
+
+    const { width, height } = blockElement.getBoundingClientRect()
+
+    if (width <= 0 || height <= 0) {
+      continue
+    }
+
+    const dataUrl = await domToImage.toPng(blockElement, {
+      width,
+      height,
+      bgcolor: '#ffffff',
+    })
+
+    snapshots.push({
+      blockId,
+      dataUrl,
+      width,
+      height,
+    })
+  }
+
+  return snapshots
+}
 
   const downloadBlob = (blob: Blob, filename: string): void => {
     const url = URL.createObjectURL(blob)
@@ -303,7 +364,7 @@ export function useNewsletterEditor() {
 
       const scale = Math.max(2, window.devicePixelRatio || 1)
       const { width, height } = exportRoot.getBoundingClientRect()
-      const exportLinkArea = getExportLinkArea(exportRoot)
+      const exportLinkAreas = getExportLinkAreas(exportRoot)
 
       switch (format) {
         case 'JPG': {
@@ -337,22 +398,27 @@ export function useNewsletterEditor() {
           })
           pdf.addImage(dataUrl, 'PNG', 0, 0, width, height)
 
-          if (exportLinkArea) {
+          exportLinkAreas.forEach((exportLinkArea) => {
             pdf.link(
-              exportLinkArea.x,
-              exportLinkArea.y,
-              exportLinkArea.width,
-              exportLinkArea.height,
+            exportLinkArea.x,
+            exportLinkArea.y,
+            exportLinkArea.width,
+            exportLinkArea.height,
               { url: exportLinkArea.href },
             )
-          }
+          })
 
           pdf.save('newsletter.pdf')
           break
         }
 
         case 'EML': {
-          const blob = await exportNewsletterEml(newsletter.id)
+          const snapshots = await buildNewsletterBlockSnapshots(
+            exportRoot,
+            domToImage,
+          )
+
+          const blob = await exportNewsletterEml(newsletter.id, snapshots)
 
           downloadBlob(blob, 'newsletter.eml')
           break          

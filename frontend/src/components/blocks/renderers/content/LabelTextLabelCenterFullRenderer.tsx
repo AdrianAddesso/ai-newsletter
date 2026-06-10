@@ -1,19 +1,27 @@
 import { Card, Typography, Chip, Box } from "@mui/material";
 import type { BlockInstance } from "@shared/types/block.types";
+import placeholderImageUrl from "../../../../assets/placeholders/PlaceholderImage.svg";
 import {
   parseContent,
   resolveContentTypographySx,
 } from "../../../../utils/blockContent";
+import {
+  buildBackgroundImageSx,
+  resolveRenderableBackgroundImage,
+} from "../utils/backgroundImage";
 
 interface Props {
   block: BlockInstance;
   editMode?: boolean;
+  backgroundImage?: string | null;
   topLabelContent?: string | null;
   bottomLabelContent?: string | null;
 }
 
 export function LabelTextLabelCenterFullRenderer({
   block,
+  editMode = false,
+  backgroundImage,
   topLabelContent = null,
   bottomLabelContent = null,
 }: Props) {
@@ -23,10 +31,18 @@ export function LabelTextLabelCenterFullRenderer({
     bodyText = "Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat.",
     bottomLabel = bottomLabelContent ?? "Consectetur adipiscing elit",
     href = "",
+    bgColor,
   } = values;
   const topLabelTypographySx = resolveContentTypographySx(values, "topLabel");
   const bodyTypographySx = resolveContentTypographySx(values, "bodyText");
   const bottomLabelTypographySx = resolveContentTypographySx(values, "bottomLabel");
+  const resolvedBackgroundImage = resolveRenderableBackgroundImage(
+    backgroundImage,
+    editMode,
+    placeholderImageUrl,
+  );
+  const bgSx = buildBackgroundImageSx(resolvedBackgroundImage);
+  void href;
 
   return (
     <Card sx={{
@@ -41,30 +57,51 @@ export function LabelTextLabelCenterFullRenderer({
     transform: "translateY(-1.5px)",
   },
     }}>
-      <Box sx={{ width: "100%", flexGrow: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 1.5, py: 2 }}>
+      <Box sx={{ 
+        width: "100%", 
+        flexGrow: 1, 
+        display: "flex", 
+        flexDirection: "column", 
+        alignItems: "center", 
+        justifyContent: "center", 
+        gap: 1.5, 
+        py: 2,
+        backgroundColor: bgColor,
+        ...bgSx,
+        }}>
         <Chip
           label={topLabel}
           sx={{
-            maxWidth: "90%",
+            maxWidth: "none",
+            width: "fit-content",
+            height: "auto",
             "& .MuiChip-label": {
               whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
+              overflow: "visible",
+              textOverflow: "unset",
+              display: "block",
               ...topLabelTypographySx,
             },
           }}
         />
-        <Typography variant="body2" color="text.secondary" sx={{ width: "90%", textAlign: "center", ...bodyTypographySx }}>
+        <Typography 
+          variant="body2" 
+          color="text.secondary" 
+          sx={{ width: "90%", textAlign: "center", ...bodyTypographySx }}
+          >
           {bodyText}
         </Typography>
         <Chip
           label={bottomLabel}
           sx={{
-            maxWidth: "90%",
+            maxWidth: "none",
+            width: "fit-content",
+            height: "auto",
             "& .MuiChip-label": {
               whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
+              overflow: "visible",
+              textOverflow: "unset",
+              display: "block",
               ...bottomLabelTypographySx,
             },
           }}

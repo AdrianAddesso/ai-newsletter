@@ -71,17 +71,18 @@ export function TextLabelCenterBackgroundFullRenderer({
         <Typography
           variant="body2"
           color="text.secondary"
-          sx={{ width: "90%", textAlign: "left", ...textTypographySx }}
+          sx={{ width: "90%", textAlign: "center", ...textTypographySx }}
         >
           {text}
         </Typography>
         <Chip
           label={label}
           sx={{
-            maxWidth: "90%",
+            maxWidth: "none",
+            width: "fit-content",
             height: 'auto',
             "& .MuiChip-label": {
-              whiteSpace: "normal",
+              whiteSpace: "nowrap",
               overflow: "visible",
               textOverflow: "unset",
               display: 'block',
