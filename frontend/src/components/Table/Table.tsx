@@ -4,10 +4,6 @@ import {
   Button,
   Chip,
   CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   IconButton,
   Paper,
   Stack,
@@ -17,7 +13,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  TextField,
   Typography,
 } from '@mui/material';
 
@@ -34,7 +29,8 @@ import { ModalDelete } from '../ModalDelete';
 import { TableSortLabel } from '@mui/material';
 import Tooltip from "@mui/material/Tooltip";
 import { useNavigate } from 'react-router';
-import { deleteNewsletter, getAllNewsletters, duplicateNewsletter } from '../../api/newsletters';
+import { deleteNewsletter, getAllNewsletters } from '../../api/newsletters';
+import { DuplicateNewsletterDialog } from '../../pages/newsletter/components/DuplicateNewsletterDialog'
 import { NewsletterPreviewModal } from '../../pages/newsletter/viewer/NewsletterPreviewModal'
 import { useAuth } from '../../contexts/AuthContext'
 
@@ -91,7 +87,7 @@ export function NewslettersTable({ search, filter, userRole, }: Props) {
   const [previewNewsletterId, setPreviewNewsletterId] = useState<string | null>(null)
   const [duplicatingId, setDuplicatingId] = useState<string | null>(null)
   const [showDuplicateDialog, setShowDuplicateDialog] = useState(false)
-  const [duplicateTitle, setDuplicateTitle] = useState('')
+  const [duplicateDialogTitle, setDuplicateDialogTitle] = useState('')
   const [duplicateNewsletterForDialog, setDuplicateNewsletterForDialog] = useState<string | null>(null)
   const { user } = useAuth()
 
@@ -134,29 +130,27 @@ export function NewslettersTable({ search, filter, userRole, }: Props) {
     }
   }
 
-  const handleDuplicate = async (id: string): Promise<void> => {
-    try {
-      setDuplicatingId(id)
-      const newNewsletter = await duplicateNewsletter(id, duplicateTitle)
-      navigate(`/editarNewsletter/${newNewsletter.id}`)
-      setShowDuplicateDialog(false)
-      setDuplicateTitle('')
-    } catch (error) {
-      console.error('Error duplicating newsletter:', error)
-    } finally {
-      setDuplicatingId(null)
-    }
+  const handleDuplicateSuccess = (newNewsletterId: string) => {
+    setShowDuplicateDialog(false)
+    setDuplicatingId(null)
+    setDuplicateDialogTitle('')
+    setDuplicateNewsletterForDialog(null)
+    navigate(`/editarNewsletter/${newNewsletterId}`)
+  }
+
+  const handleDuplicateProcessingChange = (isProcessing: boolean) => {
+    setDuplicatingId(isProcessing ? duplicateNewsletterForDialog : null)
   }
 
   const handleOpenDuplicateDialog = (id: string, title: string) => {
     setDuplicateNewsletterForDialog(id)
-    setDuplicateTitle(title)
+    setDuplicateDialogTitle(title)
     setShowDuplicateDialog(true)
   }
 
   const handleCloseDuplicateDialog = () => {
     setShowDuplicateDialog(false)
-    setDuplicateTitle('')
+    setDuplicateDialogTitle('')
     setDuplicateNewsletterForDialog(null)
   }
 
@@ -450,58 +444,15 @@ export function NewslettersTable({ search, filter, userRole, }: Props) {
         }}
       />
 
-      <Dialog
+      <DuplicateNewsletterDialog
         open={showDuplicateDialog}
+        title={duplicateDialogTitle}
+        newsletterId={duplicateNewsletterForDialog}
         onClose={handleCloseDuplicateDialog}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>Crear nueva edición</DialogTitle>
-            <DialogContent sx={{ px: 4 }}>
-            <Box sx={{ pt: 1 }}>
-                <TextField
-                fullWidth
-                label="Nombre del newsletter"
-                value={duplicateTitle}
-                onChange={(e) => setDuplicateTitle(e.target.value)}
-                placeholder="Ingresa el nombre para la nueva edición"
-                disabled={duplicatingId !== null}
-                autoFocus
-                margin="dense"
-                slotProps={{
-                    inputLabel: {
-                    shrink: true,
-                    },
-                }}
-                />
-            </Box>
-            </DialogContent>
-            <DialogActions>
-            <Button
-                onClick={handleCloseDuplicateDialog}
-                disabled={duplicatingId !== null}
-            >
-                Cancelar
-            </Button>
-            <Button
-                onClick={() =>
-                duplicateNewsletterForDialog &&
-                void handleDuplicate(duplicateNewsletterForDialog)
-                }
-                variant="contained"
-                disabled={duplicatingId !== null || !duplicateTitle.trim()}
-            >
-                {duplicatingId !== null ? (
-                <>
-                    <CircularProgress size={20} sx={{ mr: 1 }} />
-                    Duplicando...
-                </>
-                ) : (
-                "Crear"
-                )}
-            </Button>
-            </DialogActions>
-        </Dialog>
+        onDuplicateSuccess={handleDuplicateSuccess}
+        onProcessingChange={handleDuplicateProcessingChange}
+        isProcessing={duplicatingId !== null}
+      />
     </Paper>
   );
 }

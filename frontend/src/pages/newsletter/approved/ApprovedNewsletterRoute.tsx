@@ -1,17 +1,7 @@
 import { useState } from 'react'
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Button,
-  CircularProgress,
-  Box,
-} from '@mui/material'
 import { ApprovedNewsletterPage } from './ApprovedNewsletterPage'
 import { useNewsletterEditor } from '../hooks/useNewsletterEditor'
-import { duplicateNewsletter } from '../../../api/newsletters'
+import { DuplicateNewsletterDialog } from '../components/DuplicateNewsletterDialog'
 import { useNotification } from '../../../hooks/useNotification'
 
 export function ApprovedNewsletterRoute() {
@@ -33,23 +23,19 @@ export function ApprovedNewsletterRoute() {
     setShowDialog(false)
   }
 
-  const handleConfirmDuplicate = async () => {
-    if (!newTitle.trim()) {
-      notifyError('El nombre del newsletter no puede estar vacío')
-      return
-    }
+  const handleDuplicateSuccess = (newNewsletterId: string) => {
+    success('Newsletter duplicado. Redirigiendo al editor...')
+    setIsDuplicating(false)
+    setShowDialog(false)
+    vm.navigate(`/editarNewsletter/${newNewsletterId}`)
+  }
 
-    try {
-      setIsDuplicating(true)
-      const newNewsletter = await duplicateNewsletter(newsletter.id, newTitle);
-      success('Newsletter duplicado. Redirigiendo al editor...')
-      handleCloseDialog()
-      vm.navigate(`/editarNewsletter/${newNewsletter.id}`)
-    } catch (err) {
-      notifyError('No se pudo duplicar el newsletter')
-    } finally {
-      setIsDuplicating(false)
-    }
+  const handleError = (message: string) => {
+    notifyError(message)
+  }
+
+  const handleProcessingChange = (isProcessing: boolean) => {
+    setIsDuplicating(isProcessing)
   }
 
   return (
@@ -63,52 +49,16 @@ export function ApprovedNewsletterRoute() {
         isDuplicating={isDuplicating}
       />
 
-      <Dialog
+      <DuplicateNewsletterDialog
         open={showDialog}
+        title={newTitle}
+        newsletterId={newsletter.id}
         onClose={handleCloseDialog}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle sx={{ px: 1 }}>Copiar newsletter</DialogTitle>
-        <DialogContent sx={{ px: 4 }}>
-          <Box sx={{ pt: 1 }}>
-            <TextField
-              fullWidth
-              label="Nombre de la copia"
-              value={newTitle}
-              onChange={(e) => setNewTitle(e.target.value)}
-              placeholder="Ingresa el nombre para la nueva edición"
-              disabled={isDuplicating}
-              autoFocus
-              margin="dense"
-              slotProps={{
-                inputLabel: {
-                  shrink: true,
-                },
-              }}
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog} disabled={isDuplicating}>
-            Cancelar
-          </Button>
-          <Button
-            onClick={handleConfirmDuplicate}
-            variant="contained"
-            disabled={isDuplicating || !newTitle.trim()}
-          >
-            {isDuplicating ? (
-              <>
-                <CircularProgress size={20} sx={{ mr: 1 }} />
-                Duplicando...
-              </>
-            ) : (
-              "Crear"
-            )}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        onDuplicateSuccess={handleDuplicateSuccess}
+        onError={handleError}
+        onProcessingChange={handleProcessingChange}
+        isProcessing={isDuplicating}
+      />
     </>
   );
 }
