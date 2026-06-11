@@ -713,6 +713,7 @@ export class NewsLettersService {
           .map((block) =>
             renderNewsletterEmailBlock(block, {
               cidByAssetId,
+              emailWidth,
               snapshotByBlockId,
               fallback: this.renderEmailBlock.bind(this),
             }),
