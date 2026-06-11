@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   Alert,
   Box,
@@ -221,6 +222,20 @@ const filtered = useMemo(() => {
     }
   };
 
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const mousePos = useRef({ x: 0, y: 0 });
+  const previewRef = useRef<HTMLDivElement>(null);
+
+  const handleImageMouseEnter = (url: string) => setPreviewUrl(url);
+  const handleImageMouseLeave = () => setPreviewUrl(null);
+  const handleImageMouseMove = (e: React.MouseEvent) => {
+    mousePos.current = { x: e.clientX, y: e.clientY };
+    if (previewRef.current) {
+      previewRef.current.style.left = `${e.clientX + 16}px`;
+      previewRef.current.style.top = `${e.clientY - 16}px`;
+    }
+  };
+
   return (
     <Stack spacing={3}>
       <Stack
@@ -369,11 +384,15 @@ const filtered = useMemo(() => {
                       component="img"
                       src={asset.url}
                       alt={asset.name}
+                      onMouseEnter={() => handleImageMouseEnter(asset.url)}
+                      onMouseLeave={handleImageMouseLeave}
+                      onMouseMove={handleImageMouseMove}
                       sx={{
                         maxHeight: 170,
                         maxWidth: 170,
                         objectFit: "contain",
                         display: "block",
+                        cursor: "zoom-in",
                       }}
                     />
                   </TableCell>
@@ -467,6 +486,38 @@ const filtered = useMemo(() => {
         onClose={() => setDeleteId(null)}
         onConfirm={handleDelete}
       />
+
+      {previewUrl && createPortal(
+        <Box
+          ref={previewRef}
+          sx={{
+            position: "fixed",
+            left: mousePos.current.x + 16,
+            top: mousePos.current.y - 16,
+            width: 220,
+            height: 220,
+            bgcolor: "background.paper",
+            border: "1px solid",
+            borderColor: "divider",
+            borderRadius: 2,
+            boxShadow: 6,
+            p: 1,
+            pointerEvents: "none",
+            zIndex: 9999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Box
+            component="img"
+            src={previewUrl}
+            alt="preview"
+            sx={{ width: "100%", height: "100%", objectFit: "contain" }}
+          />
+        </Box>,
+        document.body
+      )}
     </Stack>
   );
 }
