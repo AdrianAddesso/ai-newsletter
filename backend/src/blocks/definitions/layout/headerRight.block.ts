@@ -12,6 +12,7 @@ export class HeaderRightBlock extends BlockDefinition {
   readonly editFields = [
     { key: 'title', label: 'Título', type: 'text' as const, required: true },
     { key: 'subtitle', label: 'Subtítulo', type: 'text' as const },
+    { key: 'bgColor', label: 'Color de fondo', type: 'color' as const },
     { key: 'logoAsset', label: 'Logo', type: 'image-asset' as const, assetTypes: ['LOGO', 'LOCKUP'] as const },
     { key: 'fontSize', label: 'Tamaño de texto', type: 'font-size' as const },
     { key: 'typographyStyle', label: 'Estilo', type: 'font-style' as const },
