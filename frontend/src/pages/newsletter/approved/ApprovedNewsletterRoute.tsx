@@ -3,16 +3,16 @@ import { ApprovedNewsletterPage } from './ApprovedNewsletterPage'
 import { useNewsletterEditor } from '../hooks/useNewsletterEditor'
 
 export function ApprovedNewsletterRoute() {
-  const vm = useNewsletterEditor()
+  const editor = useNewsletterEditor()
 
-  if (!vm.newsletter) return null
+  if (!editor.newsletter) return null
 
   return (
     <ApprovedNewsletterPage
-      newsletter={vm.newsletter}
-      exportOptions={vm.exportOptions}
-      exportingFormat={vm.exportingFormat}
-      onExport={vm.handleExport}
+      newsletter={editor.newsletter}
+      exportOptions={editor.exportOptions}
+      exportingFormat={editor.exportingFormat}
+      onExport={editor.handleExport}
     />
   )
 }

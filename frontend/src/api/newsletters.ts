@@ -142,7 +142,6 @@ export async function approveNewsletterReview(
 ): Promise<Newsletter> {
   const response = await axios.post<Newsletter>(
     `${API_BASE}/${newsletterId}/review/approve`,
-    {},
   )
 
   return response.data

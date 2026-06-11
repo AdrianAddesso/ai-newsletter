@@ -1,12 +1,12 @@
+import { useEffect } from 'react'
 import { Alert, Box, CircularProgress } from '@mui/material'
 import { useNewsletterEditor } from './newsletter/hooks/useNewsletterEditor'
 import { ReviewNewsletterPage } from './newsletter/review/ReviewNewsletterPage'
-import { useEffect } from 'react'
 
 export function ReviewNewsletterRoute() {
-  const vm = useNewsletterEditor()
+  const editor = useNewsletterEditor()
 
-  const { newsletter, navigate } = vm
+  const { newsletter, navigate } = editor
 
   useEffect(() => {
     if (
@@ -19,7 +19,7 @@ export function ReviewNewsletterRoute() {
     }
   }, [newsletter, navigate])
 
-  if (vm.isLoading) {
+  if (editor.isLoading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
         <CircularProgress />
@@ -27,13 +27,13 @@ export function ReviewNewsletterRoute() {
     )
   }
 
-  if (vm.error) {
-    return <Alert severity="error">{vm.error}</Alert>
+  if (editor.error) {
+    return <Alert severity="error">{editor.error}</Alert>
   }
 
-  if (!vm.newsletter) {
-    return <Alert severity="warning">No se encontró el newsletter solicitado.</Alert>
+  if (!editor.newsletter) {
+    return <Alert severity="warning">No se encontrÃ³ el newsletter solicitado.</Alert>
   }
 
-  return <ReviewNewsletterPage vm={vm} />
+  return <ReviewNewsletterPage editor={editor} />
 }

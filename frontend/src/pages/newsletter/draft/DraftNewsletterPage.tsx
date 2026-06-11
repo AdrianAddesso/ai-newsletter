@@ -10,79 +10,79 @@ import { EditPanel } from '../components/EditPanel'
 import { GenerationForm } from '../components/GenerationForm'
 
 type Props = {
-  vm: ReturnType<typeof useNewsletterEditor>
+  editor: ReturnType<typeof useNewsletterEditor>
 }
 
-export function DraftNewsletterPage({ vm }: Props) {
-  if (!vm.newsletter) return null
+export function DraftNewsletterPage({ editor }: Props) {
+  if (!editor.newsletter) return null
 
   return (
     <NewsletterEditorLayout
       left={
         <NewsletterViewer
-          newsletter={vm.newsletter}
-          selectedBlockId={vm.selectedBlockId}
-          onSelectBlock={vm.setSelectedBlockId}
+          newsletter={editor.newsletter}
+          selectedBlockId={editor.selectedBlockId}
+          onSelectBlock={editor.setSelectedBlockId}
         />
       }
       right={
         <NewsletterEditorSidebar>
           <NewsletterEditTabs
-            showRegenerationForm={vm.showRegenerationForm}
-            onChange={vm.setShowRegenerationForm}
+            showRegenerationForm={editor.showRegenerationForm}
+            onChange={editor.setShowRegenerationForm}
           />
 
-          {vm.showRegenerationForm && vm.selectedTemplate ? (
+          {editor.showRegenerationForm && editor.selectedTemplate ? (
             <GenerationForm
-              selectedTemplate={vm.selectedTemplate}
-              selectedBrandKitId={vm.newsletter.brandKitId ?? ''}
-              isGenerating={vm.isGeneratingAll}
-              aiError={vm.aiError}
+              selectedTemplate={editor.selectedTemplate}
+              selectedBrandKitId={editor.newsletter.brandKitId ?? ''}
+              isGenerating={editor.isGeneratingAll}
+              aiError={editor.aiError}
               initialValues={
-                vm.newsletter.generationContent?.originalContent
-                  ? requestToFormValues(vm.newsletter.generationContent.originalContent)
+                editor.newsletter.generationContent?.originalContent
+                  ? requestToFormValues(editor.newsletter.generationContent.originalContent)
                   : undefined
               }
-              onGenerate={vm.handleGenerateAll}
-              onCancel={() => vm.setShowRegenerationForm(false)}
+              onGenerate={editor.handleGenerateAll}
+              onCancel={() => editor.setShowRegenerationForm(false)}
               cancelLabel="Volver"
             />
-          ) : vm.showRegenerationForm ? (
+          ) : editor.showRegenerationForm ? (
             null
           ) : (
-            vm.selectedBlock && (
+            editor.selectedBlock && (
               <EditPanel
-                selectedBlock={vm.selectedBlock}
-                brandKitResources={vm.brandKitResources}
-                newsletterState={vm.newsletter.state}
-                reviewHistory={vm.selectedBlockReviewHistory}
+                selectedBlock={editor.selectedBlock}
+                brandKitResources={editor.brandKitResources}
+                newsletterState={editor.newsletter.state}
+                reviewHistory={editor.selectedBlockReviewHistory}
                 submitLabel={
-                  vm.newsletter.state === 'CHANGES_REQUESTED'
-                    ? 'Reenviar a revisión'
-                    : 'Enviar a revisión'
+                  editor.newsletter.state === 'CHANGES_REQUESTED'
+                    ? 'Reenviar a revisiÃ³n'
+                    : 'Enviar a revisiÃ³n'
                 }
                 isSubmitting={false}
-                isSavingDraft={vm.isSavingDraft}
-                isRegeneratingBlock={vm.regeneratingBlockId === vm.selectedBlock.id}
-                aiError={vm.aiError}
+                isSavingDraft={editor.isSavingDraft}
+                isRegeneratingBlock={editor.regeneratingBlockId === editor.selectedBlock.id}
+                aiError={editor.aiError}
                 onUpdateBlock={(updatedBlock) => {
-                  if (!vm.newsletter) return
+                  if (!editor.newsletter) return
 
-                  vm.updateBlocks(
-                    vm.newsletter.blocks.map((block) =>
+                  editor.updateBlocks(
+                    editor.newsletter.blocks.map((block) =>
                       block.id === updatedBlock.id ? updatedBlock : block,
                     ),
                   )
                 }}
-                onSaveDraft={vm.saveDraft}
-                onRegenerateBlock={vm.handleRegenerateBlock}
-                onRegenerateAll={() => vm.setShowRegenerationForm(true)}
-                onSubmit={vm.handleSubmit}
+                onSaveDraft={editor.saveDraft}
+                onRegenerateBlock={editor.handleRegenerateBlock}
+                onRegenerateAll={() => editor.setShowRegenerationForm(true)}
+                onSubmit={editor.handleSubmit}
                 onCancel={() => {
                   void (async () => {
                     try {
-                      await vm.transitionState('DISCARDED')
-                      vm.navigate('/dashboard')
+                      await editor.transitionState('DISCARDED')
+                      editor.navigate('/dashboard')
                     } catch (error) {
                       console.error(error)
                     }
