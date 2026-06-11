@@ -1,11 +1,11 @@
-import { Alert, Box, Chip, Paper, Stack, Typography } from '@mui/material'
-import { BlockRenderer } from '../../../components/blocks/BlockRenderer' 
+import { Alert, Box, Chip, Paper, Stack, Typography } from "@mui/material";
+import { BlockRenderer } from "../../../components/blocks/BlockRenderer";
 import type {
   NewsletterBlock,
   NewsletterBlockAssetBinding,
   NewsletterFormat,
-} from '../../../types/newsletter'
-import { parseContent } from '../../../utils/blockContent'
+} from "../../../types/newsletter";
+import { parseContent } from "../../../utils/blockContent";
 
 type Props = {
   blocks: NewsletterBlock[];
@@ -20,10 +20,10 @@ export function BlockList({
   selectedBlockId,
   onSelectBlock,
   readOnly = false,
-  format = 'PORTRAIT',
+  format = "PORTRAIT",
 }: Props) {
-  const rows = groupBlocksByRow(blocks)
-  const exportWidth = format === 'LANDSCAPE' ? 1400 : 700
+  const rows = groupBlocksByRow(blocks);
+  const exportWidth = format === "LANDSCAPE" ? 1400 : 700;
 
   return (
     <Stack
@@ -53,7 +53,7 @@ export function BlockList({
         data-newsletter-export-root
         sx={{
           bgcolor: "grey.200",
-          p: 3,
+          p: 0,
           borderRadius: 2,
           minHeight: 240,
           width: exportWidth,
@@ -72,7 +72,7 @@ export function BlockList({
               },
               gap: 0,
               alignItems: "stretch",
-              backgroundColor: "background.default",
+              backgroundColor: "transparent",
             }}
           >
             {row.blocks.map((block) => {
@@ -83,7 +83,7 @@ export function BlockList({
                   key={block.id}
                   //data-newsletter-block-id={block.id}
                   //data-newsletter-block-type={block.type ?? ''}
-                  component={readOnly ? 'div' : 'button'}
+                  component={readOnly ? "div" : "button"}
                   square
                   elevation={0}
                   disabled={readOnly ? undefined : false}
@@ -100,7 +100,7 @@ export function BlockList({
                     p: 0,
 
                     border: isSelected
-                      ? (theme) => `2px solid ${theme.palette.primary.main}`
+                      ? (theme) => `none`
                       : "0px solid transparent",
 
                     boxSizing: "border-box",
@@ -118,8 +118,10 @@ export function BlockList({
                 >
                   <Box
                     data-newsletter-block-id={block.id}
-                    data-newsletter-block-type={block.type ?? ''}
-                    data-newsletter-block-href={getBlockHref(block) || undefined}
+                    data-newsletter-block-type={block.type ?? ""}
+                    data-newsletter-block-href={
+                      getBlockHref(block) || undefined
+                    }
                     sx={{
                       pointerEvents: "none",
                       display: "flex",
@@ -162,11 +164,11 @@ export function BlockList({
 function groupBlocksByRow(
   blocks: NewsletterBlock[],
 ): Array<{ row: number; blocks: NewsletterBlock[] }> {
-  const rows = new Map<number, NewsletterBlock[]>()
+  const rows = new Map<number, NewsletterBlock[]>();
 
   blocks.forEach((block) => {
-    rows.set(block.row, [...(rows.get(block.row) ?? []), block])
-  })
+    rows.set(block.row, [...(rows.get(block.row) ?? []), block]);
+  });
 
   return Array.from(rows.entries())
     .sort(([leftRow], [rightRow]) => leftRow - rightRow)
@@ -175,48 +177,47 @@ function groupBlocksByRow(
       blocks: rowBlocks.sort(
         (left, right) => left.gridColumn - right.gridColumn,
       ),
-    }))
+    }));
 }
 
 function buildRendererProps(
   block: NewsletterBlock,
 ): Record<string, string | null | undefined> {
-  const values = parseContent<Record<string, string>>(block.content)
+  const values = parseContent<Record<string, string>>(block.content);
   const assetByFieldKey = new Map<string, NewsletterBlockAssetBinding>(
     block.assetBindings.map((binding) => [binding.fieldKey, binding]),
-  )
-  const logoAsset = assetByFieldKey.get('logoAsset')?.assetUrl
-  const iconAsset = assetByFieldKey.get('iconAsset')?.assetUrl
-  const imageAsset = assetByFieldKey.get('imageAsset')?.assetUrl
-  const backgroundAsset = assetByFieldKey.get('backgroundAsset')?.assetUrl
+  );
+  const logoAsset = assetByFieldKey.get("logoAsset")?.assetUrl;
+  const iconAsset = assetByFieldKey.get("iconAsset")?.assetUrl;
+  const imageAsset = assetByFieldKey.get("imageAsset")?.assetUrl;
+  const backgroundAsset = assetByFieldKey.get("backgroundAsset")?.assetUrl;
   const leftImageAsset =
-    assetByFieldKey.get('leftLogoAsset')?.assetUrl ??
-    assetByFieldKey.get('leftImageAsset')?.assetUrl
+    assetByFieldKey.get("leftLogoAsset")?.assetUrl ??
+    assetByFieldKey.get("leftImageAsset")?.assetUrl;
   const rightImageAsset =
-    assetByFieldKey.get('rightLogoAsset')?.assetUrl ??
-    assetByFieldKey.get('rightImageAsset')?.assetUrl
-  const backgroundMode = values.backgroundMode
+    assetByFieldKey.get("rightLogoAsset")?.assetUrl ??
+    assetByFieldKey.get("rightImageAsset")?.assetUrl;
+  const backgroundMode = values.backgroundMode;
 
   return {
     imageUrl: imageAsset ?? logoAsset,
     iconUrl: iconAsset,
     backgroundImage:
-      backgroundMode === 'none' || backgroundMode === 'color'
+      backgroundMode === "none" || backgroundMode === "color"
         ? null
-        : backgroundMode === 'image'
-          ? backgroundAsset ?? undefined
-          : backgroundAsset ?? (
-              values.bgColor?.trim() || values.overlayColor?.trim()
-                ? null
-                : undefined
-            ),
+        : backgroundMode === "image"
+          ? (backgroundAsset ?? undefined)
+          : (backgroundAsset ??
+            (values.bgColor?.trim() || values.overlayColor?.trim()
+              ? null
+              : undefined)),
     leftImageUrl: leftImageAsset,
     rightImageUrl: rightImageAsset,
-  }
+  };
 }
 
 function getBlockHref(block: NewsletterBlock): string {
-  const values = parseContent<Record<string, string>>(block.content)
+  const values = parseContent<Record<string, string>>(block.content);
 
-  return values.href?.trim() ?? ''
+  return values.href?.trim() ?? "";
 }
