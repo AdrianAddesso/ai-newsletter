@@ -309,9 +309,13 @@ export function EditPanel({
       field.type === "font-style" ||
       field.type === "font-size" ||
       field.type === "font-family" ||
-      field.key === "iconName" ||
-      field.key === "bgColor" ||
-      field.key === "overlayColor"
+      field.key === "iconName"
+    ) {
+      return false;
+    }
+    if (
+      (field.key === "bgColor" || field.key === "overlayColor") &&
+      backgroundAssetField
     ) {
       return false;
     }

@@ -26,7 +26,7 @@ export function HeaderFullRenderer({
   const subtitleTypographySx = resolveContentTypographySx(values, "subtitle");
   const previewUrls = useBlockPreviewUrls([nestleIsotypeStorageKey], "LOGO");
   const defaultImageUrl = previewUrls[nestleIsotypeStorageKey] ?? "";
-  const backgroundColor = "#FF595A";
+  const backgroundColor = values.bgColor || "#FF595A";
 
   return (
     <Card
