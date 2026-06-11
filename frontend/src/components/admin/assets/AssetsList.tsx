@@ -340,7 +340,7 @@ const filtered = useMemo(() => {
                     </TableSortLabel>
                     </TableCell>
 
-                    {/* ADDED: Sort para la columna Tipo */}
+                    {/*Sort para la columna Tipo */}
                     <TableCell sx={{ width: 120 }}>
                     <TableSortLabel
                         active={orderBy === "type"}
@@ -494,8 +494,8 @@ const filtered = useMemo(() => {
             position: "fixed",
             left: mousePos.current.x + 16,
             top: mousePos.current.y - 16,
-            width: 220,
-            height: 220,
+            width: 420,
+            height: 420,
             bgcolor: "background.paper",
             border: "1px solid",
             borderColor: "divider",
