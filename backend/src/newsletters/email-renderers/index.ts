@@ -7,6 +7,7 @@ import {
 
 type RenderNewsletterEmailBlockOptions = {
   cidByAssetId: Map<string, string>;
+  emailWidth: number;
   snapshotByBlockId?: Map<
     string,
     {
@@ -31,6 +32,7 @@ export function renderNewsletterEmailBlock(
 
   if (shouldRenderBlockAsSnapshot(block)) {
     const snapshotEmail = renderSnapshotEmail(block, {
+      emailWidth: options.emailWidth,
       snapshotByBlockId: options.snapshotByBlockId ?? new Map(),
     });
 

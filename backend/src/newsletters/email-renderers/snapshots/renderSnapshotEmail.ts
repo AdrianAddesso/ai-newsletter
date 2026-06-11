@@ -2,6 +2,7 @@ import type { NewsletterBlockDto } from '../../../blocks/newsletter-blocks';
 import { parseBlockValues } from '../../../blocks/newsletter-blocks';
 
 type RenderSnapshotEmailOptions = {
+  emailWidth: number;
   snapshotByBlockId: Map<
     string,
     {
@@ -24,15 +25,15 @@ export function renderSnapshotEmail(
 
   const values = parseBlockValues(block.content);
   const href = values.href?.trim();
+  const columnWidth = Math.min(snapshot.width, options.emailWidth);
 
   return `
-    <mj-column padding="0">
+    <mj-column width="${Math.round(columnWidth)}px" padding="0">
       <mj-image
         src="cid:${escapeHtml(snapshot.cid)}"
         ${href ? `href="${escapeHtml(href)}"` : ''}
         width="${Math.round(snapshot.width)}px"
         padding="0"
-        fluid-on-mobile="true"
       />
     </mj-column>
   `;
