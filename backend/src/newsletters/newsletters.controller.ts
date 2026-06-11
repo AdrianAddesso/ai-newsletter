@@ -26,9 +26,7 @@ import type {
 } from '../common/zod/route-params.schema';
 import { ZodValidationPipe } from '../common/zod/zod-validation.pipe';
 import {
-  approveNewsletterReviewBodySchema,
   addNewsletterCommentBodySchema,
-  addNewsletterLogBodySchema,
   createNewsletterBodySchema,
   requestNewsletterChangesBodySchema,
   updateNewsletterBodySchema,
@@ -38,9 +36,7 @@ import {
   exportNewsletterEmlBodySchema,
 } from './newsletters.schemas';
 import type {
-  ApproveNewsletterReviewBody,
   AddNewsletterCommentBody,
-  AddNewsletterLogBody,
   CreateNewsletterBody,
   RequestNewsletterChangesBody,
   UpdateNewsletterBody,
@@ -50,8 +46,6 @@ import type {
   ExportNewsletterEmlBody,
 } from './newsletters.schemas';
 import { JwtGuard } from '../auth/guards/jwt.guard';
-import { PermissionsGuard } from '../modules/auth/guards/permissions.guard';
-import { RequirePermission } from '../modules/auth/decorators/permissions.decorator';
 import { Action } from '../modules/auth/enum/actions';
 import { Resource } from '../modules/auth/enum/resources';
 import { AuthorizationService } from '../modules/auth/services/authorization.service';
@@ -71,14 +65,14 @@ type AuthenticatedRequest = {
 };
 
 @Controller(Resource.NEWSLETTERS)
-@UseGuards(JwtGuard, PermissionsGuard)
+@UseGuards(JwtGuard)
 export class NewslettersController {
   constructor(
     private readonly newslettersService: NewsLettersService,
     private readonly prisma: PrismaService,
     private readonly authorizationService: AuthorizationService,
     private readonly permissionCacheService: PermissionCacheService,
-  ) { }
+  ) {}
 
   @Get()
   getAll(
@@ -95,13 +89,15 @@ export class NewslettersController {
   }
 
   @Post()
-  @RequirePermission(Action.CONTENT_UPLOAD, Resource.NEWSLETTERS)
   create(
     @Req() request: AuthenticatedRequest,
     @Body(new ZodValidationPipe(createNewsletterBodySchema))
     body: CreateNewsletterBody,
   ) {
-    return this.newslettersService.create(body, request.user?.id);
+    return this.assertGlobalActionPermission(
+      request,
+      Action.CONTENT_UPLOAD,
+    ).then(() => this.newslettersService.create(body, request.user?.id));
   }
 
   @Post(':id/export/eml')
@@ -126,8 +122,6 @@ export class NewslettersController {
 
     response.send(exported.content);
   }
-
-  @Get(':id')
 
   @Get(':id')
   getById(@Param(new ZodValidationPipe(idParamSchema)) params: IdParam) {
@@ -156,28 +150,9 @@ export class NewslettersController {
     @Body(new ZodValidationPipe(updateNewsletterStatusBodySchema))
     body: UpdateNewsletterStatusBody,
   ) {
-    return this.assertStatusPermission(request, params.id, body.state).then(() =>
-      this.newslettersService.updateStatus(params.id, body),
+    return this.assertStatusPermission(request, params.id, body.state).then(
+      () => this.newslettersService.updateStatus(params.id, body),
     );
-  }
-
-  @Post(':id/logs')
-  addLog(
-    @Param(new ZodValidationPipe(idParamSchema)) params: IdParam,
-    @Body(new ZodValidationPipe(addNewsletterLogBodySchema))
-    body: AddNewsletterLogBody,
-  ) {
-    return this.newslettersService.addLog(params.id, {
-      previousState: body.previousState,
-      newState: body.newState,
-      reviewedByUserId: body.reviewedByUserId,
-      allCommentaries: body.allCommentaries,
-    });
-  }
-
-  @Get(':id/logs')
-  getLogs(@Param(new ZodValidationPipe(idParamSchema)) params: IdParam) {
-    return this.newslettersService.getLogs(params.id);
   }
 
   @Get(':id/comments')
@@ -222,46 +197,6 @@ export class NewslettersController {
     return this.newslettersService.getExports(params.id);
   }
 
-  @Post(':id/logs/approve')
-  @RequirePermission(Action.REVIEW_FINAL_APPROVE_COMMENT, Resource.NEWSLETTERS)
-  addApprovalLog(
-    @Param(new ZodValidationPipe(idParamSchema)) params: IdParam,
-    @Body(new ZodValidationPipe(addNewsletterLogBodySchema)) body: AddNewsletterLogBody,
-  ) {
-    return this.newslettersService.addLog(params.id, {
-      previousState: body.previousState,
-      newState: 'APPROVED',
-      reviewedByUserId: body.reviewedByUserId,
-    });
-  }
-
-  @Post(':id/logs/request-changes')
-  addChangesRequestedLog(
-    @Param(new ZodValidationPipe(idParamSchema)) params: IdParam,
-    @Body(new ZodValidationPipe(addNewsletterLogBodySchema)) body: AddNewsletterLogBody,
-  ) {
-    return this.newslettersService.addLog(params.id, {
-      previousState: body.previousState,
-      newState: 'CHANGES_REQUESTED',
-      reviewedByUserId: body.reviewedByUserId,
-      allCommentaries: body.allCommentaries,
-    });
-  }
-
-  @Post(':id/logs/export')
-  @RequirePermission(Action.CONTENT_EXPORT_APPROVED, Resource.NEWSLETTERS) 
-  addExportLog(
-    @Param(new ZodValidationPipe(idParamSchema)) params: IdParam,
-    @Body(new ZodValidationPipe(addNewsletterLogBodySchema)) body: AddNewsletterLogBody,
-  ) {
-    return this.newslettersService.addLog(params.id, {
-      previousState: 'APPROVED',
-      newState: 'APPROVED',
-      reviewedByUserId: body.reviewedByUserId,
-      allCommentaries: body.allCommentaries,
-    });
-  }
-
   @Post(':id/review/request-changes')
   requestChanges(
     @Req() request: AuthenticatedRequest,
@@ -281,8 +216,6 @@ export class NewslettersController {
   approveReview(
     @Req() request: AuthenticatedRequest,
     @Param(new ZodValidationPipe(idParamSchema)) params: IdParam,
-    @Body(new ZodValidationPipe(approveNewsletterReviewBodySchema))
-    body: ApproveNewsletterReviewBody,
   ) {
     return this.assertReviewPermission(request, params.id).then(() =>
       this.newslettersService.approveReview(params.id, {
@@ -309,6 +242,53 @@ export class NewslettersController {
       newsletterId,
       Action.REVIEW_FINAL_APPROVE_COMMENT,
     );
+  }
+
+  private async assertGlobalActionPermission(
+    request: AuthenticatedRequest,
+    requiredAction: Action,
+  ): Promise<void> {
+    const user = request.user;
+
+    if (!user?.role) {
+      throw new ForbiddenException({
+        message:
+          'No se encontro informacion de usuario en la solicitud o el usuario no tiene un rol asignado',
+        error: 'Permisos insuficientes',
+        statusCode: 403,
+      });
+    }
+
+    const rolePermissions =
+      await this.permissionCacheService.getPermissionsForRole(user.role);
+
+    if (!rolePermissions.includes(requiredAction)) {
+      throw new ForbiddenException({
+        message: `Tu rol (${user.role}) no tiene el permiso: ${requiredAction}`,
+        error: 'Permisos insuficientes',
+        statusCode: 403,
+      });
+    }
+
+    const normalizedUser = {
+      id: user.id ?? '',
+      permissions: [],
+      role: user.role,
+      area_id: user.area_id ?? user.area ?? '',
+    };
+
+    const isAuthorized = this.authorizationService.isAuthorized(
+      normalizedUser,
+      requiredAction,
+    );
+
+    if (!isAuthorized) {
+      throw new ForbiddenException({
+        message: 'No tienes permisos para realizar esta accion',
+        error: 'No se puede realizar esta accion',
+        statusCode: 403,
+      });
+    }
   }
 
   private async assertNewsletterApprovedForExport(
@@ -351,15 +331,15 @@ export class NewslettersController {
 
     if (!user?.role) {
       throw new ForbiddenException({
-        message: 'No se encontro informacion de usuario en la solicitud o el usuario no tiene un rol asignado',
+        message:
+          'No se encontro informacion de usuario en la solicitud o el usuario no tiene un rol asignado',
         error: 'Permisos insuficientes',
         statusCode: 403,
       });
     }
 
-    const rolePermissions = await this.permissionCacheService.getPermissionsForRole(
-      user.role,
-    );
+    const rolePermissions =
+      await this.permissionCacheService.getPermissionsForRole(user.role);
 
     if (!rolePermissions.includes(requiredAction)) {
       throw new ForbiddenException({
@@ -421,4 +401,3 @@ export class NewslettersController {
     return Action.REVIEW_FINAL_APPROVE_COMMENT;
   }
 }
-

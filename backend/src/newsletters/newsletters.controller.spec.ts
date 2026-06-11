@@ -24,8 +24,6 @@ describe('NewslettersController', () => {
       update: jest.fn(),
       delete: jest.fn(),
       updateStatus: jest.fn(),
-      addLog: jest.fn(),
-      getLogs: jest.fn(),
       getComments: jest.fn(),
       addComment: jest.fn(),
       updateComment: jest.fn(),
@@ -210,7 +208,6 @@ describe('NewslettersController', () => {
         },
       },
       { id: 'newsletter-id' },
-      {},
     );
 
     expect(newslettersService.approveReview).toHaveBeenCalledWith('newsletter-id', {

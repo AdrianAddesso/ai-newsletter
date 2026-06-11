@@ -103,19 +103,6 @@ export const requestNewsletterChangesBodySchema = z
   })
   .strict();
 
-export const approveNewsletterReviewBodySchema = z
-  .object({})
-  .strict();
-
-export const addNewsletterLogBodySchema = z
-  .object({
-    previousState: newsletterStateSchema.optional(),
-    newState: newsletterStateSchema.optional(),
-    reviewedByUserId: uuidFieldSchema.optional(),
-    allCommentaries: optionalStringFieldSchema,
-  })
-  .strict();
-
 export const addNewsletterCommentBodySchema = z
   .object({
     blockContentId: uuidFieldSchema.optional(),
@@ -152,10 +139,6 @@ export type UpdateNewsletterStatusBody = z.infer<
 export type RequestNewsletterChangesBody = z.infer<
   typeof requestNewsletterChangesBodySchema
 >;
-export type ApproveNewsletterReviewBody = z.infer<
-  typeof approveNewsletterReviewBodySchema
->;
-export type AddNewsletterLogBody = z.infer<typeof addNewsletterLogBodySchema>;
 export type AddNewsletterCommentBody = z.infer<
   typeof addNewsletterCommentBodySchema
 >;

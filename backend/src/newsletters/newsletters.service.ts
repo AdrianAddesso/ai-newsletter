@@ -20,7 +20,6 @@ import type {
   UpdateNewsletterBody,
   UpdateNewsletterStatusBody,
 } from './newsletters.schemas';
-import { validateNewsletterStateLogTransition } from './validators/newsletter.validator';
 import {
   getBlockDefinition,
   getBlockEditFields,
@@ -28,10 +27,11 @@ import {
   parseBlockValues,
 } from '../blocks/newsletter-blocks';
 import { Role } from '../modules/auth/enum/roles';
-import { NotificationsService } from '../notifications/notifications.service'
+import { NotificationsService } from '../notifications/notifications.service';
 import { renderNewsletterEmailBlock } from './email-renderers';
 
-const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const uuidPattern =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 type ReviewRequestUser = {
   id?: string;
@@ -104,7 +104,7 @@ export class NewsLettersService {
     private readonly prisma: PrismaService,
     private readonly storageService: StorageService,
     private readonly notificationsService: NotificationsService,
-  ) { }
+  ) {}
 
   async getAll(page: number = 1, limit: number = 10) {
     const skip = (page - 1) * limit;
@@ -202,9 +202,9 @@ export class NewsLettersService {
     );
     const template = body.templateId
       ? await this.prisma.templates.findFirst({
-        where: { id: body.templateId, deleted_at: null },
-        select: { id: true, area_id: true },
-      })
+          where: { id: body.templateId, deleted_at: null },
+          select: { id: true, area_id: true },
+        })
       : null;
 
     if (body.templateId && !template) {
@@ -255,7 +255,11 @@ export class NewsLettersService {
         },
         newsletter_blocks: {
           where: { deleted_at: null },
-          orderBy: [{ row: 'asc' }, { grid_column: 'asc' }, { display_order: 'asc' }],
+          orderBy: [
+            { row: 'asc' },
+            { grid_column: 'asc' },
+            { display_order: 'asc' },
+          ],
           include: {
             block_content: {
               include: {
@@ -281,7 +285,7 @@ export class NewsLettersService {
         this.toBlockDto(
           block,
           newsletter.state === newsletter_state.CHANGES_REQUESTED
-            ? activeBlockComments.get(block.block_content_id) ?? null
+            ? (activeBlockComments.get(block.block_content_id) ?? null)
             : null,
         ),
       ),
@@ -304,14 +308,17 @@ export class NewsLettersService {
       brandKitId: newsletter.brand_kit_id ?? '',
       blocks,
       comment: null,
-      generationRequest: this.readOriginalContent(newsletter.generation_content),
+      generationRequest: this.readOriginalContent(
+        newsletter.generation_content,
+      ),
       generationContent: newsletter.generation_content,
       renderedHtml: null,
       createdAt: newsletter.created_at.toISOString(),
       updatedAt: newsletter.updated_at.toISOString(),
-      reviewRounds: newsletter.state === newsletter_state.APPROVED
-        ? []
-        : reviewLogs.map((reviewLog) => this.toReviewRound(reviewLog)),
+      reviewRounds:
+        newsletter.state === newsletter_state.APPROVED
+          ? []
+          : reviewLogs.map((reviewLog) => this.toReviewRound(reviewLog)),
     };
   }
 
@@ -332,7 +339,9 @@ export class NewsLettersService {
           title: body.title,
           area_id: body.areaId,
           theme_tag: body.themeTag,
-          publish_date: body.publishDate ? new Date(body.publishDate) : undefined,
+          publish_date: body.publishDate
+            ? new Date(body.publishDate)
+            : undefined,
           brand_kit_id: body.brandKitId,
           template_id: body.templateId,
           approved_by_user_id: body.approvedByUserId,
@@ -386,20 +395,20 @@ export class NewsLettersService {
     const newsletter = await this.prisma.newsletters.findFirst({
       where: { id, deleted_at: null },
       select: { id: true },
-    })
+    });
 
     if (!newsletter) {
-      throw new NotFoundException(`Newsletter ${id} no encontrado`)
+      throw new NotFoundException(`Newsletter ${id} no encontrado`);
     }
 
     await this.prisma.newsletters.update({
       where: { id },
       data: { deleted_at: new Date() },
-    })
+    });
 
-    await this.notificationsService.notifyNewsletterDeleted(id)
+    await this.notificationsService.notifyNewsletterDeleted(id);
 
-    return { success: true }
+    return { success: true };
   }
 
   async updateStatus(id: string, body: UpdateNewsletterStatusBody) {
@@ -427,16 +436,9 @@ export class NewsLettersService {
         },
       });
     });
-    await this.notificationsService.notifyNewsletterStateChange(
-      id,
-      body.state,
-    )
+    await this.notificationsService.notifyNewsletterStateChange(id, body.state);
 
     return this.getById(id);
-  }
-
-  getLogs(id: string) {
-    return 'Desde logs newsletters con ID' + id;
   }
 
   async requestChanges(
@@ -502,7 +504,9 @@ export class NewsLettersService {
       await tx.commentary.updateMany({
         where: {
           block_content_id: {
-            in: newsletter.newsletter_blocks.map((block) => block.block_content_id),
+            in: newsletter.newsletter_blocks.map(
+              (block) => block.block_content_id,
+            ),
           },
           deleted_at: null,
         },
@@ -534,7 +538,7 @@ export class NewsLettersService {
     await this.notificationsService.notifyNewsletterStateChange(
       id,
       newsletter_state.CHANGES_REQUESTED,
-    )
+    );
 
     return this.getById(id);
   }
@@ -588,7 +592,7 @@ export class NewsLettersService {
     await this.notificationsService.notifyNewsletterStateChange(
       id,
       newsletter_state.APPROVED,
-    )
+    );
 
     return this.getById(id);
   }
@@ -596,7 +600,7 @@ export class NewsLettersService {
   async discardNewsletter(
     id: string,
     payload: {
-      reviewedByUserId?: string
+      reviewedByUserId?: string;
     },
   ) {
     await this.prisma.$transaction(async (tx) => {
@@ -606,10 +610,10 @@ export class NewsLettersService {
           id: true,
           state: true,
         },
-      })
+      });
 
       if (!newsletter) {
-        throw new NotFoundException('No se encontro el newsletter solicitado.')
+        throw new NotFoundException('No se encontro el newsletter solicitado.');
       }
 
       await tx.newsletters.update({
@@ -617,7 +621,7 @@ export class NewsLettersService {
         data: {
           state: newsletter_state.DISCARDED,
         },
-      })
+      });
 
       await tx.newsletter_state_log.create({
         data: {
@@ -626,45 +630,15 @@ export class NewsLettersService {
           new_state: newsletter_state.DISCARDED,
           reviewed_by_user_id: payload.reviewedByUserId ?? null,
         },
-      })
-    })
+      });
+    });
 
     await this.notificationsService.notifyNewsletterStateChange(
       id,
       newsletter_state.DISCARDED,
-    )
+    );
 
-    return this.getById(id)
-  }
-
-  async addLog(
-    id: string,
-    logData: {
-      previousState?: newsletter_state;
-      newState?: newsletter_state;
-      reviewedByUserId?: string;
-      allCommentaries?: string;
-    },
-  ) {
-    const newsletter = await this.prisma.newsletters.findUnique({
-      where: { id },
-    });
-
-    if (!newsletter) {
-      throw new BadRequestException('Newsletter no encontrada');
-    }
-
-    validateNewsletterStateLogTransition(newsletter.state, logData);
-
-    return this.prisma.newsletter_state_log.create({
-      data: {
-        newsletter_id: id,
-        previous_state: logData.previousState,
-        new_state: logData.newState,
-        reviewed_by_user_id: logData.reviewedByUserId,
-        all_commentaries: logData.allCommentaries,
-      },
-    });
+    return this.getById(id);
   }
 
   getComments(id: string) {
@@ -687,7 +661,10 @@ export class NewsLettersService {
     return `Desde export newsletter con ID ${id}`;
   }
 
-  async exportEml(id: string, snapshots: EmailBlockSnapshotInput[] = [],): Promise<{ filename: string; content: Buffer }> {
+  async exportEml(
+    id: string,
+    snapshots: EmailBlockSnapshotInput[] = [],
+  ): Promise<{ filename: string; content: Buffer }> {
     const newsletter = await this.getById(id);
     const attachments = await this.buildEmailInlineAttachments(
       newsletter.blocks,
@@ -733,7 +710,7 @@ export class NewsLettersService {
     const body = rows
       .map((rowBlocks) => {
         const columns = rowBlocks
-          .map((block) => 
+          .map((block) =>
             renderNewsletterEmailBlock(block, {
               cidByAssetId,
               snapshotByBlockId,
@@ -779,13 +756,14 @@ export class NewsLettersService {
     return Array.from(rows.entries())
       .sort(([leftRow], [rightRow]) => leftRow - rightRow)
       .map(([, rowBlocks]) =>
-        rowBlocks.sort(
-          (left, right) => left.gridColumn - right.gridColumn,
-        ),
+        rowBlocks.sort((left, right) => left.gridColumn - right.gridColumn),
       );
   }
 
-  private renderEmailBlock(block: NewsletterBlockDto, cidByAssetId: Map<string, string>): string {
+  private renderEmailBlock(
+    block: NewsletterBlockDto,
+    cidByAssetId: Map<string, string>,
+  ): string {
     const values = parseBlockValues(block.content);
     const assetByField = new Map(
       block.assetBindings.map((binding) => [binding.fieldKey, binding]),
@@ -813,13 +791,15 @@ export class NewsLettersService {
 
     const imageUrl = imageCid
       ? `cid:${imageCid}`
-      : imageBinding?.assetUrl ?? '';
+      : (imageBinding?.assetUrl ?? '');
 
     if (block.type === 'ctaFull' || block.type === 'ctaAlternative') {
-      const buttonLabel = values.buttonLabel ?? values.label ?? 'call to action';
+      const buttonLabel =
+        values.buttonLabel ?? values.label ?? 'call to action';
       const href = values.href ?? '';
       const buttonColor = values.buttonColor ?? values.bgColor ?? '#FF595A';
-      const buttonTextColor = values.buttonTextColor ?? values.textColor ?? '#ffffff';
+      const buttonTextColor =
+        values.buttonTextColor ?? values.textColor ?? '#ffffff';
 
       return `
         <mj-section background-color="${bgColor}" padding="16px">
@@ -848,10 +828,11 @@ export class NewsLettersService {
               padding="0"
               fluid-on-mobile="true"
             />
-            ${text
-          ? `<mj-text padding="16px">${this.escapeHtml(text)}</mj-text>`
-          : ''
-        }
+            ${
+              text
+                ? `<mj-text padding="16px">${this.escapeHtml(text)}</mj-text>`
+                : ''
+            }
           </mj-column>
         </mj-section>
       `;
@@ -903,7 +884,7 @@ export class NewsLettersService {
       if (!parsedSnapshot) {
         continue;
       }
-    
+
       const cid = `newsletter-block-snapshot-${snapshotIndex}@nestle-ai-newsletter`;
 
       snapshotByBlockId.set(snapshot.blockId, {
@@ -1222,8 +1203,10 @@ export class NewsLettersService {
 
     return (
       existingBlock.block_content.block_type !== nextBlock.type ||
-      (existingBlock.block_content.content ?? null) !== (nextBlock.content ?? null) ||
-      (existingBlock.display_order ?? null) !== (nextBlock.displayOrder ?? null) ||
+      (existingBlock.block_content.content ?? null) !==
+        (nextBlock.content ?? null) ||
+      (existingBlock.display_order ?? null) !==
+        (nextBlock.displayOrder ?? null) ||
       (existingBlock.row ?? null) !== (nextBlock.row ?? null) ||
       (existingBlock.grid_column ?? null) !== (nextBlock.gridColumn ?? null) ||
       existingBlock.block_content.must_fill !== (nextBlock.mustFill ?? false) ||
@@ -1259,7 +1242,9 @@ export class NewsLettersService {
     }
   }
 
-  private toPersistedBlock(block: NewsletterEditableBlock): NewsletterEditableBlock {
+  private toPersistedBlock(
+    block: NewsletterEditableBlock,
+  ): NewsletterEditableBlock {
     return {
       id: block.id,
       type: block.type,
@@ -1299,8 +1284,8 @@ export class NewsLettersService {
             },
             assetBlock.keyword_text,
           ),
-          assetType:
-            assetBlock.assets.type as NewsletterBlockDto['assetBindings'][number]['assetType'],
+          assetType: assetBlock.assets
+            .type as NewsletterBlockDto['assetBindings'][number]['assetType'],
           bucket: assetBlock.assets.bucket,
           objectKey: assetBlock.assets.object_key,
           fileName: assetBlock.assets.file_name,
@@ -1333,7 +1318,8 @@ export class NewsLettersService {
           : null,
       row: block.row ?? 0,
       gridColumn: block.grid_column ?? 0,
-      displayOrder: block.display_order ?? block.block_content.display_order ?? 0,
+      displayOrder:
+        block.display_order ?? block.block_content.display_order ?? 0,
       mustFill: block.block_content.must_fill,
       comment: activeComment,
       editFields,
@@ -1365,7 +1351,9 @@ export class NewsLettersService {
     };
   }
 
-  private buildActiveBlockComments(reviewLogs: ReviewLogRecord[]): Map<string, string> {
+  private buildActiveBlockComments(
+    reviewLogs: ReviewLogRecord[],
+  ): Map<string, string> {
     const latestReviewLog = reviewLogs[0];
 
     if (!latestReviewLog) {
@@ -1379,7 +1367,9 @@ export class NewsLettersService {
     );
   }
 
-  private async getReviewLogs(newsletterId: string): Promise<ReviewLogRecord[]> {
+  private async getReviewLogs(
+    newsletterId: string,
+  ): Promise<ReviewLogRecord[]> {
     return this.prisma.newsletter_state_log.findMany({
       where: {
         newsletter_id: newsletterId,
@@ -1431,10 +1421,12 @@ export class NewsLettersService {
           return [];
         }
 
-        return [{
-          blockId: entry.blockId,
-          content: normalizedContent,
-        }];
+        return [
+          {
+            blockId: entry.blockId,
+            content: normalizedContent,
+          },
+        ];
       });
     } catch {
       return [];
@@ -1490,10 +1482,7 @@ export class NewsLettersService {
   }
 
   private formatUserName(
-    user:
-      | { name: string | null; last_name: string | null }
-      | null
-      | undefined,
+    user: { name: string | null; last_name: string | null } | null | undefined,
   ): string {
     const fullName = [user?.name ?? '', user?.last_name ?? '']
       .map((value) => value.trim())
@@ -1503,7 +1492,9 @@ export class NewsLettersService {
     return fullName || 'Sin autor';
   }
 
-  private toBlockContentType(block: NewsletterEditableBlock): block_content_type {
+  private toBlockContentType(
+    block: NewsletterEditableBlock,
+  ): block_content_type {
     const category = block.category?.toUpperCase();
 
     if (this.isBlockContentType(category)) {
@@ -1529,7 +1520,9 @@ export class NewsLettersService {
     return block_content_type.CONTENT;
   }
 
-  private isBlockContentType(value: string | undefined): value is block_content_type {
+  private isBlockContentType(
+    value: string | undefined,
+  ): value is block_content_type {
     return (
       value === block_content_type.LAYOUT ||
       value === block_content_type.BASE ||
@@ -1558,7 +1551,10 @@ export class NewsLettersService {
     return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svgMarkup)}`;
   }
 
-  private applyKeywordText(svgTemplate: string, keywordText: string | null): string {
+  private applyKeywordText(
+    svgTemplate: string,
+    keywordText: string | null,
+  ): string {
     const text = this.escapeXml(keywordText?.trim() || 'Editar');
     const editableTextPattern =
       /(<text\b[^>]*\bid=(["'])editable-text\2[^>]*>)([\s\S]*?)(<\/text>)/i;
@@ -1629,7 +1625,9 @@ export class NewsLettersService {
     } as Prisma.InputJsonValue;
   }
 
-  private readOriginalContent(value: Prisma.JsonValue): Prisma.JsonValue | null {
+  private readOriginalContent(
+    value: Prisma.JsonValue,
+  ): Prisma.JsonValue | null {
     if (!value || typeof value !== 'object' || Array.isArray(value)) {
       return null;
     }
@@ -1639,7 +1637,9 @@ export class NewsLettersService {
     return originalContent === undefined ? null : originalContent;
   }
 
-  private async resolveUserId(userId: string | undefined): Promise<string | null> {
+  private async resolveUserId(
+    userId: string | undefined,
+  ): Promise<string | null> {
     if (!userId || !uuidPattern.test(userId)) {
       return null;
     }
