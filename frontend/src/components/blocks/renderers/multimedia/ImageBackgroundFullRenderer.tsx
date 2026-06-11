@@ -28,6 +28,7 @@ export function ImageBackgroundFullRenderer({
     PlaceholderBackground,
   );
   const bgSx = buildBackgroundImageSx(resolvedBackgroundImage);
+  const backgroundColor = "";
 
   return (
     <Card
@@ -37,6 +38,7 @@ export function ImageBackgroundFullRenderer({
         borderRadius: 0,
         height: "100%",
         display: "flex",
+        backgroundColor: backgroundColor,
         transition: "all 0.15s ease-in-out",
         "&:hover": {
           boxShadow: "0 8px 24px rgba(0,0,0,0.1)",
