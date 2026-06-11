@@ -81,9 +81,7 @@ export function BlockList({
               return (
                 <Paper
                   key={block.id}
-                  //data-newsletter-block-id={block.id}
-                  //data-newsletter-block-type={block.type ?? ''}
-                  component={readOnly ? "div" : "button"}
+                  component={readOnly ? 'div' : 'button'}
                   square
                   elevation={0}
                   disabled={readOnly ? undefined : false}
@@ -100,8 +98,8 @@ export function BlockList({
                     p: 0,
 
                     border: isSelected
-                      ? (theme) => `none`
-                      : "0px solid transparent",
+                      ? (theme) => `2px solid ${theme.palette.primary.main}`
+                      : "none",
 
                     boxSizing: "border-box",
 
