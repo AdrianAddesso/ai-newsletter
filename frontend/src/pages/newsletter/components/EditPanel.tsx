@@ -430,7 +430,7 @@ export function EditPanel({
                       {title}
                     </Typography>
                   </AccordionSummary>
-                  <AccordionDetails sx={{ px: 2, pb: 2, pt: 0 }}>
+                  <AccordionDetails sx={{ pl: 4, pr: 2, pb: 2, pt: 0 }}>
                     {content}
                   </AccordionDetails>
                 </Accordion>
