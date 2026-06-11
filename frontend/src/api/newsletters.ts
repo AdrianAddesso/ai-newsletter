@@ -148,6 +148,18 @@ export async function approveNewsletterReview(
   return response.data
 }
 
+export async function duplicateNewsletter(
+  newsletterId: string,
+  newTitle?: string,
+): Promise<Newsletter> {
+  const response = await axios.post<Newsletter>(
+    `${API_BASE}/${newsletterId}/duplicate`,
+    newTitle ? { title: newTitle } : {},
+  )
+
+  return response.data
+}
+
 export type NewsletterBlockSnapshotPayload = {
   blockId: string
   dataUrl: string
