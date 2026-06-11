@@ -14,11 +14,9 @@ export function resolveRenderableBackgroundImage(
   return backgroundImage;
 }
 
-export function buildBackgroundImageSx(
-  backgroundImage: string | null,
-): {
+export function buildBackgroundImageSx(backgroundImage: string | null): {
   backgroundImage?: string;
-  backgroundSize?: "cover";
+  backgroundSize?: "contain";
   backgroundRepeat?: "no-repeat";
   backgroundPosition?: "center";
 } {
@@ -28,7 +26,7 @@ export function buildBackgroundImageSx(
 
   return {
     backgroundImage: `url("${backgroundImage}")`,
-    backgroundSize: "cover",
+    backgroundSize: "contain",
     backgroundRepeat: "no-repeat",
     backgroundPosition: "center",
   };

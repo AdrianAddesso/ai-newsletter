@@ -73,8 +73,8 @@ import * as AllRenderers from "./renderers";
             justifyContent: "center",
             minHeight: "100px",
             border: "1px dashed #ccc",
-            p: 2,
-            gap: 0.5,
+            p: 0,
+            gap: 0,
             opacity: 0.5,
             transition: "all 0.2s ease",
             "&:hover": {
