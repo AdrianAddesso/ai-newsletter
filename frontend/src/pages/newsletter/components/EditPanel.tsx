@@ -416,7 +416,6 @@ export function EditPanel({
               return (
                 <Accordion
                   key={field.key}
-                  //defaultExpanded={index === 0}
                   variant="outlined"
                   disableGutters
                   sx={{
