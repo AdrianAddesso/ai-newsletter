@@ -96,6 +96,30 @@ type EmailBlockSnapshotInput = {
   height: number;
 };
 
+export type NewsletterAnalyticsItem = {
+  id: string;
+  title: string;
+  state: newsletter_state;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type NewsletterAnalyticsLogItem = {
+  id: string;
+  newsletterId: string;
+  newsletterName: string;
+  previousState: newsletter_state | null;
+  newState: newsletter_state | null;
+  reviewedByUserId: string | null;
+  allCommentaries: string | null;
+  createdAt: string;
+};
+
+export type NewslettersAnalyticsResponse = {
+  newsletters: NewsletterAnalyticsItem[];
+  logs: NewsletterAnalyticsLogItem[];
+};
+
 @Injectable()
 export class NewsLettersService {
   private readonly keywordSvgTemplateCache = new Map<string, Promise<string>>();
@@ -145,10 +169,7 @@ export class NewsLettersService {
 
     const blocks: NewsletterEditableBlock[] = await Promise.all(
       sourceNewsletter.newsletter_blocks.map(async (nb) => {
-        return this.toBlockDto(
-          nb as PersistedNewsletterBlock,
-          null,
-        ) as unknown as NewsletterEditableBlock;
+        return this.toBlockDto(nb, null);
       }),
     );
 
@@ -265,6 +286,66 @@ export class NewsLettersService {
       submittedAt: newsletter.created_at.toISOString(),
       updatedAt: newsletter.updated_at.toISOString(),
     }));
+  }
+
+  async getAnalytics(): Promise<NewslettersAnalyticsResponse> {
+    const [newsletters, logs] = await Promise.all([
+      this.prisma.newsletters.findMany({
+        where: { deleted_at: null },
+        orderBy: { created_at: 'desc' },
+        select: {
+          id: true,
+          title: true,
+          state: true,
+          generation_content: true,
+          created_at: true,
+          updated_at: true,
+        },
+      }),
+      this.prisma.newsletter_state_log.findMany({
+        where: {
+          newsletters: {
+            deleted_at: null,
+          },
+        },
+        orderBy: { created_at: 'desc' },
+        include: {
+          newsletters: {
+            select: {
+              id: true,
+              title: true,
+              generation_content: true,
+            },
+          },
+        },
+      }),
+    ]);
+
+    return {
+      newsletters: newsletters.map((newsletter) => ({
+        id: newsletter.id,
+        title: this.resolveNewsletterTitle(
+          newsletter.title,
+          newsletter.generation_content,
+        ),
+        state: newsletter.state,
+        createdAt: newsletter.created_at.toISOString(),
+        updatedAt: newsletter.updated_at.toISOString(),
+      })),
+      logs: logs.map((log) => ({
+        id: log.id,
+        newsletterId: log.newsletters.id,
+        newsletterName: this.resolveNewsletterTitle(
+          log.newsletters.title,
+          log.newsletters.generation_content,
+        ),
+        previousState: this.toNewsletterStateOrNull(log.previous_state),
+        newState: this.toNewsletterStateOrNull(log.new_state),
+        reviewedByUserId: log.reviewed_by_user_id,
+        allCommentaries: log.all_commentaries,
+        createdAt: log.created_at.toISOString(),
+      })),
+    };
   }
 
   async create(body: CreateNewsletterBody, requestUserId?: string) {
@@ -605,6 +686,7 @@ export class NewsLettersService {
     await this.notificationsService.notifyNewsletterStateChange(
       id,
       newsletter_state.CHANGES_REQUESTED,
+      payload.reviewedByUserId,
     )
 
     return this.getById(id);
@@ -659,6 +741,7 @@ export class NewsLettersService {
     await this.notificationsService.notifyNewsletterStateChange(
       id,
       newsletter_state.APPROVED,
+      payload.reviewedByUserId,
     )
 
     return this.getById(id);
@@ -703,6 +786,7 @@ export class NewsLettersService {
     await this.notificationsService.notifyNewsletterStateChange(
       id,
       newsletter_state.DISCARDED,
+      payload.reviewedByUserId,
     )
 
     return this.getById(id)
@@ -809,7 +893,7 @@ export class NewsLettersService {
               cidByAssetId,
               emailWidth,
               snapshotByBlockId,
-              fallback: this.renderEmailBlock.bind(this),
+              fallback: (b, cid) => this.renderEmailBlock(b, cid),
             }),
           )
           .join('\n');
@@ -1473,45 +1557,50 @@ export class NewsLettersService {
   }
 
   private parseStoredReviewComments(
-    rawComments: string | null,
-  ): StoredReviewComment[] {
-    if (!rawComments) {
+  rawComments: string | null,
+): StoredReviewComment[] {
+  if (!rawComments) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(rawComments) as unknown;
+
+    if (!Array.isArray(parsed)) {
       return [];
     }
 
-    try {
-      const parsed = JSON.parse(rawComments) as unknown;
+    const parsedArray = parsed as unknown[];
 
-      if (!Array.isArray(parsed)) {
+    return parsedArray.flatMap((entry) => {
+      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
         return [];
       }
 
-      return parsed.flatMap((entry) => {
-        if (
-          !entry ||
-          typeof entry !== 'object' ||
-          Array.isArray(entry) ||
-          typeof entry.blockId !== 'string' ||
-          typeof entry.content !== 'string'
-        ) {
-          return [];
-        }
+      const obj = entry as Record<string, unknown>;
 
-        const normalizedContent = entry.content.trim();
+      const blockIdCandidate = obj.blockId;
+      const contentCandidate = obj.content;
 
-        if (!normalizedContent) {
-          return [];
-        }
+      if (typeof blockIdCandidate !== 'string' || typeof contentCandidate !== 'string') {
+        return [];
+      }
 
-        return [{
-          blockId: entry.blockId,
-          content: normalizedContent,
-        }];
-      });
-    } catch {
-      return [];
-    }
+      const normalizedContent = contentCandidate.trim();
+
+      if (!normalizedContent) {
+        return [];
+      }
+
+      return [{
+        blockId: blockIdCandidate,
+        content: normalizedContent,
+      }];
+    });
+  } catch {
+    return [];
   }
+}
 
   private normalizeReviewComments(blockComments: ReviewBlockComment[]) {
     const latestByBlockId = new Map<string, string>();
@@ -1699,6 +1788,16 @@ export class NewsLettersService {
       aiContent: body.generationContent.aiContent,
       originalContent: body.generationContent.originalContent,
     } as Prisma.InputJsonValue;
+  }
+
+  private toNewsletterStateOrNull(value: string | null): newsletter_state | null {
+    if (!value) {
+      return null;
+    }
+
+    return Object.values(newsletter_state).includes(value as newsletter_state)
+      ? (value as newsletter_state)
+      : null;
   }
 
   private readOriginalContent(value: Prisma.JsonValue): Prisma.JsonValue | null {

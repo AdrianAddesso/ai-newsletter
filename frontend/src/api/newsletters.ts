@@ -3,6 +3,7 @@ import type {
   BlockReviewComment,
   CreateNewsletterPayload,
   Newsletter,
+  NewslettersAnalyticsResponse,
   NewsletterBlock,
   NewsletterListItem,
   ReviewInboxItem,
@@ -121,6 +122,19 @@ export async function updateNewsletterStatus(
 export async function getReviewInbox(): Promise<ReviewInboxItem[]> {
   const response = await axios.get<ReviewInboxItem[]>(`${API_BASE}/reviews`)
   return response.data
+}
+
+export async function getNewslettersAnalytics(): Promise<NewslettersAnalyticsResponse> {
+  const response = await axios.get<NewslettersAnalyticsResponse>(
+    `${API_BASE}/analytics`,
+  )
+
+  return {
+    newsletters: Array.isArray(response.data?.newsletters)
+      ? response.data.newsletters
+      : [],
+    logs: Array.isArray(response.data?.logs) ? response.data.logs : [],
+  }
 }
 
 export async function requestNewsletterChanges(

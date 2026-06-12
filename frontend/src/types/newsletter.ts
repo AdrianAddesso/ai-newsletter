@@ -85,6 +85,30 @@ export type NewsletterListItem = {
   createdAt: string
 }
 
+export type NewsletterAnalyticsItem = {
+  id: string
+  title: string
+  state: NewsletterState
+  createdAt: string
+  updatedAt: string
+}
+
+export type NewsletterAnalyticsLogItem = {
+  id: string
+  newsletterId: string
+  newsletterName: string
+  previousState: NewsletterState | null
+  newState: NewsletterState | null
+  reviewedByUserId: string | null
+  allCommentaries: string | null
+  createdAt: string
+}
+
+export type NewslettersAnalyticsResponse = {
+  newsletters: NewsletterAnalyticsItem[]
+  logs: NewsletterAnalyticsLogItem[]
+}
+
 export type TemplateLayoutItem = {
   block_type: string
   content: unknown
