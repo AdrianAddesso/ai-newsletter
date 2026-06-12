@@ -96,6 +96,30 @@ type EmailBlockSnapshotInput = {
   height: number;
 };
 
+export type NewsletterAnalyticsItem = {
+  id: string;
+  title: string;
+  state: newsletter_state;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type NewsletterAnalyticsLogItem = {
+  id: string;
+  newsletterId: string;
+  newsletterName: string;
+  previousState: newsletter_state | null;
+  newState: newsletter_state | null;
+  reviewedByUserId: string | null;
+  allCommentaries: string | null;
+  createdAt: string;
+};
+
+export type NewslettersAnalyticsResponse = {
+  newsletters: NewsletterAnalyticsItem[];
+  logs: NewsletterAnalyticsLogItem[];
+};
+
 @Injectable()
 export class NewsLettersService {
   private readonly keywordSvgTemplateCache = new Map<string, Promise<string>>();
@@ -194,6 +218,66 @@ export class NewsLettersService {
       submittedAt: newsletter.created_at.toISOString(),
       updatedAt: newsletter.updated_at.toISOString(),
     }));
+  }
+
+  async getAnalytics(): Promise<NewslettersAnalyticsResponse> {
+    const [newsletters, logs] = await Promise.all([
+      this.prisma.newsletters.findMany({
+        where: { deleted_at: null },
+        orderBy: { created_at: 'desc' },
+        select: {
+          id: true,
+          title: true,
+          state: true,
+          generation_content: true,
+          created_at: true,
+          updated_at: true,
+        },
+      }),
+      this.prisma.newsletter_state_log.findMany({
+        where: {
+          newsletters: {
+            deleted_at: null,
+          },
+        },
+        orderBy: { created_at: 'desc' },
+        include: {
+          newsletters: {
+            select: {
+              id: true,
+              title: true,
+              generation_content: true,
+            },
+          },
+        },
+      }),
+    ]);
+
+    return {
+      newsletters: newsletters.map((newsletter) => ({
+        id: newsletter.id,
+        title: this.resolveNewsletterTitle(
+          newsletter.title,
+          newsletter.generation_content,
+        ),
+        state: newsletter.state,
+        createdAt: newsletter.created_at.toISOString(),
+        updatedAt: newsletter.updated_at.toISOString(),
+      })),
+      logs: logs.map((log) => ({
+        id: log.id,
+        newsletterId: log.newsletters.id,
+        newsletterName: this.resolveNewsletterTitle(
+          log.newsletters.title,
+          log.newsletters.generation_content,
+        ),
+        previousState: this.toNewsletterStateOrNull(log.previous_state),
+        newState: this.toNewsletterStateOrNull(log.new_state),
+        reviewedByUserId: log.reviewed_by_user_id,
+        allCommentaries: log.all_commentaries,
+        createdAt: log.created_at.toISOString(),
+      })),
+    };
   }
 
   async create(body: CreateNewsletterBody, requestUserId?: string) {
@@ -1636,6 +1720,16 @@ export class NewsLettersService {
       aiContent: body.generationContent.aiContent,
       originalContent: body.generationContent.originalContent,
     } as Prisma.InputJsonValue;
+  }
+
+  private toNewsletterStateOrNull(value: string | null): newsletter_state | null {
+    if (!value) {
+      return null;
+    }
+
+    return Object.values(newsletter_state).includes(value as newsletter_state)
+      ? (value as newsletter_state)
+      : null;
   }
 
   private readOriginalContent(value: Prisma.JsonValue): Prisma.JsonValue | null {
