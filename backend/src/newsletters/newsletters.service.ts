@@ -534,6 +534,7 @@ export class NewsLettersService {
     await this.notificationsService.notifyNewsletterStateChange(
       id,
       newsletter_state.CHANGES_REQUESTED,
+      payload.reviewedByUserId,
     )
 
     return this.getById(id);
@@ -588,6 +589,7 @@ export class NewsLettersService {
     await this.notificationsService.notifyNewsletterStateChange(
       id,
       newsletter_state.APPROVED,
+      payload.reviewedByUserId,
     )
 
     return this.getById(id);
@@ -632,6 +634,7 @@ export class NewsLettersService {
     await this.notificationsService.notifyNewsletterStateChange(
       id,
       newsletter_state.DISCARDED,
+      payload.reviewedByUserId,
     )
 
     return this.getById(id)
@@ -738,7 +741,7 @@ export class NewsLettersService {
               cidByAssetId,
               emailWidth,
               snapshotByBlockId,
-              fallback: this.renderEmailBlock.bind(this),
+              fallback: (b, cid) => this.renderEmailBlock(b, cid),
             }),
           )
           .join('\n');
@@ -1402,45 +1405,50 @@ export class NewsLettersService {
   }
 
   private parseStoredReviewComments(
-    rawComments: string | null,
-  ): StoredReviewComment[] {
-    if (!rawComments) {
+  rawComments: string | null,
+): StoredReviewComment[] {
+  if (!rawComments) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(rawComments) as unknown;
+
+    if (!Array.isArray(parsed)) {
       return [];
     }
 
-    try {
-      const parsed = JSON.parse(rawComments) as unknown;
+    const parsedArray = parsed as unknown[];
 
-      if (!Array.isArray(parsed)) {
+    return parsedArray.flatMap((entry) => {
+      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
         return [];
       }
 
-      return parsed.flatMap((entry) => {
-        if (
-          !entry ||
-          typeof entry !== 'object' ||
-          Array.isArray(entry) ||
-          typeof entry.blockId !== 'string' ||
-          typeof entry.content !== 'string'
-        ) {
-          return [];
-        }
+      const obj = entry as Record<string, unknown>;
 
-        const normalizedContent = entry.content.trim();
+      const blockIdCandidate = obj.blockId;
+      const contentCandidate = obj.content;
 
-        if (!normalizedContent) {
-          return [];
-        }
+      if (typeof blockIdCandidate !== 'string' || typeof contentCandidate !== 'string') {
+        return [];
+      }
 
-        return [{
-          blockId: entry.blockId,
-          content: normalizedContent,
-        }];
-      });
-    } catch {
-      return [];
-    }
+      const normalizedContent = contentCandidate.trim();
+
+      if (!normalizedContent) {
+        return [];
+      }
+
+      return [{
+        blockId: blockIdCandidate,
+        content: normalizedContent,
+      }];
+    });
+  } catch {
+    return [];
   }
+}
 
   private normalizeReviewComments(blockComments: ReviewBlockComment[]) {
     const latestByBlockId = new Map<string, string>();

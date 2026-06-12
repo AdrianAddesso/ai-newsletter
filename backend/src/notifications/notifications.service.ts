@@ -74,6 +74,7 @@ export class NotificationsService {
     async notifyNewsletterStateChange(
         newsletterId: string,
         newState: newsletter_state,
+        reviewedByUserId?: string,
     ): Promise<void> {
         const newsletter = await this.prisma.newsletters.findUnique({
             where: { id: newsletterId },
@@ -95,30 +96,18 @@ export class NotificationsService {
             ? `${newsletter.users_newsletters_created_by_user_idTousers.name} ${newsletter.users_newsletters_created_by_user_idTousers.last_name}`
             : 'Anónimo'
 
-        const latestStateLog = await this.prisma.newsletter_state_log.findFirst({
-            where: {
-                newsletter_id: newsletterId,
-                new_state: newState,
-            },
-            orderBy: {
-                created_at: 'desc',
-            },
-            include: {
-                users: {
-                    select: {
-                        name: true,
-                        last_name: true,
-                    },
+        const reviewer = reviewedByUserId
+            ? await this.prisma.users.findUnique({
+                where: { id: reviewedByUserId },
+                select: {
+                    name: true,
+                    last_name: true,
                 },
-            },
-        })
+            })
+            : null
 
-        const reviewerName = latestStateLog?.users
-            ? `${latestStateLog.users.name} ${latestStateLog.users.last_name}`
-            : 'Un revisor'
-
-        const approverName = newsletter.users_newsletters_approved_by_user_idTousers
-            ? `${newsletter.users_newsletters_approved_by_user_idTousers.name} ${newsletter.users_newsletters_approved_by_user_idTousers.last_name}`
+        const reviewerName = reviewer
+            ? `${reviewer.name} ${reviewer.last_name}`
             : 'Un revisor'
 
         // Notificaciones según el estado
@@ -127,14 +116,12 @@ export class NotificationsService {
         console.log({
             creator: creatorName,
             reviewer: reviewerName,
-            approver: approverName,
             state: newState,
         })
 
         switch (newState) {
             case newsletter_state.IN_REVIEW:
             case newsletter_state.RESUBMITTED:
-                // Notificar a revisores y admins
                 await this.notifyReviewersAndAdmins(
                     newsletterId,
                     `Newsletter "${newsletter.title}" está en revisión`,
@@ -145,12 +132,11 @@ export class NotificationsService {
                 return
 
             case newsletter_state.APPROVED:
-                // Notificar al creador que fue aprobado
                 if (newsletter.users_newsletters_created_by_user_idTousers?.id) {
                     notificationsToCreate.push({
                         userId: newsletter.users_newsletters_created_by_user_idTousers.id,
                         title: 'Newsletter Aprobado',
-                        message: `Tu newsletter "${newsletter.title}" ha sido aprobado por ${approverName} y está listo para exportar.`,
+                        message: `Tu newsletter "${newsletter.title}" ha sido aprobado por ${reviewerName} y está listo para exportar.`,
                         type: NotificationType.APPROVED,
                         actionPath: `/exportarNewsletter/${newsletterId}`,
                         newsletterId,
@@ -159,7 +145,6 @@ export class NotificationsService {
                 break
 
             case newsletter_state.CHANGES_REQUESTED:
-                // Notificar al creador que debe hacer cambios
                 if (newsletter.users_newsletters_created_by_user_idTousers?.id) {
                     notificationsToCreate.push({
                         userId: newsletter.users_newsletters_created_by_user_idTousers.id,
@@ -173,7 +158,6 @@ export class NotificationsService {
                 break
 
             case newsletter_state.DISCARDED:
-                // Notificar al creador que fue descartado
                 if (newsletter.users_newsletters_created_by_user_idTousers?.id) {
                     notificationsToCreate.push({
                         userId: newsletter.users_newsletters_created_by_user_idTousers.id,
@@ -187,35 +171,8 @@ export class NotificationsService {
                 break
         }
 
-        // Crear todas las notificaciones en paralelo
+        // Crea todas las notificaciones en paralelo
         await Promise.all(notificationsToCreate.map(notif => this.createNotification(notif)))
-    }
-
-    async notifyNewNewsletter(newsletterId: string): Promise<void> {
-        const newsletter = await this.prisma.newsletters.findUnique({
-            where: { id: newsletterId },
-            include: {
-                users_newsletters_created_by_user_idTousers: {
-                    select: { name: true, last_name: true },
-                },
-            },
-        })
-
-        if (!newsletter) {
-            throw new BadRequestException('Newsletter no encontrado')
-        }
-
-        const creatorName = newsletter.users_newsletters_created_by_user_idTousers
-            ? `${newsletter.users_newsletters_created_by_user_idTousers.name} ${newsletter.users_newsletters_created_by_user_idTousers.last_name}`
-            : 'Un usuario'
-
-        // Notificar a revisores y admins cuando hay un newsletter nuevo
-        await this.notifyReviewersAndAdmins(
-            newsletterId,
-            `Nuevo newsletter: ${newsletter.title}`,
-            `${creatorName} ha creado un nuevo newsletter "${newsletter.title}".`,
-            `/reviewNewsletter/${newsletterId}`,
-        )
     }
 
     async notifyReviewersAndAdmins(
@@ -224,7 +181,7 @@ export class NotificationsService {
         message: string,
         actionPath: string,
     ): Promise<void> {
-        // Obtener todos los usuarios con rol FUNCTIONAL o ADMIN
+
         const reviewersAndAdmins = await this.prisma.users.findMany({
             where: {
                 role: {
@@ -264,7 +221,7 @@ export class NotificationsService {
         await this.createNotification({
             userId: newsletter.created_by_user_id,
             title: 'Newsletter Eliminado',
-            message: `El newsletter "${newsletter.title}" fue eliminado.`,
+            message: `El newsletter "${newsletter.title}" fue eliminado por el administrador.`,
             type: NotificationType.INFO,
             actionPath: '/dashboard',
             newsletterId,
