@@ -169,10 +169,7 @@ export class NewsLettersService {
 
     const blocks: NewsletterEditableBlock[] = await Promise.all(
       sourceNewsletter.newsletter_blocks.map(async (nb) => {
-        return this.toBlockDto(
-          nb as PersistedNewsletterBlock,
-          null,
-        ) as unknown as NewsletterEditableBlock;
+        return this.toBlockDto(nb, null);
       }),
     );
 
