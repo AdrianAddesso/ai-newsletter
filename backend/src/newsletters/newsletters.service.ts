@@ -96,6 +96,30 @@ type EmailBlockSnapshotInput = {
   height: number;
 };
 
+export type NewsletterAnalyticsItem = {
+  id: string;
+  title: string;
+  state: newsletter_state;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type NewsletterAnalyticsLogItem = {
+  id: string;
+  newsletterId: string;
+  newsletterName: string;
+  previousState: newsletter_state | null;
+  newState: newsletter_state | null;
+  reviewedByUserId: string | null;
+  allCommentaries: string | null;
+  createdAt: string;
+};
+
+export type NewslettersAnalyticsResponse = {
+  newsletters: NewsletterAnalyticsItem[];
+  logs: NewsletterAnalyticsLogItem[];
+};
+
 @Injectable()
 export class NewsLettersService {
   private readonly keywordSvgTemplateCache = new Map<string, Promise<string>>();
@@ -105,6 +129,74 @@ export class NewsLettersService {
     private readonly storageService: StorageService,
     private readonly notificationsService: NotificationsService,
   ) {}
+
+  async duplicateNewsletter(
+    sourceNewsletterIdId: string,
+    requestUserId?: string,
+    newTitle?: string,
+  ) {
+    const sourceNewsletter = await this.prisma.newsletters.findFirst({
+      where: { id: sourceNewsletterIdId, deleted_at: null },
+      include: {
+        newsletter_blocks: {
+          where: { deleted_at: null },
+          orderBy: [{ row: 'asc' }, { grid_column: 'asc' }, { display_order: 'asc' }],
+          include: {
+            block_content: {
+              include: {
+                assets_block: {
+                  where: { deleted_at: null },
+                  include: { assets: true },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!sourceNewsletter) {
+      throw new NotFoundException('No se encontro el newsletter solicitado.');
+    }
+
+    if (sourceNewsletter.state !== newsletter_state.APPROVED) {
+      throw new BadRequestException(
+        'Solo se puede duplicar newsletters aprobados.',
+      );
+    }
+
+    const creatorId = await this.resolveUserId(requestUserId);
+
+    const blocks: NewsletterEditableBlock[] = await Promise.all(
+      sourceNewsletter.newsletter_blocks.map(async (nb) => {
+        return this.toBlockDto(nb, null);
+      }),
+    );
+
+    const newNewsletter = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.newsletters.create({
+        data: {
+          title: newTitle && newTitle.trim() ? newTitle : sourceNewsletter.title,
+          area_id: sourceNewsletter.area_id,
+          theme_tag: sourceNewsletter.theme_tag,
+          publish_date: null,
+          brand_kit_id: sourceNewsletter.brand_kit_id,
+          template_id: sourceNewsletter.template_id,
+          created_by_user_id: creatorId,
+          state: newsletter_state.DRAFT,
+          language: sourceNewsletter.language,
+          format: sourceNewsletter.format,
+          generation_content: sourceNewsletter.generation_content ?? undefined,
+        },
+      });
+
+      await this.replaceBlocks(tx, created.id, blocks);
+
+      return created;
+    });
+
+    return this.getById(newNewsletter.id);
+  }
 
   async getAll(page: number = 1, limit: number = 10) {
     const skip = (page - 1) * limit;
@@ -194,6 +286,66 @@ export class NewsLettersService {
       submittedAt: newsletter.created_at.toISOString(),
       updatedAt: newsletter.updated_at.toISOString(),
     }));
+  }
+
+  async getAnalytics(): Promise<NewslettersAnalyticsResponse> {
+    const [newsletters, logs] = await Promise.all([
+      this.prisma.newsletters.findMany({
+        where: { deleted_at: null },
+        orderBy: { created_at: 'desc' },
+        select: {
+          id: true,
+          title: true,
+          state: true,
+          generation_content: true,
+          created_at: true,
+          updated_at: true,
+        },
+      }),
+      this.prisma.newsletter_state_log.findMany({
+        where: {
+          newsletters: {
+            deleted_at: null,
+          },
+        },
+        orderBy: { created_at: 'desc' },
+        include: {
+          newsletters: {
+            select: {
+              id: true,
+              title: true,
+              generation_content: true,
+            },
+          },
+        },
+      }),
+    ]);
+
+    return {
+      newsletters: newsletters.map((newsletter) => ({
+        id: newsletter.id,
+        title: this.resolveNewsletterTitle(
+          newsletter.title,
+          newsletter.generation_content,
+        ),
+        state: newsletter.state,
+        createdAt: newsletter.created_at.toISOString(),
+        updatedAt: newsletter.updated_at.toISOString(),
+      })),
+      logs: logs.map((log) => ({
+        id: log.id,
+        newsletterId: log.newsletters.id,
+        newsletterName: this.resolveNewsletterTitle(
+          log.newsletters.title,
+          log.newsletters.generation_content,
+        ),
+        previousState: this.toNewsletterStateOrNull(log.previous_state),
+        newState: this.toNewsletterStateOrNull(log.new_state),
+        reviewedByUserId: log.reviewed_by_user_id,
+        allCommentaries: log.all_commentaries,
+        createdAt: log.created_at.toISOString(),
+      })),
+    };
   }
 
   async create(body: CreateNewsletterBody, requestUserId?: string) {
@@ -538,7 +690,8 @@ export class NewsLettersService {
     await this.notificationsService.notifyNewsletterStateChange(
       id,
       newsletter_state.CHANGES_REQUESTED,
-    );
+      payload.reviewedByUserId,
+    )
 
     return this.getById(id);
   }
@@ -592,7 +745,8 @@ export class NewsLettersService {
     await this.notificationsService.notifyNewsletterStateChange(
       id,
       newsletter_state.APPROVED,
-    );
+      payload.reviewedByUserId,
+    )
 
     return this.getById(id);
   }
@@ -636,7 +790,8 @@ export class NewsLettersService {
     await this.notificationsService.notifyNewsletterStateChange(
       id,
       newsletter_state.DISCARDED,
-    );
+      payload.reviewedByUserId,
+    )
 
     return this.getById(id);
   }
@@ -715,7 +870,7 @@ export class NewsLettersService {
               cidByAssetId,
               emailWidth,
               snapshotByBlockId,
-              fallback: this.renderEmailBlock.bind(this),
+              fallback: (b, cid) => this.renderEmailBlock(b, cid),
             }),
           )
           .join('\n');
@@ -1392,47 +1547,50 @@ export class NewsLettersService {
   }
 
   private parseStoredReviewComments(
-    rawComments: string | null,
-  ): StoredReviewComment[] {
-    if (!rawComments) {
+  rawComments: string | null,
+): StoredReviewComment[] {
+  if (!rawComments) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(rawComments) as unknown;
+
+    if (!Array.isArray(parsed)) {
       return [];
     }
 
-    try {
-      const parsed = JSON.parse(rawComments) as unknown;
+    const parsedArray = parsed as unknown[];
 
-      if (!Array.isArray(parsed)) {
+    return parsedArray.flatMap((entry) => {
+      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
         return [];
       }
 
-      return parsed.flatMap((entry) => {
-        if (
-          !entry ||
-          typeof entry !== 'object' ||
-          Array.isArray(entry) ||
-          typeof entry.blockId !== 'string' ||
-          typeof entry.content !== 'string'
-        ) {
-          return [];
-        }
+      const obj = entry as Record<string, unknown>;
 
-        const normalizedContent = entry.content.trim();
+      const blockIdCandidate = obj.blockId;
+      const contentCandidate = obj.content;
 
-        if (!normalizedContent) {
-          return [];
-        }
+      if (typeof blockIdCandidate !== 'string' || typeof contentCandidate !== 'string') {
+        return [];
+      }
 
-        return [
-          {
-            blockId: entry.blockId,
-            content: normalizedContent,
-          },
-        ];
-      });
-    } catch {
-      return [];
-    }
+      const normalizedContent = contentCandidate.trim();
+
+      if (!normalizedContent) {
+        return [];
+      }
+
+      return [{
+        blockId: blockIdCandidate,
+        content: normalizedContent,
+      }];
+    });
+  } catch {
+    return [];
   }
+}
 
   private normalizeReviewComments(blockComments: ReviewBlockComment[]) {
     const latestByBlockId = new Map<string, string>();
@@ -1626,9 +1784,17 @@ export class NewsLettersService {
     } as Prisma.InputJsonValue;
   }
 
-  private readOriginalContent(
-    value: Prisma.JsonValue,
-  ): Prisma.JsonValue | null {
+  private toNewsletterStateOrNull(value: string | null): newsletter_state | null {
+    if (!value) {
+      return null;
+    }
+
+    return Object.values(newsletter_state).includes(value as newsletter_state)
+      ? (value as newsletter_state)
+      : null;
+  }
+
+  private readOriginalContent(value: Prisma.JsonValue): Prisma.JsonValue | null {
     if (!value || typeof value !== 'object' || Array.isArray(value)) {
       return null;
     }

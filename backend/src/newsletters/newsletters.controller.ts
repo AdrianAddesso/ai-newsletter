@@ -14,6 +14,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { NewsLettersService } from './newsletters.service';
+import type { NewslettersAnalyticsResponse } from './newsletters.service';
 import {
   idAndCommentIdParamSchema,
   idAndExportIdParamSchema,
@@ -86,6 +87,13 @@ export class NewslettersController {
   @Get('reviews')
   getReviewInbox(@Req() request: AuthenticatedRequest) {
     return this.newslettersService.getReviewInbox(request.user);
+  }
+
+  @Get('analytics')
+  getAnalytics(@Req() request: AuthenticatedRequest): Promise<NewslettersAnalyticsResponse> {
+    return this.assertAnalyticsPermission(request).then(() =>
+      this.newslettersService.getAnalytics(),
+    );
   }
 
   @Post()
@@ -224,6 +232,20 @@ export class NewslettersController {
     );
   }
 
+  @Post(':id/duplicate')
+  @RequirePermission(Action.CONTENT_UPLOAD, Resource.NEWSLETTERS)
+  duplicate(
+    @Req() request: AuthenticatedRequest,
+    @Param(new ZodValidationPipe(idParamSchema)) params: IdParam,
+    @Body() body?: { title?: string },
+  ) {
+    return this.newslettersService.duplicateNewsletter(
+      params.id,
+      request.user?.id,
+      body?.title,
+    );
+  }
+
   private async assertStatusPermission(
     request: AuthenticatedRequest,
     newsletterId: string,
@@ -244,27 +266,26 @@ export class NewslettersController {
     );
   }
 
-  private async assertGlobalActionPermission(
+  private async assertAnalyticsPermission(
     request: AuthenticatedRequest,
-    requiredAction: Action,
   ): Promise<void> {
     const user = request.user;
 
     if (!user?.role) {
       throw new ForbiddenException({
-        message:
-          'No se encontro informacion de usuario en la solicitud o el usuario no tiene un rol asignado',
+        message: 'No se encontro informacion de usuario en la solicitud o el usuario no tiene un rol asignado',
         error: 'Permisos insuficientes',
         statusCode: 403,
       });
     }
 
-    const rolePermissions =
-      await this.permissionCacheService.getPermissionsForRole(user.role);
+    const rolePermissions = await this.permissionCacheService.getPermissionsForRole(
+      user.role,
+    );
 
-    if (!rolePermissions.includes(requiredAction)) {
+    if (!rolePermissions.includes(Action.AUDIT_LOGS_METRICS_VIEW)) {
       throw new ForbiddenException({
-        message: `Tu rol (${user.role}) no tiene el permiso: ${requiredAction}`,
+        message: `Tu rol (${user.role}) no tiene el permiso: ${Action.AUDIT_LOGS_METRICS_VIEW}`,
         error: 'Permisos insuficientes',
         statusCode: 403,
       });
@@ -279,7 +300,7 @@ export class NewslettersController {
 
     const isAuthorized = this.authorizationService.isAuthorized(
       normalizedUser,
-      requiredAction,
+      Action.AUDIT_LOGS_METRICS_VIEW,
     );
 
     if (!isAuthorized) {

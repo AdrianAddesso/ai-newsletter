@@ -17,8 +17,9 @@
     Pagination,
     Select,
     Stack,
-    Tab,
-    Tabs,
+    Accordion,
+    AccordionSummary,
+    AccordionDetails,
     TextField,
     Typography,
     type SelectChangeEvent,
@@ -58,6 +59,7 @@
     import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
     import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
     import RefreshIcon from "@mui/icons-material/Refresh"; 
+    import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 
 type SelectableAssetType = Exclude<AssetType, "BLOCK">;
@@ -301,6 +303,27 @@ export function EditPanel({
     Boolean(values.bgColor?.trim() || values.overlayColor?.trim()),
   );
 
+  // Filtramos los campos que realmente generan un panel visual para facilitar la indexación
+  const visibleFields = selectedBlock.editFields.filter((field) => {
+    if (
+      field.type === "font-style" ||
+      field.type === "font-size" ||
+      field.type === "font-family" ||
+      field.key === "iconName"
+    ) {
+      return false;
+    }
+    if (
+      (field.key === "bgColor" || field.key === "overlayColor") &&
+      backgroundAssetField
+    ) {
+      return false;
+    }
+    if (field.key === "backgroundAsset" && !backgroundAssetField) return false;
+    if (field.key === "iconAsset" && !iconAssetField) return false;
+    return true;
+  });
+
   return (
     <Stack
       sx={{
@@ -321,102 +344,102 @@ export function EditPanel({
         }}
       >
         <Stack spacing={2}>
-          <Typography variant="subtitle1">{selectedBlock.name}</Typography>
+          <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
+            {selectedBlock.name}
+          </Typography>
 
           {aiError && <Alert severity="error">{aiError}</Alert>}
 
-          {selectedBlock.editFields.map((field) => {
-            if (field.type === "font-style" || field.type === "font-size") {
-              return null;
-            }
-
-            if (field.type === "font-family") {
-              return null;
-            }
-
-            if (field.key === "iconName") {
-              return null;
-            }
-
-            if (field.key === "backgroundAsset") {
-              if (!backgroundAssetField) {
-                return null;
-              }
-
-              return (
-                <BackgroundStyleFieldEditor
-                  key="background-style"
-                  block={selectedBlock}
-                  backgroundAssetField={backgroundAssetField}
-                  backgroundColorField={backgroundColorField}
-                  backgroundMode={backgroundMode}
-                  brandKitResources={brandKitResources}
-                  canEdit={canEdit}
-                  onUpdateBlock={onUpdateBlock}
-                />
-              );
-            }
-
-            if (field.key === "iconAsset") {
-              if (!iconAssetField) {
-                return null;
-              }
-
-              return (
-                <ImageAssetFieldEditor
-                  key="icon-asset"
-                  block={selectedBlock}
-                  field={iconAssetField}
-                  canEdit={canEdit}
-                  brandKitResources={brandKitResources}
-                  onUpdateBlock={onUpdateBlock}
-                />
-              );
-            }
-
-            if (field.key === "bgColor" || field.key === "overlayColor") {
-              return null;
-            }
-
-            if (supportsIndependentTypography(field)) {
-              return (
-                <TextFieldGroupEditor
-                  key={field.key}
-                  block={selectedBlock}
-                  field={field}
-                  value={values[field.key] ?? ""}
-                  fontSizeValue={
-                    values[`${field.key}FontSize`] ?? values.fontSize ?? ""
-                  }
-                  fontFamilyValue={
-                    values[`${field.key}FontFamily`] ?? values.fontFamily ?? ""
-                  }
-                  brandKitResources={brandKitResources}
-                  canEdit={canEdit}
-                  hasTextFontSizeControl={hasTextFontSizeControl}
-                  hasTextFontFamilyControl={hasTextFontFamilyControl}
-                  onUpdateBlock={onUpdateBlock}
-                />
-              );
-            }
-
-            return (
-              <FieldEditor
-                key={field.key}
-                block={selectedBlock}
-                field={field}
-                value={values[field.key] ?? ""}
-                brandKitResources={brandKitResources}
-                canEdit={canEdit}
-                onUpdateBlock={onUpdateBlock}
-              />
-            );
-          })}
-
-          {selectedBlock.editFields.length === 0 && (
+          {visibleFields.length === 0 ? (
             <Alert severity="info">
               Este bloque no tiene campos editables.
             </Alert>
+          ) : (
+            visibleFields.map((field, index) => {
+              let content = null;
+              let title = field.label;
+
+              if (field.key === "backgroundAsset") {
+                title = backgroundAssetField!.label || "Fondo";
+                content = (
+                  <BackgroundStyleFieldEditor
+                    block={selectedBlock}
+                    backgroundAssetField={backgroundAssetField!}
+                    backgroundColorField={backgroundColorField}
+                    backgroundMode={backgroundMode}
+                    brandKitResources={brandKitResources}
+                    canEdit={canEdit}
+                    onUpdateBlock={onUpdateBlock}
+                  />
+                );
+              } else if (field.key === "iconAsset") {
+                title = iconAssetField!.label || "Icono";
+                content = (
+                  <ImageAssetFieldEditor
+                    block={selectedBlock}
+                    field={iconAssetField!}
+                    canEdit={canEdit}
+                    brandKitResources={brandKitResources}
+                    onUpdateBlock={onUpdateBlock}
+                  />
+                );
+              } else if (supportsIndependentTypography(field)) {
+                content = (
+                  <TextFieldGroupEditor
+                    block={selectedBlock}
+                    field={field}
+                    value={values[field.key] ?? ""}
+                    fontSizeValue={
+                      values[`${field.key}FontSize`] ?? values.fontSize ?? ""
+                    }
+                    fontFamilyValue={
+                      values[`${field.key}FontFamily`] ??
+                      values.fontFamily ??
+                      ""
+                    }
+                    brandKitResources={brandKitResources}
+                    canEdit={canEdit}
+                    hasTextFontSizeControl={hasTextFontSizeControl}
+                    hasTextFontFamilyControl={hasTextFontFamilyControl}
+                    onUpdateBlock={onUpdateBlock}
+                  />
+                );
+              } else {
+                content = (
+                  <FieldEditor
+                    block={selectedBlock}
+                    field={field}
+                    value={values[field.key] ?? ""}
+                    brandKitResources={brandKitResources}
+                    canEdit={canEdit}
+                    onUpdateBlock={onUpdateBlock}
+                  />
+                );
+              }
+
+              return (
+                <Accordion
+                  key={field.key}
+                  variant="outlined"
+                  disableGutters
+                  sx={{
+                    "&:before": { display: "none" },
+                    borderRadius: 1,
+                    mb: 1,
+                    "&:last-child": { mb: 0 },
+                  }}
+                >
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                      {title}
+                    </Typography>
+                  </AccordionSummary>
+                  <AccordionDetails sx={{ pl: 4, pr: 2, pb: 2, pt: 0 }}>
+                    {content}
+                  </AccordionDetails>
+                </Accordion>
+              );
+            })
           )}
 
           {canEdit &&
@@ -428,7 +451,7 @@ export function EditPanel({
                 color="secondary"
                 disabled={isRegeneratingBlock}
                 onClick={() => void onRegenerateBlock(selectedBlock.id)}
-                sx={{ alignSelf: "flex-end" }}
+                sx={{ alignSelf: "flex-end", mt: 1 }}
                 startIcon={
                   isRegeneratingBlock ? (
                     <CircularProgress size={18} color="inherit" />

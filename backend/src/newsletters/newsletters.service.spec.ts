@@ -1,10 +1,18 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
+jest.mock('../notifications/notifications.service', () => ({
+  NotificationsService: class NotificationsService {
+    notifyNewsletterDeleted = jest.fn()
+    notifyNewsletterStateChange = jest.fn()
+  },
+}))
+
 import { Test, TestingModule } from '@nestjs/testing';
 import { NewsLettersService } from './newsletters.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { BadRequestException } from '@nestjs/common';
 import { StorageService } from '../storage/storage.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 describe('NewsLettersService', () => {
   let service: NewsLettersService;
@@ -47,6 +55,7 @@ describe('NewsLettersService', () => {
         findUnique: jest.fn(),
         findFirst: jest.fn(),
         update: jest.fn(),
+        findMany: jest.fn(),
       },
       users: {
         findUnique: jest.fn(),
@@ -69,6 +78,13 @@ describe('NewsLettersService', () => {
           provide: StorageService,
           useValue: {
             getSignedUrl: jest.fn(),
+          },
+        },
+        {
+          provide: NotificationsService,
+          useValue: {
+            notifyNewsletterDeleted: jest.fn(),
+            notifyNewsletterStateChange: jest.fn(),
           },
         },
       ],
@@ -402,6 +418,7 @@ describe('NewsLettersService', () => {
         where: { id: 'newsletter-id' },
         data: {
           state: 'APPROVED',
+          approved_by_user_id: 'reviewer-id',
         },
       });
       expect(prisma.__tx.newsletter_state_log.create).toHaveBeenCalledWith({

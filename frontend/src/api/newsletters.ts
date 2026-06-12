@@ -3,6 +3,7 @@ import type {
   BlockReviewComment,
   CreateNewsletterPayload,
   Newsletter,
+  NewslettersAnalyticsResponse,
   NewsletterBlock,
   NewsletterListItem,
   ReviewInboxItem,
@@ -123,6 +124,19 @@ export async function getReviewInbox(): Promise<ReviewInboxItem[]> {
   return response.data
 }
 
+export async function getNewslettersAnalytics(): Promise<NewslettersAnalyticsResponse> {
+  const response = await axios.get<NewslettersAnalyticsResponse>(
+    `${API_BASE}/analytics`,
+  )
+
+  return {
+    newsletters: Array.isArray(response.data?.newsletters)
+      ? response.data.newsletters
+      : [],
+    logs: Array.isArray(response.data?.logs) ? response.data.logs : [],
+  }
+}
+
 export async function requestNewsletterChanges(
   newsletterId: string,
   blockComments: Array<Pick<BlockReviewComment, 'blockId' | 'content'>>,
@@ -142,6 +156,18 @@ export async function approveNewsletterReview(
 ): Promise<Newsletter> {
   const response = await axios.post<Newsletter>(
     `${API_BASE}/${newsletterId}/review/approve`,
+  )
+
+  return response.data
+}
+
+export async function duplicateNewsletter(
+  newsletterId: string,
+  newTitle?: string,
+): Promise<Newsletter> {
+  const response = await axios.post<Newsletter>(
+    `${API_BASE}/${newsletterId}/duplicate`,
+    newTitle ? { title: newTitle } : {},
   )
 
   return response.data

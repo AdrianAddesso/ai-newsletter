@@ -13,6 +13,8 @@ type Props = {
   exportOptions: ExportOption[]
   exportingFormat: ExportFormat | null
   onExport: (format: ExportFormat) => void
+  onDuplicate: () => void
+  isDuplicating: boolean
 }
 
 export function ApprovedNewsletterPage({
@@ -20,6 +22,8 @@ export function ApprovedNewsletterPage({
   exportOptions,
   exportingFormat,
   onExport,
+  onDuplicate,
+  isDuplicating,
 }: Props) {
   return (
     <Stack
@@ -48,6 +52,8 @@ export function ApprovedNewsletterPage({
           exportOptions={exportOptions}
           exportingFormat={exportingFormat}
           onExport={onExport}
+          onDuplicate={onDuplicate}
+          isDuplicating={isDuplicating}
         />
       </Box>
     </Stack>
