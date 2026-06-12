@@ -3,6 +3,7 @@ import {
   Box,
   Button,
   Chip,
+  CircularProgress,
   IconButton,
   Paper,
   Stack,
@@ -19,6 +20,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import IosShareIcon from '@mui/icons-material/IosShare'
 import EditIcon from '@mui/icons-material/Edit';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import {
   NewsletterStatus,
   NewsletterStatusLabel,
@@ -28,6 +30,7 @@ import { TableSortLabel } from '@mui/material';
 import Tooltip from "@mui/material/Tooltip";
 import { useNavigate } from 'react-router';
 import { deleteNewsletter, getAllNewsletters } from '../../api/newsletters';
+import { DuplicateNewsletterDialog } from '../../pages/newsletter/components/DuplicateNewsletterDialog'
 import { NewsletterPreviewModal } from '../../pages/newsletter/viewer/NewsletterPreviewModal'
 import { useAuth } from '../../contexts/AuthContext'
 
@@ -82,6 +85,10 @@ export function NewslettersTable({ search, filter, userRole, }: Props) {
   const [order, setOrder] = useState<'asc' | 'desc'>('desc');
   const [previewOpen, setPreviewOpen] = useState(false)
   const [previewNewsletterId, setPreviewNewsletterId] = useState<string | null>(null)
+  const [duplicatingId, setDuplicatingId] = useState<string | null>(null)
+  const [showDuplicateDialog, setShowDuplicateDialog] = useState(false)
+  const [duplicateDialogTitle, setDuplicateDialogTitle] = useState('')
+  const [duplicateNewsletterForDialog, setDuplicateNewsletterForDialog] = useState<string | null>(null)
   const { user } = useAuth()
 
   const handleSort = (property: keyof NewsletterRow) => {
@@ -121,6 +128,30 @@ export function NewslettersTable({ search, filter, userRole, }: Props) {
     } finally {
       setIsDeleting(false)
     }
+  }
+
+  const handleDuplicateSuccess = (newNewsletterId: string) => {
+    setShowDuplicateDialog(false)
+    setDuplicatingId(null)
+    setDuplicateDialogTitle('')
+    setDuplicateNewsletterForDialog(null)
+    navigate(`/editarNewsletter/${newNewsletterId}`)
+  }
+
+  const handleDuplicateProcessingChange = (isProcessing: boolean) => {
+    setDuplicatingId(isProcessing ? duplicateNewsletterForDialog : null)
+  }
+
+  const handleOpenDuplicateDialog = (id: string, title: string) => {
+    setDuplicateNewsletterForDialog(id)
+    setDuplicateDialogTitle(title)
+    setShowDuplicateDialog(true)
+  }
+
+  const handleCloseDuplicateDialog = () => {
+    setShowDuplicateDialog(false)
+    setDuplicateDialogTitle('')
+    setDuplicateNewsletterForDialog(null)
   }
 
   useEffect(() => {
@@ -266,22 +297,21 @@ export function NewslettersTable({ search, filter, userRole, }: Props) {
           <TableBody>
             {visibleData.map((n) => {
               const isPrivilegedUser =
-                userRole === 'ADMIN' || userRole === 'FUNCTIONAL'
-              const isOwner = user?.id === n.creatorUserId
+                userRole === "ADMIN" || userRole === "FUNCTIONAL";
+              const isOwner = user?.id === n.creatorUserId;
 
-              const canEditByState = editableStatuses.has(n.state)
-              const canEdit = canEditByState && (isPrivilegedUser || isOwner)
+              const canEditByState = editableStatuses.has(n.state);
+              const canEdit = canEditByState && (isPrivilegedUser || isOwner);
 
-              const canDelete = isPrivilegedUser
+              const canDelete = isPrivilegedUser;
 
-              const canExport =
-                n.state === NewsletterStatus.APPROVED
+              const canExport = n.state === NewsletterStatus.APPROVED;
 
               const editTooltip = !canEditByState
-                ? 'Solo se puede editar borradores o newsletters con cambios solicitados'
+                ? "Solo se puede editar borradores o newsletters con cambios solicitados"
                 : !isPrivilegedUser && !isOwner
-                  ? 'Solo podes editar newsletters propios'
-                  : 'Editar'
+                  ? "Solo podes editar newsletters propios"
+                  : "Editar";
 
               return (
                 <TableRow key={n.id} hover>
@@ -315,15 +345,31 @@ export function NewslettersTable({ search, filter, userRole, }: Props) {
                     <Stack
                       direction="row"
                       spacing={1}
-                      sx={{ justifyContent: 'flex-end' }}
+                      sx={{ justifyContent: "flex-end" }}
                     >
-                        {canExport && (
+                      {canExport && (
                         <Tooltip title="Exportar" arrow>
                           <IconButton
                             size="small"
-                            onClick={() => navigate(`/exportarNewsletter/${n.id}`)}
+                            onClick={() =>
+                              navigate(`/exportarNewsletter/${n.id}`)
+                            }
                           >
                             <IosShareIcon />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+
+                      {canExport && (
+                        <Tooltip title="Crear nueva edición" arrow>
+                          <IconButton
+                            size="small"
+                            disabled={duplicatingId === n.id}
+                            onClick={() =>
+                              handleOpenDuplicateDialog(n.id, n.title)
+                            }
+                          >
+                            <ContentCopyIcon />
                           </IconButton>
                         </Tooltip>
                       )}
@@ -337,20 +383,21 @@ export function NewslettersTable({ search, filter, userRole, }: Props) {
                         </IconButton>
                       </Tooltip>
 
-                      <Tooltip
-                        title={editTooltip}
-                        arrow
-                      >
-                        <span>
-                          <IconButton
-                            size="small"
-                            disabled={!canEdit}
-                            onClick={() => navigate(`/editarNewsletter/${n.id}`)}
-                          >
-                            <EditIcon />
-                          </IconButton>
-                        </span>
-                      </Tooltip>
+                      {canEdit && (
+                        <Tooltip title={editTooltip} arrow>
+                          <span>
+                            <IconButton
+                              size="small"
+                              disabled={!canEdit}
+                              onClick={() =>
+                                navigate(`/editarNewsletter/${n.id}`)
+                              }
+                            >
+                              <EditIcon />
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                      )}
 
                       {canDelete && (
                         <Tooltip title="Eliminar" arrow>
@@ -362,7 +409,7 @@ export function NewslettersTable({ search, filter, userRole, }: Props) {
                     </Stack>
                   </TableCell>
                 </TableRow>
-              )
+              );
             })}
           </TableBody>
         </MuiTable>
@@ -392,11 +439,20 @@ export function NewslettersTable({ search, filter, userRole, }: Props) {
         open={previewOpen}
         newsletterId={previewNewsletterId}
         onClose={() => {
-          setPreviewOpen(false)
-          setPreviewNewsletterId(null)
+          setPreviewOpen(false);
+          setPreviewNewsletterId(null);
         }}
       />
 
+      <DuplicateNewsletterDialog
+        open={showDuplicateDialog}
+        title={duplicateDialogTitle}
+        newsletterId={duplicateNewsletterForDialog}
+        onClose={handleCloseDuplicateDialog}
+        onDuplicateSuccess={handleDuplicateSuccess}
+        onProcessingChange={handleDuplicateProcessingChange}
+        isProcessing={duplicatingId !== null}
+      />
     </Paper>
   );
 }

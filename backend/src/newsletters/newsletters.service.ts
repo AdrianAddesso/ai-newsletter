@@ -130,6 +130,77 @@ export class NewsLettersService {
     private readonly notificationsService: NotificationsService,
   ) { }
 
+  async duplicateNewsletter(
+    sourceNewsletterIdId: string,
+    requestUserId?: string,
+    newTitle?: string,
+  ) {
+    const sourceNewsletter = await this.prisma.newsletters.findFirst({
+      where: { id: sourceNewsletterIdId, deleted_at: null },
+      include: {
+        newsletter_blocks: {
+          where: { deleted_at: null },
+          orderBy: [{ row: 'asc' }, { grid_column: 'asc' }, { display_order: 'asc' }],
+          include: {
+            block_content: {
+              include: {
+                assets_block: {
+                  where: { deleted_at: null },
+                  include: { assets: true },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!sourceNewsletter) {
+      throw new NotFoundException('No se encontro el newsletter solicitado.');
+    }
+
+    if (sourceNewsletter.state !== newsletter_state.APPROVED) {
+      throw new BadRequestException(
+        'Solo se puede duplicar newsletters aprobados.',
+      );
+    }
+
+    const creatorId = await this.resolveUserId(requestUserId);
+
+    const blocks: NewsletterEditableBlock[] = await Promise.all(
+      sourceNewsletter.newsletter_blocks.map(async (nb) => {
+        return this.toBlockDto(
+          nb as PersistedNewsletterBlock,
+          null,
+        ) as unknown as NewsletterEditableBlock;
+      }),
+    );
+
+    const newNewsletter = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.newsletters.create({
+        data: {
+          title: newTitle && newTitle.trim() ? newTitle : sourceNewsletter.title,
+          area_id: sourceNewsletter.area_id,
+          theme_tag: sourceNewsletter.theme_tag,
+          publish_date: null,
+          brand_kit_id: sourceNewsletter.brand_kit_id,
+          template_id: sourceNewsletter.template_id,
+          created_by_user_id: creatorId,
+          state: newsletter_state.DRAFT,
+          language: sourceNewsletter.language,
+          format: sourceNewsletter.format,
+          generation_content: sourceNewsletter.generation_content ?? undefined,
+        },
+      });
+
+      await this.replaceBlocks(tx, created.id, blocks);
+
+      return created;
+    });
+
+    return this.getById(newNewsletter.id);
+  }
+
   async getAll(page: number = 1, limit: number = 10) {
     const skip = (page - 1) * limit;
 

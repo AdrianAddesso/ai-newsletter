@@ -299,6 +299,20 @@ export class NewslettersController {
     );
   }
 
+  @Post(':id/duplicate')
+  @RequirePermission(Action.CONTENT_UPLOAD, Resource.NEWSLETTERS)
+  duplicate(
+    @Req() request: AuthenticatedRequest,
+    @Param(new ZodValidationPipe(idParamSchema)) params: IdParam,
+    @Body() body?: { title?: string },
+  ) {
+    return this.newslettersService.duplicateNewsletter(
+      params.id,
+      request.user?.id,
+      body?.title,
+    );
+  }
+
   private async assertStatusPermission(
     request: AuthenticatedRequest,
     newsletterId: string,
