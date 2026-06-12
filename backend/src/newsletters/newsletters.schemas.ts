@@ -103,19 +103,6 @@ export const requestNewsletterChangesBodySchema = z
   })
   .strict();
 
-export const addNewsletterCommentBodySchema = z
-  .object({
-    blockContentId: uuidFieldSchema.optional(),
-    commentedByUserId: uuidFieldSchema.optional(),
-    show: optionalBooleanFieldSchema,
-    content: optionalStringFieldSchema,
-  })
-  .strict();
-
-export const updateNewsletterCommentBodySchema = addNewsletterCommentBodySchema
-  .partial()
-  .strict();
-
 export const updateNewsletterExportBodySchema = z
   .object({
     urlFile: optionalUrlFieldSchema,
@@ -138,12 +125,6 @@ export type UpdateNewsletterStatusBody = z.infer<
 >;
 export type RequestNewsletterChangesBody = z.infer<
   typeof requestNewsletterChangesBodySchema
->;
-export type AddNewsletterCommentBody = z.infer<
-  typeof addNewsletterCommentBodySchema
->;
-export type UpdateNewsletterCommentBody = z.infer<
-  typeof updateNewsletterCommentBodySchema
 >;
 export type UpdateNewsletterExportBody = z.infer<
   typeof updateNewsletterExportBodySchema

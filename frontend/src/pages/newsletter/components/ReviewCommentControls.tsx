@@ -100,7 +100,7 @@ export function ReviewCommentControls({
           variant="outlined"
           color="warning"
           onClick={onRequestChanges}
-          disabled={isSubmitting}
+          disabled={isSubmitting || pendingComments.length === 0}
         >
           Solicitar cambios
         </Button>

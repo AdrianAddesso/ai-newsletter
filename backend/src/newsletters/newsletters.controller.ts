@@ -16,37 +16,33 @@ import {
 import { NewsLettersService } from './newsletters.service';
 import type { NewslettersAnalyticsResponse } from './newsletters.service';
 import {
-  idAndCommentIdParamSchema,
   idAndExportIdParamSchema,
   idParamSchema,
 } from '../common/zod/route-params.schema';
 import type {
-  IdAndCommentIdParam,
   IdAndExportIdParam,
   IdParam,
 } from '../common/zod/route-params.schema';
 import { ZodValidationPipe } from '../common/zod/zod-validation.pipe';
 import {
-  addNewsletterCommentBodySchema,
   createNewsletterBodySchema,
+  exportNewsletterEmlBodySchema,
   requestNewsletterChangesBodySchema,
   updateNewsletterBodySchema,
-  updateNewsletterCommentBodySchema,
   updateNewsletterExportBodySchema,
   updateNewsletterStatusBodySchema,
-  exportNewsletterEmlBodySchema,
 } from './newsletters.schemas';
 import type {
-  AddNewsletterCommentBody,
   CreateNewsletterBody,
+  ExportNewsletterEmlBody,
   RequestNewsletterChangesBody,
   UpdateNewsletterBody,
-  UpdateNewsletterCommentBody,
   UpdateNewsletterExportBody,
   UpdateNewsletterStatusBody,
-  ExportNewsletterEmlBody,
 } from './newsletters.schemas';
 import { JwtGuard } from '../auth/guards/jwt.guard';
+import { PermissionsGuard } from '../modules/auth/guards/permissions.guard';
+import { RequirePermission } from '../modules/auth/decorators/permissions.decorator';
 import { Action } from '../modules/auth/enum/actions';
 import { Resource } from '../modules/auth/enum/resources';
 import { AuthorizationService } from '../modules/auth/services/authorization.service';
@@ -65,8 +61,15 @@ type AuthenticatedRequest = {
   };
 };
 
+type AuthorizedUser = {
+  id: string;
+  permissions: [];
+  role: Role;
+  area_id: string;
+};
+
 @Controller(Resource.NEWSLETTERS)
-@UseGuards(JwtGuard)
+@UseGuards(JwtGuard, PermissionsGuard)
 export class NewslettersController {
   constructor(
     private readonly newslettersService: NewsLettersService,
@@ -97,15 +100,13 @@ export class NewslettersController {
   }
 
   @Post()
+  @RequirePermission(Action.CONTENT_UPLOAD, Resource.NEWSLETTERS)
   create(
     @Req() request: AuthenticatedRequest,
     @Body(new ZodValidationPipe(createNewsletterBodySchema))
     body: CreateNewsletterBody,
   ) {
-    return this.assertGlobalActionPermission(
-      request,
-      Action.CONTENT_UPLOAD,
-    ).then(() => this.newslettersService.create(body, request.user?.id));
+    return this.newslettersService.create(body, request.user?.id);
   }
 
   @Post(':id/export/eml')
@@ -161,32 +162,6 @@ export class NewslettersController {
     return this.assertStatusPermission(request, params.id, body.state).then(
       () => this.newslettersService.updateStatus(params.id, body),
     );
-  }
-
-  @Get(':id/comments')
-  getComments(@Param(new ZodValidationPipe(idParamSchema)) params: IdParam) {
-    return this.newslettersService.getComments(params.id);
-  }
-
-  @Post(':id/comments')
-  addComment(
-    @Param(new ZodValidationPipe(idParamSchema)) params: IdParam,
-    @Body(new ZodValidationPipe(addNewsletterCommentBodySchema))
-    body: AddNewsletterCommentBody,
-  ) {
-    void body;
-    return this.newslettersService.addComment(params.id);
-  }
-
-  @Patch(':id/comments/:commentId')
-  updateComment(
-    @Param(new ZodValidationPipe(idAndCommentIdParamSchema))
-    params: IdAndCommentIdParam,
-    @Body(new ZodValidationPipe(updateNewsletterCommentBodySchema))
-    body: UpdateNewsletterCommentBody,
-  ) {
-    void body;
-    return this.newslettersService.updateComment(params.id, params.commentId);
   }
 
   @Patch(':id/exports/:exportId')
@@ -269,34 +244,10 @@ export class NewslettersController {
   private async assertAnalyticsPermission(
     request: AuthenticatedRequest,
   ): Promise<void> {
-    const user = request.user;
-
-    if (!user?.role) {
-      throw new ForbiddenException({
-        message: 'No se encontro informacion de usuario en la solicitud o el usuario no tiene un rol asignado',
-        error: 'Permisos insuficientes',
-        statusCode: 403,
-      });
-    }
-
-    const rolePermissions = await this.permissionCacheService.getPermissionsForRole(
-      user.role,
+    const normalizedUser = await this.assertUserHasRolePermission(
+      request,
+      Action.AUDIT_LOGS_METRICS_VIEW,
     );
-
-    if (!rolePermissions.includes(Action.AUDIT_LOGS_METRICS_VIEW)) {
-      throw new ForbiddenException({
-        message: `Tu rol (${user.role}) no tiene el permiso: ${Action.AUDIT_LOGS_METRICS_VIEW}`,
-        error: 'Permisos insuficientes',
-        statusCode: 403,
-      });
-    }
-
-    const normalizedUser = {
-      id: user.id ?? '',
-      permissions: [],
-      role: user.role,
-      area_id: user.area_id ?? user.area ?? '',
-    };
 
     const isAuthorized = this.authorizationService.isAuthorized(
       normalizedUser,
@@ -348,6 +299,48 @@ export class NewslettersController {
     newsletterId: string,
     requiredAction: Action,
   ): Promise<void> {
+    const normalizedUser = await this.assertUserHasRolePermission(
+      request,
+      requiredAction,
+    );
+
+    const newsletter = await this.prisma.newsletters.findUnique({
+      where: { id: newsletterId },
+      select: {
+        id: true,
+        created_by_user_id: true,
+        state: true,
+        area_id: true,
+      },
+    });
+
+    if (!newsletter) {
+      throw new NotFoundException({
+        message: `No se encontro el recurso newsletters con ID ${newsletterId}`,
+        error: 'Recurso no encontrado',
+        statusCode: 404,
+      });
+    }
+
+    const isAuthorized = this.authorizationService.isAuthorized(
+      normalizedUser,
+      requiredAction,
+      newsletter,
+    );
+
+    if (!isAuthorized) {
+      throw new ForbiddenException({
+        message: 'No tienes permisos para realizar esta accion',
+        error: 'No se puede realizar esta accion',
+        statusCode: 403,
+      });
+    }
+  }
+
+  private async assertUserHasRolePermission(
+    request: AuthenticatedRequest,
+    requiredAction: Action,
+  ): Promise<AuthorizedUser> {
     const user = request.user;
 
     if (!user?.role) {
@@ -370,44 +363,12 @@ export class NewslettersController {
       });
     }
 
-    const newsletter = await this.prisma.newsletters.findUnique({
-      where: { id: newsletterId },
-      select: {
-        id: true,
-        created_by_user_id: true,
-        state: true,
-        area_id: true,
-      },
-    });
-
-    if (!newsletter) {
-      throw new NotFoundException({
-        message: `No se encontro el recurso newsletters con ID ${newsletterId}`,
-        error: 'Recurso no encontrado',
-        statusCode: 404,
-      });
-    }
-
-    const normalizedUser = {
+    return {
       id: user.id ?? '',
       permissions: [],
       role: user.role,
       area_id: user.area_id ?? user.area ?? '',
     };
-
-    const isAuthorized = this.authorizationService.isAuthorized(
-      normalizedUser,
-      requiredAction,
-      newsletter,
-    );
-
-    if (!isAuthorized) {
-      throw new ForbiddenException({
-        message: 'No tienes permisos para realizar esta accion',
-        error: 'No se puede realizar esta accion',
-        statusCode: 403,
-      });
-    }
   }
 
   private getStatusAction(nextState: newsletter_state): Action {

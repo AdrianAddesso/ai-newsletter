@@ -1,13 +1,13 @@
-import { Route } from 'react-router'
-import { ProtectedLayout } from '../../components/ProtectedLayout'
-import { ProtectedRoute } from '../../components/ProtectedRoute'
-import { AnalyticsPage } from '../../pages/AnalyticsPage'
-import { ReviewsPage } from '../../pages/ReviewsPage'
-import { ReviewNewsletterRoute } from '../../pages/ReviewNewsletterRoute'
-import TemplatesPage from '../../pages/TemplatesPage'
-import { EditTemplatePage } from '../../pages/EditTemplatePage'
-import { UsersPage } from '../../pages/UsersPage'
-import { CreateTemplate } from '../../pages/templates/CreateTemplate'
+import { Route } from "react-router";
+import { ProtectedLayout } from "../../components/ProtectedLayout";
+import { ProtectedRoute } from "../../components/ProtectedRoute";
+import { AnalyticsPage } from "../../pages/AnalyticsPage";
+import { ReviewsPage } from "../../pages/ReviewsPage";
+import { ReviewNewsletterPage } from "../../pages/newsletter/review/ReviewNewsletterPage";
+import TemplatesPage from "../../pages/TemplatesPage";
+import { EditTemplatePage } from "../../pages/EditTemplatePage";
+import { UsersPage } from "../../pages/UsersPage";
+import { CreateTemplate } from "../../pages/templates/CreateTemplate";
 import { BackofficePage } from "../../pages/admin/AdminPanelPage";
 import { BrandkitPage } from "../../pages/admin/BrandkitPage";
 
@@ -51,7 +51,7 @@ export const adminRoutes = (
       element={
         <ProtectedRoute allowedRoles={["ADMIN", "FUNCTIONAL"]}>
           <ProtectedLayout>
-            <ReviewNewsletterRoute />
+            <ReviewNewsletterPage />
           </ProtectedLayout>
         </ProtectedRoute>
       }
@@ -93,7 +93,7 @@ export const adminRoutes = (
       element={
         <ProtectedRoute allowedRoles={["ADMIN"]}>
           <ProtectedLayout>
-            < BackofficePage/>
+            <BackofficePage />
           </ProtectedLayout>
         </ProtectedRoute>
       }
@@ -103,7 +103,7 @@ export const adminRoutes = (
       element={
         <ProtectedRoute allowedRoles={["ADMIN"]}>
           <ProtectedLayout>
-            < BrandkitPage/>
+            <BrandkitPage />
           </ProtectedLayout>
         </ProtectedRoute>
       }

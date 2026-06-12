@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { Alert, Box, CircularProgress } from '@mui/material'
 import { ReviewCommentControls } from '../components/ReviewCommentControls'
 import { NewsletterViewer } from '../viewer/NewsletterViewer'
 import { NewsletterEditorLayout } from '../editor/NewsletterEditorLayout'
@@ -9,15 +10,23 @@ import {
 } from '../../../api/newsletters'
 import { useNotification } from '../../../hooks/useNotification'
 
-type Props = {
-  editor: ReturnType<typeof useNewsletterEditor>
-}
-
-export function ReviewNewsletterPage({ editor }: Props) {
+export function ReviewNewsletterPage() {
+  const editor = useNewsletterEditor()
   const { success, error } = useNotification()
   const [draftComments, setDraftComments] = useState<Record<string, string>>({})
   const [pendingComments, setPendingComments] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const { newsletter, navigate } = editor
+
+  useEffect(() => {
+    if (
+      newsletter &&
+      newsletter.state !== 'IN_REVIEW' &&
+      newsletter.state !== 'RESUBMITTED'
+    ) {
+      navigate('/reviews')
+    }
+  }, [newsletter, navigate])
 
   const blockCommentsPayload = useMemo(() => {
     return Object.entries(pendingComments)
@@ -42,6 +51,33 @@ export function ReviewNewsletterPage({ editor }: Props) {
       .filter((comment) => comment.content.length > 0)
   }, [pendingComments, editor.newsletter])
 
+  if (editor.isLoading) {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '60vh',
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    )
+  }
+
+  if (editor.error) {
+    return <Alert severity="error">{editor.error}</Alert>
+  }
+
+  if (!editor.newsletter) {
+    return (
+      <Alert severity="warning">
+        No se encontró el newsletter solicitado.
+      </Alert>
+    )
+  }
+
   if (!editor.newsletter || !editor.selectedBlock) {
     return null
   }
@@ -52,7 +88,7 @@ export function ReviewNewsletterPage({ editor }: Props) {
     }
 
     if (blockCommentsPayload.length === 0) {
-      error('DebÃ©s dejar al menos un comentario para solicitar cambios.')
+      error('Debes dejar al menos un comentario para solicitar cambios.')
       return
     }
 

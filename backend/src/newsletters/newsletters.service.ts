@@ -791,21 +791,9 @@ export class NewsLettersService {
       id,
       newsletter_state.DISCARDED,
       payload.reviewedByUserId,
-    )
+    );
 
     return this.getById(id);
-  }
-
-  getComments(id: string) {
-    return 'Desde comments newsletters con ID' + id;
-  }
-
-  addComment(id: string) {
-    return 'Desde add comment newsletters con ID' + id;
-  }
-
-  updateComment(id: string, commentId: string) {
-    return `Desde update comment newsletters con ID ${id} y commentId ${commentId}`;
   }
 
   updateExports(id: string, exportId: string) {
