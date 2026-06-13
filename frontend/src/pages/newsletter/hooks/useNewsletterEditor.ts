@@ -321,11 +321,6 @@ export function useNewsletterEditor() {
   return [...anchorLinkAreas, ...blockLinkAreas]
 }
 
-  const baseExportBlockTypes = new Set(['ctaFull', 'ctaAlternative', 'empty'])
-
-  const shouldSnapshotBlock = (blockType: string): boolean =>
-    !baseExportBlockTypes.has(blockType)
-
   const buildNewsletterBlockSnapshots = async (
   exportRoot: HTMLElement,
   domToImage: typeof import('dom-to-image-more').default,
@@ -338,9 +333,8 @@ export function useNewsletterEditor() {
 
   for (const blockElement of blockElements) {
     const blockId = blockElement.dataset.newsletterBlockId
-    const blockType = blockElement.dataset.newsletterBlockType ?? ''
 
-    if (!blockId || !shouldSnapshotBlock(blockType)) {
+    if (!blockId) {
       continue
     }
 

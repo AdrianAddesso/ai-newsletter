@@ -116,7 +116,6 @@ export function BlockList({
                 >
                   <Box
                     data-newsletter-block-id={block.id}
-                    data-newsletter-block-type={block.type ?? ""}
                     data-newsletter-block-href={
                       getBlockHref(block) || undefined
                     }
