@@ -47,7 +47,7 @@ export const adminRoutes = (
     />
 
     <Route
-      path="/reviewNewsletter/:id"
+      path="/reviews/:id"
       element={
         <ProtectedRoute allowedRoles={["ADMIN", "FUNCTIONAL"]}>
           <ProtectedLayout>

@@ -107,7 +107,7 @@ export function TemplateLibraryPage() {
     };
 
     const handleSelect = (id: string) => {
-        navigate(`/crearNewsletter/${id}`);
+        navigate(`/newsletters/create/${id}`);
     };
 
     if (loading) {

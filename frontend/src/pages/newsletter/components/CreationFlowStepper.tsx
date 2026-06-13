@@ -8,18 +8,18 @@ type UserRole = 'ADMIN' | 'FUNCTIONAL' | 'USER';
 interface CreationStepperProps {
   /** 0 = Generar | 1 = Editar | 2 = Exportar */
   activeStep: 0 | 1 | 2;
-  /** ID del newsletter (necesario para navegar a /editarNewsletter/:id) */
+  /** Newsletter ID used to navigate to the edit/export routes. */
   newsletterId?: string;
-  /** Rol del usuario autenticado */
+  /** Authenticated user role. */
   userRole: UserRole;
-  /** Callback opcional para override de navegacion */
+  /** Optional callback to override navigation. */
   onStepClick?: (step: number) => void;
 }
 
 const CREATION_STEPS = [
-  { label: 'Generar',  path: () => '/crearNewsletter' },
-  { label: 'Editar',   path: (id?: string) => `/editarNewsletter/${id}` },
-  { label: 'Exportar', path: (id?: string) => `/exportarNewsletter/${id}` },
+  { label: 'Generar',  path: () => '/newsletters/create' },
+  { label: 'Editar',   path: (id?: string) => `/newsletters/edit/${id}` },
+  { label: 'Exportar', path: (id?: string) => `/newsletters/export/${id}` },
 ];
 
 const ROLES_WITH_EXPORT: UserRole[] = ['ADMIN', 'FUNCTIONAL'];

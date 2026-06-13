@@ -31,7 +31,7 @@ export default function EditNewsletterPage() {
               color="inherit"
               size="small"
               onClick={() =>
-                editor.navigate(`/exportarNewsletter/${newsletter.id}`)
+                editor.navigate(`/newsletters/export/${newsletter.id}`)
               }
             >
               Exportar

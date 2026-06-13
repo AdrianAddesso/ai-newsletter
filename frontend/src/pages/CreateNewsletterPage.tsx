@@ -98,7 +98,7 @@ function CreateNewsletterPage() {
       return;
     }
 
-    navigate(`/crearNewsletter/${selectedTemplateId}`, {
+    navigate(`/newsletters/create/${selectedTemplateId}`, {
       replace: true,
       state: {
         newsletterId: backState.newsletterId,
@@ -160,7 +160,7 @@ function CreateNewsletterPage() {
         }
 
         // 3. Navegar a EditNewsletterPage con el ID
-        navigate(`/editarNewsletter/${newsletterId}`);
+        navigate(`/newsletters/edit/${newsletterId}`);
       } catch (error) {
         const msg =
           (error as { response?: { data?: { message?: string } } })?.response?.data?.message ??
