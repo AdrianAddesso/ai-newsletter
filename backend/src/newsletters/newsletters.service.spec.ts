@@ -289,6 +289,49 @@ describe('NewsLettersService', () => {
     });
   });
 
+  it('keeps CHANGES_REQUESTED when saving edited blocks without an explicit state', async () => {
+    prisma.__tx.newsletter_blocks.findMany.mockResolvedValue([]);
+    prisma.newsletters.findFirst
+      .mockResolvedValueOnce({ id: 'newsletter-id', state: 'CHANGES_REQUESTED' })
+      .mockResolvedValueOnce({
+        id: 'newsletter-id',
+        title: 'Newsletter',
+        created_by_user_id: null,
+        state: 'CHANGES_REQUESTED',
+        template_id: null,
+        brand_kit_id: null,
+        generation_content: null,
+        created_at: new Date('2026-05-24T12:00:00.000Z'),
+        updated_at: new Date('2026-05-24T12:00:00.000Z'),
+        newsletter_blocks: [],
+      });
+
+    await service.update('newsletter-id', {
+      blocks: [
+        {
+          id: 'header-left-0',
+          type: 'headerLeft',
+          name: 'Header Left',
+          content: '{"headline":"Texto editado"}',
+          row: 0,
+          gridColumn: 0,
+          displayOrder: 0,
+          mustFill: false,
+          comment: null,
+          assetBindings: [],
+        },
+      ],
+    });
+
+    expect(prisma.__tx.newsletters.update).toHaveBeenCalledWith({
+      where: { id: 'newsletter-id' },
+      data: expect.objectContaining({
+        state: undefined,
+      }),
+    });
+    expect(prisma.__tx.newsletter_state_log.create).not.toHaveBeenCalled();
+  });
+
   describe('requestChanges', () => {
     it('stores a review round, updates active block comments, and moves the newsletter to CHANGES_REQUESTED', async () => {
       prisma.__tx.newsletters.findFirst.mockResolvedValue({

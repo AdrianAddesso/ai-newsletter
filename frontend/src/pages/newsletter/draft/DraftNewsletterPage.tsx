@@ -61,6 +61,11 @@ export function DraftNewsletterPage({ editor }: Props) {
                     ? 'Reenviar a revisión'
                     : 'Enviar a revisión'
                 }
+                saveLabel={
+                  editor.newsletter.state === 'CHANGES_REQUESTED'
+                    ? 'Guardar cambios'
+                    : 'Guardar borrador'
+                }
                 isSubmitting={false}
                 isSavingDraft={editor.isSavingDraft}
                 isRegeneratingBlock={editor.regeneratingBlockId === editor.selectedBlock.id}
