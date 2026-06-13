@@ -1,6 +1,7 @@
 import { Card, Typography, Box, CardMedia, Grid } from "@mui/material";
 import type { BlockInstance } from "@shared/types/block.types";
 import placeholderIconUrl from "../../../../assets/placeholders/PlaceholderIcon.svg";
+import placeholderImageUrl from "../../../../assets/placeholders/PlaceholderImage.svg";
 import {
   parseContent,
   resolveContentTypographySx,
@@ -33,7 +34,7 @@ const DEFAULT_ICON_ITEMS: IconItem[] = [
 
 export function IconBoxBackgroundFullRenderer({
   block,
-  backgroundImage,
+  backgroundImage = placeholderImageUrl,
   editMode = false,
   iconUrl = placeholderIconUrl,
   titleContent = null,

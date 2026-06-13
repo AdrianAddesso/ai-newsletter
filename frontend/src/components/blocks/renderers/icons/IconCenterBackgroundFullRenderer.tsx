@@ -1,6 +1,7 @@
 import { Card, Typography, Box, CardMedia } from "@mui/material";
 import type { BlockInstance } from "@shared/types/block.types";
 import placeholderIconUrl from "../../../../assets/placeholders/PlaceholderIcon.svg";
+import placeholderImageUrl from "../../../../assets/placeholders/PlaceholderImage.svg";
 import {
   parseContent,
   resolveContentTypographySx,
@@ -19,7 +20,7 @@ interface Props {
 
 export function IconCenterBackgroundFullRenderer({
   block,
-  backgroundImage,
+  backgroundImage = placeholderImageUrl,
   editMode = false,
   iconUrl = placeholderIconUrl,
 }: Props) {

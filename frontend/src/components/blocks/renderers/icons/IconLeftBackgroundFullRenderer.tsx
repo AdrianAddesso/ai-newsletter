@@ -9,6 +9,7 @@ import {
   parseContent,
   resolveContentTypographySx,
 } from "../../../../utils/blockContent";
+import placeholderImageUrl from "../../../../assets/placeholders/PlaceholderImage.svg";
 
 interface Props {
   block: BlockInstance;
@@ -19,7 +20,7 @@ interface Props {
 
 export function IconLeftBackgroundFullRenderer({
   block,
-  backgroundImage,
+  backgroundImage = placeholderImageUrl,
   editMode = false,
   iconUrl = placeholderIconUrl,
 }: Props) {
