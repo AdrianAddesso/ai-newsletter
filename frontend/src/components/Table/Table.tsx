@@ -3,7 +3,6 @@ import {
   Box,
   Button,
   Chip,
-  CircularProgress,
   IconButton,
   Paper,
   Stack,
@@ -296,8 +295,7 @@ export function NewslettersTable({ search, filter, userRole, }: Props) {
 
           <TableBody>
             {visibleData.map((n) => {
-              const isPrivilegedUser =
-                userRole === "ADMIN" || userRole === "FUNCTIONAL";
+              const isPrivilegedUser = userRole === "ADMIN";
               const isOwner = user?.id === n.creatorUserId;
 
               const canEditByState = editableStatuses.has(n.state);
@@ -308,7 +306,7 @@ export function NewslettersTable({ search, filter, userRole, }: Props) {
               const canExport = n.state === NewsletterStatus.APPROVED;
 
               const editTooltip = !canEditByState
-                ? "Solo se puede editar borradores o newsletters con cambios solicitados"
+                ? "Solo se puede e  ditar borradores o newsletters con cambios solicitados"
                 : !isPrivilegedUser && !isOwner
                   ? "Solo podes editar newsletters propios"
                   : "Editar";
