@@ -1,21 +1,18 @@
 import { useState } from "react";
-import { Typography, Chip, Button, Stack, Box } from "@mui/material";
+import { Typography, Button, Stack, Box } from "@mui/material";
 import { CheckCircleOutlined as UseIcon } from "@mui/icons-material";
 import { PreviewCanvas } from "./canvas/PreviewCanvas";
 import type { TemplateLayoutItem } from "../types/newsletter";
 
-type StatusChipColor = "default" | "success" | "warning";
-
-const STATE_MAP: Record<string, { label: string; color: StatusChipColor }> = {
-  ACTIVE: { label: "Activa", color: "success" },
-  DRAFT: { label: "Borrador", color: "warning" },
+const AREA_LABELS: Record<string, string> = {
+  COMUNICACION_INTERNA: "Comunicación Interna",
+  COMUNICACION_CORPORATIVA: "Comunicación Corporativa",
 };
 
 interface TemplateCardProps {
   id: string;
   name: string;
   area_id: string;
-  state_code: string;
   state_name: string;
   description: string | null;
   orientation: "Portrait" | "Landscape";
@@ -29,7 +26,6 @@ export function TemplateCard({
   id,
   name,
   area_id,
-  state_code,
   state_name,
   description,
   layout,
@@ -96,7 +92,7 @@ export function TemplateCard({
           left: 0,
           width: "100%",
           height: "100%",
-          bgcolor: "rgba(0, 0, 0, 0.75)",
+          bgcolor: "rgba(0, 0, 0, 0.88)",
           color: "white",
           zIndex: 2,
           opacity: isHovered ? 1 : 0,
@@ -111,12 +107,6 @@ export function TemplateCard({
       >
         <Stack spacing={2} sx={{ width: "100%", alignItems: "center" }}>
           <Stack spacing={2} sx={{ alignItems: "center" }}>
-            <Chip
-              size="small"
-              label={STATE_MAP[state_code]?.label ?? state_name}
-              color={STATE_MAP[state_code]?.color ?? "default"}
-              sx={{ mb: 1 }}
-            />
             <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
               {name}
             </Typography>
@@ -124,7 +114,7 @@ export function TemplateCard({
               variant="caption"
               sx={{ color: "rgba(255,255,255,0.7)" }}
             >
-              Área: {area_id}
+              Área: {AREA_LABELS[area_id] ?? area_id}
             </Typography>
             {description && (
               <Typography
@@ -141,7 +131,7 @@ export function TemplateCard({
               </Typography>
             )}
           </Stack>
-          <Stack spacing={1}>
+          <Stack spacing={1} sx={{ width: "100%", alignItems: "center" }}>
             <Button
               size="small"
               variant="contained"
@@ -150,8 +140,9 @@ export function TemplateCard({
               onClick={() => onSelect(id)}
               disabled={!isUsable}
               title={!isUsable ? "Plantilla inactiva o no utilizable" : ""}
+              sx={{ width: "50%" }}
             >
-              Usar
+              Seleccionar
             </Button>
           </Stack>
         </Stack>

@@ -9,6 +9,8 @@ import {
   MenuItem,
   Select,
   Stack,
+  ToggleButton,
+  ToggleButtonGroup,
   Typography,
 } from "@mui/material";
 import type { SelectChangeEvent } from "@mui/material";
@@ -43,7 +45,7 @@ export function TemplateLibraryPage() {
 
     const [search, setSearch] = useState("");
     const [areaFilter, setAreaFilter] = useState("Todas");
-    const [orientationFilter, setOrientationFilter] = useState("Todas");
+    const [orientationFilter, setOrientationFilter] = useState<"Portrait" | "Landscape" | null>(null);
 
     useEffect(() => {
         const fetchTemplates = async () => {
@@ -82,12 +84,6 @@ export function TemplateLibraryPage() {
         ];
     }, [templates]);
 
-    const orientations: Array<"Todas" | "Portrait" | "Landscape"> = [
-        "Todas",
-        "Portrait",
-        "Landscape",
-    ];
-
     const filteredTemplates = useMemo(() => {
         return templates
         .filter((template) => {
@@ -98,7 +94,7 @@ export function TemplateLibraryPage() {
             const matchesArea =
             areaFilter === "Todas" || template.area_id === areaFilter;
             const matchesOrientation =
-            orientationFilter === "Todas" ||
+            orientationFilter === null ||
             template.orientation === orientationFilter;
 
             return matchesSearch && matchesArea && matchesOrientation;
@@ -170,11 +166,20 @@ export function TemplateLibraryPage() {
             <Stack
                 direction={{ xs: "column", sm: "row" }}
                 spacing={2}
-                sx={{ alignItems: { xs: "stretch", sm: "center" } }}
+                sx={{ alignItems: { xs: "stretch", sm: "center" }, justifyContent: "flex-end" }}
             >
-                <Box sx={{ width: { xs: "100%", sm: 280 } }}>
-                <SearchBar value={search} onChange={setSearch} />
-                </Box>
+                <ToggleButtonGroup
+                    exclusive
+                    size="small"
+                    color="primary"
+                    value={orientationFilter}
+                    onChange={(_, value: "Portrait" | "Landscape" | null) => {
+                        setOrientationFilter(value);
+                    }}
+                >
+                    <ToggleButton value="Portrait">Portrait</ToggleButton>
+                    <ToggleButton value="Landscape">Landscape</ToggleButton>
+                </ToggleButtonGroup>
 
                 <FormControl
                 size="small"
@@ -198,25 +203,9 @@ export function TemplateLibraryPage() {
                 </Select>
                 </FormControl>
 
-                <FormControl
-                size="small"
-                sx={{ minWidth: { xs: "100%", sm: 160 }, width: { xs: "100%", sm: "auto" } }}
-                >
-                <InputLabel>Orientación</InputLabel>
-                <Select
-                    value={orientationFilter}
-                    label="Orientación"
-                    onChange={(event: SelectChangeEvent) =>
-                    setOrientationFilter(event.target.value)
-                    }
-                >
-                    {orientations.map((orientation) => (
-                    <MenuItem key={orientation} value={orientation}>
-                        {orientation}
-                    </MenuItem>
-                    ))}
-                </Select>
-                </FormControl>
+                <Box sx={{ width: { xs: "100%", sm: 280 } }}>
+                <SearchBar value={search} onChange={setSearch} />
+                </Box>
             </Stack>
 
             {filteredTemplates.length === 0 ? (
@@ -244,7 +233,6 @@ export function TemplateLibraryPage() {
                     id={template.id}
                     name={template.name}
                     area_id={template.area_id}
-                    state_code={template.state_id}
                     state_name={template.state_name}
                     description={template.description}
                     orientation={template.orientation}

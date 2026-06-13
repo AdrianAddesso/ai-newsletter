@@ -561,6 +561,12 @@ export class AiService {
           label: field.label,
           required: field.required ?? false,
         })),
+        aiCopyFields: this.getAiCopyFields(block.editFields).map((field) => ({
+          key: field.key,
+          type: field.type,
+          label: field.label,
+          required: field.required ?? false,
+        })),
         defaultValues: parseBlockValues(block.content),
       })),
       outputContract: {
@@ -740,9 +746,14 @@ export class AiService {
             ),
           ]),
         );
+        const repairedValues = this.repairStructuredGeneratedValues(
+          templateBlock.editFields,
+          nextValues,
+          defaultValues,
+        );
 
-        if (Object.keys(nextValues).length > 0) {
-          generatedValues.set(block.blockId, nextValues);
+        if (Object.keys(repairedValues).length > 0) {
+          generatedValues.set(block.blockId, repairedValues);
         }
       });
 
@@ -789,20 +800,42 @@ export class AiService {
       templateBlocks.map((block, index) => {
         const legacyBlock = legacyBlocks[index];
         const defaultValues = parseBlockValues(block.content);
-        const firstTextField = block.editFields.find(
-          (field) => field.type === 'text' || field.type === 'textarea',
-        );
-        const firstColorField = block.editFields.find(
-          (field) => field.type === 'color',
-        );
         const values = { ...defaultValues };
 
-        if (legacyBlock && firstTextField) {
-          values[firstTextField.key] = legacyBlock.text.trim();
+        if (!legacyBlock) {
+          return [block.id, values];
         }
 
-        if (legacyBlock && firstColorField) {
-          values[firstColorField.key] = legacyBlock.backgroundColor.trim();
+        const textFields =
+          this.getAiCopyFields(block.editFields).length > 0
+            ? this.getAiCopyFields(block.editFields)
+            : block.editFields.filter(
+                (field) => field.type === 'text' || field.type === 'textarea',
+              );
+        const colorFields = block.editFields.filter(
+          (field) => field.type === 'color',
+        );
+
+        // Distribute the text across multiple fields if needed
+        if (textFields.length === 1) {
+          // Single text field - use it directly
+          values[textFields[0].key] = legacyBlock.text.trim();
+        } else if (textFields.length > 1) {
+          // Multiple text fields - fill the first primary field and distribute others
+          const primaryField = textFields[0];
+          values[primaryField.key] = legacyBlock.text.trim();
+
+          // For secondary fields, use parts of the text or fallback
+          for (let i = 1; i < textFields.length; i++) {
+            const field = textFields[i];
+            // Use the same text or a shorter version for secondary fields
+            values[field.key] = legacyBlock.text.trim();
+          }
+        }
+
+        // Fill all color fields with the background color
+        for (const colorField of colorFields) {
+          values[colorField.key] = legacyBlock.backgroundColor.trim();
         }
 
         return [block.id, values];
@@ -828,6 +861,121 @@ export class AiService {
     }
 
     return value?.trim() || defaultValue;
+  }
+
+  private getAiCopyFields(editFields: BlockEditField[]): BlockEditField[] {
+    const copyFields = editFields.filter(
+      (field) =>
+        (field.type === 'text' || field.type === 'textarea') &&
+        field.key !== 'iconName',
+    );
+
+    return this.sortAiCopyFields(copyFields);
+  }
+
+  private sortAiCopyFields(fields: BlockEditField[]): BlockEditField[] {
+    const priorityOrder = [
+      'buttonLabel',
+      'title',
+      'subtitle',
+      'topLabel',
+      'introText',
+      'primaryText',
+      'bodyText',
+      'text',
+      'label',
+      'item1Text',
+      'item2Text',
+      'item3Text',
+      'item4Text',
+      'secondaryText',
+      'bottomLabel',
+      'closingText',
+      'altText',
+    ];
+
+    return [...fields].sort((left, right) => {
+      const leftIndex = priorityOrder.indexOf(left.key);
+      const rightIndex = priorityOrder.indexOf(right.key);
+
+      return (leftIndex === -1 ? 999 : leftIndex) -
+        (rightIndex === -1 ? 999 : rightIndex);
+    });
+  }
+
+  private repairStructuredGeneratedValues(
+    editFields: BlockEditField[],
+    values: GeneratedBlockValues,
+    defaultValues: Record<string, string>,
+  ): GeneratedBlockValues {
+    const copyFields = this.getAiCopyFields(editFields);
+
+    if (copyFields.length === 0) {
+      return values;
+    }
+
+    const hasGeneratedCopy = copyFields.some((field) => {
+      const currentValue = values[field.key]?.trim();
+      return Boolean(currentValue && currentValue !== (defaultValues[field.key] ?? ''));
+    });
+
+    const primaryGeneratedCopyField = hasGeneratedCopy
+      ? copyFields.find((field) => {
+          const currentValue = values[field.key]?.trim();
+          return Boolean(
+            currentValue && currentValue !== (defaultValues[field.key] ?? ''),
+          );
+        })
+      : undefined;
+
+    if (primaryGeneratedCopyField) {
+      const primaryValue = values[primaryGeneratedCopyField.key]?.trim() ?? '';
+
+      return Object.fromEntries(
+        Object.entries(values).map(([key, value]) => {
+          const matchingCopyField = copyFields.find(
+            (field) => field.key === key,
+          );
+
+          if (!matchingCopyField) {
+            return [key, value];
+          }
+
+          const currentValue = value?.trim() ?? '';
+          const defaultValue = defaultValues[key] ?? '';
+          const shouldBackfill =
+            key !== primaryGeneratedCopyField.key &&
+            (!currentValue || currentValue === defaultValue);
+
+          return [key, shouldBackfill ? primaryValue : value];
+        }),
+      );
+    }
+
+    const fallbackTextField = editFields.find((field) => {
+      if (field.type !== 'text' && field.type !== 'textarea') {
+        return false;
+      }
+
+      if (copyFields.some((copyField) => copyField.key === field.key)) {
+        return false;
+      }
+
+      const currentValue = values[field.key]?.trim();
+      return Boolean(currentValue && currentValue !== (defaultValues[field.key] ?? ''));
+    });
+
+    if (!fallbackTextField) {
+      return values;
+    }
+
+    const fallbackValue = values[fallbackTextField.key]?.trim() ?? '';
+
+    return {
+      ...values,
+      [copyFields[0].key]: fallbackValue,
+      [fallbackTextField.key]: defaultValues[fallbackTextField.key] ?? '',
+    };
   }
 
   private buildUserContentFallbackValues(
@@ -860,6 +1008,14 @@ export class AiService {
         request.audience.trim() ||
         request.tone.trim(),
       label: firstKeyMessage || request.topic.trim(),
+      item1Text: firstKeyMessage || request.topic.trim(),
+      item2Text: request.objective.trim() || request.audience.trim(),
+      item3Text:
+        request.additionalContext?.trim() || request.tone.trim(),
+      item4Text:
+        request.contact?.trim() ||
+        request.relevantDates?.trim() ||
+        request.tone.trim(),
       topLabel: request.topic.trim(),
       bottomLabel: request.tone.trim() || request.audience.trim(),
       buttonLabel: request.cta?.trim() || request.topic.trim(),

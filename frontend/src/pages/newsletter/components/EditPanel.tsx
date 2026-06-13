@@ -1,65 +1,65 @@
-    import axios from "axios";
-    import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
-    import {
-    Alert,
-    Box,
-    Button,
-    CircularProgress,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle,
-    Divider,
-    FormControl,
-    InputLabel,
-    LinearProgress,
-    MenuItem,
-    Pagination,
-    Select,
-    Stack,
-    Accordion,
-    AccordionSummary,
-    AccordionDetails,
-    TextField,
-    Typography,
-    type SelectChangeEvent,
-    } from "@mui/material";
-    import type { BlockAssetType, BlockEditField } from "@shared/types/block.types";
-    import {
-    listAssets,
-    uploadAsset,
-    type AssetType,
-    type UploadedAsset,
-    } from "../../../api/assets";
-    import type {
-    BrandKitResourceAsset,
-    BrandKitResources,
-    } from "../../../api/brand-kits";
-    import type {
-    BlockReviewComment,
-    NewsletterBlock,
-    NewsletterState,
-    } from "../../../types/newsletter";
-    import { parseContent } from "../../../utils/blockContent";
-    import {
-    getBlockAssetBinding,
-    removeBlockAssetBinding,
-    setBlockAssetBinding,
-    updateBlockValue,
-    updateBlockValues,
-    } from "../../../utils/newsletterBlocks";
-    import { buildKeywordSvgMarkup } from "../utils/keywordSvg";
-    import { AssetImageCard } from "./AssetImageCard";
-    import { ReviewHistoryPanel } from "./ReviewHistoryPanel";
-    import DeleteIcon from "@mui/icons-material/Delete";
-    import SaveIcon from "@mui/icons-material/Save";
-    import SendIcon from "@mui/icons-material/Send";
-    import UploadIcon from "@mui/icons-material/Upload";
-    import ToggleButton from "@mui/material/ToggleButton";
-    import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
-    import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
-    import RefreshIcon from "@mui/icons-material/Refresh"; 
-    import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import axios from "axios";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
+import {
+  Alert,
+  Box,
+  Button,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  FormControl,
+  InputLabel,
+  LinearProgress,
+  MenuItem,
+  Pagination,
+  Select,
+  Stack,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  TextField,
+  Typography,
+  type SelectChangeEvent,
+} from "@mui/material";
+import type { BlockAssetType, BlockEditField } from "@shared/types/block.types";
+import {
+  listAssets,
+  uploadAsset,
+  type AssetType,
+  type UploadedAsset,
+} from "../../../api/assets";
+import type {
+  BrandKitResourceAsset,
+  BrandKitResources,
+} from "../../../api/brand-kits";
+import type {
+  BlockReviewComment,
+  NewsletterBlock,
+  NewsletterState,
+} from "../../../types/newsletter";
+import { parseContent } from "../../../utils/blockContent";
+import {
+  getBlockAssetBinding,
+  removeBlockAssetBinding,
+  setBlockAssetBinding,
+  updateBlockValue,
+  updateBlockValues,
+} from "../../../utils/newsletterBlocks";
+import { buildKeywordSvgMarkup } from "../utils/keywordSvg";
+import { AssetImageCard } from "./AssetImageCard";
+import { ReviewHistoryPanel } from "./ReviewHistoryPanel";
+import DeleteIcon from "@mui/icons-material/Delete";
+import SaveIcon from "@mui/icons-material/Save";
+import SendIcon from "@mui/icons-material/Send";
+import UploadIcon from "@mui/icons-material/Upload";
+import ToggleButton from "@mui/material/ToggleButton";
+import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
+import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 
 type SelectableAssetType = Exclude<AssetType, "BLOCK">;
@@ -206,7 +206,7 @@ function BackgroundStyleFieldEditor({
         borderColor: "divider",
         borderRadius: 1.5,
         p: 1.5,
-        backgroundColor: "background.paper",
+        backgroundColor: "background.paper"
       }}
     >
       <Typography variant="subtitle2">{backgroundAssetField.label}</Typography>
@@ -215,15 +215,22 @@ function BackgroundStyleFieldEditor({
         select
         label="Tipo de fondo"
         value={effectiveMode}
-        onChange={(event) =>
-          onUpdateBlock(
-            updateBlockValue(
-              block,
-              "backgroundMode",
-              event.target.value as BackgroundMode,
-            ),
-          )
-        }
+        onChange={(event) => {
+          const nextMode = event.target.value as BackgroundMode;
+
+          if (nextMode === "none" && backgroundColorField) {
+            onUpdateBlock(
+              updateBlockValues(block, {
+                ...values,
+                backgroundMode: nextMode,
+                [backgroundColorField.key]: "#ffffff",
+              }),
+            );
+            return;
+          }
+
+          onUpdateBlock(updateBlockValue(block, "backgroundMode", nextMode));
+        }}
         fullWidth
         disabled={!canEdit}
       >
@@ -355,7 +362,7 @@ export function EditPanel({
               Este bloque no tiene campos editables.
             </Alert>
           ) : (
-            visibleFields.map((field, index) => {
+            visibleFields.map((field) => {
               let content = null;
               let title = field.label;
 
@@ -465,13 +472,58 @@ export function EditPanel({
                   : "Regenerar este bloque"}
               </Button>
             )}
-
+           <Stack
+            direction={{ xs: "column", md: "row" }}
+            sx={{ justifyContent: "space-between" }}
+            spacing="2%"
+          >
+            <Button
+              variant="outlined"
+              color="inherit"
+              onClick={onCancel}
+              disabled={isSubmitting}
+              startIcon={<DeleteIcon />}
+              sx={{ flex: 1 }}
+            >
+              Descartar
+            </Button>
+            {canEdit && (
+              <Button
+                variant="outlined"
+                color="secondary"
+                onClick={onRegenerateAll}
+                startIcon={<AutoFixHighIcon />}
+                sx={{ flex: 2 }}
+              >
+                Regenerar todo
+              </Button>
+            )}
+            {canEdit && (
+              <Button
+                variant="outlined"
+                color="error"
+                disabled={isSavingDraft}
+                onClick={() => void onSaveDraft()}
+                startIcon={<SaveIcon />}
+                sx={{ flex: 2 }}
+              >
+                {isSavingDraft ? "Guardando..." : "Guardar"}
+              </Button>
+            )}
+            <Button
+              variant="contained"
+              onClick={onSubmit}
+              disabled={isSubmitting || !canEdit}
+              startIcon={<SendIcon />}
+              sx={{ flex: 2 }}
+            >
+              {isSubmitting ? "Enviando..." : submitLabel}
+            </Button>
+          </Stack>
           <ReviewHistoryPanel comments={reviewHistory} />
         </Stack>
       </Box>
-
       <Divider />
-
       <Box
         sx={{
           backgroundColor: "background.paper",
@@ -479,54 +531,6 @@ export function EditPanel({
           py: 2,
         }}
       >
-        <Stack
-          direction={{ xs: "column", md: "row" }}
-          sx={{ justifyContent: "space-between" }}
-          spacing="2%"
-        >
-          <Button
-            variant="outlined"
-            color="inherit"
-            onClick={onCancel}
-            disabled={isSubmitting}
-            startIcon={<DeleteIcon />}
-            sx={{ flex: 1 }}
-          >
-            Descartar
-          </Button>
-          {canEdit && (
-            <Button
-              variant="outlined"
-              color="secondary"
-              onClick={onRegenerateAll}
-              startIcon={<AutoFixHighIcon />}
-              sx={{ flex: 2 }}
-            >
-              Regenerar todo
-            </Button>
-          )}
-          {canEdit && (
-            <Button
-              variant="outlined"
-              color="error"
-              disabled={isSavingDraft}
-              onClick={() => void onSaveDraft()}
-              startIcon={<SaveIcon />}
-              sx={{ flex: 2 }}
-            >
-              {isSavingDraft ? "Guardando..." : "Guardar"}
-            </Button>
-          )}
-          <Button
-            variant="contained"
-            onClick={onSubmit}
-            disabled={isSubmitting || !canEdit}
-            startIcon={<SendIcon />}
-            sx={{ flex: 2 }}
-          >
-            {isSubmitting ? "Enviando..." : submitLabel}
-          </Button>
-        </Stack>
       </Box>
     </Stack>
   );
@@ -882,7 +886,7 @@ function TextFontFamilyFieldEditor({
       }}
       fullWidth
       disabled={!canEdit}
-      sx={{ width:"50%" }}
+      sx={{ width: "50%" }}
     >
       <MenuItem value="">
         <em>Usar default</em>
@@ -927,9 +931,9 @@ function TextSizeFieldEditor({
       label="Tamaño de texto"
       fullWidth
       disabled={!canEdit}
-      sx={{ width:"50%" }}
+      sx={{ width: "50%" }}
     >
-       {fontSizeOptions.map((option) => (
+      {fontSizeOptions.map((option) => (
         <MenuItem key={option.value} value={option.value}>
           {option.label}
         </MenuItem>
@@ -1410,22 +1414,22 @@ function ImageAssetFieldEditor({
             )}
             {(uploadStatus === "compressing" ||
               uploadStatus === "uploading") && (
-              <Stack spacing={1}>
-                <Typography variant="caption">
-                  {uploadStatus === "compressing"
-                    ? "Comprimiendo imagen..."
-                    : `Subiendo asset ${uploadProgress}%`}
-                </Typography>
-                <LinearProgress
-                  variant={
-                    uploadStatus === "uploading"
-                      ? "determinate"
-                      : "indeterminate"
-                  }
-                  value={uploadProgress}
-                />
-              </Stack>
-            )}
+                <Stack spacing={1}>
+                  <Typography variant="caption">
+                    {uploadStatus === "compressing"
+                      ? "Comprimiendo imagen..."
+                      : `Subiendo asset ${uploadProgress}%`}
+                  </Typography>
+                  <LinearProgress
+                    variant={
+                      uploadStatus === "uploading"
+                        ? "determinate"
+                        : "indeterminate"
+                    }
+                    value={uploadProgress}
+                  />
+                </Stack>
+              )}
             {uploadStatus === "cancelled" && (
               <Alert severity="warning">Carga cancelada.</Alert>
             )}

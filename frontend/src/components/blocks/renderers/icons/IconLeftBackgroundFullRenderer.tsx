@@ -9,6 +9,7 @@ import {
   parseContent,
   resolveContentTypographySx,
 } from "../../../../utils/blockContent";
+import placeholderImageUrl from "../../../../assets/placeholders/PlaceholderImage.svg";
 
 interface Props {
   block: BlockInstance;
@@ -17,17 +18,49 @@ interface Props {
   iconUrl?: string | null;
 }
 
+function isLikelyCopyText(value: string | null | undefined): boolean {
+  const trimmedValue = value?.trim() ?? "";
+
+  if (!trimmedValue || trimmedValue === "description") {
+    return false;
+  }
+
+  return /\s/.test(trimmedValue) || trimmedValue.length > 24;
+}
+
+function resolveDisplayLabel(
+  label: string | undefined,
+  iconName: string | undefined,
+  fallbackLabel: string,
+): string {
+  const trimmedLabel = label?.trim() ?? "";
+  const trimmedIconName = iconName?.trim() ?? "";
+
+  if (trimmedLabel && trimmedLabel !== fallbackLabel) {
+    return trimmedLabel;
+  }
+
+  if (isLikelyCopyText(trimmedIconName)) {
+    return trimmedIconName;
+  }
+
+  return trimmedLabel || fallbackLabel;
+}
+
 export function IconLeftBackgroundFullRenderer({
   block,
-  backgroundImage,
+  backgroundImage = placeholderImageUrl,
   editMode = false,
   iconUrl = placeholderIconUrl,
 }: Props) {
   const values = parseContent(block.content);
+  const fallbackLabel = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.";
   const {
-    label = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+    label = fallbackLabel,
     bgColor,
+    iconName = "description",
   } = values;
+  const displayLabel = resolveDisplayLabel(label, iconName, fallbackLabel);
 
   const typographySx = resolveContentTypographySx(values, "label");
   const resolvedBackgroundImage = resolveRenderableBackgroundImage(
@@ -90,7 +123,7 @@ export function IconLeftBackgroundFullRenderer({
             color="text.secondary"
             sx={{ textAlign: "left", ...typographySx }}
           >
-            {label}
+            {displayLabel}
           </Typography>
         </Box>
       </Box>
