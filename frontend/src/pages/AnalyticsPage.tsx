@@ -413,7 +413,14 @@ export function AnalyticsPage(): JSX.Element {
                   </>
                 )}
               </Card>
-
+              <Stack spacing={1}>
+              <Typography variant="h2">
+                Lista de logs
+              </Typography>
+              <Typography variant="body1" color="text.secondary">
+                Visualizá el detalle de cada cambio registrado en el historial de newsletters.
+              </Typography>
+              </Stack>
               <Card elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
                 <Box
                   sx={{
@@ -427,6 +434,7 @@ export function AnalyticsPage(): JSX.Element {
                     gap: 2,
                   }}
                 >
+
                   <SearchBar value={filterText} onChange={setFilterText} />
                   <Button
                     variant="contained"
