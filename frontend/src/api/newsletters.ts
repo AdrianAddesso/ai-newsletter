@@ -133,7 +133,12 @@ export async function getNewslettersAnalytics(): Promise<NewslettersAnalyticsRes
     newsletters: Array.isArray(response.data?.newsletters)
       ? response.data.newsletters
       : [],
-    logs: Array.isArray(response.data?.logs) ? response.data.logs : [],
+    logs: Array.isArray(response.data?.logs)
+      ? response.data.logs.map((log) => ({
+          ...log,
+          blockComments: Array.isArray(log.blockComments) ? log.blockComments : [],
+        }))
+      : [],
   }
 }
 
@@ -156,7 +161,6 @@ export async function approveNewsletterReview(
 ): Promise<Newsletter> {
   const response = await axios.post<Newsletter>(
     `${API_BASE}/${newsletterId}/review/approve`,
-    {},
   )
 
   return response.data

@@ -103,32 +103,6 @@ export const requestNewsletterChangesBodySchema = z
   })
   .strict();
 
-export const approveNewsletterReviewBodySchema = z
-  .object({})
-  .strict();
-
-export const addNewsletterLogBodySchema = z
-  .object({
-    previousState: newsletterStateSchema.optional(),
-    newState: newsletterStateSchema.optional(),
-    reviewedByUserId: uuidFieldSchema.optional(),
-    allCommentaries: optionalStringFieldSchema,
-  })
-  .strict();
-
-export const addNewsletterCommentBodySchema = z
-  .object({
-    blockContentId: uuidFieldSchema.optional(),
-    commentedByUserId: uuidFieldSchema.optional(),
-    show: optionalBooleanFieldSchema,
-    content: optionalStringFieldSchema,
-  })
-  .strict();
-
-export const updateNewsletterCommentBodySchema = addNewsletterCommentBodySchema
-  .partial()
-  .strict();
-
 export const updateNewsletterExportBodySchema = z
   .object({
     urlFile: optionalUrlFieldSchema,
@@ -151,16 +125,6 @@ export type UpdateNewsletterStatusBody = z.infer<
 >;
 export type RequestNewsletterChangesBody = z.infer<
   typeof requestNewsletterChangesBodySchema
->;
-export type ApproveNewsletterReviewBody = z.infer<
-  typeof approveNewsletterReviewBodySchema
->;
-export type AddNewsletterLogBody = z.infer<typeof addNewsletterLogBodySchema>;
-export type AddNewsletterCommentBody = z.infer<
-  typeof addNewsletterCommentBodySchema
->;
-export type UpdateNewsletterCommentBody = z.infer<
-  typeof updateNewsletterCommentBodySchema
 >;
 export type UpdateNewsletterExportBody = z.infer<
   typeof updateNewsletterExportBodySchema

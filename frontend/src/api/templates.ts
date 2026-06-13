@@ -77,7 +77,7 @@ const parseTemplateLayout = (
   } catch (error) {
     console.error('Error parsing layout for template', templateId, error)
     return null
-  }
+}
 }
 
 const normalizeTemplate = (template: TemplateApiResponse): TemplateDetail => ({

@@ -79,6 +79,7 @@ type Props = {
   newsletterState: NewsletterState;
   reviewHistory: BlockReviewComment[];
   submitLabel: string;
+  saveLabel: string;
   isSubmitting: boolean;
   isSavingDraft: boolean;
   isRegeneratingBlock: boolean;
@@ -272,6 +273,7 @@ export function EditPanel({
   newsletterState,
   reviewHistory,
   submitLabel,
+  saveLabel,
   isSubmitting,
   isSavingDraft,
   isRegeneratingBlock,
@@ -507,7 +509,7 @@ export function EditPanel({
                 startIcon={<SaveIcon />}
                 sx={{ flex: 2 }}
               >
-                {isSavingDraft ? "Guardando..." : "Guardar"}
+                {isSavingDraft ? "Guardando..." : saveLabel}
               </Button>
             )}
             <Button

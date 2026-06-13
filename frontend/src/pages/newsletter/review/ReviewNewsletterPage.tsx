@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { Alert, Box, CircularProgress } from '@mui/material'
 import { ReviewCommentControls } from '../components/ReviewCommentControls'
 import { NewsletterViewer } from '../viewer/NewsletterViewer'
 import { NewsletterEditorLayout } from '../editor/NewsletterEditorLayout'
@@ -9,15 +10,23 @@ import {
 } from '../../../api/newsletters'
 import { useNotification } from '../../../hooks/useNotification'
 
-type Props = {
-  vm: ReturnType<typeof useNewsletterEditor>
-}
-
-export function ReviewNewsletterPage({ vm }: Props) {
+export function ReviewNewsletterPage() {
+  const editor = useNewsletterEditor()
   const { success, error } = useNotification()
   const [draftComments, setDraftComments] = useState<Record<string, string>>({})
   const [pendingComments, setPendingComments] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const { newsletter, navigate } = editor
+
+  useEffect(() => {
+    if (
+      newsletter &&
+      newsletter.state !== 'IN_REVIEW' &&
+      newsletter.state !== 'RESUBMITTED'
+    ) {
+      navigate('/reviews')
+    }
+  }, [newsletter, navigate])
 
   const blockCommentsPayload = useMemo(() => {
     return Object.entries(pendingComments)
@@ -29,39 +38,66 @@ export function ReviewNewsletterPage({ vm }: Props) {
   }, [pendingComments])
 
   const pendingCommentsSummary = useMemo(() => {
-    if (!vm.newsletter) {
+    if (!editor.newsletter) {
       return []
     }
 
-    return vm.newsletter.blocks
+    return editor.newsletter.blocks
       .map((block) => ({
         blockId: block.id,
         blockName: block.name,
         content: (pendingComments[block.id] ?? '').trim(),
       }))
       .filter((comment) => comment.content.length > 0)
-  }, [pendingComments, vm.newsletter])
+  }, [pendingComments, editor.newsletter])
 
-  if (!vm.newsletter || !vm.selectedBlock) {
+  if (editor.isLoading) {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '60vh',
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    )
+  }
+
+  if (editor.error) {
+    return <Alert severity="error">{editor.error}</Alert>
+  }
+
+  if (!editor.newsletter) {
+    return (
+      <Alert severity="warning">
+        No se encontró el newsletter solicitado.
+      </Alert>
+    )
+  }
+
+  if (!editor.newsletter || !editor.selectedBlock) {
     return null
   }
 
   const handleRequestChanges = async () => {
-    if (!vm.newsletter) {
+    if (!editor.newsletter) {
       return
     }
 
     if (blockCommentsPayload.length === 0) {
-      error('Debés dejar al menos un comentario para solicitar cambios.')
+      error('Debes dejar al menos un comentario para solicitar cambios.')
       return
     }
 
     setIsSubmitting(true)
 
     try {
-      await requestNewsletterChanges(vm.newsletter.id, blockCommentsPayload)
+      await requestNewsletterChanges(editor.newsletter.id, blockCommentsPayload)
       success('Cambios solicitados correctamente')
-      vm.navigate('/reviews')
+      editor.navigate('/reviews')
     } catch (requestError) {
       const message = requestError instanceof Error
         ? requestError.message
@@ -73,16 +109,16 @@ export function ReviewNewsletterPage({ vm }: Props) {
   }
 
   const handleApprove = async () => {
-    if (!vm.newsletter) {
+    if (!editor.newsletter) {
       return
     }
 
     setIsSubmitting(true)
 
     try {
-      await approveNewsletterReview(vm.newsletter.id)
+      await approveNewsletterReview(editor.newsletter.id)
       success('Newsletter aprobado correctamente')
-      vm.navigate('/reviews')
+      editor.navigate('/reviews')
     } catch (requestError) {
       const message = requestError instanceof Error
         ? requestError.message
@@ -97,16 +133,16 @@ export function ReviewNewsletterPage({ vm }: Props) {
     <NewsletterEditorLayout
       left={(
         <NewsletterViewer
-          newsletter={vm.newsletter}
-          selectedBlockId={vm.selectedBlockId}
-          onSelectBlock={vm.setSelectedBlockId}
+          newsletter={editor.newsletter}
+          selectedBlockId={editor.selectedBlockId}
+          onSelectBlock={editor.setSelectedBlockId}
         />
       )}
       right={(
         <ReviewCommentControls
-          selectedBlock={vm.selectedBlock}
-          reviewHistory={vm.selectedBlockReviewHistory}
-          draftComment={draftComments[vm.selectedBlock.id] ?? ''}
+          selectedBlock={editor.selectedBlock}
+          reviewHistory={editor.selectedBlockReviewHistory}
+          draftComment={draftComments[editor.selectedBlock.id] ?? ''}
           pendingComments={pendingCommentsSummary}
           isSubmitting={isSubmitting}
           onChangeDraftComment={(blockId, value) => {

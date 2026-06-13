@@ -289,140 +289,47 @@ describe('NewsLettersService', () => {
     });
   });
 
-  describe('addLog', () => {
-    describe('APPROVED', () => {
-      it('should allow approved log from IN_REVIEW', async () => {
-        prisma.newsletters.findUnique.mockResolvedValue({ id: '1', state: 'IN_REVIEW' });
-        prisma.newsletter_state_log.create.mockResolvedValue({});
-
-        await expect(service.addLog('1', { previousState: 'IN_REVIEW', newState: 'APPROVED' })).resolves.toBeDefined();
+  it('keeps CHANGES_REQUESTED when saving edited blocks without an explicit state', async () => {
+    prisma.__tx.newsletter_blocks.findMany.mockResolvedValue([]);
+    prisma.newsletters.findFirst
+      .mockResolvedValueOnce({ id: 'newsletter-id', state: 'CHANGES_REQUESTED' })
+      .mockResolvedValueOnce({
+        id: 'newsletter-id',
+        title: 'Newsletter',
+        created_by_user_id: null,
+        state: 'CHANGES_REQUESTED',
+        template_id: null,
+        brand_kit_id: null,
+        generation_content: null,
+        created_at: new Date('2026-05-24T12:00:00.000Z'),
+        updated_at: new Date('2026-05-24T12:00:00.000Z'),
+        newsletter_blocks: [],
       });
 
-      it('should allow approved log from RESUBMITTED', async () => {
-        prisma.newsletters.findUnique.mockResolvedValue({ id: '1', state: 'RESUBMITTED' });
-        prisma.newsletter_state_log.create.mockResolvedValue({});
-
-        await expect(service.addLog('1', { previousState: 'RESUBMITTED', newState: 'APPROVED' })).resolves.toBeDefined();
-      });
+    await service.update('newsletter-id', {
+      blocks: [
+        {
+          id: 'header-left-0',
+          type: 'headerLeft',
+          name: 'Header Left',
+          content: '{"headline":"Texto editado"}',
+          row: 0,
+          gridColumn: 0,
+          displayOrder: 0,
+          mustFill: false,
+          comment: null,
+          assetBindings: [],
+        },
+      ],
     });
 
-    describe('CHANGES_REQUESTED', () => {
-      it('should allow changes requested from IN_REVIEW', async () => {
-        prisma.newsletters.findUnique.mockResolvedValue({ id: '1', state: 'IN_REVIEW' });
-        prisma.newsletter_state_log.create.mockResolvedValue({});
-
-        await expect(
-          service.addLog('1', {
-            previousState: 'IN_REVIEW',
-            newState: 'CHANGES_REQUESTED',
-            allCommentaries: 'Fix layout sizing',
-          }),
-        ).resolves.toBeDefined();
-      });
-
-      it('should allow changes requested from RESUBMITTED', async () => {
-        prisma.newsletters.findUnique.mockResolvedValue({ id: '1', state: 'RESUBMITTED' });
-        prisma.newsletter_state_log.create.mockResolvedValue({});
-
-        await expect(
-          service.addLog('1', {
-            previousState: 'RESUBMITTED',
-            newState: 'CHANGES_REQUESTED',
-            allCommentaries: 'Fix typography',
-          }),
-        ).resolves.toBeDefined();
-      });
-
-      it('should deny changes requested if newsletter is DRAFT', async () => {
-        prisma.newsletters.findUnique.mockResolvedValue({ id: '1', state: 'DRAFT' });
-
-        await expect(
-          service.addLog('1', {
-            previousState: 'DRAFT',
-            newState: 'CHANGES_REQUESTED',
-            allCommentaries: 'Fix layout sizing',
-          }),
-        ).rejects.toThrow(BadRequestException);
-      });
-
-      it('should deny changes requested if newsletter is APPROVED', async () => {
-        prisma.newsletters.findUnique.mockResolvedValue({ id: '1', state: 'APPROVED' });
-
-        await expect(
-          service.addLog('1', {
-            previousState: 'APPROVED',
-            newState: 'CHANGES_REQUESTED',
-            allCommentaries: 'Fix layout sizing',
-          }),
-        ).rejects.toThrow(BadRequestException);
-      });
-
-      it('should deny changes requested if allCommentaries is missing', async () => {
-        prisma.newsletters.findUnique.mockResolvedValue({ id: '1', state: 'IN_REVIEW' });
-
-        await expect(
-          service.addLog('1', {
-            previousState: 'IN_REVIEW',
-            newState: 'CHANGES_REQUESTED',
-          }),
-        ).rejects.toThrow(BadRequestException);
-      });
-
-      it('should deny changes requested if allCommentaries is empty string', async () => {
-        prisma.newsletters.findUnique.mockResolvedValue({ id: '1', state: 'IN_REVIEW' });
-
-        await expect(
-          service.addLog('1', {
-            previousState: 'IN_REVIEW',
-            newState: 'CHANGES_REQUESTED',
-            allCommentaries: '   ',
-          }),
-        ).rejects.toThrow(BadRequestException);
-      });
+    expect(prisma.__tx.newsletters.update).toHaveBeenCalledWith({
+      where: { id: 'newsletter-id' },
+      data: expect.objectContaining({
+        state: undefined,
+      }),
     });
-
-    describe('EXPORT', () => {
-      it('should allow export log if newsletter is APPROVED', async () => {
-        prisma.newsletters.findUnique.mockResolvedValue({ id: '1', state: 'APPROVED' });
-        prisma.newsletter_state_log.create.mockResolvedValue({});
-
-        await expect(service.addLog('1', { previousState: 'APPROVED', newState: 'APPROVED' })).resolves.toBeDefined();
-      });
-
-      it('should deny export log if newsletter is IN_REVIEW', async () => {
-        prisma.newsletters.findUnique.mockResolvedValue({ id: '1', state: 'IN_REVIEW' });
-
-        await expect(service.addLog('1', { previousState: 'APPROVED', newState: 'APPROVED' })).rejects.toThrow(
-          BadRequestException,
-        );
-      });
-
-      it('should deny export log if newsletter is CHANGES_REQUESTED', async () => {
-        prisma.newsletters.findUnique.mockResolvedValue({ id: '1', state: 'CHANGES_REQUESTED' });
-
-        await expect(service.addLog('1', { previousState: 'APPROVED', newState: 'APPROVED' })).rejects.toThrow(
-          BadRequestException,
-        );
-      });
-
-      it('should deny export log if newsletter is DRAFT', async () => {
-        prisma.newsletters.findUnique.mockResolvedValue({ id: '1', state: 'DRAFT' });
-
-        await expect(service.addLog('1', { previousState: 'APPROVED', newState: 'APPROVED' })).rejects.toThrow(
-          BadRequestException,
-        );
-      });
-    });
-
-    describe('VALIDATION', () => {
-      it('should throw BadRequestException if newsletter does not exist', async () => {
-        prisma.newsletters.findUnique.mockResolvedValue(null);
-
-        await expect(service.addLog('999', { previousState: 'DRAFT', newState: 'APPROVED' })).rejects.toThrow(
-          BadRequestException,
-        );
-      });
-    });
+    expect(prisma.__tx.newsletter_state_log.create).not.toHaveBeenCalled();
   });
 
   describe('requestChanges', () => {

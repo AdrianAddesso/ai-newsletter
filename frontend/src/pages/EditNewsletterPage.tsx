@@ -4,9 +4,9 @@ import { useNewsletterEditor } from './newsletter/hooks/useNewsletterEditor'
 import { DraftNewsletterPage } from './newsletter/draft/DraftNewsletterPage'
 
 export default function EditNewsletterPage() {
-  const vm = useNewsletterEditor()
+  const editor = useNewsletterEditor()
 
-  if (vm.isLoading) {
+  if (editor.isLoading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
         <CircularProgress />
@@ -14,14 +14,14 @@ export default function EditNewsletterPage() {
     )
   }
 
-  if (vm.error) {
-    return <Alert severity="error">{vm.error}</Alert>
+  if (editor.error) {
+    return <Alert severity="error">{editor.error}</Alert>
   }
 
-  if (!vm.newsletter) return null
-  const newsletter = vm.newsletter
+  if (!editor.newsletter) return null
+  const newsletter = editor.newsletter
 
-  if (vm.isApproved) {
+  if (editor.isApproved) {
     return (
       <Alert
         severity="info"
@@ -31,7 +31,7 @@ export default function EditNewsletterPage() {
               color="inherit"
               size="small"
               onClick={() =>
-                vm.navigate(`/exportarNewsletter/${newsletter.id}`)
+                editor.navigate(`/exportarNewsletter/${newsletter.id}`)
               }
             >
               Exportar
@@ -40,7 +40,7 @@ export default function EditNewsletterPage() {
             <Button
               color="inherit"
               size="small"
-              onClick={() => vm.navigate('/dashboard')}
+              onClick={() => editor.navigate('/dashboard')}
             >
               Ir al inicio
             </Button>
@@ -52,5 +52,5 @@ export default function EditNewsletterPage() {
     )
   }
 
-  return <DraftNewsletterPage vm={vm} />
+  return <DraftNewsletterPage editor={editor} />
 }

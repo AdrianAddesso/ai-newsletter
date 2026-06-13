@@ -217,7 +217,6 @@ export function useNewsletterEditor() {
     try {
       const updated = await updateNewsletter(id, {
         blocks: newsletter.blocks,
-        state: 'DRAFT',
       })
 
       setNewsletter(updated)
@@ -226,7 +225,11 @@ export function useNewsletterEditor() {
           ? current
           : (updated.blocks[0]?.id ?? ''),
       )
-      success('Borrador guardado')
+      success(
+        newsletter.state === 'CHANGES_REQUESTED'
+          ? 'Cambios guardados'
+          : 'Borrador guardado',
+      )
     } finally {
       setIsSavingDraft(false)
     }

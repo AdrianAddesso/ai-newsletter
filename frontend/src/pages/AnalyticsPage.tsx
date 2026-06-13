@@ -48,33 +48,6 @@ const getStateLabel = (state: NewsletterState | null): string => {
   return state ? NewsletterStatusLabel[state] : '-'
 }
 
-const normalizeComments = (rawComments: string | null): string | null => {
-  if (!rawComments) {
-    return null
-  }
-
-  try {
-    const parsed = JSON.parse(rawComments) as unknown
-
-    if (!Array.isArray(parsed)) {
-      return rawComments
-    }
-
-    const comments = parsed.flatMap((entry) => {
-      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
-        return []
-      }
-
-      const content = (entry as { content?: unknown }).content
-      return typeof content === 'string' && content.trim() ? [content.trim()] : []
-    })
-
-    return comments.length > 0 ? comments.join('\n\n') : rawComments
-  } catch {
-    return rawComments
-  }
-}
-
 const escapeCsvValue = (value: string): string => {
   return `"${value.replace(/"/g, '""')}"`
 }
@@ -93,7 +66,7 @@ export function AnalyticsPage(): JSX.Element {
   })
   const [visibleRows, setVisibleRows] = useState(5)
   const [modalOpen, setModalOpen] = useState(false)
-  const [currentComments, setCurrentComments] = useState<string | null>(null)
+  const [currentComments, setCurrentComments] = useState<NewsletterAnalyticsLogItem['blockComments']>([])
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
 
@@ -137,7 +110,7 @@ export function AnalyticsPage(): JSX.Element {
       { label: 'Total de newsletters', value: activeNewsletters.length },
       {
         label: 'Rev. con comentarios',
-        value: activeLogs.filter((log) => normalizeComments(log.allCommentaries)).length,
+        value: activeLogs.filter((log) => log.blockComments.length > 0).length,
       },
       {
         label: 'Aprobados',
@@ -223,7 +196,7 @@ export function AnalyticsPage(): JSX.Element {
         log.newsletterName,
         getStateLabel(log.previousState),
         getStateLabel(log.newState),
-        normalizeComments(log.allCommentaries) ?? '',
+        '',
       ].some((value) => value.toLowerCase().includes(normalizedFilter))
     })
 
@@ -282,9 +255,12 @@ export function AnalyticsPage(): JSX.Element {
     URL.revokeObjectURL(url)
   }
 
-  const handleOpenComments = (event: MouseEvent, comments: string | null): void => {
+  const handleOpenComments = (
+    event: MouseEvent,
+    comments: NewsletterAnalyticsLogItem['blockComments'],
+  ): void => {
     event.stopPropagation()
-    setCurrentComments(normalizeComments(comments))
+    setCurrentComments(comments)
     setModalOpen(true)
   }
 
@@ -515,12 +491,12 @@ export function AnalyticsPage(): JSX.Element {
                               {new Date(log.createdAt).toLocaleDateString()}
                             </TableCell>
                             <TableCell align="center">
-                              {normalizeComments(log.allCommentaries) ? (
+                              {log.blockComments.length > 0 ? (
                                 <Button
                                   size="small"
                                   variant="outlined"
                                   onClick={(event) =>
-                                    handleOpenComments(event, log.allCommentaries)
+                                    handleOpenComments(event, log.blockComments)
                                   }
                                 >
                                   Ver
@@ -560,9 +536,26 @@ export function AnalyticsPage(): JSX.Element {
       <Dialog open={modalOpen} onClose={() => setModalOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>Comentarios de revisión</DialogTitle>
         <DialogContent dividers>
-          <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
-            {currentComments}
-          </Typography>
+          <Stack spacing={2}>
+            {currentComments.map((comment) => (
+              <Box
+                key={`${comment.blockId}-${comment.content}`}
+                sx={{
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  borderRadius: 1,
+                  p: 2,
+                }}
+              >
+                <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
+                  {comment.blockName}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {comment.content}
+                </Typography>
+              </Box>
+            ))}
+          </Stack>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setModalOpen(false)}>Cerrar</Button>
