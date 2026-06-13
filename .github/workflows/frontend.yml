@@ -19,23 +19,25 @@ jobs:
   frontend:
     runs-on: ubuntu-latest
     env:
+      NODE_VERSION: 20
+      PNPM_VERSION: 10.33.2
       IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/ai-newsletter-frontend
 
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v6
         with:
-          version: 10.33.0
+          version: ${{ env.PNPM_VERSION }}
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
           cache-dependency-path: frontend/pnpm-lock.yaml
 
-      - name: Install dependencies
+      - name: Install frontend dependencies
         run: pnpm --dir frontend install --frozen-lockfile --ignore-workspace
 
-      - name: Build frontend
+      - name: Build frontend app
         run: pnpm --dir frontend run build
 
       - name: Set up Docker Buildx
@@ -69,12 +71,13 @@ jobs:
             echo 'EOF'
           } >> "${GITHUB_OUTPUT}"
 
-      - name: Build and optionally push Docker image
+      - name: Build and optionally push frontend image
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./frontend/Dockerfile
           build-args: |
+            PNPM_VERSION=${{ env.PNPM_VERSION }}
             VITE_API_URL=/api
           push: ${{ github.event_name == 'push' }}
           tags: ${{ steps.docker_tags.outputs.tags }}
