@@ -1,10 +1,26 @@
 import { Alert, Box, Button, CircularProgress, Stack } from '@mui/material'
+import { useEffect } from 'react'
 
 import { useNewsletterEditor } from './newsletter/hooks/useNewsletterEditor'
 import { DraftNewsletterPage } from './newsletter/draft/DraftNewsletterPage'
 
 export default function EditNewsletterPage() {
   const editor = useNewsletterEditor()
+
+  useEffect(() => {
+    if (editor.isLoading || !editor.newsletter) {
+      return
+    }
+
+    if (editor.currentUserRole === 'FUNCTIONAL') {
+      editor.navigate('/dashboard', { replace: true })
+    }
+  }, [
+    editor.currentUserRole,
+    editor.isLoading,
+    editor.navigate,
+    editor.newsletter,
+  ])
 
   if (editor.isLoading) {
     return (
@@ -19,6 +35,15 @@ export default function EditNewsletterPage() {
   }
 
   if (!editor.newsletter) return null
+
+  if (editor.currentUserRole === 'FUNCTIONAL') {
+    return (
+      <Alert severity="warning">
+        No tienes permisos para editar newsletters.
+      </Alert>
+    )
+  }
+
   const newsletter = editor.newsletter
 
   if (editor.isApproved) {

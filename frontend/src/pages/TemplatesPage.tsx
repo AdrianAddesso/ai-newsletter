@@ -26,7 +26,6 @@ import {
 } from "@mui/material";
 import {
   Add as AddIcon,
-  CheckCircleOutlined as ReviewIcon,
   DeleteOutlined as DeleteIcon,
   EditOutlined as EditIcon,
   VisibilityOutlined as ViewIcon,
@@ -361,17 +360,6 @@ export function TemplatesPage() {
                               </IconButton>
                             </Tooltip>
                           )}
-
-                          {role === "FUNCTIONAL" &&
-                            template.state_id !== "DRAFT" && (
-                              <Button
-                                size="small"
-                                startIcon={<ReviewIcon />}
-                                variant="outlined"
-                              >
-                                Revisar
-                              </Button>
-                            )}
                         </Stack>
                       </TableCell>
                     </TableRow>
