@@ -87,6 +87,7 @@ type EmailInlineAttachment = {
   content: Buffer;
   cid: string;
   contentType?: string;
+  contentDisposition?: 'inline';
 };
 
 type EmailBlockSnapshotInput = {
@@ -1052,6 +1053,10 @@ export class NewsLettersService {
       NewsletterBlockDto['assetBindings'][number]
     >();
 
+    const snapshottedBlockIds = new Set(
+      snapshots.map((snapshot) => snapshot.blockId),
+    );
+
     let snapshotIndex = 0;
     for (const snapshot of snapshots) {
       const parsedSnapshot = this.dataUrlToBuffer(snapshot.dataUrl);
@@ -1072,12 +1077,17 @@ export class NewsLettersService {
         content: parsedSnapshot.content,
         cid,
         contentType: parsedSnapshot.contentType,
+        contentDisposition: 'inline',
       });
 
       snapshotIndex += 1;
     }
 
     for (const block of blocks) {
+      if (snapshottedBlockIds.has(block.id)) {
+        continue;
+      }
+
       for (const binding of block.assetBindings) {
         if (!binding.bucket || !binding.objectKey) {
           continue;
@@ -1108,6 +1118,7 @@ export class NewsLettersService {
           content,
           cid,
           contentType: binding.mimeType ?? undefined,
+          contentDisposition: 'inline',
         });
 
         index += 1;
