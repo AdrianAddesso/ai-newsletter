@@ -1,6 +1,7 @@
 import { Card, Typography, Chip, CardMedia, Box, Grid } from "@mui/material";
 import type { BlockInstance } from "@shared/types/block.types";
 import placeholderImageUrl from "../../../../assets/placeholders/PlaceholderImage.svg";
+import PlaceholderBackground from "../../../../assets/placeholders/PlaceholderBackground.svg";
 import {
   parseContent,
   resolveContentTypographySx,
@@ -9,6 +10,7 @@ import {
   buildBackgroundImageSx,
   resolveRenderableBackgroundImage,
 } from "../utils/backgroundImage";
+
 
 interface Props {
   block: BlockInstance;
@@ -23,7 +25,7 @@ interface Props {
 
 export function SpecialBoxBackgroundFullRenderer({
   block,
-  backgroundImage,
+  backgroundImage = PlaceholderBackground,
   editMode = false,
   imageUrl = placeholderImageUrl,
 }: Props) {
@@ -45,7 +47,7 @@ export function SpecialBoxBackgroundFullRenderer({
     placeholderImageUrl,
   );
   const bgSx = buildBackgroundImageSx(resolvedBackgroundImage);
-  const { href = "" } = values;
+  const resolvedImageUrl = imageUrl || placeholderImageUrl;
 
   return (
     <Card
@@ -134,9 +136,9 @@ export function SpecialBoxBackgroundFullRenderer({
           >
             <CardMedia
               component="img"
-              image={imageUrl}
+              image={resolvedImageUrl}
               alt="Image"
-              sx={{ width: "100% cover", borderRadius: 1, objectFit: "auto" }}
+              sx={{ width: "100%", height: "100%", borderRadius: 1, objectFit: "cover" }}
             />
           </Grid>
         </Grid>

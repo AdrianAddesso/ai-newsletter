@@ -215,15 +215,22 @@ function BackgroundStyleFieldEditor({
         select
         label="Tipo de fondo"
         value={effectiveMode}
-        onChange={(event) =>
-          onUpdateBlock(
-            updateBlockValue(
-              block,
-              "backgroundMode",
-              event.target.value as BackgroundMode,
-            ),
-          )
-        }
+        onChange={(event) => {
+          const nextMode = event.target.value as BackgroundMode;
+
+          if (nextMode === "none" && backgroundColorField) {
+            onUpdateBlock(
+              updateBlockValues(block, {
+                ...values,
+                backgroundMode: nextMode,
+                [backgroundColorField.key]: "#ffffff",
+              }),
+            );
+            return;
+          }
+
+          onUpdateBlock(updateBlockValue(block, "backgroundMode", nextMode));
+        }}
         fullWidth
         disabled={!canEdit}
       >
