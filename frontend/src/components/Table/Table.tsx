@@ -135,7 +135,7 @@ export function NewslettersTable({ search, filter, userRole, }: Props) {
     setDuplicatingId(null)
     setDuplicateDialogTitle('')
     setDuplicateNewsletterForDialog(null)
-    navigate(`/editarNewsletter/${newNewsletterId}`)
+    navigate(`/newsletters/edit/${newNewsletterId}`)
   }
 
   const handleDuplicateProcessingChange = (isProcessing: boolean) => {
@@ -352,7 +352,7 @@ export function NewslettersTable({ search, filter, userRole, }: Props) {
                           <IconButton
                             size="small"
                             onClick={() =>
-                              navigate(`/exportarNewsletter/${n.id}`)
+                              navigate(`/newsletters/export/${n.id}`)
                             }
                           >
                             <IosShareIcon />
@@ -390,7 +390,7 @@ export function NewslettersTable({ search, filter, userRole, }: Props) {
                               size="small"
                               disabled={!canEdit}
                               onClick={() =>
-                                navigate(`/editarNewsletter/${n.id}`)
+                                navigate(`/newsletters/edit/${n.id}`)
                               }
                             >
                               <EditIcon />

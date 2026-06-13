@@ -27,7 +27,7 @@ export function ApprovedNewsletterRoute() {
     success('Newsletter duplicado. Redirigiendo al editor...')
     setIsDuplicating(false)
     setShowDialog(false)
-    vm.navigate(`/editarNewsletter/${newNewsletterId}`)
+    vm.navigate(`/newsletters/edit/${newNewsletterId}`)
   }
 
   const handleError = (message: string) => {

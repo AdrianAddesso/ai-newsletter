@@ -2,12 +2,15 @@ export const routes = {
   login: '/login',
   dashboard: '/dashboard',
   newsletters: {
-    create: '/crearNewsletter',
+    create: '/newsletters/create',
     edit: (id: string) =>
-      `/editarNewsletter/${id}`,
+      `/newsletters/edit/${id}`,
+    export: (id: string) =>
+      `/newsletters/export/${id}`,
   },
 
   templates: '/templates',
+  templateLibrary: '/templates/library',
   analytics: '/analytics',
   reviews: {
     list: '/reviews',

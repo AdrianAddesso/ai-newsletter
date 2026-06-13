@@ -21,7 +21,7 @@ export const protectedRoutes = (
       }
     />
     <Route
-      path="/crearNewsletter"
+      path="/newsletters/create"
       element={
         <ProtectedRoute>
           <ProtectedLayout>
@@ -31,7 +31,7 @@ export const protectedRoutes = (
       }
     />
     <Route
-      path="/crearNewsletter/:templateId"
+      path="/newsletters/create/:templateId"
       element={
         <ProtectedRoute>
           <ProtectedLayout>
@@ -41,7 +41,7 @@ export const protectedRoutes = (
       }
     />
     <Route
-      path="/templates/biblioteca"
+      path="/templates/library"
       element={
         <ProtectedRoute allowedRoles={["ADMIN", "USER"]}>
           <ProtectedLayout>
@@ -52,7 +52,7 @@ export const protectedRoutes = (
     />
 
     <Route
-      path="/editarNewsletter/:id"
+      path="/newsletters/edit/:id"
       element={
         <ProtectedRoute>
           <ProtectedLayout>
@@ -63,7 +63,7 @@ export const protectedRoutes = (
     />
 
     <Route
-      path="/exportarNewsletter/:id"
+      path="/newsletters/export/:id"
       element={
         <ProtectedRoute>
           <ProtectedLayout>

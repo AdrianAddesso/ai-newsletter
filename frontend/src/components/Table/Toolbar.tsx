@@ -28,7 +28,7 @@ export function Toolbar({
   const navigate = useNavigate();
 
   const route = () => {
-    navigate("/templates/biblioteca");
+    navigate("/templates/library");
   };
 
   return (

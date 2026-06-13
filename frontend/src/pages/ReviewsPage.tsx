@@ -216,7 +216,7 @@ export function ReviewsPage() {
                         <Button
                           variant="outlined"
                           onClick={() =>
-                            navigate(`/reviewNewsletter/${review.id}`)
+                            navigate(`/reviews/${review.id}`)
                           }
                           sx={{ whiteSpace: "nowrap" }}
                         >
