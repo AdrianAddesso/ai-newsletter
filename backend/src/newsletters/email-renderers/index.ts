@@ -1,9 +1,5 @@
 import type { NewsletterBlockDto } from '../../blocks/newsletter-blocks';
-import { renderBaseEmail } from './base/renderBaseEmail';
-import {
-  renderSnapshotEmail,
-  shouldRenderBlockAsSnapshot,
-} from './snapshots/renderSnapshotEmail';
+import { renderSnapshotEmail } from './snapshots/renderSnapshotEmail';
 
 type RenderNewsletterEmailBlockOptions = {
   cidByAssetId: Map<string, string>;
@@ -26,19 +22,13 @@ export function renderNewsletterEmailBlock(
   block: NewsletterBlockDto,
   options: RenderNewsletterEmailBlockOptions,
 ): string {
-  if (block.type === 'ctaFull' || block.type === 'ctaAlternative' || block.type === 'empty') {
-    return renderBaseEmail(block);
-  }
+  const snapshotEmail = renderSnapshotEmail(block, {
+    emailWidth: options.emailWidth,
+    snapshotByBlockId: options.snapshotByBlockId ?? new Map(),
+  });
 
-  if (shouldRenderBlockAsSnapshot(block)) {
-    const snapshotEmail = renderSnapshotEmail(block, {
-      emailWidth: options.emailWidth,
-      snapshotByBlockId: options.snapshotByBlockId ?? new Map(),
-    });
-
-    if (snapshotEmail) {
-      return snapshotEmail;
-    }
+  if (snapshotEmail) {
+    return snapshotEmail;
   }
 
   return options.fallback(block, options.cidByAssetId);

@@ -887,6 +887,18 @@ export class NewsLettersService {
 
     const body = rows
       .map((rowBlocks) => {
+        const canRenderAsSnapshotTable = rowBlocks.every((block) =>
+          snapshotByBlockId.has(block.id),
+        );
+
+        if (canRenderAsSnapshotTable) {
+          return this.renderSnapshotEmailRowTable(
+            rowBlocks,
+            snapshotByBlockId,
+            emailWidth,
+          );
+        }
+
         const columns = rowBlocks
           .map((block) =>
             renderNewsletterEmailBlock(block, {
@@ -920,6 +932,103 @@ export class NewsLettersService {
           ${body}
         </mj-body>
       </mjml>
+    `;
+  }
+
+  private renderSnapshotEmailRowTable(
+    rowBlocks: NewsletterBlockDto[],
+    snapshotByBlockId: Map<
+      string,
+      {
+        cid: string;
+        width: number;
+        height: number;
+      }
+    >,
+    emailWidth: number,
+  ): string {
+    const cells = rowBlocks
+      .map((block) => {
+        const snapshot = snapshotByBlockId.get(block.id);
+
+        if (!snapshot) {
+          return '';
+        }
+
+        const values = parseBlockValues(block.content);
+        const href = (values.href ?? values.url ?? values.link ?? '').trim();
+        const image = `
+          <img
+            src="cid:${this.escapeHtml(snapshot.cid)}"
+            width="${snapshot.width}"
+            height="${snapshot.height}"
+            alt=""
+            style="display:block;border:0;outline:none;text-decoration:none;width:${snapshot.width}px;height:${snapshot.height}px;"
+          />
+        `;
+
+        const content = href
+          ? `
+            <a
+              href="${this.escapeHtml(href)}"
+              target="_blank"
+              style="display:block;text-decoration:none;border:0;"
+            >
+              ${image}
+            </a>
+          `
+          : image;
+
+        return `
+          <td
+            width="${snapshot.width}"
+            valign="top"
+            style="padding:0;margin:0;border:0;width:${snapshot.width}px;vertical-align:top;"
+          >
+            ${content}
+          </td>
+        `;
+      })
+      .join('\n');
+
+    const rowWidth = rowBlocks.reduce((total, block) => {
+      const snapshot = snapshotByBlockId.get(block.id);
+
+      return total + (snapshot?.width ?? 0);
+    }, 0);
+
+    return `
+      <mj-raw>
+        <table
+          role="presentation"
+          width="${emailWidth}"
+          cellpadding="0"
+          cellspacing="0"
+          border="0"
+          style="border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;padding:0;margin:0;width:${emailWidth}px;"
+        >
+          <tr>
+            <td
+              width="${emailWidth}"
+              valign="top"
+              style="padding:0;margin:0;border:0;width:${emailWidth}px;vertical-align:top;"
+            >
+              <table
+                role="presentation"
+                width="${rowWidth}"
+                cellpadding="0"
+                cellspacing="0"
+                border="0"
+                style="border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;padding:0;margin:0;width:${rowWidth}px;"
+              >
+                <tr>
+                  ${cells}
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </mj-raw>
     `;
   }
 

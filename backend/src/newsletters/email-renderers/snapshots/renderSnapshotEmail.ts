@@ -24,7 +24,7 @@ export function renderSnapshotEmail(
   }
 
   const values = parseBlockValues(block.content);
-  const href = values.href?.trim();
+  const href = (values.href ?? values.url ?? values.link ?? '').trim();
   const columnWidth = Math.min(snapshot.width, options.emailWidth);
 
   return `
@@ -37,14 +37,6 @@ export function renderSnapshotEmail(
       />
     </mj-column>
   `;
-}
-
-export function shouldRenderBlockAsSnapshot(block: NewsletterBlockDto): boolean {
-  return !isBaseBlock(block.type);
-}
-
-function isBaseBlock(type: string): boolean {
-  return type === 'ctaFull' || type === 'ctaAlternative' || type === 'empty';
 }
 
 function escapeHtml(value: string): string {
