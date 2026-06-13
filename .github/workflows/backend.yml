@@ -19,6 +19,8 @@ jobs:
   backend:
     runs-on: ubuntu-latest
     env:
+      NODE_VERSION: 20
+      PNPM_VERSION: 10.33.2
       IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/ai-newsletter-backend
 
     steps:
@@ -26,18 +28,18 @@ jobs:
 
       - uses: pnpm/action-setup@v6
         with:
-          version: 10.33.0
+          version: ${{ env.PNPM_VERSION }}
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
           cache-dependency-path: backend/pnpm-lock.yaml
 
-      - name: Install dependencies
+      - name: Install backend dependencies
         run: pnpm --dir backend install --frozen-lockfile --ignore-workspace
 
-      - name: Build backend
+      - name: Build backend app
         run: pnpm --dir backend run build
 
       - name: Set up Docker Buildx
@@ -71,10 +73,12 @@ jobs:
             echo 'EOF'
           } >> "${GITHUB_OUTPUT}"
 
-      - name: Build and optionally push Docker image
+      - name: Build and optionally push backend image
         uses: docker/build-push-action@v6
         with:
-          context: .                     
-          file: ./backend/Dockerfile     
+          context: .
+          file: ./backend/Dockerfile
+          build-args: |
+            PNPM_VERSION=${{ env.PNPM_VERSION }}
           push: ${{ github.event_name == 'push' }}
           tags: ${{ steps.docker_tags.outputs.tags }}
