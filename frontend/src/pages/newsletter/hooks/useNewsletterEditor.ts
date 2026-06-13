@@ -29,6 +29,46 @@ import type { BrandKit, BrandKitResources } from '../../../api/brand-kits'
 import type { GenerateNewsletterRequest } from '../../../api/ai'
 import { updateBlockValue } from '../../../utils/newsletterBlocks'
 
+function getPreferredRegenerationField(
+  block: NewsletterBlock,
+): NewsletterBlock['editFields'][number] | undefined {
+  const priorityOrder = [
+    'buttonLabel',
+    'title',
+    'subtitle',
+    'topLabel',
+    'introText',
+    'primaryText',
+    'bodyText',
+    'text',
+    'label',
+    'secondaryText',
+    'bottomLabel',
+    'closingText',
+    'altText',
+  ]
+
+  const textFields = block.editFields.filter(
+    (field) =>
+      (field.type === 'text' || field.type === 'textarea') &&
+      field.key !== 'iconName',
+  )
+
+  if (textFields.length === 0) {
+    return block.editFields.find(
+      (field) => field.type === 'text' || field.type === 'textarea',
+    )
+  }
+
+  return [...textFields].sort((left, right) => {
+    const leftIndex = priorityOrder.indexOf(left.key)
+    const rightIndex = priorityOrder.indexOf(right.key)
+
+    return (leftIndex === -1 ? 999 : leftIndex) -
+      (rightIndex === -1 ? 999 : rightIndex)
+  })[0]
+}
+
 export function useNewsletterEditor() {
   const navigate = useNavigate()
   const { id } = useParams()
@@ -440,9 +480,7 @@ export function useNewsletterEditor() {
 
       if (!target) return
 
-      const editableTextField = target.editFields.find(
-        (field) => field.type === 'text' || field.type === 'textarea',
-      )
+      const editableTextField = getPreferredRegenerationField(target)
 
       if (!editableTextField) return
 

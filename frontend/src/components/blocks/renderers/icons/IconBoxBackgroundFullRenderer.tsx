@@ -25,12 +25,34 @@ interface Props {
   iconItems?: IconItem[];
 }
 
-const DEFAULT_ICON_ITEMS: IconItem[] = [
-  { text: "Lorem ipsum dolor sit amet consectetur." },
-  { text: "Adipiscing elit provident blanditiis." },
-  { text: "Natus ratione necessitatibus consequuntur." },
-  { text: "Eum voluptas iure repellat voluptate." },
-];
+function isLikelyCopyText(value: string | null | undefined): boolean {
+  const trimmedValue = value?.trim() ?? "";
+
+  if (!trimmedValue || trimmedValue === "description") {
+    return false;
+  }
+
+  return /\s/.test(trimmedValue) || trimmedValue.length > 24;
+}
+
+function resolveDisplayLabel(
+  label: string | undefined,
+  iconName: string | undefined,
+  fallbackLabel: string,
+): string {
+  const trimmedLabel = label?.trim() ?? "";
+  const trimmedIconName = iconName?.trim() ?? "";
+
+  if (trimmedLabel && trimmedLabel !== fallbackLabel) {
+    return trimmedLabel;
+  }
+
+  if (isLikelyCopyText(trimmedIconName)) {
+    return trimmedIconName;
+  }
+
+  return trimmedLabel || fallbackLabel;
+}
 
 export function IconBoxBackgroundFullRenderer({
   block,
@@ -38,13 +60,31 @@ export function IconBoxBackgroundFullRenderer({
   editMode = false,
   iconUrl = placeholderIconUrl,
   titleContent = null,
-  iconItems = DEFAULT_ICON_ITEMS,
+  iconItems,
 }: Props) {
   const values = parseContent(block.content);
+  const fallbackLabel =
+    titleContent ?? "Lorem ipsum dolor sit amet consectetur.";
   const {
-    label = titleContent ?? "Lorem ipsum dolor sit amet consectetur.",
+    label = fallbackLabel,
     bgColor,
+    iconName = "description",
+    item1Text = "",
+    item2Text = "",
+    item3Text = "",
+    item4Text = "",
   } = values;
+  const displayLabel = resolveDisplayLabel(label, iconName, fallbackLabel);
+  const blockItemTexts = [item1Text, item2Text, item3Text, item4Text].map(
+    (itemText) => itemText?.trim() || displayLabel,
+  );
+  const resolvedIconItems =
+    iconItems && iconItems.length > 0
+      ? iconItems
+      : blockItemTexts.map((itemText) => ({
+          iconUrl,
+          text: itemText,
+        }));
 
   const typographySx = resolveContentTypographySx(values, "label");
   const resolvedBackgroundImage = resolveRenderableBackgroundImage(
@@ -53,6 +93,7 @@ export function IconBoxBackgroundFullRenderer({
     placeholderIconUrl,
   );
   const bgSx = buildBackgroundImageSx(resolvedBackgroundImage);
+  
 
   return (
     <Card
@@ -92,10 +133,10 @@ export function IconBoxBackgroundFullRenderer({
             ...typographySx,
           }}
         >
-          {label}
+          {displayLabel}
         </Typography>
         <Grid container sx={{ width: "90%" }}>
-          {iconItems.slice(0, 4).map((item, index) => {
+          {resolvedIconItems.slice(0, 4).map((item, index) => {
             const currentIconUrl = item.iconUrl ?? iconUrl;
 
             return (
@@ -128,7 +169,7 @@ export function IconBoxBackgroundFullRenderer({
                   color="text.secondary"
                   sx={{ textAlign: "left", ...typographySx }}
                 >
-                  {item.text ?? label}
+                  {item.text ?? displayLabel}
                 </Typography>
               </Grid>
             );

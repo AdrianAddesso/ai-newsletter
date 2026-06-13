@@ -18,6 +18,35 @@ interface Props {
   iconUrl?: string | null;
 }
 
+function isLikelyCopyText(value: string | null | undefined): boolean {
+  const trimmedValue = value?.trim() ?? "";
+
+  if (!trimmedValue || trimmedValue === "description") {
+    return false;
+  }
+
+  return /\s/.test(trimmedValue) || trimmedValue.length > 24;
+}
+
+function resolveDisplayLabel(
+  label: string | undefined,
+  iconName: string | undefined,
+  fallbackLabel: string,
+): string {
+  const trimmedLabel = label?.trim() ?? "";
+  const trimmedIconName = iconName?.trim() ?? "";
+
+  if (trimmedLabel && trimmedLabel !== fallbackLabel) {
+    return trimmedLabel;
+  }
+
+  if (isLikelyCopyText(trimmedIconName)) {
+    return trimmedIconName;
+  }
+
+  return trimmedLabel || fallbackLabel;
+}
+
 export function IconCenterBackgroundFullRenderer({
   block,
   backgroundImage = placeholderImageUrl,
@@ -25,10 +54,14 @@ export function IconCenterBackgroundFullRenderer({
   iconUrl = placeholderIconUrl,
 }: Props) {
   const values = parseContent(block.content);
+  const fallbackLabel =
+    "Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat.";
   const {
-    label = "Lorem ipsum dolor sit amet consectetur, adipisicing elit. Provident blanditiis omnis natus ratione necessitatibus consequuntur eum voluptas iure repellat.",
+    label = fallbackLabel,
     bgColor,
+    iconName = "description",
   } = values;
+  const displayLabel = resolveDisplayLabel(label, iconName, fallbackLabel);
 
   const typographySx = resolveContentTypographySx(values, "label");
   const resolvedBackgroundImage = resolveRenderableBackgroundImage(
@@ -80,7 +113,7 @@ export function IconCenterBackgroundFullRenderer({
           color="text.secondary"
           sx={{ width: "90%", textAlign: "center", ...typographySx }}
         >
-          {label}
+          {displayLabel}
         </Typography>
       </Box>
     </Card>
