@@ -58,8 +58,8 @@ export function DraftNewsletterPage({ editor }: Props) {
                 reviewHistory={editor.selectedBlockReviewHistory}
                 submitLabel={
                   editor.newsletter.state === 'CHANGES_REQUESTED'
-                    ? 'Reenviar a revisiÃ³n'
-                    : 'Enviar a revisiÃ³n'
+                    ? 'Reenviar a revisión'
+                    : 'Enviar a revisión'
                 }
                 isSubmitting={false}
                 isSavingDraft={editor.isSavingDraft}

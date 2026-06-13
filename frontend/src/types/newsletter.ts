@@ -101,6 +101,11 @@ export type NewsletterAnalyticsLogItem = {
   newState: NewsletterState | null
   reviewedByUserId: string | null
   allCommentaries: string | null
+  blockComments: Array<{
+    blockId: string
+    blockName: string
+    content: string
+  }>
   createdAt: string
 }
 

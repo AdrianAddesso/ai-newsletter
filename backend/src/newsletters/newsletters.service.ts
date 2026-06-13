@@ -112,6 +112,11 @@ export type NewsletterAnalyticsLogItem = {
   newState: newsletter_state | null;
   reviewedByUserId: string | null;
   allCommentaries: string | null;
+  blockComments: Array<{
+    blockId: string;
+    blockName: string;
+    content: string;
+  }>;
   createdAt: string;
 };
 
@@ -315,6 +320,17 @@ export class NewsLettersService {
               id: true,
               title: true,
               generation_content: true,
+              newsletter_blocks: {
+                where: { deleted_at: null },
+                select: {
+                  block_content: {
+                    select: {
+                      id: true,
+                      block_type: true,
+                    },
+                  },
+                },
+              },
             },
           },
         },
@@ -332,19 +348,37 @@ export class NewsLettersService {
         createdAt: newsletter.created_at.toISOString(),
         updatedAt: newsletter.updated_at.toISOString(),
       })),
-      logs: logs.map((log) => ({
-        id: log.id,
-        newsletterId: log.newsletters.id,
-        newsletterName: this.resolveNewsletterTitle(
-          log.newsletters.title,
-          log.newsletters.generation_content,
-        ),
-        previousState: this.toNewsletterStateOrNull(log.previous_state),
-        newState: this.toNewsletterStateOrNull(log.new_state),
-        reviewedByUserId: log.reviewed_by_user_id,
-        allCommentaries: log.all_commentaries,
-        createdAt: log.created_at.toISOString(),
-      })),
+      logs: logs.map((log) => {
+        const blockNamesById = new Map(
+          log.newsletters.newsletter_blocks.map((block) => [
+            block.block_content.id,
+            getBlockDefinition(block.block_content.block_type).label,
+          ]),
+        );
+        const blockComments = this.parseStoredReviewComments(
+          log.all_commentaries,
+        ).map((comment) => ({
+          blockId: comment.blockId,
+          blockName:
+            blockNamesById.get(comment.blockId) ?? 'Bloque no disponible',
+          content: comment.content,
+        }));
+
+        return {
+          id: log.id,
+          newsletterId: log.newsletters.id,
+          newsletterName: this.resolveNewsletterTitle(
+            log.newsletters.title,
+            log.newsletters.generation_content,
+          ),
+          previousState: this.toNewsletterStateOrNull(log.previous_state),
+          newState: this.toNewsletterStateOrNull(log.new_state),
+          reviewedByUserId: log.reviewed_by_user_id,
+          allCommentaries: log.all_commentaries,
+          blockComments,
+          createdAt: log.created_at.toISOString(),
+        };
+      }),
     };
   }
 
