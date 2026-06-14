@@ -6,6 +6,7 @@ import {
   ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
+import { Buffer } from 'node:buffer';
 import { randomUUID } from 'node:crypto';
 import { basename, extname, posix } from 'node:path';
 import { PrismaService } from '../prisma/prisma.service';
@@ -35,6 +36,7 @@ type PersistedFont = {
 };
 
 type SeededFontInput = {
+  buffer?: Buffer;
   name: string;
   groupName: string;
   storageKey: string;
@@ -374,6 +376,27 @@ export class FontsService {
         });
 
     return this.toUploadedFontDto(font);
+  }
+
+  async seedFontFile(input: SeededFontInput): Promise<UploadedFontDto> {
+    if (!input.buffer) {
+      throw new BadRequestException('Debe indicar un archivo de fuente valido.');
+    }
+
+    await this.storageService.uploadObject(
+      this.getFontBucketName(),
+      input.storageKey,
+      input.buffer,
+      input.mimeType,
+    );
+
+    return this.upsertSeededFont({
+      name: input.name,
+      groupName: input.groupName,
+      storageKey: input.storageKey,
+      mimeType: input.mimeType,
+      sizeBytes: input.buffer.length,
+    });
   }
 
   private async findOrCreateFontGroup(name: string): Promise<FontGroupRef> {

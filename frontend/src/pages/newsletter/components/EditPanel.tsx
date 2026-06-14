@@ -61,7 +61,6 @@ import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
-
 type SelectableAssetType = Exclude<AssetType, "BLOCK">;
 type UploadStatus =
   | "idle"
@@ -207,7 +206,7 @@ function BackgroundStyleFieldEditor({
         borderColor: "divider",
         borderRadius: 1.5,
         p: 1.5,
-        backgroundColor: "background.paper"
+        backgroundColor: "background.paper",
       }}
     >
       <Typography variant="subtitle2">{backgroundAssetField.label}</Typography>
@@ -474,7 +473,7 @@ export function EditPanel({
                   : "Regenerar este bloque"}
               </Button>
             )}
-           <Stack
+          <Stack
             direction={{ xs: "column", md: "row" }}
             sx={{ justifyContent: "space-between" }}
             spacing="2%"
@@ -532,8 +531,7 @@ export function EditPanel({
           px: 2,
           py: 2,
         }}
-      >
-      </Box>
+      ></Box>
     </Stack>
   );
 }
@@ -634,8 +632,8 @@ function FieldEditor({
                       transition: "transform 0.12s ease, box-shadow 0.12s ease",
                       "&:hover": canEdit
                         ? {
-                          transform: "translateY(-1px)",
-                        }
+                            transform: "translateY(-1px)",
+                          }
                         : undefined,
                     }}
                   />
@@ -964,8 +962,8 @@ function ImageAssetFieldEditor({
     (getBlockAssetBinding(block, field.key)?.assetType as
       | SelectableAssetType
       | undefined) ??
-    allowedTypes[0] ??
-    "IMAGE",
+      allowedTypes[0] ??
+      "IMAGE",
   );
   const [globalAssets, setGlobalAssets] = useState<UploadedAsset[]>([]);
   const [isLoadingAssets, setIsLoadingAssets] = useState(false);
@@ -1027,7 +1025,7 @@ function ImageAssetFieldEditor({
         setAssetListError(
           axios.isAxiosError(error)
             ? (error.response?.data?.message ??
-              "No se pudieron obtener los assets.")
+                "No se pudieron obtener los assets.")
             : "No se pudieron obtener los assets.",
         );
         setGlobalAssets([]);
@@ -1231,31 +1229,33 @@ function ImageAssetFieldEditor({
         <Box sx={{ p: 2 }}>
           <Stack spacing={2}>
             <Stack direction="row" sx={{ alignItems: "center", gap: "5%" }}>
-              <FormControl
-                sx={{ flex: 2 }}
-                size="small"
-                disabled={!canEdit || allowedTypes.length <= 1}
-              >
-                <InputLabel id={`${field.key}-global-type-label`}>
-                  Tipo
-                </InputLabel>
-                <Select
-                  labelId={`${field.key}-global-type-label`}
-                  label="Tipo"
-                  value={globalAssetType}
-                  onChange={(event: SelectChangeEvent<SelectableAssetType>) =>
-                    setGlobalAssetType(
-                      event.target.value as SelectableAssetType,
-                    )
-                  }
+              {sourceTab === "global" && (
+                <FormControl
+                  sx={{ flex: 2 }}
+                  size="small"
+                  disabled={!canEdit || allowedTypes.length <= 1}
                 >
-                  {allowedTypes.map((type) => (
-                    <MenuItem key={type} value={type}>
-                      {assetTypeLabels[type]}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+                  <InputLabel id={`${field.key}-global-type-label`}>
+                    Tipo
+                  </InputLabel>
+                  <Select
+                    labelId={`${field.key}-global-type-label`}
+                    label="Tipo"
+                    value={globalAssetType}
+                    onChange={(event: SelectChangeEvent<SelectableAssetType>) =>
+                      setGlobalAssetType(
+                        event.target.value as SelectableAssetType,
+                      )
+                    }
+                  >
+                    {allowedTypes.map((type) => (
+                      <MenuItem key={type} value={type}>
+                        {assetTypeLabels[type]}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              )}
 
               {hasBrandKitAssets && (
                 <ToggleButtonGroup
@@ -1416,22 +1416,22 @@ function ImageAssetFieldEditor({
             )}
             {(uploadStatus === "compressing" ||
               uploadStatus === "uploading") && (
-                <Stack spacing={1}>
-                  <Typography variant="caption">
-                    {uploadStatus === "compressing"
-                      ? "Comprimiendo imagen..."
-                      : `Subiendo asset ${uploadProgress}%`}
-                  </Typography>
-                  <LinearProgress
-                    variant={
-                      uploadStatus === "uploading"
-                        ? "determinate"
-                        : "indeterminate"
-                    }
-                    value={uploadProgress}
-                  />
-                </Stack>
-              )}
+              <Stack spacing={1}>
+                <Typography variant="caption">
+                  {uploadStatus === "compressing"
+                    ? "Comprimiendo imagen..."
+                    : `Subiendo asset ${uploadProgress}%`}
+                </Typography>
+                <LinearProgress
+                  variant={
+                    uploadStatus === "uploading"
+                      ? "determinate"
+                      : "indeterminate"
+                  }
+                  value={uploadProgress}
+                />
+              </Stack>
+            )}
             {uploadStatus === "cancelled" && (
               <Alert severity="warning">Carga cancelada.</Alert>
             )}
@@ -1559,13 +1559,13 @@ function resolveAssetPreviewUrl(
   asset:
     | Pick<UploadedAsset, "id" | "url" | "type" | "svgTemplate" | "keywordText">
     | Pick<
-      BrandKitResourceAsset,
-      "id" | "url" | "type" | "svgTemplate" | "keywordText"
-    >
+        BrandKitResourceAsset,
+        "id" | "url" | "type" | "svgTemplate" | "keywordText"
+      >
     | Pick<
-      NewsletterBlock["assetBindings"][number],
-      "assetId" | "assetUrl" | "assetType" | "keywordText"
-    >,
+        NewsletterBlock["assetBindings"][number],
+        "assetId" | "assetUrl" | "assetType" | "keywordText"
+      >,
   keywordTextOverride?: string | null,
 ): string | null {
   const assetType = "assetType" in asset ? asset.assetType : asset.type;

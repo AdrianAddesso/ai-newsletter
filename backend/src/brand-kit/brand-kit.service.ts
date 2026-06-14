@@ -523,6 +523,35 @@ export class BrandKitService {
     }
   }
 
+  async linkAssetByBrandKitName(
+    brandKitName: string,
+    assetId: string,
+  ): Promise<void> {
+    const brandKit = await this.prisma.brand_kit.findFirst({
+      where: {
+        name: brandKitName,
+        deleted_at: null,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!brandKit) {
+      throw new NotFoundException('No se encontro el brand kit solicitado.');
+    }
+
+    await this.prisma.brandkit_assets.createMany({
+      data: [
+        {
+          brand_kit_id: brandKit.id,
+          asset_id: assetId,
+        },
+      ],
+      skipDuplicates: true,
+    });
+  }
+
   private async ensureBrandKitExists(id: string): Promise<void> {
     const brandKit = await this.prisma.brand_kit.findFirst({
       where: {
