@@ -6,9 +6,9 @@ import { ConfigModule } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { asset_type } from '@prisma/client';
 import { AssetsService } from '../src/assets/assets.service';
+import { BrandKitService } from '../src/brand-kit/brand-kit.service';
 import { FontsService } from '../src/fonts/fonts.service';
 import { PrismaModule } from '../src/prisma/prisma.module';
-import { PrismaService } from '../src/prisma/prisma.service';
 import { StorageService } from '../src/storage/storage.service';
 
 type SeedTarget =
@@ -17,12 +17,10 @@ type SeedTarget =
 
 @Module({
   imports: [ConfigModule.forRoot({ isGlobal: true }), PrismaModule],
-  providers: [AssetsService, FontsService, StorageService],
+  providers: [AssetsService, BrandKitService, FontsService, StorageService],
 })
 class AssetSeedScriptModule {}
 
-const assetBucket = process.env.S3_ASSETS_BUCKET?.trim() || 'ai-newsletter-assets';
-const fontBucket = process.env.S3_FONTS_BUCKET?.trim() || 'ai-newsletter-fonts';
 const sourceDirectory = resolve(process.cwd(), 'assets');
 
 async function main(): Promise<void> {
@@ -31,10 +29,9 @@ async function main(): Promise<void> {
   });
 
   try {
-    const storage = app.get(StorageService);
-    const assets = app.get(AssetsService);
-    const fonts = app.get(FontsService);
-    const prisma = app.get(PrismaService);
+    const assets = app.get<AssetsService>(AssetsService);
+    const brandKits = app.get<BrandKitService>(BrandKitService);
+    const fonts = app.get<FontsService>(FontsService);
     const filePaths = await listFiles(sourceDirectory);
 
     let seededAssets = 0;
@@ -47,39 +44,32 @@ async function main(): Promise<void> {
       const buffer = await readFile(absolutePath);
       const mimeType = getMimeType(absolutePath);
 
-      await storage.uploadObject(
-        target.kind === 'font' ? fontBucket : assetBucket,
-        storageKey,
-        buffer,
-        mimeType,
-      );
-
       if (target.kind === 'font') {
-        await fonts.upsertSeededFont({
+        await fonts.seedFontFile({
+          buffer,
+          mimeType,
           name: basename(relativePath),
           groupName: getFontGroupName(relativePath),
           storageKey,
-          mimeType,
-          sizeBytes: buffer.length,
         });
         seededFonts += 1;
         continue;
       }
 
-      const asset = await assets.upsertSeededAsset({
+      const asset = await assets.seedAssetFile({
+        buffer,
+        mimeType,
         name: basename(relativePath),
         type: target.type,
         storageKey,
         description: relativePath,
-        mimeType,
-        sizeBytes: buffer.length,
         fromBrand: true,
       });
 
       const brandKitName = getBrandKitName(relativePath);
 
       if (brandKitName) {
-        await linkAssetToBrandKit(prisma, asset.id, brandKitName);
+        await brandKits.linkAssetByBrandKitName(brandKitName, asset.id);
       }
 
       seededAssets += 1;
@@ -230,28 +220,6 @@ function normalizeSegment(value: string): string {
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '') || 'default'
   );
-}
-
-async function linkAssetToBrandKit(
-  prisma: PrismaService,
-  assetId: string,
-  brandKitName: string,
-): Promise<void> {
-  const brandKit = await prisma.brand_kit.findFirst({
-    where: { name: brandKitName },
-    select: { id: true },
-  });
-
-  if (!brandKit) {
-    throw new Error(
-      `Required brand kit "${brandKitName}" is missing. Run database/seed.sql before assets:seed-minio.`,
-    );
-  }
-
-  await prisma.brandkit_assets.createMany({
-    data: [{ brand_kit_id: brandKit.id, asset_id: assetId }],
-    skipDuplicates: true,
-  });
 }
 
 void main().catch((error: unknown) => {

@@ -5,6 +5,7 @@ import {
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
+import { Buffer } from 'node:buffer';
 import { asset_type } from '@prisma/client';
 import { randomUUID } from 'node:crypto';
 import { basename, extname, posix } from 'node:path';
@@ -30,6 +31,7 @@ type PersistedAsset = {
 };
 
 type SeededAssetInput = {
+  buffer?: Buffer;
   name: string;
   type: asset_type;
   storageKey: string;
@@ -432,6 +434,29 @@ export class AssetsService {
         });
 
     return this.toUploadedAssetDto(asset);
+  }
+
+  async seedAssetFile(input: SeededAssetInput): Promise<UploadedAssetDto> {
+    if (!input.buffer || !input.mimeType) {
+      throw new BadRequestException('Debe indicar un asset valido.');
+    }
+
+    await this.storageService.uploadObject(
+      this.getAssetBucketName(),
+      input.storageKey,
+      input.buffer,
+      input.mimeType,
+    );
+
+    return this.upsertSeededAsset({
+      name: input.name,
+      type: input.type,
+      storageKey: input.storageKey,
+      description: input.description,
+      mimeType: input.mimeType,
+      sizeBytes: input.buffer.length,
+      fromBrand: input.fromBrand,
+    });
   }
 
   private validateAssetFile(file: UploadedAssetFile): void {
