@@ -26,6 +26,7 @@ describe('BrandKitController', () => {
 
     controller = new BrandKitController(
       brandKitService as unknown as BrandKitService,
+        {} as any,
     );
   });
 
