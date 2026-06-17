@@ -27,6 +27,7 @@ import SearchBar from "../components/SearchBar";
 import { getReviewInbox } from "../api/newsletters";
 import type { ReviewInboxItem } from "../types/newsletter";
 import { useAuth } from "../contexts/AuthContext";
+import { useNotification } from "../hooks/useNotification";
 
 type SortableKey = "title" | "author" | "area" | "status" | "submittedAt";
 
@@ -61,6 +62,7 @@ const reviewMatchesSearch = (
 
 export function ReviewsPage() {
   const { user } = useAuth();
+  const { error: notifyError } = useNotification();
   const navigate = useNavigate();
 
   const [reviews, setReviews] = useState<ReviewInboxItem[]>([]);
@@ -77,18 +79,22 @@ export function ReviewsPage() {
         const reviewInbox = await getReviewInbox();
         setReviews(Array.isArray(reviewInbox) ? reviewInbox : []);
         setLoadError(null);
-      } catch {
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "No se pudieron cargar los newsletters pendientes de revisión.";
+
         setReviews([]);
-        setLoadError(
-          "No se pudieron cargar los newsletters pendientes de revisión.",
-        );
+        setLoadError(message);
+        notifyError(message);
       } finally {
         setIsLoading(false);
       }
     };
 
     void loadReviews();
-  }, []);
+  }, [notifyError]);
 
   const filteredReviews = useMemo(() => {
     const normalizedSearch = search.toLowerCase();

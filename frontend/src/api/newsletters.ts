@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { toApiError } from './errors'
 import type {
   BlockReviewComment,
   CreateNewsletterPayload,
@@ -74,33 +75,53 @@ function toPersistedBlocks(blocks: NewsletterBlock[]) {
 export async function createNewsletter(
   payload: CreateNewsletterPayload,
 ): Promise<Newsletter> {
-  const response = await axios.post<Newsletter>(API_BASE, createBody(payload))
-  return response.data
+  try {
+    const response = await axios.post<Newsletter>(API_BASE, createBody(payload))
+    return response.data
+  } catch (error) {
+    throw toApiError(error, 'No se pudo crear el newsletter')
+  }
 }
 
 export async function getNewsletter(id: string): Promise<Newsletter> {
-  const response = await axios.get<Newsletter>(`${API_BASE}/${id}`)
-  return response.data
+  try {
+    const response = await axios.get<Newsletter>(`${API_BASE}/${id}`)
+    return response.data
+  } catch (error) {
+    throw toApiError(error, 'No se pudo cargar el newsletter')
+  }
 }
 
 export async function updateNewsletter(
   id: string,
   payload: UpdateNewsletterPayload,
 ): Promise<Newsletter> {
-  const response = await axios.patch<Newsletter>(
-    `${API_BASE}/${id}`,
-    updateBody(payload),
-  )
-  return response.data
+  try {
+    const response = await axios.patch<Newsletter>(
+      `${API_BASE}/${id}`,
+      updateBody(payload),
+    )
+    return response.data
+  } catch (error) {
+    throw toApiError(error, 'No se pudo actualizar el newsletter')
+  }
 }
 
 export async function deleteNewsletter(id: string): Promise<void> {
-  await axios.delete(`${API_BASE}/${id}`)
+  try {
+    await axios.delete(`${API_BASE}/${id}`)
+  } catch (error) {
+    throw toApiError(error, 'No se pudo eliminar el newsletter')
+  }
 }
 
 export async function getAllNewsletters(): Promise<NewsletterListItem[]> {
-  const response = await axios.get<{ data: NewsletterListItem[] }>(API_BASE)
-  return Array.isArray(response.data?.data) ? response.data.data : []
+  try {
+    const response = await axios.get<{ data: NewsletterListItem[] }>(API_BASE)
+    return Array.isArray(response.data?.data) ? response.data.data : []
+  } catch (error) {
+    throw toApiError(error, 'No se pudieron cargar los newsletters')
+  }
 }
 
 export async function updateNewsletterStatus(
@@ -108,37 +129,49 @@ export async function updateNewsletterStatus(
   state: NewsletterStatus,
   comment?: string | null,
 ): Promise<Newsletter> {
-  const response = await axios.post<Newsletter>(
-    `${API_BASE}/${newsletterId}/status`,
-    {
-      state,
-      allCommentaries: comment ?? undefined,
-    },
-  )
+  try {
+    const response = await axios.post<Newsletter>(
+      `${API_BASE}/${newsletterId}/status`,
+      {
+        state,
+        allCommentaries: comment ?? undefined,
+      },
+    )
 
-  return response.data
+    return response.data
+  } catch (error) {
+    throw toApiError(error, 'No se pudo actualizar el estado del newsletter')
+  }
 }
 
 export async function getReviewInbox(): Promise<ReviewInboxItem[]> {
-  const response = await axios.get<ReviewInboxItem[]>(`${API_BASE}/reviews`)
-  return response.data
+  try {
+    const response = await axios.get<ReviewInboxItem[]>(`${API_BASE}/reviews`)
+    return response.data
+  } catch (error) {
+    throw toApiError(error, 'No se pudieron cargar los newsletters pendientes de revisión')
+  }
 }
 
 export async function getNewslettersAnalytics(): Promise<NewslettersAnalyticsResponse> {
-  const response = await axios.get<NewslettersAnalyticsResponse>(
-    `${API_BASE}/analytics`,
-  )
+  try {
+    const response = await axios.get<NewslettersAnalyticsResponse>(
+      `${API_BASE}/analytics`,
+    )
 
-  return {
-    newsletters: Array.isArray(response.data?.newsletters)
-      ? response.data.newsletters
-      : [],
-    logs: Array.isArray(response.data?.logs)
-      ? response.data.logs.map((log) => ({
-          ...log,
-          blockComments: Array.isArray(log.blockComments) ? log.blockComments : [],
-        }))
-      : [],
+    return {
+      newsletters: Array.isArray(response.data?.newsletters)
+        ? response.data.newsletters
+        : [],
+      logs: Array.isArray(response.data?.logs)
+        ? response.data.logs.map((log) => ({
+            ...log,
+            blockComments: Array.isArray(log.blockComments) ? log.blockComments : [],
+          }))
+        : [],
+    }
+  } catch (error) {
+    throw toApiError(error, 'No se pudieron cargar las métricas de newsletters')
   }
 }
 
@@ -146,36 +179,48 @@ export async function requestNewsletterChanges(
   newsletterId: string,
   blockComments: Array<Pick<BlockReviewComment, 'blockId' | 'content'>>,
 ): Promise<Newsletter> {
-  const response = await axios.post<Newsletter>(
-    `${API_BASE}/${newsletterId}/review/request-changes`,
-    {
-      blockComments,
-    },
-  )
+  try {
+    const response = await axios.post<Newsletter>(
+      `${API_BASE}/${newsletterId}/review/request-changes`,
+      {
+        blockComments,
+      },
+    )
 
-  return response.data
+    return response.data
+  } catch (error) {
+    throw toApiError(error, 'No se pudo solicitar cambios')
+  }
 }
 
 export async function approveNewsletterReview(
   newsletterId: string,
 ): Promise<Newsletter> {
-  const response = await axios.post<Newsletter>(
-    `${API_BASE}/${newsletterId}/review/approve`,
-  )
+  try {
+    const response = await axios.post<Newsletter>(
+      `${API_BASE}/${newsletterId}/review/approve`,
+    )
 
-  return response.data
+    return response.data
+  } catch (error) {
+    throw toApiError(error, 'No se pudo aprobar el newsletter')
+  }
 }
 
 export async function duplicateNewsletter(
   newsletterId: string,
   newTitle?: string,
 ): Promise<Newsletter> {
-  const response = await axios.post<Newsletter>(
-    `${API_BASE}/${newsletterId}/duplicate`,
-    newTitle ? { title: newTitle } : {},
-  )
+  try {
+    const response = await axios.post<Newsletter>(
+      `${API_BASE}/${newsletterId}/duplicate`,
+      newTitle ? { title: newTitle } : {},
+    )
 
-  return response.data
+    return response.data
+  } catch (error) {
+    throw toApiError(error, 'No se pudo duplicar el newsletter')
+  }
 }
 
 export type NewsletterBlockSnapshotPayload = {
@@ -189,15 +234,19 @@ export async function exportNewsletterEml(
   newsletterId: string,
   snapshots: NewsletterBlockSnapshotPayload[] = [],
 ): Promise<Blob> {
-  const response = await axios.post<Blob>(
-    `${API_BASE}/${newsletterId}/export/eml`,
-    {
-      snapshots,
-    },
-    {
-      responseType: 'blob',
-    },
-  )
+  try {
+    const response = await axios.post<Blob>(
+      `${API_BASE}/${newsletterId}/export/eml`,
+      {
+        snapshots,
+      },
+      {
+        responseType: 'blob',
+      },
+    )
 
-  return response.data
+    return response.data
+  } catch (error) {
+    throw toApiError(error, 'No se pudo exportar el newsletter')
+  }
 }
