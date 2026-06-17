@@ -25,22 +25,8 @@ import {
 } from "../../../../packages/shared/src/enums/area-name.enum";
 import { enumToOptions } from "../../../../packages/shared/src/utils/enum-to-options";
 
-export const StructureControl: React.FC<{ onConfirm: () => void }> = ({
-  onConfirm,
-}) => {
-  const {
-    layoutMode,
-    setMode,
-    rows,
-    addRow,
-    removeRow,
-    addColumn,
-    removeColumn,
-    setTemplateDetails,
-    name,
-    description,
-    area,
-  } = useTemplateStore();
+export const StructureControl: React.FC<{ onConfirm: () => void }> = ({ onConfirm}) => {
+  const { layoutMode, setMode, rows, addRow, removeRow, addColumn,removeColumn,setTemplateDetails,name,description,area,} = useTemplateStore();
 
   return (
     <Stack spacing={3}>
@@ -87,7 +73,7 @@ export const StructureControl: React.FC<{ onConfirm: () => void }> = ({
             label="Descripción"
             fullWidth
             multiline
-            rows={4} // Adjust this number for your desired height
+            rows={4}
             required
             error={
               description.length > 0 &&
