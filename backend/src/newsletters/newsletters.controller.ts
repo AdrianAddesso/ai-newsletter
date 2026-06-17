@@ -152,7 +152,6 @@ export class NewslettersController {
   }
 
   @Post(':id/status')
-  // Permission is state-dependent: request preview/resubmission is not final approval.
   updateStatus(
     @Req() request: AuthenticatedRequest,
     @Param(new ZodValidationPipe(idParamSchema)) params: IdParam,
