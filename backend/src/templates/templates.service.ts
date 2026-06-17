@@ -27,9 +27,6 @@ type TemplatePromptConfig = {
   optionalGenerationFields: TemplateGenerationField[];
 };
 
-const uuidPattern =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
 export type TemplateListItem = {
   id: string;
   name: string;
@@ -239,12 +236,10 @@ export class TemplatesService {
       this.prisma.template_states.findUnique({
         where: { code: template.state },
       }),
-      uuidPattern.test(userId)
-        ? this.prisma.users.findUnique({
-            where: { id: userId },
-            select: { id: true },
-          })
-        : Promise.resolve(null),
+      this.prisma.users.findUnique({
+        where: { id: userId },
+        select: { id: true },
+      }),
     ]);
 
     if (!area) {
@@ -260,9 +255,9 @@ export class TemplatesService {
     }
 
     if (!creator) {
-      this.logger.warn(
-        'Template creator user was not found; saving template without creator reference.',
-      );
+      throw new BadRequestException({
+        message: `Usuario creador no encontrado con ID: ${userId}`,
+      });
     }
 
     const newTemplate = await this.prisma.templates.create({
