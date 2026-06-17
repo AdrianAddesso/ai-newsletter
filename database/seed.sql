@@ -128,7 +128,8 @@ SELECT
   0::integer
 FROM (
   VALUES
-    ('ecbe7026-4405-4697-95de-20a855ebdcd0', 'Lumen', 'Local', 'nestleainewsletterort@gmail.com', 'COMUNICACION_INTERNA', 'ADMIN')
+     ('ecbe7026-4405-4697-95de-20a855ebdcd0', 'Agus', 'Admin', 'rojas.agustint@gmail.com', 'COMUNICACION_INTERNA', 'ADMIN'),
+    ('ecbe7026-4405-4697-95de-20a855ebdcd2', 'Lumen', 'Usuario', 'agustom2585@gmail.com', 'COMUNICACION_INTERNA', 'USER')
 ) AS v(id, name, last_name, email, area_name, role)
 JOIN public.areas a
   ON a.name = v.area_name::area_name

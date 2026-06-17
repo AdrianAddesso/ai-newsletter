@@ -29,6 +29,26 @@ const notificationTypeMap: Record<NotificationDto['type'], AppNotification['type
   [NotificationType.NEW_NEWSLETTER]: 'pending-review',
 }
 
+function normalizeActionPath(actionPath: string | null): string | undefined {
+  if (!actionPath) {
+    return undefined
+  }
+
+  if (actionPath.startsWith('/reviewNewsletter/')) {
+    return actionPath.replace('/reviewNewsletter/', '/reviews/')
+  }
+
+  if (actionPath.startsWith('/exportarNewsletter/')) {
+    return actionPath.replace('/exportarNewsletter/', '/newsletters/export/')
+  }
+
+  if (actionPath.startsWith('/editarNewsletter/')) {
+    return actionPath.replace('/editarNewsletter/', '/newsletters/edit/')
+  }
+
+  return actionPath
+}
+
 function mapToAppNotification(dto: NotificationDto): AppNotification {
   return {
     id: dto.id,
@@ -37,7 +57,7 @@ function mapToAppNotification(dto: NotificationDto): AppNotification {
     message: dto.message,
     timestamp: new Date(dto.createdAt).getTime(),
     isRead: dto.isRead,
-    actionPath: dto.actionPath ?? undefined,
+    actionPath: normalizeActionPath(dto.actionPath),
   }
 }
 
