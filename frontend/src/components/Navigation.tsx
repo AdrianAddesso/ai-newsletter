@@ -5,12 +5,16 @@ import { useAuth } from '../contexts/AuthContext'
 import { DesktopNavBar } from './navigation/DesktopNavBar'
 import { MobileNavBar } from './navigation/MobileNavBar'
 import { navLinks } from './navigation/navigation'
+import { useOnboarding } from '../onboarding/OnboardingProvider'
+
+const guideUrl = `${import.meta.env.BASE_URL}guia-de-usuario-ai-newsletter.pdf`
 
 export function Navigation() {
   const navigate = useNavigate()
   const location = useLocation()
   const { user, logout } = useAuth()
   const theme = useTheme()
+  const { canStartCurrentTour, currentTourTitle, startCurrentTour } = useOnboarding()
   const [desktopMenuAnchorEl, setDesktopMenuAnchorEl] = useState<HTMLElement | null>(null)
   const [mobileMenuAnchorEl, setMobileMenuAnchorEl] = useState<HTMLElement | null>(null)
 
@@ -49,6 +53,7 @@ export function Navigation() {
 
   return (
     <AppBar
+      data-onboarding="navigation"
       position="static"
       elevation={0}
       sx={{
@@ -103,6 +108,10 @@ export function Navigation() {
             onMenuClose={handleDesktopMenuClose}
             onMenuOpen={handleDesktopMenuOpen}
             onNavigate={handleNavigate}
+            canStartTour={canStartCurrentTour}
+            currentTourTitle={currentTourTitle}
+            guideUrl={guideUrl}
+            onStartTour={startCurrentTour}
             user={user}
           />
 
@@ -114,6 +123,10 @@ export function Navigation() {
             onMenuClose={handleMobileMenuClose}
             onMenuOpen={handleMobileMenuOpen}
             onNavigate={handleNavigate}
+            canStartTour={canStartCurrentTour}
+            currentTourTitle={currentTourTitle}
+            guideUrl={guideUrl}
+            onStartTour={startCurrentTour}
             user={user}
           />
         </Toolbar>

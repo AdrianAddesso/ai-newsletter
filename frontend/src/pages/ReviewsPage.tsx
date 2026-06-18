@@ -143,6 +143,7 @@ export function ReviewsPage() {
       <Container maxWidth="lg" disableGutters>
         <Stack spacing={4}>
           <Box
+            data-onboarding="reviews-filters"
             sx={{
               display: "flex",
               flexDirection: { xs: "column", sm: "row" },
@@ -166,6 +167,7 @@ export function ReviewsPage() {
           </Box>
 
           <TableContainer
+            data-onboarding="reviews-table"
             component={Card}
             variant="outlined"
             sx={{ borderRadius: 2, overflowX: "auto" }}

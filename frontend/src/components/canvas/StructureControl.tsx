@@ -43,7 +43,7 @@ export const StructureControl: React.FC<{ onConfirm: () => void }> = ({
   } = useTemplateStore();
 
   return (
-    <Stack spacing={3}>
+    <Stack data-onboarding="block-picker" spacing={3}>
       <Box>
         <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 700 }}>
           Orientación

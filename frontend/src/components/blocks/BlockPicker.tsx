@@ -34,6 +34,7 @@ export function BlockPicker({ onSelect }: BlockPickerProps): ReactElement {
 
   return (
     <Box
+      data-onboarding="block-picker"
       sx={{
         display: "grid",
         gap: 2,
