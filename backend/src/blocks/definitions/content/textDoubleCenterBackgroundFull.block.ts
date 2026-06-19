@@ -14,9 +14,10 @@ export class TextDoubleCenterBackgroundFullBlock extends BlockDefinition {
     { key: 'secondaryText', label: 'Texto secundario', type: 'textarea' as const, defaultValue: 'Consequuntur eum voluptas iure repellat voluptate, nisi ipsam explicabo fugit architecto sint adipisci.' },
     { key: 'bgColor', label: 'Color de fondo', type: 'color' as const },
     { key: 'backgroundAsset', label: 'Fondo', type: 'image-asset' as const, assetTypes: ['IMAGE', 'SHAPE', 'KEYWORD'] as const },
-    { key: 'fontSize', label: 'Tamaño de texto', type: 'font-size' as const },
+    { key: 'fontSize', label: 'TamaÃ±o de texto', type: 'font-size' as const },
     { key: 'typographyStyle', label: 'Estilo', type: 'font-style' as const },
-    { key: 'fontFamily', label: 'Tipografía', type: 'font-family' as const },
+    { key: 'fontFamily', label: 'TipografÃ­a', type: 'font-family' as const },
+    { key: 'fontColor', label: 'Color de texto', type: 'font-color' as const },
     { key: 'href', label: 'URL de destino', type: 'url' as const, placeholder: 'https://' },
   ];
 }

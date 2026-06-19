@@ -127,7 +127,7 @@ function FieldInput({ field, value, onChange }: FieldInputProps) {
     return <TextField {...commonProps} multiline minRows={3} />;
   }
 
-  if (field.type === "color") {
+  if (field.type === "color" || field.type === "font-color") {
     return (
       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
         <TextField {...commonProps} />

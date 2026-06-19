@@ -293,6 +293,9 @@ export function EditPanel({
   const hasTextFontSizeControl = selectedBlock.editFields.some(
     (field) => field.type === "font-size",
   );
+  const hasTextFontColorControl = selectedBlock.editFields.some(
+    (field) => field.type === "font-color",
+  );
   const hasTextFontFamilyControl =
     selectedBlock.editFields.some((field) => field.type === "font-family") &&
     (brandKitResources?.fonts.length ?? 0) > 0;
@@ -316,6 +319,7 @@ export function EditPanel({
     if (
       field.type === "font-style" ||
       field.type === "font-size" ||
+      field.type === "font-color" ||
       field.type === "font-family" ||
       field.key === "iconName"
     ) {
@@ -401,6 +405,9 @@ export function EditPanel({
                     fontSizeValue={
                       values[`${field.key}FontSize`] ?? values.fontSize ?? ""
                     }
+                    fontColorValue={
+                      values[`${field.key}FontColor`] ?? values.fontColor ?? ""
+                    }
                     fontFamilyValue={
                       values[`${field.key}FontFamily`] ??
                       values.fontFamily ??
@@ -409,6 +416,7 @@ export function EditPanel({
                     brandKitResources={brandKitResources}
                     canEdit={canEdit}
                     hasTextFontSizeControl={hasTextFontSizeControl}
+                    hasTextFontColorControl={hasTextFontColorControl}
                     hasTextFontFamilyControl={hasTextFontFamilyControl}
                     onUpdateBlock={onUpdateBlock}
                   />
@@ -577,7 +585,7 @@ function FieldEditor({
     );
   }
 
-  if (field.type === "color") {
+  if (field.type === "color" || field.type === "font-color") {
     const colorSwatches = brandKitResources?.colors ?? [];
 
     return (
@@ -780,10 +788,12 @@ function TextFieldGroupEditor({
   field,
   value,
   fontSizeValue,
+  fontColorValue,
   fontFamilyValue,
   brandKitResources,
   canEdit,
   hasTextFontSizeControl,
+  hasTextFontColorControl,
   hasTextFontFamilyControl,
   onUpdateBlock,
 }: {
@@ -791,10 +801,12 @@ function TextFieldGroupEditor({
   field: BlockEditField;
   value: string;
   fontSizeValue: string;
+  fontColorValue: string;
   fontFamilyValue: string;
   brandKitResources: BrandKitResources | null;
   canEdit: boolean;
   hasTextFontSizeControl: boolean;
+  hasTextFontColorControl: boolean;
   hasTextFontFamilyControl: boolean;
   onUpdateBlock: (block: NewsletterBlock) => void;
 }) {
@@ -818,7 +830,11 @@ function TextFieldGroupEditor({
         onUpdateBlock={onUpdateBlock}
       />
 
-      {(hasTextFontFamilyControl || hasTextFontSizeControl) && (
+      {(
+        hasTextFontFamilyControl ||
+        hasTextFontSizeControl ||
+        hasTextFontColorControl
+      ) && (
         <Stack
           direction={{ xs: "column", md: "row" }}
           spacing={1.5}
@@ -839,6 +855,16 @@ function TextFieldGroupEditor({
               block={block}
               sizeKey={`${field.key}FontSize`}
               value={fontSizeValue}
+              canEdit={canEdit}
+              onUpdateBlock={onUpdateBlock}
+            />
+          ) : null}
+          {hasTextFontColorControl ? (
+            <TextFontColorFieldEditor
+              block={block}
+              fieldKey={field.key}
+              value={fontColorValue}
+              brandKitResources={brandKitResources}
               canEdit={canEdit}
               onUpdateBlock={onUpdateBlock}
             />
@@ -887,7 +913,7 @@ function TextFontFamilyFieldEditor({
       }}
       fullWidth
       disabled={!canEdit}
-      sx={{ width: "50%" }}
+      sx={{ flex: 1, minWidth: 180 }}
     >
       <MenuItem value="">
         <em>Usar default</em>
@@ -932,7 +958,7 @@ function TextSizeFieldEditor({
       label="Tamaño de texto"
       fullWidth
       disabled={!canEdit}
-      sx={{ width: "50%" }}
+      sx={{ flex: 1, minWidth: 180 }}
     >
       {fontSizeOptions.map((option) => (
         <MenuItem key={option.value} value={option.value}>
@@ -940,6 +966,40 @@ function TextSizeFieldEditor({
         </MenuItem>
       ))}
     </TextField>
+  );
+}
+
+function TextFontColorFieldEditor({
+  block,
+  fieldKey,
+  value,
+  brandKitResources,
+  canEdit,
+  onUpdateBlock,
+}: {
+  block: NewsletterBlock;
+  fieldKey: string;
+  value: string;
+  brandKitResources: BrandKitResources | null;
+  canEdit: boolean;
+  onUpdateBlock: (block: NewsletterBlock) => void;
+}) {
+  return (
+    <Box sx={{ flex: 1, minWidth: 180 }}>
+      <FieldEditor
+        block={block}
+        field={{
+          key: `${fieldKey}FontColor`,
+          label: "Color de texto",
+          type: "font-color",
+        }}
+        value={value}
+        brandKitResources={brandKitResources}
+        canEdit={canEdit}
+        onUpdateBlock={onUpdateBlock}
+        compact
+      />
+    </Box>
   );
 }
 
