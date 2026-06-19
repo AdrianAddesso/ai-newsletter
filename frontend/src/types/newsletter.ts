@@ -189,6 +189,7 @@ export type CreateNewsletterPayload = {
   creatorUserId?: string
   templateId: string
   brandKitId: string
+  format: NewsletterFormat
   blocks: NewsletterBlock[]
   generationRequest: GenerateNewsletterRequest
   generationContent: NewsletterGenerationContent
@@ -199,6 +200,7 @@ export type UpdateNewsletterPayload = {
   title?: string
   templateId?: string
   brandKitId?: string
+  format?: NewsletterFormat
   blocks?: NewsletterBlock[]
   comment?: string | null
   state?: NewsletterState

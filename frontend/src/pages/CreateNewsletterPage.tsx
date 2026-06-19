@@ -122,6 +122,11 @@ function CreateNewsletterPage() {
 
   const handleGenerate = useCallback(
     async (request: GenerateNewsletterRequest) => {
+      if (!selectedTemplate) {
+        setAiError("No se pudo identificar la orientación de la plantilla seleccionada.")
+        return
+      }
+
       setIsGenerating(true);
       setAiError(null);
 
@@ -141,6 +146,7 @@ function CreateNewsletterPage() {
             title: request.topic,
             templateId: request.templateId,
             brandKitId: request.brandKitId,
+            format: selectedTemplate.orientation,
             blocks: response.blocks,
             generationRequest: request,
             generationContent,
@@ -152,6 +158,7 @@ function CreateNewsletterPage() {
             creatorUserId: currentUserId,
             templateId: request.templateId,
             brandKitId: request.brandKitId,
+            format: selectedTemplate.orientation,
             blocks: response.blocks,
             generationRequest: request,
             generationContent,
@@ -172,7 +179,7 @@ function CreateNewsletterPage() {
         setIsGenerating(false);
       }
     },
-    [backState.newsletterId, currentUserId, navigate, notifyError],
+    [backState.newsletterId, currentUserId, navigate, notifyError, selectedTemplate],
   );
 
   if (isLoadingTemplates) {

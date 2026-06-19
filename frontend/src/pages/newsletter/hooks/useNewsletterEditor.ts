@@ -124,8 +124,20 @@ function mergeGeneratedBlocksWithExisting(
   })
 }
 
-function getCanonicalExportWidth(newsletter: Newsletter): number {
-  return newsletter.format === 'LANDSCAPE' ? 1400 : 700
+function resolveExportOrientation(
+  newsletter: Newsletter,
+  template?: NewsletterTemplate,
+): 'PORTRAIT' | 'LANDSCAPE' {
+  return template?.orientation ?? newsletter.format
+}
+
+function getCanonicalExportWidth(
+  newsletter: Newsletter,
+  template?: NewsletterTemplate,
+): number {
+  return resolveExportOrientation(newsletter, template) === 'LANDSCAPE'
+    ? 1400
+    : 700
 }
 
 export function useNewsletterEditor() {
@@ -475,7 +487,14 @@ export function useNewsletterEditor() {
       const scale = Math.max(2, window.devicePixelRatio || 1)
       const { width: renderedWidth, height: renderedHeight } =
         exportRoot.getBoundingClientRect()
-      const canonicalWidth = getCanonicalExportWidth(newsletter)
+      const exportOrientation = resolveExportOrientation(
+        newsletter,
+        selectedTemplate,
+      )
+      const canonicalWidth = getCanonicalExportWidth(
+        newsletter,
+        selectedTemplate,
+      )
       const exportScaleFactor =
         renderedWidth > 0 ? canonicalWidth / renderedWidth : 1
       const canonicalHeight = Math.round(renderedHeight * exportScaleFactor)
@@ -512,7 +531,8 @@ export function useNewsletterEditor() {
           })
           const { jsPDF } = await import('jspdf')
           const pdf = new jsPDF({
-            orientation: newsletter.format === 'LANDSCAPE' ? 'landscape' : 'portrait',
+            orientation:
+              exportOrientation === 'LANDSCAPE' ? 'landscape' : 'portrait',
             unit: 'px',
             format: [canonicalWidth, canonicalHeight],
             hotfixes: ['px_scaling'],
@@ -551,7 +571,7 @@ export function useNewsletterEditor() {
       setExportingFormat(null)
     }
   },
-  [newsletter, brandKitResources],
+  [newsletter, brandKitResources, selectedTemplate],
 )
 
   const handleRegenerateBlock = useCallback(
