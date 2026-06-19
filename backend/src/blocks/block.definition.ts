@@ -13,13 +13,8 @@ export abstract class BlockDefinition {
   abstract readonly previewKey: string;
   abstract readonly mustFill: boolean;
   abstract readonly layout: BlockDefinitionDTO['layout'];
-  /** Editable fields exposed to the newsletter editor. Override per block. */
   readonly editFields: BlockEditField[] = [];
 
-  /**
-   * Serialized default content derived from editFields.
-   * Returns null when the block has no editable fields.
-   */
   get defaultContent(): string | null {
     if (this.editFields.length === 0) {
       return null;

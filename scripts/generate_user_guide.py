@@ -250,7 +250,7 @@ def build_story() -> list[object]:
     story.append(callout("Estados", "Borrador y cambios solicitados permiten edición. En revisión queda bloqueado para el autor. Aprobado habilita exportación para roles autorizados."))
     story.append(PageBreak())
 
-    story.extend(section("3. Crear un newsletter", "La creación comienza seleccionando una plantilla publicada y un brandkit. Luego se completa el contexto que recibirá la IA."))
+    story.extend(section("3. Crear un newsletter", "La creación comienza al seleccionar el botón 'Nuevo Newsletter' en la pantalla principal (Dashboard), el cual redirige a la librería de plantillas publicadas. Una vez seleccionada la plantilla, se mostrará un menu desplegable donde se permitirá seleccionar el brand-kit, y por último en la sección derecha de la pantalla el formulario para el contexto que recibirá la IA."))
     story.extend(screenshot("03-template-library.png", "Biblioteca de plantillas: filtros por orientación y área, búsqueda y selección del diseño."))
     story.append(p("Paso 1 - Elegir plantilla y brandkit", "h2"))
     story.extend(bullets([

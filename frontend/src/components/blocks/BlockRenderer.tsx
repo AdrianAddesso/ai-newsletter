@@ -3,7 +3,6 @@ import type { ElementType } from "react";
 import type { ColumnObject } from "../../interfaces/interfaces.templates";
 import * as AllRenderers from "./renderers";
 
-// Map your exact block types to their specific renderer components
     const RendererMap: Record<string, ElementType> = {
       // BASE
         ctaAlternative: AllRenderers.CTAAlternativeRenderer,
@@ -57,12 +56,10 @@ import * as AllRenderers from "./renderers";
 
     const SelectedRenderer = RendererMap[block.type ?? ""];
 
-    // If a matching renderer is found, render it
     if (SelectedRenderer) {
         return <SelectedRenderer block={blockInstance} editMode={editMode} {...rendererProps} />;
     }
-
-  // Default fallback for unknown or unmapped types
+    
     return (
         <Box
         sx={{

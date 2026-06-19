@@ -9,14 +9,11 @@ export function useBlockPreviewUrls(
   type: AssetType = 'BLOCK',
 ): BlockPreviewUrlState {
   const [previewUrls, setPreviewUrls] = useState<BlockPreviewUrlState>({})
-  const previewKeySignature = [...new Set(previewKeys.filter(Boolean))]
-    .sort()
-    .join('\n')
+  const previewKeySignature = [...new Set(previewKeys.filter(Boolean))].sort().join('\n')
 
   useEffect(() => {
     const uniquePreviewKeys = previewKeySignature
-      ? previewKeySignature.split('\n')
-      : []
+      ? previewKeySignature.split('\n'): []
 
     if (!uniquePreviewKeys.length) {
       return

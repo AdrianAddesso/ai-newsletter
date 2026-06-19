@@ -6,7 +6,6 @@ export class BlockRegistry {
     private readonly blocks = new Map<string, BlockDefinition>();
 
     private constructor() {
-        // Se registran todos los tipos disponibles al iniciar
         const definitions: BlockDefinition[] = Object.values(AllBlocks).map(
         (BlockClass) => new BlockClass(),
         );

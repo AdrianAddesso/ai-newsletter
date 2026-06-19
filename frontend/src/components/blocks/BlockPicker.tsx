@@ -1,10 +1,4 @@
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  CardMedia,
-} from "@mui/material";
+import {Box,Card,CardContent,Typography, CardMedia,} from "@mui/material";
 import type { ReactElement } from 'react'
 import { useBlockDefinitions } from '../../hooks/useBlockDefinitions'
 import { useBlockPreviewUrls } from '../../hooks/useBlockPreviewUrls'
@@ -54,13 +48,13 @@ export function BlockPicker({ onSelect }: BlockPickerProps): ReactElement {
             <CardContent>
               <CardMedia
                 component="img"
-                height="140" // Adjust height as needed
+                height="140"
                 image={previewUrls[definition.previewKey] ?? ''}
                 alt={definition.label}
                 sx={{
                   borderRadius: 1,
                   mb: 2,
-                  objectFit: "contain", // or 'cover' depending on your design
+                  objectFit: "contain",
                   bgcolor: "background.default",
                 }}
               />

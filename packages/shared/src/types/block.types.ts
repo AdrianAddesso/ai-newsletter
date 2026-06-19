@@ -22,12 +22,12 @@ export type BlockAssetType =
   | "KEYWORD";
 
 export interface BlockEditField {
-  key: string;           // key inside the parsed content JSON object
-  label: string;         // human-readable label shown in the editor
+  key: string; 
+  label: string;
   type: EditFieldType;
   placeholder?: string;
-  options?: { label: string; value: string }[]; // only used when type === 'select'
-  assetTypes?: readonly BlockAssetType[]; // only used when type === 'image-asset'
+  options?: { label: string; value: string }[];
+  assetTypes?: readonly BlockAssetType[]; 
   required?: boolean;
   defaultValue?: string;
 }
@@ -41,7 +41,6 @@ export interface BlockDefinitionDTO {
   previewKey: string;
   defaultContent: string | null;
   mustFill: boolean;
-  // metadata de layout para el front
   layout: {
     minCols: number;
     minRows: number;
@@ -50,11 +49,10 @@ export interface BlockDefinitionDTO {
   editFields: BlockEditField[];
 }
 
-// Instancia en memoria — aún sin persistir
 export interface BlockInstance {
-  localId: string;              // crypto.randomUUID() en el cliente
+  localId: string;
   type: BlockType;
-  content: string | null;       // JSON string: { buttonLabel: "Click here", href: "..." }
+  content: string | null;
   mustFill: boolean;
   displayOrder: number;
 }
