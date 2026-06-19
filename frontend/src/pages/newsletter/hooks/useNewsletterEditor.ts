@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
-import { parseContent } from '../../../utils/blockContent'
+import { parseContent, serializeContent } from '../../../utils/blockContent'
 import { useAuth } from '../../../contexts/AuthContext'
 import { useNotification } from '../../../hooks/useNotification'
 
@@ -67,6 +67,61 @@ function getPreferredRegenerationField(
     return (leftIndex === -1 ? 999 : leftIndex) -
       (rightIndex === -1 ? 999 : rightIndex)
   })[0]
+}
+
+function getAiRegeneratedFields(
+  block: NewsletterBlock,
+): NewsletterBlock['editFields'] {
+  return block.editFields.filter(
+    (field) =>
+      (field.type === 'text' || field.type === 'textarea') &&
+      field.key !== 'iconName',
+  )
+}
+
+function getBlockLayoutKey(block: Pick<NewsletterBlock, 'type' | 'row' | 'gridColumn' | 'displayOrder'>): string {
+  return `${block.type}:${block.row}:${block.gridColumn}:${block.displayOrder}`
+}
+
+function mergeGeneratedBlocksWithExisting(
+  currentBlocks: NewsletterBlock[],
+  generatedBlocks: NewsletterBlock[],
+): NewsletterBlock[] {
+  const currentBlocksByLayoutKey = new Map(
+    currentBlocks.map((block) => [getBlockLayoutKey(block), block] as const),
+  )
+
+  return generatedBlocks.map((generatedBlock) => {
+    const currentBlock = currentBlocksByLayoutKey.get(
+      getBlockLayoutKey(generatedBlock),
+    )
+
+    if (!currentBlock) {
+      return generatedBlock
+    }
+
+    const currentValues = parseContent<Record<string, string>>(currentBlock.content)
+    const generatedValues = parseContent<Record<string, string>>(generatedBlock.content)
+    const mergedValues: Record<string, string> = Object.fromEntries(
+      Object.entries(currentValues).map(([key, value]) => [key, value ?? '']),
+    )
+
+    getAiRegeneratedFields(generatedBlock).forEach((field) => {
+      const nextValue = generatedValues[field.key]?.trim()
+
+      if (nextValue) {
+        mergedValues[field.key] = generatedValues[field.key] ?? ''
+      }
+    })
+
+    return {
+      ...currentBlock,
+      content: serializeContent(mergedValues),
+      assetBindings: currentBlock.assetBindings,
+      comment: currentBlock.comment,
+      editFields: generatedBlock.editFields,
+    }
+  })
 }
 
 export function useNewsletterEditor() {
@@ -534,9 +589,12 @@ export function useNewsletterEditor() {
 
       try {
         const response = await generateNewsletter(request, notifyError)
+        const mergedBlocks = newsletter
+          ? mergeGeneratedBlocksWithExisting(newsletter.blocks, response.blocks)
+          : response.blocks
 
         const updated = await updateNewsletter(id, {
-          blocks: response.blocks,
+          blocks: mergedBlocks,
           generationRequest: request,
           generationContent: {
             aiContent: response,
@@ -557,7 +615,7 @@ export function useNewsletterEditor() {
         setIsGeneratingAll(false)
       }
     },
-    [id, notifyError],
+    [id, newsletter, notifyError],
   )
 
   const handleSubmit = useCallback(async () => {
