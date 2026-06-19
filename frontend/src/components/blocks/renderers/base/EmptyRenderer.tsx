@@ -1,13 +1,15 @@
 import { Card } from "@mui/material";
 import type { BlockInstance } from "@shared/types/block.types";
+import { parseContent } from "../../../../utils/blockContent";
 
 interface Props {
     block: BlockInstance;
     editMode?: boolean;
 }
 
-export function EmptyRenderer(props: Props) {
-    const backgroundColor = "#ffffff";
+export function EmptyRenderer({ block }: Props) {
+    const values = parseContent(block.content);
+    const backgroundColor = values.bgColor || "#ffffff";
 
     return (
         <Card

@@ -9,6 +9,7 @@ import {
   buildBackgroundImageSx,
   resolveRenderableBackgroundImage,
 } from "../utils/backgroundImage";
+import { resolveLabelSurfaceSx } from "../utils/labelAppearance";
 
 interface Props {
   block: BlockInstance;
@@ -22,7 +23,12 @@ export function LabelCenterBackgroundFullRenderer({
   editMode = false,
 }: Props) {
   const values = parseContent(block.content);
-  const { label = "Lorem ipsum dolor sit amet", bgColor, href = "" } = values;
+  const {
+    label = "Lorem ipsum dolor sit amet",
+    bgColor,
+    backgroundColor,
+    href = "",
+  } = values;
   const typographySx = resolveContentTypographySx(values, "label");
   const resolvedBackgroundImage = resolveRenderableBackgroundImage(
     backgroundImage,
@@ -30,6 +36,7 @@ export function LabelCenterBackgroundFullRenderer({
     placeholderImageUrl,
   );
   const bgSx = buildBackgroundImageSx(resolvedBackgroundImage);
+  const labelSurfaceSx = resolveLabelSurfaceSx(bgColor);
 
   return (
     <Card
@@ -53,7 +60,7 @@ export function LabelCenterBackgroundFullRenderer({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          backgroundColor: bgColor,
+          backgroundColor,
           py: 4,
           ...bgSx,
         }}
@@ -64,6 +71,7 @@ export function LabelCenterBackgroundFullRenderer({
             maxWidth: "none",
             width: "fit-content",
             height: 'auto',
+            ...labelSurfaceSx,
             "& .MuiChip-label": {
               whiteSpace: "nowrap",
               overflow: "visible",

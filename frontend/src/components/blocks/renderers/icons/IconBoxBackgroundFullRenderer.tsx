@@ -87,6 +87,12 @@ export function IconBoxBackgroundFullRenderer({
         }));
 
   const typographySx = resolveContentTypographySx(values, "label");
+  const itemTypographySx = [
+    resolveContentTypographySx(values, "item1Text"),
+    resolveContentTypographySx(values, "item2Text"),
+    resolveContentTypographySx(values, "item3Text"),
+    resolveContentTypographySx(values, "item4Text"),
+  ];
   const resolvedBackgroundImage = resolveRenderableBackgroundImage(
     backgroundImage,
     editMode,
@@ -138,6 +144,7 @@ export function IconBoxBackgroundFullRenderer({
         <Grid container sx={{ width: "90%" }}>
           {resolvedIconItems.slice(0, 4).map((item, index) => {
             const currentIconUrl = item.iconUrl ?? iconUrl;
+            const currentTypographySx = itemTypographySx[index] ?? typographySx;
 
             return (
               <Grid
@@ -167,7 +174,7 @@ export function IconBoxBackgroundFullRenderer({
                 <Typography
                   variant="body2"
                   color="text.secondary"
-                  sx={{ textAlign: "left", ...typographySx }}
+                  sx={{ textAlign: "left", ...currentTypographySx }}
                 >
                   {item.text ?? displayLabel}
                 </Typography>

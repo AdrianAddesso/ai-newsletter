@@ -72,6 +72,15 @@ type UploadStatus =
 type AssetSourceTab = "global" | "brandkit";
 type BackgroundMode = "image" | "color" | "none";
 
+const labelSurfaceColorBlockTypes = new Set([
+  "labelCenterBackgroundFull",
+  "labelLeftBackgroundFull",
+  "labelLeftBackgroundSmall",
+  "labelTextLabelCenterFull",
+  "textLabelCenterBackgroundFull",
+  "specialBoxBackgroundFull",
+]);
+
 type Props = {
   selectedBlock: NewsletterBlock;
   brandKitResources: BrandKitResources | null;
@@ -305,13 +314,23 @@ export function EditPanel({
   const iconAssetField = selectedBlock.editFields.find(
     (field) => field.key === "iconAsset",
   );
+  const usesLabelSurfaceColor = labelSurfaceColorBlockTypes.has(
+    selectedBlock.type,
+  );
   const backgroundColorField = selectedBlock.editFields.find(
-    (field) => field.key === "bgColor" || field.key === "overlayColor",
+    (field) =>
+      field.key === "overlayColor" ||
+      field.key === "backgroundColor" ||
+      (field.key === "bgColor" && !usesLabelSurfaceColor),
   );
   const backgroundMode = resolveBackgroundMode(
     values.backgroundMode,
     getBlockAssetBinding(selectedBlock, "backgroundAsset") !== undefined,
-    Boolean(values.bgColor?.trim() || values.overlayColor?.trim()),
+    Boolean(
+      values.backgroundColor?.trim() ||
+        values.bgColor?.trim() ||
+        values.overlayColor?.trim(),
+    ),
   );
 
   // Filtramos los campos que realmente generan un panel visual para facilitar la indexación
@@ -325,10 +344,7 @@ export function EditPanel({
     ) {
       return false;
     }
-    if (
-      (field.key === "bgColor" || field.key === "overlayColor") &&
-      backgroundAssetField
-    ) {
+    if (backgroundAssetField && backgroundColorField?.key === field.key) {
       return false;
     }
     if (field.key === "backgroundAsset" && !backgroundAssetField) return false;
@@ -835,30 +851,34 @@ function TextFieldGroupEditor({
         hasTextFontSizeControl ||
         hasTextFontColorControl
       ) && (
-        <Stack
-          direction={{ xs: "column", md: "row" }}
-          spacing={1.5}
-          sx={{ alignItems: { md: "flex-start" } }}
-        >
-          {hasTextFontFamilyControl ? (
-            <TextFontFamilyFieldEditor
-              block={block}
-              fieldKey={field.key}
-              value={fontFamilyValue}
-              brandKitResources={brandKitResources}
-              canEdit={canEdit}
-              onUpdateBlock={onUpdateBlock}
-            />
-          ) : null}
-          {hasTextFontSizeControl ? (
-            <TextSizeFieldEditor
-              block={block}
-              sizeKey={`${field.key}FontSize`}
-              value={fontSizeValue}
-              canEdit={canEdit}
-              onUpdateBlock={onUpdateBlock}
-            />
-          ) : null}
+        <Stack spacing={1.5}>
+          {(hasTextFontFamilyControl || hasTextFontSizeControl) && (
+            <Stack
+              direction={{ xs: "column", md: "row" }}
+              spacing={1.5}
+              sx={{ alignItems: { md: "flex-start" } }}
+            >
+              {hasTextFontFamilyControl ? (
+                <TextFontFamilyFieldEditor
+                  block={block}
+                  fieldKey={field.key}
+                  value={fontFamilyValue}
+                  brandKitResources={brandKitResources}
+                  canEdit={canEdit}
+                  onUpdateBlock={onUpdateBlock}
+                />
+              ) : null}
+              {hasTextFontSizeControl ? (
+                <TextSizeFieldEditor
+                  block={block}
+                  sizeKey={`${field.key}FontSize`}
+                  value={fontSizeValue}
+                  canEdit={canEdit}
+                  onUpdateBlock={onUpdateBlock}
+                />
+              ) : null}
+            </Stack>
+          )}
           {hasTextFontColorControl ? (
             <TextFontColorFieldEditor
               block={block}
@@ -985,7 +1005,7 @@ function TextFontColorFieldEditor({
   onUpdateBlock: (block: NewsletterBlock) => void;
 }) {
   return (
-    <Box sx={{ flex: 1, minWidth: 180 }}>
+    <Box sx={{ width: "100%" }}>
       <FieldEditor
         block={block}
         field={{

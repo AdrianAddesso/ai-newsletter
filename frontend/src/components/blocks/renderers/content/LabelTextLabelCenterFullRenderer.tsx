@@ -9,6 +9,7 @@ import {
   buildBackgroundImageSx,
   resolveRenderableBackgroundImage,
 } from "../utils/backgroundImage";
+import { resolveLabelSurfaceSx } from "../utils/labelAppearance";
 
 interface Props {
   block: BlockInstance;
@@ -32,6 +33,7 @@ export function LabelTextLabelCenterFullRenderer({
     bottomLabel = bottomLabelContent ?? "Consectetur adipiscing elit",
     href = "",
     bgColor,
+    backgroundColor,
   } = values;
   const topLabelTypographySx = resolveContentTypographySx(values, "topLabel");
   const bodyTypographySx = resolveContentTypographySx(values, "bodyText");
@@ -42,6 +44,7 @@ export function LabelTextLabelCenterFullRenderer({
     placeholderImageUrl,
   );
   const bgSx = buildBackgroundImageSx(resolvedBackgroundImage);
+  const labelSurfaceSx = resolveLabelSurfaceSx(bgColor);
   void href;
 
   return (
@@ -66,7 +69,7 @@ export function LabelTextLabelCenterFullRenderer({
         justifyContent: "center", 
         gap: 1.5, 
         py: 2,
-        backgroundColor: bgColor,
+        backgroundColor,
         ...bgSx,
         }}>
         <Chip
@@ -75,6 +78,7 @@ export function LabelTextLabelCenterFullRenderer({
             maxWidth: "none",
             width: "fit-content",
             height: "auto",
+            ...labelSurfaceSx,
             "& .MuiChip-label": {
               whiteSpace: "nowrap",
               overflow: "visible",
@@ -97,6 +101,7 @@ export function LabelTextLabelCenterFullRenderer({
             maxWidth: "none",
             width: "fit-content",
             height: "auto",
+            ...labelSurfaceSx,
             "& .MuiChip-label": {
               whiteSpace: "nowrap",
               overflow: "visible",

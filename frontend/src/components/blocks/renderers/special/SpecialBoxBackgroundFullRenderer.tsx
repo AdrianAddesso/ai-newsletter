@@ -10,6 +10,7 @@ import {
   buildBackgroundImageSx,
   resolveRenderableBackgroundImage,
 } from "../utils/backgroundImage";
+import { resolveLabelSurfaceSx } from "../utils/labelAppearance";
 
 
 interface Props {
@@ -47,6 +48,7 @@ export function SpecialBoxBackgroundFullRenderer({
     placeholderImageUrl,
   );
   const bgSx = buildBackgroundImageSx(resolvedBackgroundImage);
+  const labelSurfaceSx = resolveLabelSurfaceSx(bgColor);
   const resolvedImageUrl = imageUrl || placeholderImageUrl;
 
   return (
@@ -70,7 +72,6 @@ export function SpecialBoxBackgroundFullRenderer({
           flexGrow: 1,
           display: "flex",
           alignItems: "stretch",
-          backgroundColor: bgColor,
           py: 4,
           ...bgSx,
         }}
@@ -94,6 +95,7 @@ export function SpecialBoxBackgroundFullRenderer({
                 maxWidth: "none",
                 width: "fit-content",
                 height: "auto",
+                ...labelSurfaceSx,
                 "& .MuiChip-label": {
                   whiteSpace: "nowrap",
                   overflow: "visible",
