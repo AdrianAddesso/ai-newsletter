@@ -126,7 +126,7 @@ export class NotificationsService {
                     newsletterId,
                     `Newsletter "${newsletter.title}" está en revisión`,
                     `El newsletter "${newsletter.title}" de ${creatorName} está esperando tu revisión.`,
-                    `/reviewNewsletter/${newsletterId}`,
+                    `/reviews/${newsletterId}`,
                 )
 
                 return
@@ -138,7 +138,7 @@ export class NotificationsService {
                         title: 'Newsletter Aprobado',
                         message: `Tu newsletter "${newsletter.title}" ha sido aprobado por ${reviewerName} y está listo para exportar.`,
                         type: NotificationType.APPROVED,
-                        actionPath: `/exportarNewsletter/${newsletterId}`,
+                        actionPath: `/newsletters/export/${newsletterId}`,
                         newsletterId,
                     })
                 }
@@ -151,7 +151,7 @@ export class NotificationsService {
                         title: 'Cambios Solicitados',
                         message: `${reviewerName} solicitó cambios en tu newsletter "${newsletter.title}". Por favor revísalos.`,
                         type: NotificationType.REJECTED,
-                        actionPath: `/editarNewsletter/${newsletterId}`,
+                        actionPath: `/newsletters/edit/${newsletterId}`,
                         newsletterId,
                     })
                 }

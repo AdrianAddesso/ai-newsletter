@@ -164,6 +164,7 @@ export function TemplateLibraryPage() {
             </Stack>
 
             <Stack
+                data-onboarding="template-library-filters"
                 direction={{ xs: "column", sm: "row" }}
                 spacing={2}
                 sx={{ alignItems: { xs: "stretch", sm: "center" }, justifyContent: "flex-end" }}
@@ -217,6 +218,7 @@ export function TemplateLibraryPage() {
                 </Typography>
             ) : (
                 <Box
+                  data-onboarding="template-library-grid"
                 sx={{
                     display: "grid",
                     gap: 3,

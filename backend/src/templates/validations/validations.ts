@@ -1,4 +1,5 @@
 import { BadRequestException } from "@nestjs/common/exceptions/bad-request.exception";
+import { BlockRegistry } from "../../blocks/block.registry";
 
 type layoutDTO = {
     block_type: string | null;
@@ -9,7 +10,7 @@ type layoutDTO = {
     mustFill?: boolean | undefined;
 };
 
-export const validateTemplateBlocks = (block: layoutDTO, blockRegistry: any) => {
+export const validateTemplateBlocks = (block: layoutDTO, blockRegistry: BlockRegistry) => {
     if (block.block_type === null) {
         return {
             type: null,

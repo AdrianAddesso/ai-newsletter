@@ -52,7 +52,7 @@ export class AuthorizationService {
 
     [Action.AUDIT_LOGS_METRICS_VIEW]: (user) => this.isFunctionalAdmin(user) || this.isSuperAdmin(user),
 
-    [Action.CONTENT_EXPORT_APPROVED]: (user: User, res: Newsletter) => this.isApproved(res),
+    [Action.CONTENT_EXPORT_APPROVED]: (_user: User, res: Newsletter) => this.isApproved(res),
   };
 
   private isOwner(user: User, resource: Newsletter): boolean {

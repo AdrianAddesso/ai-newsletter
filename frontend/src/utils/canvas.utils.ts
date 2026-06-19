@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import type { TemplateLayoutItem } from '../types/newsletter';
 import type { RowObject, ColumnObject } from '../interfaces/interfaces.templates';
-
+ 
 export const mapLayoutItemsToRows = (layoutItems: TemplateLayoutItem[]): RowObject[] => {
   if (!Array.isArray(layoutItems) || layoutItems.length === 0) return [];
 

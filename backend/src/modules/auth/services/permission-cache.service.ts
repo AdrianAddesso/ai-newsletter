@@ -10,13 +10,12 @@ export class PermissionCacheService {
     constructor(private readonly prisma: PrismaService) {}
 
     async getPermissionsForRole(role: Role): Promise<string[]> {
-        if(!role) throw new BadRequestException('Role is required to fetch permissions');
+        if(!role) throw new BadRequestException('El Rol es requerido para obtener los permisos.');
 
         if(this.cachePermissionService.has(role)) {
             return this.cachePermissionService.get(role) || [];
         }
         
-
         const rolePermissions = await this.prisma.role_permissions.findMany({
             where: { role: role},
             include: {

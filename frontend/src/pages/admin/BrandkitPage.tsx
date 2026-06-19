@@ -227,6 +227,7 @@ export function BrandkitPage() {
       <Container maxWidth="lg" disableGutters>
         <Stack spacing={3}>
           <Stack
+            data-onboarding="brandkit-header"
             direction={{ xs: 'column', sm: 'row' }}
             spacing={2}
             sx={{
@@ -277,27 +278,28 @@ export function BrandkitPage() {
             <Alert severity="info">Cargando configuracion del brandkit...</Alert>
           ) : null}
 
-          <BrandInfo values={brandInfo} onChange={setBrandInfo} errors={errors} />
+          <Stack data-onboarding="brandkit-resources" spacing={3}>
+            <BrandInfo values={brandInfo} onChange={setBrandInfo} errors={errors} />
 
-          <TypographyList
-            fonts={fonts}
-            isLoading={isLoading}
-            isDisabled={!brandkitId}
-            onUploadFonts={handleUploadFonts}
-            onUpdateFont={handleUpdateFont}
-            onDeleteFont={handleDeleteFont}
-          />
+            <TypographyList
+              fonts={fonts}
+              isLoading={isLoading}
+              isDisabled={!brandkitId}
+              onUploadFonts={handleUploadFonts}
+              onUpdateFont={handleUpdateFont}
+              onDeleteFont={handleDeleteFont}
+            />
 
-          <ColorList
-            colors={colors}
-            isLoading={isLoading}
-            isDisabled={!brandkitId}
-            onCreateColor={handleCreateColor}
-            onUpdateColor={handleUpdateColor}
-            onDeleteColor={handleDeleteColor}
-          />
+            <ColorList
+              colors={colors}
+              isLoading={isLoading}
+              isDisabled={!brandkitId}
+              onCreateColor={handleCreateColor}
+              onUpdateColor={handleUpdateColor}
+              onDeleteColor={handleDeleteColor}
+            />
 
-          <Box>
+            <Box>
             <Stack spacing={1} sx={{ mb: 2 }}>
               <Typography variant="subtitle1">Assets del brandkit</Typography>
               <Typography variant="body2" color="text.secondary">
@@ -305,7 +307,8 @@ export function BrandkitPage() {
               </Typography>
             </Stack>
             <AssetsList brandId={brandkitId ?? undefined} compact />
-          </Box>
+            </Box>
+          </Stack>
 
           <Box
             sx={{

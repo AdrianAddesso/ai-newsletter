@@ -51,8 +51,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
   const unreadCount = notifications.filter((notification) => !notification.isRead).length
 
-  // Load notifications from API when user changes
-  useEffect(() => {
+   useEffect(() => {
     if (!user) {
       return
     }
@@ -71,7 +70,6 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
     loadNotifications()
 
-    // Poll for new notifications every 30 seconds
     const interval = setInterval(loadNotifications, 30000)
 
     return () => clearInterval(interval)
@@ -107,7 +105,6 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         ),
       )
 
-      // Call API
       try {
         await markAsReadApi(id)
       } catch (error) {

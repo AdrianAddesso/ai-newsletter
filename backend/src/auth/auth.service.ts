@@ -1,4 +1,4 @@
-import { Injectable, ForbiddenException, UnauthorizedException, Logger } from '@nestjs/common';
+import { Injectable, ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { generateTokens } from './utils/generateTokens';
@@ -7,7 +7,6 @@ import { JWTPayload } from 'jose';
 
 @Injectable()
 export class AuthService {
-  private readonly logger = new Logger(AuthService.name);
 
   constructor(
     private prisma: PrismaService,
