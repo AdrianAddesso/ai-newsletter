@@ -72,6 +72,15 @@ type UploadStatus =
 type AssetSourceTab = "global" | "brandkit";
 type BackgroundMode = "image" | "color" | "none";
 
+const labelSurfaceColorBlockTypes = new Set([
+  "labelCenterBackgroundFull",
+  "labelLeftBackgroundFull",
+  "labelLeftBackgroundSmall",
+  "labelTextLabelCenterFull",
+  "textLabelCenterBackgroundFull",
+  "specialBoxBackgroundFull",
+]);
+
 type Props = {
   selectedBlock: NewsletterBlock;
   brandKitResources: BrandKitResources | null;
@@ -293,6 +302,9 @@ export function EditPanel({
   const hasTextFontSizeControl = selectedBlock.editFields.some(
     (field) => field.type === "font-size",
   );
+  const hasTextFontColorControl = selectedBlock.editFields.some(
+    (field) => field.type === "font-color",
+  );
   const hasTextFontFamilyControl =
     selectedBlock.editFields.some((field) => field.type === "font-family") &&
     (brandKitResources?.fonts.length ?? 0) > 0;
@@ -302,13 +314,23 @@ export function EditPanel({
   const iconAssetField = selectedBlock.editFields.find(
     (field) => field.key === "iconAsset",
   );
+  const usesLabelSurfaceColor = labelSurfaceColorBlockTypes.has(
+    selectedBlock.type,
+  );
   const backgroundColorField = selectedBlock.editFields.find(
-    (field) => field.key === "bgColor" || field.key === "overlayColor",
+    (field) =>
+      field.key === "overlayColor" ||
+      field.key === "backgroundColor" ||
+      (field.key === "bgColor" && !usesLabelSurfaceColor),
   );
   const backgroundMode = resolveBackgroundMode(
     values.backgroundMode,
     getBlockAssetBinding(selectedBlock, "backgroundAsset") !== undefined,
-    Boolean(values.bgColor?.trim() || values.overlayColor?.trim()),
+    Boolean(
+      values.backgroundColor?.trim() ||
+        values.bgColor?.trim() ||
+        values.overlayColor?.trim(),
+    ),
   );
 
   // Filtramos los campos que realmente generan un panel visual para facilitar la indexación
@@ -316,15 +338,13 @@ export function EditPanel({
     if (
       field.type === "font-style" ||
       field.type === "font-size" ||
+      field.type === "font-color" ||
       field.type === "font-family" ||
       field.key === "iconName"
     ) {
       return false;
     }
-    if (
-      (field.key === "bgColor" || field.key === "overlayColor") &&
-      backgroundAssetField
-    ) {
+    if (backgroundAssetField && backgroundColorField?.key === field.key) {
       return false;
     }
     if (field.key === "backgroundAsset" && !backgroundAssetField) return false;
@@ -401,6 +421,9 @@ export function EditPanel({
                     fontSizeValue={
                       values[`${field.key}FontSize`] ?? values.fontSize ?? ""
                     }
+                    fontColorValue={
+                      values[`${field.key}FontColor`] ?? values.fontColor ?? ""
+                    }
                     fontFamilyValue={
                       values[`${field.key}FontFamily`] ??
                       values.fontFamily ??
@@ -409,6 +432,7 @@ export function EditPanel({
                     brandKitResources={brandKitResources}
                     canEdit={canEdit}
                     hasTextFontSizeControl={hasTextFontSizeControl}
+                    hasTextFontColorControl={hasTextFontColorControl}
                     hasTextFontFamilyControl={hasTextFontFamilyControl}
                     onUpdateBlock={onUpdateBlock}
                   />
@@ -577,7 +601,7 @@ function FieldEditor({
     );
   }
 
-  if (field.type === "color") {
+  if (field.type === "color" || field.type === "font-color") {
     const colorSwatches = brandKitResources?.colors ?? [];
 
     return (
@@ -780,10 +804,12 @@ function TextFieldGroupEditor({
   field,
   value,
   fontSizeValue,
+  fontColorValue,
   fontFamilyValue,
   brandKitResources,
   canEdit,
   hasTextFontSizeControl,
+  hasTextFontColorControl,
   hasTextFontFamilyControl,
   onUpdateBlock,
 }: {
@@ -791,10 +817,12 @@ function TextFieldGroupEditor({
   field: BlockEditField;
   value: string;
   fontSizeValue: string;
+  fontColorValue: string;
   fontFamilyValue: string;
   brandKitResources: BrandKitResources | null;
   canEdit: boolean;
   hasTextFontSizeControl: boolean;
+  hasTextFontColorControl: boolean;
   hasTextFontFamilyControl: boolean;
   onUpdateBlock: (block: NewsletterBlock) => void;
 }) {
@@ -818,27 +846,45 @@ function TextFieldGroupEditor({
         onUpdateBlock={onUpdateBlock}
       />
 
-      {(hasTextFontFamilyControl || hasTextFontSizeControl) && (
-        <Stack
-          direction={{ xs: "column", md: "row" }}
-          spacing={1.5}
-          sx={{ alignItems: { md: "flex-start" } }}
-        >
-          {hasTextFontFamilyControl ? (
-            <TextFontFamilyFieldEditor
+      {(
+        hasTextFontFamilyControl ||
+        hasTextFontSizeControl ||
+        hasTextFontColorControl
+      ) && (
+        <Stack spacing={1.5}>
+          {(hasTextFontFamilyControl || hasTextFontSizeControl) && (
+            <Stack
+              direction={{ xs: "column", md: "row" }}
+              spacing={1.5}
+              sx={{ alignItems: { md: "flex-start" } }}
+            >
+              {hasTextFontFamilyControl ? (
+                <TextFontFamilyFieldEditor
+                  block={block}
+                  fieldKey={field.key}
+                  value={fontFamilyValue}
+                  brandKitResources={brandKitResources}
+                  canEdit={canEdit}
+                  onUpdateBlock={onUpdateBlock}
+                />
+              ) : null}
+              {hasTextFontSizeControl ? (
+                <TextSizeFieldEditor
+                  block={block}
+                  sizeKey={`${field.key}FontSize`}
+                  value={fontSizeValue}
+                  canEdit={canEdit}
+                  onUpdateBlock={onUpdateBlock}
+                />
+              ) : null}
+            </Stack>
+          )}
+          {hasTextFontColorControl ? (
+            <TextFontColorFieldEditor
               block={block}
               fieldKey={field.key}
-              value={fontFamilyValue}
+              value={fontColorValue}
               brandKitResources={brandKitResources}
-              canEdit={canEdit}
-              onUpdateBlock={onUpdateBlock}
-            />
-          ) : null}
-          {hasTextFontSizeControl ? (
-            <TextSizeFieldEditor
-              block={block}
-              sizeKey={`${field.key}FontSize`}
-              value={fontSizeValue}
               canEdit={canEdit}
               onUpdateBlock={onUpdateBlock}
             />
@@ -887,7 +933,7 @@ function TextFontFamilyFieldEditor({
       }}
       fullWidth
       disabled={!canEdit}
-      sx={{ width: "50%" }}
+      sx={{ flex: 1, minWidth: 180 }}
     >
       <MenuItem value="">
         <em>Usar default</em>
@@ -932,7 +978,7 @@ function TextSizeFieldEditor({
       label="Tamaño de texto"
       fullWidth
       disabled={!canEdit}
-      sx={{ width: "50%" }}
+      sx={{ flex: 1, minWidth: 180 }}
     >
       {fontSizeOptions.map((option) => (
         <MenuItem key={option.value} value={option.value}>
@@ -940,6 +986,40 @@ function TextSizeFieldEditor({
         </MenuItem>
       ))}
     </TextField>
+  );
+}
+
+function TextFontColorFieldEditor({
+  block,
+  fieldKey,
+  value,
+  brandKitResources,
+  canEdit,
+  onUpdateBlock,
+}: {
+  block: NewsletterBlock;
+  fieldKey: string;
+  value: string;
+  brandKitResources: BrandKitResources | null;
+  canEdit: boolean;
+  onUpdateBlock: (block: NewsletterBlock) => void;
+}) {
+  return (
+    <Box sx={{ width: "100%" }}>
+      <FieldEditor
+        block={block}
+        field={{
+          key: `${fieldKey}FontColor`,
+          label: "Color de texto",
+          type: "font-color",
+        }}
+        value={value}
+        brandKitResources={brandKitResources}
+        canEdit={canEdit}
+        onUpdateBlock={onUpdateBlock}
+        compact
+      />
+    </Box>
   );
 }
 

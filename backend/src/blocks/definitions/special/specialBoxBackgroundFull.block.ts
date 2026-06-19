@@ -14,12 +14,13 @@ export class SpecialBoxBackgroundFullBlock extends BlockDefinition {
     { key: 'introText', label: 'Texto superior', type: 'textarea' as const, defaultValue: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.' },
     { key: 'bodyText', label: 'Texto central', type: 'textarea' as const, defaultValue: 'Provident blanditiis omnis natus ratione necessitatibus.' },
     { key: 'closingText', label: 'Texto inferior', type: 'textarea' as const, defaultValue: 'Consequuntur eum voluptas iure repellat voluptate nisi.' },
-    { key: 'bgColor', label: 'Color de fondo', type: 'color' as const },
+    { key: 'bgColor', label: 'Color de las Etiquetas', type: 'color' as const },
     { key: 'backgroundAsset', label: 'Fondo', type: 'image-asset' as const, assetTypes: ['IMAGE', 'SHAPE', 'KEYWORD'] as const },
     { key: 'imageAsset', label: 'Imagen', type: 'image-asset' as const, assetTypes: ['IMAGE'] as const },
     { key: 'fontSize', label: 'Tamaño de texto', type: 'font-size' as const },
     { key: 'typographyStyle', label: 'Estilo', type: 'font-style' as const },
     { key: 'fontFamily', label: 'Tipografía', type: 'font-family' as const },
+    { key: 'fontColor', label: 'Color de texto', type: 'font-color' as const },
     { key: 'href', label: 'URL de destino', type: 'url' as const, placeholder: 'https://' },
   ];
 }

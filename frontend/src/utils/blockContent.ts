@@ -34,7 +34,14 @@ export function resolveTypographySx(
   fontSize?: string,
   typographyStyle?: string,
   fontFamily?: string,
-): { fontSize?: string; fontWeight?: number; fontStyle?: string; fontFamily?: string } {
+  fontColor?: string,
+): {
+  fontSize?: string
+  fontWeight?: number
+  fontStyle?: string
+  fontFamily?: string
+  color?: string
+} {
   const styles = typographyStyle ? typographyStyle.split(',') : []
   const hasCustomFontFamily = !!fontFamily?.trim()
 
@@ -44,16 +51,24 @@ export function resolveTypographySx(
     ...(!hasCustomFontFamily &&
       styles.includes('italic') && { fontStyle: 'italic' }),
     ...(hasCustomFontFamily && { fontFamily: `"${fontFamily!.trim()}"` }),
+    ...(fontColor?.trim() && { color: fontColor.trim() }),
   }
 }
 
 export function resolveContentTypographySx(
   values: Partial<Record<string, string>>,
   fieldKey: string,
-): { fontSize?: string; fontWeight?: number; fontStyle?: string; fontFamily?: string } {
+): {
+  fontSize?: string
+  fontWeight?: number
+  fontStyle?: string
+  fontFamily?: string
+  color?: string
+} {
   return resolveTypographySx(
     values[`${fieldKey}FontSize`] ?? values.fontSize,
     values.typographyStyle,
     values[`${fieldKey}FontFamily`] ?? values.fontFamily,
+    values[`${fieldKey}FontColor`] ?? values.fontColor,
   )
 }

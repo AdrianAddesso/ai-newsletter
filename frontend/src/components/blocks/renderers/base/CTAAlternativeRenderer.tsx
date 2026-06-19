@@ -12,8 +12,9 @@ interface Props {
 
 export function CTAAlternativeRenderer({ block }: Props) {
   const values = parseContent(block.content);
-  const { buttonLabel = "Click here", href = "", bgColor } = values;
+  const { buttonLabel = "Click here", href = "", bgColor, blockBgColor } = values;
   const typographySx = resolveContentTypographySx(values, "buttonLabel");
+  const buttonTextColor = typographySx.color ?? "#1976d2";
 
   return (
     <Card
@@ -23,7 +24,7 @@ export function CTAAlternativeRenderer({ block }: Props) {
         borderRadius: 0,
         height: "100%",
         display: "flex",
-        backgroundColor: bgColor,
+        backgroundColor: blockBgColor,
         transition: "all 0.15s ease-in-out",
         "&:hover": {
           boxShadow: "0 8px 24px rgba(0,0,0,0.1)",
@@ -40,7 +41,14 @@ export function CTAAlternativeRenderer({ block }: Props) {
           sx={{
             borderRadius: 1.5,
             textTransform: "none",
-            minWidth: "100px", // Added minimum width
+            minWidth: "100px",
+            backgroundColor: bgColor,
+            color: buttonTextColor,
+            borderColor: buttonTextColor,
+            "&:hover": {
+              backgroundColor: bgColor,
+              borderColor: buttonTextColor,
+            },
             ...typographySx,
           }}
         >

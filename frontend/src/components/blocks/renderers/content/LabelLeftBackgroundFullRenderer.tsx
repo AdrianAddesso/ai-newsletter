@@ -9,6 +9,7 @@ import {
   buildBackgroundImageSx,
   resolveRenderableBackgroundImage,
 } from "../utils/backgroundImage";
+import { resolveLabelSurfaceSx } from "../utils/labelAppearance";
 
 interface Props {
   block: BlockInstance;
@@ -22,7 +23,12 @@ export function LabelLeftBackgroundFullRenderer({
   editMode = false,
 }: Props) {
   const values = parseContent(block.content);
-  const { label = "Lorem ipsum dolor sit amet", bgColor, href = "" } = values;
+  const {
+    label = "Lorem ipsum dolor sit amet",
+    bgColor,
+    backgroundColor,
+    href = "",
+  } = values;
   const typographySx = resolveContentTypographySx(values, "label");
   const resolvedBackgroundImage = resolveRenderableBackgroundImage(
     backgroundImage,
@@ -30,6 +36,7 @@ export function LabelLeftBackgroundFullRenderer({
     placeholderImageUrl,
   );
   const bgSx = buildBackgroundImageSx(resolvedBackgroundImage);
+  const labelSurfaceSx = resolveLabelSurfaceSx(bgColor);
 
   return (
     <Card sx={{
@@ -44,7 +51,7 @@ export function LabelLeftBackgroundFullRenderer({
     transform: "translateY(-1.5px)",
   },
     }}>
-      <Box sx={{ width: "100%", flexGrow: 1, display: "flex", alignItems: "center", backgroundColor: bgColor, py: 4, ...bgSx }}>
+      <Box sx={{ width: "100%", flexGrow: 1, display: "flex", alignItems: "center", backgroundColor, py: 4, ...bgSx }}>
         <Box sx={{ width: "90%", mx: "auto" }}>
           <Chip
             label={label}
@@ -52,6 +59,7 @@ export function LabelLeftBackgroundFullRenderer({
               maxWidth: "none",
               width: "fit-content",
               height: "auto",
+              ...labelSurfaceSx,
               "& .MuiChip-label": {
                 whiteSpace: "nowrap",
                 overflow: "visible",

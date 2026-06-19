@@ -11,7 +11,8 @@ export type EditFieldType =
   | "select"
   | "font-size"
   | "font-style"
-  | "font-family";
+  | "font-family"
+  | "font-color";
 
 export type BlockAssetType =
   | "IMAGE"
