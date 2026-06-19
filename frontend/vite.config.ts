@@ -8,6 +8,7 @@ export default defineConfig({
     alias: {
       "@shared": path.resolve(__dirname, "../packages/shared/src"),
     },
+    dedupe: ['react', 'react-dom', '@emotion/react', '@emotion/styled'],
   },
   server: {
     fs: {
