@@ -124,6 +124,22 @@ function mergeGeneratedBlocksWithExisting(
   })
 }
 
+function resolveExportOrientation(
+  newsletter: Newsletter,
+  template?: NewsletterTemplate,
+): 'PORTRAIT' | 'LANDSCAPE' {
+  return template?.orientation ?? newsletter.format
+}
+
+function getCanonicalExportWidth(
+  newsletter: Newsletter,
+  template?: NewsletterTemplate,
+): number {
+  return resolveExportOrientation(newsletter, template) === 'LANDSCAPE'
+    ? 1400
+    : 700
+}
+
 export function useNewsletterEditor() {
   const navigate = useNavigate()
   const { id } = useParams()
@@ -342,6 +358,7 @@ export function useNewsletterEditor() {
 
   const getExportLinkAreas = (
   exportRoot: HTMLElement,
+  exportScaleFactor: number,
 ): Array<{
   href: string
   x: number
@@ -356,10 +373,10 @@ export function useNewsletterEditor() {
 
     return {
       href,
-      x: linkRect.left - rootRect.left,
-      y: linkRect.top - rootRect.top,
-      width: linkRect.width,
-      height: linkRect.height,
+      x: (linkRect.left - rootRect.left) * exportScaleFactor,
+      y: (linkRect.top - rootRect.top) * exportScaleFactor,
+      width: linkRect.width * exportScaleFactor,
+      height: linkRect.height * exportScaleFactor,
     }
   }
 
@@ -385,6 +402,7 @@ export function useNewsletterEditor() {
   const buildNewsletterBlockSnapshots = async (
   exportRoot: HTMLElement,
   domToImage: typeof import('dom-to-image-more').default,
+  exportScaleFactor: number,
 ): Promise<Array<{ blockId: string; dataUrl: string; width: number; height: number }>> => {
   const blockElements = Array.from(
     exportRoot.querySelectorAll<HTMLElement>('[data-newsletter-block-id]'),
@@ -405,17 +423,23 @@ export function useNewsletterEditor() {
       continue
     }
 
+    const snapshotWidth = Math.round(width * exportScaleFactor)
+    const snapshotHeight = Math.round(height * exportScaleFactor)
     const dataUrl = await domToImage.toPng(blockElement, {
-      width,
-      height,
+      width: snapshotWidth,
+      height: snapshotHeight,
+      style: {
+        transform: `scale(${exportScaleFactor})`,
+        transformOrigin: 'top left',
+      },
       bgcolor: '#ffffff',
     })
 
     snapshots.push({
       blockId,
       dataUrl,
-      width,
-      height,
+      width: snapshotWidth,
+      height: snapshotHeight,
     })
   }
 
@@ -461,16 +485,31 @@ export function useNewsletterEditor() {
       })
 
       const scale = Math.max(2, window.devicePixelRatio || 1)
-      const { width, height } = exportRoot.getBoundingClientRect()
-      const exportLinkAreas = getExportLinkAreas(exportRoot)
+      const { width: renderedWidth, height: renderedHeight } =
+        exportRoot.getBoundingClientRect()
+      const exportOrientation = resolveExportOrientation(
+        newsletter,
+        selectedTemplate,
+      )
+      const canonicalWidth = getCanonicalExportWidth(
+        newsletter,
+        selectedTemplate,
+      )
+      const exportScaleFactor =
+        renderedWidth > 0 ? canonicalWidth / renderedWidth : 1
+      const canonicalHeight = Math.round(renderedHeight * exportScaleFactor)
+      const exportLinkAreas = getExportLinkAreas(exportRoot, exportScaleFactor)
 
       switch (format) {
         case 'JPG': {
           const dataUrl = await domToImage.toJpeg(exportRoot, {
             quality: 0.92,
-            width: width * scale,
-            height: height * scale,
-            style: { transform: `scale(${scale})`, transformOrigin: 'top left' },
+            width: canonicalWidth * scale,
+            height: canonicalHeight * scale,
+            style: {
+              transform: `scale(${exportScaleFactor * scale})`,
+              transformOrigin: 'top left',
+            },
             bgcolor: '#ffffff',
           })
           const link = document.createElement('a')
@@ -482,19 +521,23 @@ export function useNewsletterEditor() {
 
         case 'PDF': {
           const dataUrl = await domToImage.toPng(exportRoot, {
-            width: width * scale,
-            height: height * scale,
-            style: { transform: `scale(${scale})`, transformOrigin: 'top left' },
+            width: canonicalWidth * scale,
+            height: canonicalHeight * scale,
+            style: {
+              transform: `scale(${exportScaleFactor * scale})`,
+              transformOrigin: 'top left',
+            },
             bgcolor: '#ffffff',
           })
           const { jsPDF } = await import('jspdf')
           const pdf = new jsPDF({
-            orientation: width >= height ? 'landscape' : 'portrait',
+            orientation:
+              exportOrientation === 'LANDSCAPE' ? 'landscape' : 'portrait',
             unit: 'px',
-            format: [width, height],
+            format: [canonicalWidth, canonicalHeight],
             hotfixes: ['px_scaling'],
           })
-          pdf.addImage(dataUrl, 'PNG', 0, 0, width, height)
+          pdf.addImage(dataUrl, 'PNG', 0, 0, canonicalWidth, canonicalHeight)
 
           exportLinkAreas.forEach((exportLinkArea) => {
             pdf.link(
@@ -514,6 +557,7 @@ export function useNewsletterEditor() {
           const snapshots = await buildNewsletterBlockSnapshots(
             exportRoot,
             domToImage,
+            exportScaleFactor,
           )
 
           const blob = await exportNewsletterEml(newsletter.id, snapshots)
@@ -527,7 +571,7 @@ export function useNewsletterEditor() {
       setExportingFormat(null)
     }
   },
-  [newsletter, brandKitResources],
+  [newsletter, brandKitResources, selectedTemplate],
 )
 
   const handleRegenerateBlock = useCallback(

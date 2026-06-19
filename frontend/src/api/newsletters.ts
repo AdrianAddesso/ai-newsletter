@@ -27,19 +27,21 @@ function createBody(payload: CreateNewsletterPayload) {
     createdByUserId: payload.creatorUserId,
     templateId: payload.templateId,
     brandKitId: payload.brandKitId,
+    format: payload.format,
     blocks: toPersistedBlocks(payload.blocks),
     generationContent: payload.generationContent,
   };
 }
 
 function updateBody(payload: UpdateNewsletterPayload) {
-  const { title, templateId, brandKitId, blocks, state, generationContent } =
+  const { title, templateId, brandKitId, format, blocks, state, generationContent } =
     payload;
 
   return {
     title,
     templateId,
     brandKitId,
+    format,
     blocks: blocks ? toPersistedBlocks(blocks) : undefined,
     state,
     generationContent,
