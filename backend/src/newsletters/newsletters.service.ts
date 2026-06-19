@@ -1603,6 +1603,7 @@ export class NewsLettersService {
           key === 'fontId' ||
           key.endsWith('FontSize') ||
           key.endsWith('FontFamily') ||
+          key.endsWith('FontColor') ||
           key.endsWith('FontId'),
       ),
     );
