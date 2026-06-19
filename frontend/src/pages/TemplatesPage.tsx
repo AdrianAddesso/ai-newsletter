@@ -209,6 +209,7 @@ export function TemplatesPage() {
       <Container maxWidth="lg" disableGutters>
         <Stack spacing={4}>
           <Stack
+            data-onboarding="templates-toolbar"
             sx={{
               display: "flex",
               flexDirection: {
@@ -262,6 +263,7 @@ export function TemplatesPage() {
             </Alert>
           ) : (
             <TableContainer
+              data-onboarding="templates-table"
               component={Card}
               variant="outlined"
               sx={{ borderRadius: 2 }}

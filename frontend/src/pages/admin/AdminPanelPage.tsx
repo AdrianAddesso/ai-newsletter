@@ -72,8 +72,8 @@ export function BackofficePage() {
             </Stack>
 
             {/* Tabs */}
-            <Box>
-              <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+            <Box data-onboarding="admin-content">
+              <Box data-onboarding="admin-tabs" sx={{ borderBottom: 1, borderColor: "divider" }}>
                 <Tabs
                   value={tab}
                   onChange={(_, newValue: number) => setTab(newValue)}

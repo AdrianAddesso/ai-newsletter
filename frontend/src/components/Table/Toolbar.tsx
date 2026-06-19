@@ -33,6 +33,7 @@ export function Toolbar({
 
   return (
     <Stack
+      data-onboarding="newsletter-toolbar"
       sx={{
         display: "flex",
         flexDirection: {

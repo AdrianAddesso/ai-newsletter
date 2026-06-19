@@ -31,7 +31,7 @@ export function ApprovedNewsletterPage({
       spacing={3}
       sx={{ p:3 }}
     >
-      <Box sx={{ flex:1, minWidth:0, }}>
+      <Box data-onboarding="approved-preview" sx={{ flex:1, minWidth:0, }}>
         <Box
           sx={{
             width: '100%',
@@ -47,7 +47,7 @@ export function ApprovedNewsletterPage({
         </Box>
       </Box>
 
-      <Box sx={{ width:{ lg:380 } }}>
+      <Box data-onboarding="export-actions" sx={{ width:{ lg:380 } }}>
         <ApprovedNewsletterExport
           exportOptions={exportOptions}
           exportingFormat={exportingFormat}

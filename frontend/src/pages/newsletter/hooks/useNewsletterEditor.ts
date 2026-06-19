@@ -134,15 +134,21 @@ export function useNewsletterEditor() {
 
           setBrandKitResources(resources)
         }
-      } catch {
-        setError('No se pudo cargar el newsletter')
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : 'No se pudo cargar el newsletter'
+
+        setError(message)
+        notifyError(message)
       } finally {
         setIsLoading(false)
       }
     }
 
     void load()
-  }, [id])
+  }, [id, notifyError])
 
   useEffect(() => {
     if (!brandKitResources?.fonts.length || typeof FontFace === 'undefined') {
@@ -508,7 +514,7 @@ export function useNewsletterEditor() {
         )
       } catch (error) {
         const message =
-          getApiErrorMessage(error) ??
+          (error instanceof Error ? error.message : null) ??
           'No se pudo regenerar el contenido de este bloque.'
 
         setAiError(message)
@@ -543,7 +549,7 @@ export function useNewsletterEditor() {
         setShowRegenerationForm(false)
       } catch (error) {
         const message =
-          getApiErrorMessage(error) ??
+          (error instanceof Error ? error.message : null) ??
           'No se pudo generar el contenido del newsletter en este momento.'
 
         setAiError(message)
@@ -604,38 +610,4 @@ export function useNewsletterEditor() {
     navigate,
     isApproved: newsletter?.state === 'APPROVED',
   }
-}
-
-function getApiErrorMessage(error: unknown): string | null {
-  if (
-    typeof error === 'object' &&
-    error !== null &&
-    'response' in error
-  ) {
-    const response = error.response
-
-    if (
-      typeof response === 'object' &&
-      response !== null &&
-      'data' in response
-    ) {
-      const data = response.data
-
-      if (
-        typeof data === 'object' &&
-        data !== null &&
-        'message' in data &&
-        typeof data.message === 'string' &&
-        data.message.trim()
-      ) {
-        return data.message.trim()
-      }
-    }
-  }
-
-  if (error instanceof Error && error.message.trim()) {
-    return error.message.trim()
-  }
-
-  return null
 }

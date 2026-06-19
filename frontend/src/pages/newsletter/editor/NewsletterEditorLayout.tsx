@@ -21,6 +21,7 @@ export function NewsletterEditorLayout({
       }}
     >
       <Box
+        data-onboarding="newsletter-preview"
         sx={{
           order: { xs: 2, lg: 1 },
           p: 3,
@@ -43,6 +44,7 @@ export function NewsletterEditorLayout({
       </Box>
 
       <Box
+        data-onboarding="newsletter-editor"
         sx={{
           p: 3,
           minWidth: 0,

@@ -12,7 +12,7 @@ import { useNotification } from '../../../hooks/useNotification'
 
 export function ReviewNewsletterPage() {
   const editor = useNewsletterEditor()
-  const { success, error } = useNotification()
+  const { success, error, warning } = useNotification()
   const [draftComments, setDraftComments] = useState<Record<string, string>>({})
   const [pendingComments, setPendingComments] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -24,9 +24,10 @@ export function ReviewNewsletterPage() {
       newsletter.state !== 'IN_REVIEW' &&
       newsletter.state !== 'RESUBMITTED'
     ) {
+      warning('El newsletter ya no está disponible para revisión.')
       navigate('/reviews')
     }
-  }, [newsletter, navigate])
+  }, [newsletter, navigate, warning])
 
   const blockCommentsPayload = useMemo(() => {
     return Object.entries(pendingComments)

@@ -211,7 +211,7 @@ export function NewslettersTable({ search, filter, userRole, }: Props) {
 
   return (
     <Paper sx={{ p: 2 }}>
-      <TableContainer>
+      <TableContainer data-onboarding="newsletter-table">
         <MuiTable>
           <TableHead>
             <TableRow>

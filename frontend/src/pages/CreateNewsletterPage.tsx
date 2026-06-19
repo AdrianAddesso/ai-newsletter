@@ -195,7 +195,9 @@ function CreateNewsletterPage() {
       component="main"
       sx={{ minHeight: "calc(100vh - 64px)", bgcolor: "background.default" }}
     >
-      <NewsletterStepper activeStep={0} />
+      <Box data-onboarding="creation-progress">
+        <NewsletterStepper activeStep={0} />
+      </Box>
       <Box
         sx={{
           display: "grid",
@@ -206,6 +208,7 @@ function CreateNewsletterPage() {
         }}
       >
         <Box
+          data-onboarding="template-selector"
           sx={{
             order: { xs: 2, lg: 1 },
             p: { xs: 2, md: 3 },
@@ -224,7 +227,10 @@ function CreateNewsletterPage() {
           />
         </Box>
 
-        <Box sx={{ p: { xs: 2, md: 3 }, minWidth: 0, order: { xs: 1, lg: 2 } }}>
+        <Box
+          data-onboarding="generation-form"
+          sx={{ p: { xs: 2, md: 3 }, minWidth: 0, order: { xs: 1, lg: 2 } }}
+        >
           <Stack spacing={2}>
             <Typography variant="h4">Crear newsletter</Typography>
             {templatesError && <Alert severity="error">{templatesError}</Alert>}

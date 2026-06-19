@@ -269,6 +269,7 @@ export function AnalyticsPage(): JSX.Element {
       <Container maxWidth="lg" disableGutters>
         <Stack spacing={4}>
           <Stack
+            data-onboarding="analytics-summary"
             direction={{ xs: 'column', md: 'row' }}
             spacing={2}
             sx={{
@@ -422,7 +423,11 @@ export function AnalyticsPage(): JSX.Element {
                     Exportar reporte
                   </Button>
                 </Box>
-                <TableContainer component={Paper} elevation={0}>
+                <TableContainer
+                  data-onboarding="analytics-table"
+                  component={Paper}
+                  elevation={0}
+                >
                   <Table>
                     <TableHead>
                       <TableRow>

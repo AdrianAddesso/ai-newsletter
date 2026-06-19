@@ -37,7 +37,7 @@ export function ReviewCommentControls({
   }
 
   return (
-    <Stack spacing={2}>
+    <Stack data-onboarding="review-controls" spacing={2}>
       <Tabs value={0}>
         <Tab label="Revisión" />
       </Tabs>

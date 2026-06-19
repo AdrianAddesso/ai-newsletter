@@ -75,6 +75,7 @@ export function UsersPage() {
           {error && <Alert severity="error">{error}</Alert>}
 
           <Box
+            data-onboarding="users-toolbar"
             sx={{
               display: "flex",
               flexDirection: {
@@ -121,7 +122,11 @@ export function UsersPage() {
             placeholder="Buscar usuario"
           />
 
-          <TableContainer component={Card} sx={{ overflowX: "auto" }}>
+          <TableContainer
+            data-onboarding="users-table"
+            component={Card}
+            sx={{ overflowX: "auto" }}
+          >
             <Table sx={{ minWidth: 760 }}>
               <TableHead>
                 <TableRow>

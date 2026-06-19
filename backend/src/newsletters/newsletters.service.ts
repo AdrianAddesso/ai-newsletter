@@ -146,7 +146,11 @@ export class NewsLettersService {
       include: {
         newsletter_blocks: {
           where: { deleted_at: null },
-          orderBy: [{ row: 'asc' }, { grid_column: 'asc' }, { display_order: 'asc' }],
+          orderBy: [
+            { row: 'asc' },
+            { grid_column: 'asc' },
+            { display_order: 'asc' },
+          ],
           include: {
             block_content: {
               include: {
@@ -182,7 +186,8 @@ export class NewsLettersService {
     const newNewsletter = await this.prisma.$transaction(async (tx) => {
       const created = await tx.newsletters.create({
         data: {
-          title: newTitle && newTitle.trim() ? newTitle : sourceNewsletter.title,
+          title:
+            newTitle && newTitle.trim() ? newTitle : sourceNewsletter.title,
           area_id: sourceNewsletter.area_id,
           theme_tag: sourceNewsletter.theme_tag,
           publish_date: null,
@@ -280,10 +285,7 @@ export class NewsLettersService {
 
     return newsletters.map((newsletter) => ({
       id: newsletter.id,
-      title: this.resolveNewsletterTitle(
-        newsletter.title,
-        newsletter.generation_content,
-      ),
+      title: newsletter.title,
       author: this.formatUserName(
         newsletter.users_newsletters_created_by_user_idTousers,
       ),
@@ -726,7 +728,7 @@ export class NewsLettersService {
       id,
       newsletter_state.CHANGES_REQUESTED,
       payload.reviewedByUserId,
-    )
+    );
 
     return this.getById(id);
   }
@@ -781,7 +783,7 @@ export class NewsLettersService {
       id,
       newsletter_state.APPROVED,
       payload.reviewedByUserId,
-    )
+    );
 
     return this.getById(id);
   }
@@ -1689,50 +1691,55 @@ export class NewsLettersService {
   }
 
   private parseStoredReviewComments(
-  rawComments: string | null,
-): StoredReviewComment[] {
-  if (!rawComments) {
-    return [];
-  }
-
-  try {
-    const parsed = JSON.parse(rawComments) as unknown;
-
-    if (!Array.isArray(parsed)) {
+    rawComments: string | null,
+  ): StoredReviewComment[] {
+    if (!rawComments) {
       return [];
     }
 
-    const parsedArray = parsed as unknown[];
+    try {
+      const parsed = JSON.parse(rawComments) as unknown;
 
-    return parsedArray.flatMap((entry) => {
-      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+      if (!Array.isArray(parsed)) {
         return [];
       }
 
-      const obj = entry as Record<string, unknown>;
+      const parsedArray = parsed as unknown[];
 
-      const blockIdCandidate = obj.blockId;
-      const contentCandidate = obj.content;
+      return parsedArray.flatMap((entry) => {
+        if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+          return [];
+        }
 
-      if (typeof blockIdCandidate !== 'string' || typeof contentCandidate !== 'string') {
-        return [];
-      }
+        const obj = entry as Record<string, unknown>;
 
-      const normalizedContent = contentCandidate.trim();
+        const blockIdCandidate = obj.blockId;
+        const contentCandidate = obj.content;
 
-      if (!normalizedContent) {
-        return [];
-      }
+        if (
+          typeof blockIdCandidate !== 'string' ||
+          typeof contentCandidate !== 'string'
+        ) {
+          return [];
+        }
 
-      return [{
-        blockId: blockIdCandidate,
-        content: normalizedContent,
-      }];
-    });
-  } catch {
-    return [];
+        const normalizedContent = contentCandidate.trim();
+
+        if (!normalizedContent) {
+          return [];
+        }
+
+        return [
+          {
+            blockId: blockIdCandidate,
+            content: normalizedContent,
+          },
+        ];
+      });
+    } catch {
+      return [];
+    }
   }
-}
 
   private normalizeReviewComments(blockComments: ReviewBlockComment[]) {
     const latestByBlockId = new Map<string, string>();
@@ -1926,7 +1933,9 @@ export class NewsLettersService {
     } as Prisma.InputJsonValue;
   }
 
-  private toNewsletterStateOrNull(value: string | null): newsletter_state | null {
+  private toNewsletterStateOrNull(
+    value: string | null,
+  ): newsletter_state | null {
     if (!value) {
       return null;
     }
@@ -1936,7 +1945,9 @@ export class NewsLettersService {
       : null;
   }
 
-  private readOriginalContent(value: Prisma.JsonValue): Prisma.JsonValue | null {
+  private readOriginalContent(
+    value: Prisma.JsonValue,
+  ): Prisma.JsonValue | null {
     if (!value || typeof value !== 'object' || Array.isArray(value)) {
       return null;
     }
