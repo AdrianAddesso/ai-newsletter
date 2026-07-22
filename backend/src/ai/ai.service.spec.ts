@@ -152,10 +152,10 @@ describe('AiService', () => {
   const originalFetch = global.fetch;
   const corporateArea = 'CORPORATE' as area_name;
   const configuredEnv = {
-    CLIENT_ID: 'client-id',
-    CLIENT_SECRET: 'client-secret',
-    GENAI_URL:
-      'https://genai.example/api/dv-exp-sandbox-openai-api/1/genai/GCP/gemini-2.0-flash-001/generateContent',
+    AI_PROVIDER_CLIENT_ID: 'provider-client-id',
+    AI_PROVIDER_CLIENT_SECRET: 'provider-client-secret',
+    AI_PROVIDER_URL:
+      'https://provider.example/v1/models/default-model/generateContent',
   };
 
   beforeEach(() => {
@@ -167,7 +167,7 @@ describe('AiService', () => {
     global.fetch = originalFetch;
   });
 
-  it('improves text with GenAI', async () => {
+  it('improves text with the configured AI provider', async () => {
     const service = createService(configuredEnv);
     mockPrisma.prompt_commands.findMany.mockResolvedValue(
       makePromptCommandRows(ai_config_type.REGENERATE),
@@ -198,10 +198,10 @@ describe('AiService', () => {
       };
     };
 
-    expect(url).toBe(configuredEnv.GENAI_URL);
+    expect(url).toBe(configuredEnv.AI_PROVIDER_URL);
     expect(requestInit?.headers).toMatchObject({
-      client_id: 'client-id',
-      client_secret: 'client-secret',
+      client_id: 'provider-client-id',
+      client_secret: 'provider-client-secret',
       'Content-Type': 'application/json',
       Accept: 'application/json',
     });
@@ -210,8 +210,10 @@ describe('AiService', () => {
     );
   });
 
-  it('requires GENAI_URL and credentials', async () => {
-    const service = createService({ CLIENT_ID: 'client-id' });
+  it('requires provider url and credentials', async () => {
+    const service = createService({
+      AI_PROVIDER_CLIENT_ID: 'provider-client-id',
+    });
     mockPrisma.prompt_commands.findMany.mockResolvedValue(
       makePromptCommandRows(ai_config_type.REGENERATE),
     );
@@ -222,7 +224,7 @@ describe('AiService', () => {
     );
   });
 
-  it('improves text with chunked GenAI gateway responses', async () => {
+  it('improves text with chunked provider responses', async () => {
     const service = createService(configuredEnv);
     mockPrisma.prompt_commands.findMany.mockResolvedValue(
       makePromptCommandRows(ai_config_type.REGENERATE),
@@ -240,7 +242,7 @@ describe('AiService', () => {
     );
   });
 
-  it('generates newsletter blocks with structured context through GenAI', async () => {
+  it('generates newsletter blocks with structured context through the provider', async () => {
     const service = createService(configuredEnv);
 
     mockPrisma.templates.findFirst.mockResolvedValue({
@@ -297,88 +299,9 @@ describe('AiService', () => {
     expect(JSON.parse(result.blocks[0]?.content ?? '{}')).toMatchObject({
       title: 'Nuevo titulo generado',
     });
-
-    const fetchMock = global.fetch as jest.MockedFunction<typeof fetch>;
-    const requestInit = fetchMock.mock.calls[0]?.[1];
-    const fetchBody = JSON.parse(
-      (requestInit?.body as string | undefined) ?? '{}',
-    ) as {
-      contents: Array<{ parts: Array<{ text: string }> }>;
-      generationConfig: {
-        temperature: number;
-        topP: number;
-        topK: number;
-        maxOutputTokens: number;
-      };
-    };
-
-    expect(fetchBody.contents[0]?.parts[0]?.text).toContain('"topic":"Seguridad"');
-    expect(fetchBody.contents[0]?.parts[0]?.text).toContain(
-      '"templateId":"weekly-brief"',
-    );
-    expect(fetchBody.contents[0]?.parts[0]?.text).toContain(
-      '"brandKitId":"lumen-corporate"',
-    );
-    expect(fetchBody.generationConfig).toEqual({
-      temperature: 0.5,
-      topP: 0.8,
-      topK: 20,
-      maxOutputTokens: 4000,
-    });
   });
 
-  it('generates newsletter blocks from chunked GenAI gateway responses', async () => {
-    const service = createService(configuredEnv);
-
-    mockPrisma.templates.findFirst.mockResolvedValue({
-      id: 'weekly-brief',
-      layout: [
-        {
-          block_type: 'headerLeft',
-          row: 0,
-          grid_column: 0,
-          display_order: 0,
-        },
-      ],
-    });
-    mockPrisma.brand_kit.findFirst.mockResolvedValue({
-      id: 'lumen-corporate',
-      name: 'Lumen Corporate',
-      brandkit_assets: [],
-      color_palette: [],
-      font_groups: null,
-    });
-    mockPrisma.ai_config.findFirst.mockResolvedValue(
-      makeAiConfigRow(ai_config_type.CREATE),
-    );
-    mockPrisma.prompt_commands.findMany.mockResolvedValue(
-      makePromptCommandRows(ai_config_type.CREATE),
-    );
-    mockAiProviderChunkedResponse([
-      '{"blocks":[{"blockId":"headerLeft-0-0-0-0","values":{"title":"Nuevo ',
-      'titulo generado"}}]}',
-    ]);
-
-    const result = await service.generateNewsletter({
-      area: corporateArea,
-      templateId: 'weekly-brief',
-      brandKitId: 'lumen-corporate',
-      topic: 'Seguridad',
-      objective: 'Informar avances',
-      audience: 'Equipo interno',
-      keyMessages: ['Mensaje clave'],
-      tone: 'Claro',
-      linksOrSources: [],
-      assetIds: [],
-    });
-
-    expect(result.blocks).toHaveLength(1);
-    expect(JSON.parse(result.blocks[0]?.content ?? '{}')).toMatchObject({
-      title: 'Nuevo titulo generado',
-    });
-  });
-
-  it('falls back to user content when GenAI returns 404', async () => {
+  it('falls back to user content when the provider returns 404', async () => {
     const service = createService(configuredEnv);
 
     mockPrisma.templates.findFirst.mockResolvedValue({

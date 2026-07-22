@@ -128,7 +128,7 @@ SELECT
   0::integer
 FROM (
   VALUES
-    ('ecbe7026-4405-4697-95de-20a855ebdcd0', 'Lumen', 'Local', 'nestleainewsletterort@gmail.com', 'COMUNICACION_INTERNA', 'ADMIN')
+    ('ecbe7026-4405-4697-95de-20a855ebdcd0', 'Lumen', 'Local', 'newsletter-admin@example.com', 'COMUNICACION_INTERNA', 'ADMIN')
 ) AS v(id, name, last_name, email, area_name, role)
 JOIN public.areas a
   ON a.name = v.area_name::area_name
@@ -147,7 +147,7 @@ SET
 
 INSERT INTO public.font_groups (name)
 VALUES
-  ('Nestle'),
+  ('Core Brand'),
   ('Purina'),
   ('Kit Kat'),
   ('Maggi'),
@@ -160,8 +160,8 @@ VALUES
   ('San Pellegrino'),
   ('Gerber'),
   ('Carnation'),
-  ('Nestle Classic'),
-  ('Nestle Health Science')
+  ('Regional Brand'),
+  ('Specialty Brand')
 ON CONFLICT (name) DO NOTHING;
 
 -- ========================================
@@ -340,7 +340,7 @@ WITH desired_brand_kits AS (
     fg.id AS font_group_id
   FROM (
     VALUES
-      ('Nestle'),
+      ('Core Brand'),
       ('Purina'),
       ('Kit Kat'),
       ('Maggi'),
@@ -353,8 +353,8 @@ WITH desired_brand_kits AS (
       ('San Pellegrino'),
       ('Gerber'),
       ('Carnation'),
-      ('Nestle Classic'),
-      ('Nestle Health Science')
+      ('Regional Brand'),
+      ('Specialty Brand')
   ) AS v(name)
   LEFT JOIN public.font_groups fg
     ON fg.name = v.name
@@ -374,7 +374,7 @@ WITH desired_brand_kits AS (
     fg.id AS font_group_id
   FROM (
     VALUES
-      ('Nestle'),
+      ('Core Brand'),
       ('Purina'),
       ('Kit Kat'),
       ('Maggi'),
@@ -387,8 +387,8 @@ WITH desired_brand_kits AS (
       ('San Pellegrino'),
       ('Gerber'),
       ('Carnation'),
-      ('Nestle Classic'),
-      ('Nestle Health Science')
+      ('Regional Brand'),
+      ('Specialty Brand')
   ) AS v(name)
   LEFT JOIN public.font_groups fg
     ON fg.name = v.name
@@ -410,7 +410,7 @@ WHERE NOT EXISTS (
 
 INSERT INTO colors (id, name, hex, created_at, updated_at, deleted_at)
 VALUES
-  (gen_random_uuid(), 'Nestle Red',       '#FF595A', NOW(), NOW(), NULL),
+  (gen_random_uuid(), 'Brand Red',        '#FF595A', NOW(), NOW(), NULL),
   (gen_random_uuid(), 'Dark Oak',         '#30261D', NOW(), NOW(), NULL),
   (gen_random_uuid(), 'White',            '#FFFFFF', NOW(), NOW(), NULL),
 
@@ -476,21 +476,21 @@ FROM (
     ('San Pellegrino',        'Blue Light'),
     ('San Pellegrino',        'Green Light'),
 
-    ('Nestle Classic',        'Purple Dark'),
-    ('Nestle Classic',        'Yellow Light'),
-    ('Nestle Classic',        'Turquoise Light'),
+    ('Regional Brand',        'Purple Dark'),
+    ('Regional Brand',        'Yellow Light'),
+    ('Regional Brand',        'Turquoise Light'),
 
     ('Nescau',                'Orange'),
     ('Nescau',                'Blue Dark'),
     ('Nescau',                'Yellow Light'),
 
-    ('Nestle Health Science', 'Green Light'),
-    ('Nestle Health Science', 'Turquoise Light'),
-    ('Nestle Health Science', 'Blue Dark'),
+    ('Specialty Brand',       'Green Light'),
+    ('Specialty Brand',       'Turquoise Light'),
+    ('Specialty Brand',       'Blue Dark'),
 
-    ('Nestle',                'Blue Dark'),
-    ('Nestle',                'Green Dark'),
-    ('Nestle',                'Yellow Light'),
+    ('Core Brand',            'Blue Dark'),
+    ('Core Brand',            'Green Dark'),
+    ('Core Brand',            'Yellow Light'),
 
     ('Perrier',               'Turquoise Dark'),
     ('Perrier',               'Green Light'),
@@ -544,14 +544,14 @@ WHERE type IN ('CREATE', 'REGENERATE');
 
 INSERT INTO public.prompt_commands (name, type, display_order, instruction)
 VALUES
-  ('Contexto para refinamiento', 'REGENERATE', 0, 'Sos un editor de copias en espanol para boletines internos de Nestle. Mejoras textos para claridad, fluidez, tono, legibilidad y correccion, manteniendo el sentido original y el contexto corporativo.'),
+  ('Contexto para refinamiento', 'REGENERATE', 0, 'Sos un editor de copias en espanol para boletines internos. Mejoras textos para claridad, fluidez, tono, legibilidad y correccion, manteniendo el sentido original y el contexto corporativo.'),
   ('Regla de preservacion', 'REGENERATE', 1, 'Conserva la intencion original del texto. No inventes informacion nueva, no cambies fechas, nombres, cifras, hechos ni llamados a la accion si no estan explicitamente presentes en el texto original.'),
   ('Regla de salida', 'REGENERATE', 2, 'Devuelve unicamente el texto final mejorado en espanol. No devuelvas JSON, markdown, vinetas, titulos, comillas, comentarios ni explicaciones.'),
   ('Regla de estilo', 'REGENERATE', 3, 'Manten un tono corporativo interno, claro y natural. Evita frases genericas, exageradas o demasiado promocionales. Si el texto ya esta bien, solo haz mejoras minimas.'),
-  ('Definicion de rol', 'CREATE', 1, 'Sos un redactor de copias en espanol para boletines internos de Nestle. Escribis contenido claro, profesional, empatico y alineado con la comunicacion corporativa interna.'),
+  ('Definicion de rol', 'CREATE', 1, 'Sos un redactor de copias en espanol para boletines internos. Escribis contenido claro, profesional, empatico y alineado con la comunicacion corporativa interna.'),
   ('Instruccion de tarea', 'CREATE', 2, 'Debes generar contenido para todos los bloques presentes en templateBlocks usando unicamente el contexto estructurado proporcionado. Para cada bloque, completa todas las keys incluidas en fieldsToGenerate. No omitas bloques ni campos.'),
   ('Instruccion de formato de salida', 'CREATE', 3, 'Devuelve solo JSON valido con esta forma exacta: {"blocks":[{"blockId":"...","values":{"fieldKey":"generated value"}}]}. La respuesta debe incluir un elemento en "blocks" por cada bloque de templateBlocks.'),
-  ('Ejemplo de esquema JSON', 'CREATE', 4, '{"blocks":[{"blockId":"headerFull-0-0-0-0","values":{"title":"El Mundial 2026 se acerca","subtitle":"Preparate para vivir la pasion del futbol con Nestle.","href":""}},{"blockId":"labelTextLabelCenterFull-1-0-0-1","values":{"topLabel":"Comunicado importante","bodyText":"Queremos compartir informacion clave con todo el equipo de forma clara y ordenada.","bottomLabel":"Gracias por acompanarnos en este proceso.","href":""}}]}'),
+  ('Ejemplo de esquema JSON', 'CREATE', 4, '{"blocks":[{"blockId":"headerFull-0-0-0-0","values":{"title":"El Mundial 2026 se acerca","subtitle":"Preparate para vivir la pasion del futbol con todo el equipo.","href":""}},{"blockId":"labelTextLabelCenterFull-1-0-0-1","values":{"topLabel":"Comunicado importante","bodyText":"Queremos compartir informacion clave con todo el equipo de forma clara y ordenada.","bottomLabel":"Gracias por acompanarnos en este proceso.","href":""}}]}'),
   ('Restricciones de formato', 'CREATE', 5, 'La respuesta debe contener exactamente un objeto raiz con la key "blocks". Cada elemento de "blocks" debe incluir exactamente "blockId" y "values". Dentro de "values", usa unicamente las keys presentes en fieldsToGenerate para ese bloque. No agregues campos extra. No uses esquemas legacy con "id", "name", "text" o "backgroundColor" como campos del bloque.'),
   ('Restriccion de material de origen', 'CREATE', 6, 'Usa el contexto estructurado proporcionado como unica fuente de verdad. No inventes estructura nueva. Si falta informacion especifica, escribe un fallback corporativo neutral en espanol, pero igualmente completa todas las keys requeridas para cada bloque.'),
   ('Regla de completitud por bloque', 'CREATE', 7, 'Debes devolver una entrada en "blocks" para cada bloque presente en templateBlocks. Para cada bloque, completa todas las keys incluidas en fieldsToGenerate. Si un bloque tiene multiples campos textuales, cada campo debe tener contenido propio y diferenciado.'),

@@ -599,18 +599,18 @@ export class AiService {
     publicMessage: string,
     operation: 'improveText' | 'generateNewsletter',
   ): Promise<GenAIGenerateContentSuccess | null> {
-    const clientId = this.readEnv('CLIENT_ID');
-    const clientSecret = this.readEnv('CLIENT_SECRET');
-    const url = this.readEnv('GENAI_URL');
+    const clientId = this.readEnv('AI_PROVIDER_CLIENT_ID');
+    const clientSecret = this.readEnv('AI_PROVIDER_CLIENT_SECRET');
+    const url = this.readEnv('AI_PROVIDER_URL');
 
     if (!url || !clientId || !clientSecret) {
       throw new ServiceUnavailableException(
-        'GenAI is not configured on the server.',
+        'The AI provider is not configured on the server.',
       );
     }
 
     this.logger.log(
-      `Calling AI provider operation=${operation} provider=genai model=${this.extractModelName()} url=${url}`,
+      `Calling AI provider operation=${operation} provider=external-ai model=${this.extractModelName()} url=${url}`,
     );
 
     let response: Response;
@@ -1156,13 +1156,13 @@ export class AiService {
   }
 
   private extractModelFromUrl(url: string): string {
-    const match = url.match(/\/genai\/[^/]+\/([^/]+)\/generateContent$/);
-    return match?.[1] ?? 'gemini-2.0-flash-001';
+    const segments = url.split('/').filter(Boolean);
+    return segments.at(-2) ?? 'default-model';
   }
 
   private extractModelName(): string {
-    const url = this.readEnv('GENAI_URL') ?? '';
-    return this.readEnv('GENAI_MODEL') ?? this.extractModelFromUrl(url);
+    const url = this.readEnv('AI_PROVIDER_URL') ?? '';
+    return this.readEnv('AI_PROVIDER_MODEL') ?? this.extractModelFromUrl(url);
   }
 
   private extractErrorMessage(
@@ -1195,7 +1195,7 @@ export class AiService {
       }
     }
 
-    return `GenAI returned status ${responseStatus}.`;
+    return `The AI provider returned status ${responseStatus}.`;
   }
 
   private extractText(
@@ -1216,7 +1216,7 @@ export class AiService {
 
     throw this.createProviderException(
       502,
-      `GenAI model ${model} did not return any text content.`,
+      `AI provider model ${model} did not return any text content.`,
       publicMessage,
       operation,
     );
@@ -1229,14 +1229,14 @@ export class AiService {
     operation: 'improveText' | 'generateNewsletter',
   ): BadGatewayException {
     this.logger.error(
-      `AI ${operation} failed with provider=genai status=${providerStatus} error=${providerError}`,
+      `AI ${operation} failed with provider=external-ai status=${providerStatus} error=${providerError}`,
     );
 
     return new BadGatewayException({
       message: publicMessage,
       providerError,
       providerStatus,
-      provider: 'genai',
+      provider: 'external-ai',
     });
   }
 

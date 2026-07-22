@@ -51,7 +51,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }): React
       prevBtnText: 'Anterior',
       doneBtnText: 'Finalizar',
       progressText: '{{current}} de {{total}}',
-      popoverClass: 'nestle-onboarding-popover',
+      popoverClass: 'app-onboarding-popover',
     })
 
     window.requestAnimationFrame(() => tourDriver.drive())

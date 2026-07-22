@@ -6,8 +6,8 @@ WORKDIR /app/frontend
 
 RUN corepack enable && corepack prepare pnpm@${PNPM_VERSION} --activate
 
-ARG VITE_API_URL=/api
-ENV VITE_API_URL=$VITE_API_URL
+ARG VITE_API_BASE_URL=/api
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 
 COPY frontend/package.json frontend/pnpm-lock.yaml ./
 

@@ -19,7 +19,7 @@ export function TypographyPage() {
       <SectionHeader
         eyebrow="Typography"
         title="Tipografia"
-        description="Fuentes Nestlé"
+        description="Tipografia base del sistema"
       />
 
       <Paper
@@ -32,7 +32,7 @@ export function TypographyPage() {
       >
         <Typography
           sx={{
-            fontFamily: `"${theme.nestle.fonts.title}"`,
+            fontFamily: `"${theme.appBrand.fonts.title}"`,
             fontSize: '2rem',
           }}
         >

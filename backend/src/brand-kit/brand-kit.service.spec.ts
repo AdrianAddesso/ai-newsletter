@@ -22,7 +22,7 @@ function createService() {
               name: 'dark-green.svg',
               type: 'SHAPE',
               bucket: 'assets-bucket',
-              object_key: 'assets/shapes/brand/nestle/dark-green.svg',
+              object_key: 'assets/shapes/brand/default-brand/dark-green.svg',
             },
           },
           {
@@ -31,7 +31,7 @@ function createService() {
               name: 'logo-white.svg',
               type: 'LOGO',
               bucket: 'assets-bucket',
-              object_key: 'assets/logos/nestle/logo-white.svg',
+              object_key: 'assets/logos/default-brand/logo-white.svg',
             },
           },
         ],
@@ -56,17 +56,17 @@ function createService() {
           fonts: [
             {
               id: 'font-b',
-              name: 'NestleTextTF-Bold.ttf',
+              name: 'CorporateSans-Bold.ttf',
               style: 'Bold',
               bucket: 'fonts-bucket',
-              object_key: 'fonts/nestle/bold.ttf',
+              object_key: 'fonts/default-brand/bold.ttf',
             },
             {
               id: 'font-a',
-              name: 'NestleTextTF-Book.ttf',
+              name: 'CorporateSans-Book.ttf',
               style: 'Book',
               bucket: 'fonts-bucket',
-              object_key: 'fonts/nestle/book.ttf',
+              object_key: 'fonts/default-brand/book.ttf',
             },
           ],
         },
@@ -85,7 +85,6 @@ function createService() {
   return {
     service: new BrandKitService(prisma, storageService),
     prisma,
-    storageService,
   };
 }
 
@@ -109,13 +108,13 @@ describe('BrandKitService', () => {
           id: 'logo-id',
           name: 'logo-white.svg',
           type: 'LOGO',
-          url: 'https://signed.example/assets-bucket/assets/logos/nestle/logo-white.svg',
+          url: 'https://signed.example/assets-bucket/assets/logos/default-brand/logo-white.svg',
         },
         {
           id: 'shape-id',
           name: 'dark-green.svg',
           type: 'SHAPE',
-          url: 'https://signed.example/assets-bucket/assets/shapes/brand/nestle/dark-green.svg',
+          url: 'https://signed.example/assets-bucket/assets/shapes/brand/default-brand/dark-green.svg',
         },
       ],
       colors: [
@@ -133,17 +132,17 @@ describe('BrandKitService', () => {
       fonts: [
         {
           id: 'font-b',
-          name: 'NestleTextTF-Bold.ttf',
+          name: 'CorporateSans-Bold.ttf',
           style: 'Bold',
           groupName: 'Lumen',
-          url: 'https://signed.example/fonts-bucket/fonts/nestle/bold.ttf',
+          url: 'https://signed.example/fonts-bucket/fonts/default-brand/bold.ttf',
         },
         {
           id: 'font-a',
-          name: 'NestleTextTF-Book.ttf',
+          name: 'CorporateSans-Book.ttf',
           style: 'Book',
           groupName: 'Lumen',
-          url: 'https://signed.example/fonts-bucket/fonts/nestle/book.ttf',
+          url: 'https://signed.example/fonts-bucket/fonts/default-brand/book.ttf',
         },
       ],
     });

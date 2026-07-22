@@ -146,7 +146,7 @@ function resolveMimeType(filePath: string): string {
 
 function printUsage(): void {
   Logger.log(
-    'Usage: pnpm --dir backend exec ts-node scripts/test-minio-upload.ts --file assets/logos/nestle_isotype.png --type LOGO',
+    'Usage: pnpm --dir backend exec ts-node scripts/test-minio-upload.ts --file assets/logos/sample-logo.png --type LOGO',
     'TestMinioUploadScript',
   );
 }

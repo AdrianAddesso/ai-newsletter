@@ -65,7 +65,7 @@ export function Navigation() {
       <Container maxWidth="lg" disableGutters>
         <Toolbar
           sx={{
-            px: theme.nestle.page.sectionPaddingX,
+            px: theme.appBrand.page.sectionPaddingX,
             py: 2,
             justifyContent: 'space-between',
             gap: 2,
@@ -83,9 +83,9 @@ export function Navigation() {
           >
             <Box
               component="img"
-              src={theme.nestle.assets.logos.nestWhite}
-              alt="Nestle"
-              sx={{ width: 80, height: 'auto', flexShrink: 0 }}
+              src={theme.appBrand.assets.logos.mark}
+              alt="App logo"
+              sx={{ width: 44, height: 'auto', flexShrink: 0 }}
             />
             <Typography
               variant="h6"

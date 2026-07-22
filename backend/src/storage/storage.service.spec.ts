@@ -16,15 +16,15 @@ describe('StorageService', () => {
     const configService = {
       get: (key: string) =>
         ({
-          S3_ENDPOINT: 'http://localhost:9000',
-          S3_PUBLIC_ENDPOINT: 'http://public-minio.example:9000',
-          S3_REGION: 'us-east-1',
-          S3_ASSETS_BUCKET: 'ai-newsletter-assets',
-          S3_FONTS_BUCKET: 'ai-newsletter-fonts',
-          S3_EXPORTS_BUCKET: 'ai-newsletter-exports',
-          S3_ACCESS_KEY: 'minioadmin',
-          S3_SECRET_KEY: 'minioadmin123',
-          S3_FORCE_PATH_STYLE: 'true',
+          OBJECT_STORAGE_ENDPOINT: 'http://localhost:9000',
+          OBJECT_STORAGE_PUBLIC_ENDPOINT: 'http://public-storage.example:9000',
+          OBJECT_STORAGE_REGION: 'us-east-1',
+          OBJECT_STORAGE_ASSETS_BUCKET: 'ai-newsletter-assets',
+          OBJECT_STORAGE_FONTS_BUCKET: 'ai-newsletter-fonts',
+          OBJECT_STORAGE_EXPORTS_BUCKET: 'ai-newsletter-exports',
+          OBJECT_STORAGE_ACCESS_KEY: 'storage-user',
+          OBJECT_STORAGE_SECRET_KEY: 'storage-password',
+          OBJECT_STORAGE_FORCE_PATH_STYLE: 'true',
         })[key],
     } as ConfigService;
 
@@ -80,7 +80,7 @@ describe('StorageService', () => {
     const signedUrlClient = getSignedUrlMock.mock.calls[0]?.[0] as S3Client;
     const endpoint = await signedUrlClient.config.endpoint?.();
 
-    expect(endpoint?.hostname).toBe('public-minio.example');
+    expect(endpoint?.hostname).toBe('public-storage.example');
     expect(endpoint?.port).toBe(9000);
   });
 });

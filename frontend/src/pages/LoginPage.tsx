@@ -1,4 +1,4 @@
-﻿import {
+import {
   Alert,
   Box,
   Button,
@@ -8,9 +8,9 @@
   Stack,
   Typography,
 } from "@mui/material";
-import GoogleIcon from '@mui/icons-material/Google';
-import lightBlue from "../assets/brand_shapes/isolated-by-brand/nestle-classic/light-blue.svg";
+import GoogleIcon from "@mui/icons-material/Google";
 import { Navigate, useLocation } from "react-router";
+import backgroundShape from "../assets/placeholders/PlaceholderBackground.svg";
 import { useAuth } from "../contexts/AuthContext";
 
 type LoginLocationState = {
@@ -44,7 +44,7 @@ export function LoginPage() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: `url(${lightBlue}) no-repeat center center fixed`,
+        background: `url(${backgroundShape}) no-repeat center center fixed`,
         backgroundSize: "cover",
         px: 2,
       }}
@@ -58,7 +58,7 @@ export function LoginPage() {
               </Typography>
               {errorMessage && <Alert severity="error">{errorMessage}</Alert>}
               <Button
-                sx={{ alignItems: "center", justifyContent: "center", justifyItems: "center"}}
+                sx={{ alignItems: "center", justifyContent: "center", justifyItems: "center" }}
                 variant="contained"
                 color="primary"
                 size="large"

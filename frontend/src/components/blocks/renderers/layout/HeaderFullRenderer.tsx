@@ -1,12 +1,10 @@
 import { Card, CardMedia, Box, Typography } from "@mui/material";
-import { useBlockPreviewUrls } from "../../../../hooks/useBlockPreviewUrls";
+import placeholderLogo from "../../../../assets/placeholders/PlaceholderIcon.svg";
 import type { BlockInstance } from "@shared/types/block.types";
 import {
   parseContent,
   resolveContentTypographySx,
 } from "../../../../utils/blockContent";
-
-const nestleIsotypeStorageKey = "assets/logos/nestle/nestle_isotype.png";
 
 interface Props {
   block: BlockInstance;
@@ -21,11 +19,10 @@ export function HeaderFullRenderer({
   rightImageUrl,
 }: Props) {
   const values = parseContent(block.content);
-  const { title = "", subtitle = "", href = "" } = values;
+  const { title = "", subtitle = "" } = values;
   const titleTypographySx = resolveContentTypographySx(values, "title");
   const subtitleTypographySx = resolveContentTypographySx(values, "subtitle");
-  const previewUrls = useBlockPreviewUrls([nestleIsotypeStorageKey], "LOGO");
-  const defaultImageUrl = previewUrls[nestleIsotypeStorageKey] ?? "";
+  const defaultImageUrl = placeholderLogo;
   const backgroundColor = values.bgColor || "#FF595A";
 
   return (

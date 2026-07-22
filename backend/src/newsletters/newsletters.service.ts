@@ -859,7 +859,7 @@ export class NewsLettersService {
     );
     const html = await renderMjml(mjml);
     const content = await this.buildEmlMessage(
-      newsletter.title || 'Newsletter Nestle',
+      newsletter.title || 'Newsletter',
       html,
       attachments.files,
     );
@@ -1179,7 +1179,7 @@ export class NewsLettersService {
         continue;
       }
 
-      const cid = `newsletter-block-snapshot-${snapshotIndex}@nestle-ai-newsletter`;
+      const cid = `newsletter-block-snapshot-${snapshotIndex}@newsletter-app.local`;
 
       snapshotByBlockId.set(snapshot.blockId, {
         cid,
@@ -1221,7 +1221,7 @@ export class NewsLettersService {
           binding.bucket!,
           binding.objectKey!,
         );
-        const cid = `newsletter-asset-${index}@nestle-ai-newsletter`;
+        const cid = `newsletter-asset-${index}@newsletter-app.local`;
         const filename =
           binding.fileName ||
           `${binding.assetName || `asset-${index}`}.${this.extensionFromMimeType(binding.mimeType)}`;

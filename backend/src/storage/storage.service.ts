@@ -101,12 +101,12 @@ export class StorageService {
     }
 
     this.client = new S3Client({
-      endpoint: this.readRequiredEnv('S3_ENDPOINT'),
-      region: this.readRequiredEnv('S3_REGION'),
-      forcePathStyle: this.readBooleanEnv('S3_FORCE_PATH_STYLE'),
+      endpoint: this.readRequiredEnv('OBJECT_STORAGE_ENDPOINT'),
+      region: this.readRequiredEnv('OBJECT_STORAGE_REGION'),
+      forcePathStyle: this.readBooleanEnv('OBJECT_STORAGE_FORCE_PATH_STYLE'),
       credentials: {
-        accessKeyId: this.readRequiredEnv('S3_ACCESS_KEY'),
-        secretAccessKey: this.readRequiredEnv('S3_SECRET_KEY'),
+        accessKeyId: this.readRequiredEnv('OBJECT_STORAGE_ACCESS_KEY'),
+        secretAccessKey: this.readRequiredEnv('OBJECT_STORAGE_SECRET_KEY'),
       },
     });
 
@@ -120,13 +120,13 @@ export class StorageService {
 
     this.signedUrlClient = new S3Client({
       endpoint:
-        this.readOptionalEnv('S3_PUBLIC_ENDPOINT') ??
-        this.readRequiredEnv('S3_ENDPOINT'),
-      region: this.readRequiredEnv('S3_REGION'),
-      forcePathStyle: this.readBooleanEnv('S3_FORCE_PATH_STYLE'),
+        this.readOptionalEnv('OBJECT_STORAGE_PUBLIC_ENDPOINT') ??
+        this.readRequiredEnv('OBJECT_STORAGE_ENDPOINT'),
+      region: this.readRequiredEnv('OBJECT_STORAGE_REGION'),
+      forcePathStyle: this.readBooleanEnv('OBJECT_STORAGE_FORCE_PATH_STYLE'),
       credentials: {
-        accessKeyId: this.readRequiredEnv('S3_ACCESS_KEY'),
-        secretAccessKey: this.readRequiredEnv('S3_SECRET_KEY'),
+        accessKeyId: this.readRequiredEnv('OBJECT_STORAGE_ACCESS_KEY'),
+        secretAccessKey: this.readRequiredEnv('OBJECT_STORAGE_SECRET_KEY'),
       },
     });
 
@@ -134,15 +134,15 @@ export class StorageService {
   }
 
   getAssetsBucket(): string {
-    return this.readRequiredEnv('S3_ASSETS_BUCKET');
+    return this.readRequiredEnv('OBJECT_STORAGE_ASSETS_BUCKET');
   }
 
   getFontsBucket(): string {
-    return this.readRequiredEnv('S3_FONTS_BUCKET');
+    return this.readRequiredEnv('OBJECT_STORAGE_FONTS_BUCKET');
   }
 
   getExportsBucket(): string {
-    return this.readRequiredEnv('S3_EXPORTS_BUCKET');
+    return this.readRequiredEnv('OBJECT_STORAGE_EXPORTS_BUCKET');
   }
 
   private readRequiredEnv(key: string): string {

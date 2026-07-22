@@ -183,8 +183,8 @@ export function TemplatesPage() {
     return (
       <Box
         sx={{
-          py: theme.nestle?.page?.sectionPaddingY || 4,
-          px: theme.nestle?.page?.sectionPaddingX || 2,
+          py: theme.appBrand?.page?.sectionPaddingY || 4,
+          px: theme.appBrand?.page?.sectionPaddingX || 2,
           bgcolor: "background.default",
           minHeight: "100vh",
           display: "flex",
@@ -200,8 +200,8 @@ export function TemplatesPage() {
   return (
     <Box
       sx={{
-        py: theme.nestle?.page?.sectionPaddingY || 4,
-        px: theme.nestle?.page?.sectionPaddingX || 2,
+        py: theme.appBrand?.page?.sectionPaddingY || 4,
+        px: theme.appBrand?.page?.sectionPaddingX || 2,
         bgcolor: "background.default",
         minHeight: "100vh",
       }}

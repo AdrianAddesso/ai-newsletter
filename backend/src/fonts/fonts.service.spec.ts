@@ -2,7 +2,6 @@ import { BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
 import { FontsService } from './fonts.service';
-import type { UploadedFontFile } from './dto/upload-font.dto';
 
 function createService() {
   const uploadObjectMock = jest.fn().mockResolvedValue(undefined);
@@ -19,10 +18,10 @@ function createService() {
     fonts: {
       create: jest.fn().mockResolvedValue({
         id: 'font-id',
-        name: 'NestleTextTF-BoldItalic.ttf',
+        name: 'CorporateSans-BoldItalic.ttf',
         style: 'BoldItalic',
         bucket: 'ai-newsletter-fonts',
-        object_key: 'fonts/uploads/nestle/nestletexttf-bolditalic-fake.ttf',
+        object_key: 'fonts/uploads/default-brand/corporatesans-bolditalic-fake.ttf',
         font_groups: {
           name: 'Lumen',
         },
@@ -30,10 +29,10 @@ function createService() {
       findMany: jest.fn().mockResolvedValue([
         {
           id: 'seed-font-id',
-          name: 'NestleTextTF-BoldItalic.ttf',
+          name: 'CorporateSans-BoldItalic.ttf',
           style: 'BoldItalic',
           bucket: 'ai-newsletter-fonts',
-          object_key: 'fonts/nestle/NestleTextTF-BoldItalic.ttf',
+          object_key: 'fonts/default-brand/CorporateSans-BoldItalic.ttf',
           font_groups: {
             name: 'Lumen',
           },
@@ -53,7 +52,6 @@ function createService() {
   return {
     service: new FontsService(prisma, storageService),
     uploadObjectMock,
-    prisma,
   };
 }
 
@@ -69,7 +67,7 @@ describe('FontsService', () => {
       service.uploadFonts(
         [
           {
-            originalname: 'NestleTextTF-BoldItalic.ttf',
+            originalname: 'CorporateSans-BoldItalic.ttf',
             mimetype: 'font/ttf',
             size: 4096,
             buffer: Buffer.from('fake-font'),
@@ -81,7 +79,7 @@ describe('FontsService', () => {
       fonts: [
         {
           id: 'font-id',
-          name: 'NestleTextTF-BoldItalic.ttf',
+          name: 'CorporateSans-BoldItalic.ttf',
           style: 'BoldItalic',
           groupName: 'Lumen',
           url: 'http://localhost:9000/ai-newsletter-fonts/fake',
@@ -92,7 +90,7 @@ describe('FontsService', () => {
     expect(uploadObjectMock).toHaveBeenCalledWith(
       'ai-newsletter-fonts',
       expect.stringMatching(
-        /^fonts\/uploads\/nestle\/nestletexttf-bolditalic-/,
+        /^fonts\/uploads\/default-brand\/corporatesans-bolditalic-/,
       ),
       Buffer.from('fake-font'),
       'font/ttf',
@@ -106,7 +104,7 @@ describe('FontsService', () => {
       fonts: [
         {
           id: 'seed-font-id',
-          name: 'NestleTextTF-BoldItalic.ttf',
+          name: 'CorporateSans-BoldItalic.ttf',
           style: 'BoldItalic',
           groupName: 'Lumen',
           url: 'http://localhost:9000/ai-newsletter-fonts/fake',

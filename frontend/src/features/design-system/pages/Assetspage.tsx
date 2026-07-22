@@ -20,7 +20,7 @@ export function AssetsPage() {
       <SectionHeader
         eyebrow="Theme assets"
         title="Logos disponibles para paginas"
-        description="El theme registra los dos logos blancos pensados para fondos de color."
+        description="El theme registra recursos visuales genericos para fondos de color."
       />
 
       <BackendConnectionDemo />
@@ -46,13 +46,13 @@ export function AssetsPage() {
           <Stack spacing={2}>
             <Box
               component="img"
-              src={theme.nestle.assets.logos.signatureWhite}
-              alt="Nestle"
-              sx={{ width: 230 }}
+              src={theme.appBrand.assets.logos.primary}
+              alt="Logo generico"
+              sx={{ width: 96 }}
             />
 
             <Typography variant="h4">
-              Firma completa
+              Marca principal
             </Typography>
           </Stack>
         </Paper>

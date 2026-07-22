@@ -1,6 +1,4 @@
-import templateClassicImage from "../assets/we_make_nestle/wmn-lockup-one-line-dark-oak-on-white.jpg";
-import templateEditorialImage from "../assets/we_make_nestle/wmn-lockup-two-lines-dark-oak-on-white.jpg";
-import templateBriefImage from "../assets/we_make_nestle/wmn-lockup-three-lines-dark-oak-on-white.jpg";
+import templatePreviewImage from "../assets/placeholders/PlaceholderImage.svg";
 import { AreaNameLabel } from "@shared/enums/area-name.enum";
 import type {
   AreaName,
@@ -32,11 +30,11 @@ export function getTemplatePreviewImage(layout: TemplateLayoutBlock[] | string |
 
   switch (layoutName) {
     case "EDITORIAL":
-      return templateEditorialImage;
+      return templatePreviewImage;
     case "BRIEF":
-      return templateBriefImage;
+      return templatePreviewImage;
     case "CLASSIC":
     default:
-      return templateClassicImage;
+      return templatePreviewImage;
   }
 }

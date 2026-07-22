@@ -3,7 +3,7 @@ import axios from 'axios'
 const defaultApiBaseUrl = '/api'
 
 export const apiBaseUrl = (
-  import.meta.env.VITE_API_URL ?? defaultApiBaseUrl
+  import.meta.env.VITE_API_BASE_URL ?? defaultApiBaseUrl
 ).replace(/\/$/, '')
 
 export function configureAxiosBaseUrl() {

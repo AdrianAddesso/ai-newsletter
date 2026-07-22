@@ -38,11 +38,15 @@ WHITE = colors.white
 
 def register_fonts() -> tuple[str, str]:
     font_dir = ROOT / "frontend" / "src" / "assets" / "fonts"
-    regular = font_dir / "NestleTextTF-BookCnd.ttf"
-    bold = font_dir / "NestleTextTF-Bold.ttf"
-    pdfmetrics.registerFont(TTFont("NestleText", str(regular)))
-    pdfmetrics.registerFont(TTFont("NestleTextBold", str(bold)))
-    return "NestleText", "NestleTextBold"
+    regular = next(iter(sorted(font_dir.glob("*Book*.ttf"))), None)
+    bold = next(iter(sorted(font_dir.glob("*Bold*.ttf"))), None)
+
+    if regular is None or bold is None:
+        return "Helvetica", "Helvetica-Bold"
+
+    pdfmetrics.registerFont(TTFont("GuideBodyFont", str(regular)))
+    pdfmetrics.registerFont(TTFont("GuideHeadingFont", str(bold)))
+    return "GuideBodyFont", "GuideHeadingFont"
 
 
 REGULAR_FONT, BOLD_FONT = register_fonts()

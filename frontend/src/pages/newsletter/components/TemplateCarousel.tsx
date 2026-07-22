@@ -67,9 +67,7 @@ export function TemplateCarousel({
       return
     }
 
-    const defaultBrandKit =
-      brandKitOptions.find((brandKit) => brandKit.name === 'Nestle') ??
-      brandKitOptions[0]
+    const defaultBrandKit = brandKitOptions[0]
 
     if (defaultBrandKit) {
       onSelectBrandKit(defaultBrandKit.id)

@@ -1,23 +1,16 @@
 import { createTheme } from '@mui/material/styles';
-import nestleTextBold from '../assets/fonts/NestleTextTF-Bold.ttf';
-import nestleTextBoldCnd from '../assets/fonts/NestleTextTF-BoldCnd.ttf';
-import nestleTextBoldCndItalic from '../assets/fonts/NestleTextTF-BoldCndItalic.ttf';
-import nestleTextBoldItalic from '../assets/fonts/NestleTextTF-BoldItalic.ttf';
-import nestleTextBookCnd from '../assets/fonts/NestleTextTF-BookCnd.ttf';
-import nestleTextBookCndItalic from '../assets/fonts/NestleTextTF-BookCndItalic.ttf';
-import nestleTextLightCnd from '../assets/fonts/NestleTextTF-LightCnd.ttf';
-import nestleLogoSignatureWhite from '../assets/logos/Nestle_GoodFoodGoodLifeLogo_White_RGB.png';
-import nestleLogoNestWhite from '../assets/logos/Nestle_NestLogo_White_RGB.png';
+import placeholderIcon from '../assets/placeholders/PlaceholderIcon.svg';
 
-const nestleTextBoldFamily = 'Nestle Text TF Bold';
-const nestleTextBoldCndFamily = 'Nestle Text TF Bold Condensed';
-const nestleTextBookCndFamily = 'Nestle Text TF Book Condensed';
-const nestleTextLightCndFamily = 'Nestle Text TF Light Condensed';
+const fontStack = (...families: string[]): string =>
+  [...families, 'Arial', 'sans-serif']
+    .map((family) =>
+      family.includes(' ') ? `"${family}"` : family,
+    )
+    .join(',');
 
-const fontStack = (family: string) => [`"${family}"`, 'Arial', 'sans-serif'].join(',');
-const bodyFontStack = fontStack(nestleTextBookCndFamily);
-const titleFontStack = fontStack(nestleTextBoldCndFamily);
-const emphasisFontStack = fontStack(nestleTextBoldFamily);
+const bodyFontStack = fontStack('Trebuchet MS');
+const titleFontStack = fontStack('Arial Narrow', 'Arial');
+const emphasisFontStack = fontStack('Arial');
 
 const brandColors = {
   red: '#FF595A',
@@ -102,66 +95,15 @@ declare module '@mui/material/styles' {
   }
 
   interface PaletteOptions {
-    brand?: {
-      red?: string;
-      darkOak?: string;
-      white?: string;
-      blueDark?: string;
-      blueLight?: string;
-      greenDark?: string;
-      greenLight?: string;
-      turquoiseDark?: string;
-      turquoiseLight?: string;
-      purpleDark?: string;
-      purpleLight?: string;
-      orange?: string;
-      yellowDark?: string;
-      yellowLight?: string;
-      backgroundsWithText?: {
-        blue?: string;
-        green?: string;
-        turquoise?: string;
-        purple?: string;
-        yellow?: string;
-      };
-      keywordFills?: {
-        yellow?: string;
-        purple?: string;
-        turquoise?: string;
-        green?: string;
-        blue?: string;
-        orange?: string;
-      };
-      keywordShadows?: {
-        yellow?: string;
-        purple?: string;
-        turquoise?: string;
-        green?: string;
-        blue?: string;
-        orange?: string;
-      };
-      shapeFills?: {
-        lightBlue?: string;
-        darkBlue?: string;
-        lightGreen?: string;
-        darkGreen?: string;
-        lightTurquoise?: string;
-        darkTurquoise?: string;
-        lightPurple?: string;
-        darkPurple?: string;
-        orange?: string;
-        lightYellow?: string;
-        darkYellow?: string;
-      };
-    };
+    brand?: Partial<Palette['brand']>;
   }
 
   interface Theme {
-    nestle: {
+    appBrand: {
       assets: {
         logos: {
-          signatureWhite: string;
-          nestWhite: string;
+          primary: string;
+          mark: string;
         };
       };
       fonts: {
@@ -185,49 +127,25 @@ declare module '@mui/material/styles' {
   }
 
   interface ThemeOptions {
-    nestle?: {
-      assets?: {
-        logos?: {
-          signatureWhite?: string;
-          nestWhite?: string;
-        };
-      };
-      fonts?: {
-        body?: string;
-        title?: string;
-        emphasis?: string;
-        light?: string;
-      };
-      page?: {
-        maxWidth?: number;
-        sectionPaddingX?: {
-          xs?: number;
-          md?: number;
-        };
-        sectionPaddingY?: {
-          xs?: number;
-          md?: number;
-        };
-      };
-    };
+    appBrand?: Partial<Theme['appBrand']>;
   }
 }
 
-export const nestlePageAssets = {
+export const appBrandAssets = {
   logos: {
-    signatureWhite: nestleLogoSignatureWhite,
-    nestWhite: nestleLogoNestWhite,
+    primary: placeholderIcon,
+    mark: placeholderIcon,
   },
 } as const;
 
 const theme = createTheme({
-  nestle: {
-    assets: nestlePageAssets,
+  appBrand: {
+    assets: appBrandAssets,
     fonts: {
-      body: nestleTextBookCndFamily,
-      title: nestleTextBoldCndFamily,
-      emphasis: nestleTextBoldFamily,
-      light: nestleTextLightCndFamily,
+      body: 'Trebuchet MS',
+      title: 'Arial Narrow',
+      emphasis: 'Arial',
+      light: 'Arial',
     },
     page: {
       maxWidth: 1180,
@@ -245,7 +163,7 @@ const theme = createTheme({
     borderRadius: 8,
   },
   palette: {
-    mode: "light",
+    mode: 'light',
     primary: {
       main: brandColors.red,
       contrastText: brandColors.white,
@@ -271,14 +189,14 @@ const theme = createTheme({
     },
     text: {
       primary: brandColors.darkOak,
-      secondary: "rgba(48, 38, 29, 0.72)",
-      disabled: "rgba(48, 38, 29, 0.48)",
+      secondary: 'rgba(48, 38, 29, 0.72)',
+      disabled: 'rgba(48, 38, 29, 0.48)',
     },
     background: {
       default: brandColors.white,
       paper: brandColors.white,
     },
-    divider: "rgba(48, 38, 29, 0.14)",
+    divider: 'rgba(48, 38, 29, 0.14)',
     brand: {
       ...brandColors,
       backgroundsWithText: {
@@ -318,171 +236,115 @@ const theme = createTheme({
     h1: {
       fontFamily: titleFontStack,
       fontWeight: 700,
-      fontSize: "3.5rem",
+      fontSize: '3.5rem',
       lineHeight: 0.98,
       letterSpacing: 0,
     },
     h2: {
       fontFamily: titleFontStack,
       fontWeight: 700,
-      fontSize: "2.5rem",
+      fontSize: '2.5rem',
       lineHeight: 1.05,
       letterSpacing: 0,
     },
     h3: {
       fontFamily: titleFontStack,
       fontWeight: 700,
-      fontSize: "2rem",
+      fontSize: '2rem',
       lineHeight: 1.08,
       letterSpacing: 0,
     },
     h4: {
       fontFamily: titleFontStack,
       fontWeight: 700,
-      fontSize: "1.75rem",
+      fontSize: '1.75rem',
       lineHeight: 1.12,
       letterSpacing: 0,
     },
     h5: {
       fontFamily: titleFontStack,
       fontWeight: 700,
-      fontSize: "1.5rem",
+      fontSize: '1.5rem',
       lineHeight: 1.15,
       letterSpacing: 0,
     },
     h6: {
       fontFamily: titleFontStack,
       fontWeight: 700,
-      fontSize: "1.25rem",
+      fontSize: '1.25rem',
       lineHeight: 1.2,
       letterSpacing: 0,
     },
     subtitle1: {
       fontFamily: emphasisFontStack,
       fontWeight: 700,
-      fontSize: "1.125rem",
+      fontSize: '1.125rem',
       lineHeight: 1.35,
       letterSpacing: 0,
     },
     subtitle2: {
       fontFamily: titleFontStack,
       fontWeight: 700,
-      fontSize: "1rem",
+      fontSize: '1rem',
       lineHeight: 1.35,
       letterSpacing: 0,
     },
     body1: {
       fontFamily: bodyFontStack,
       fontWeight: 400,
-      fontSize: "1.0625rem",
+      fontSize: '1.0625rem',
       lineHeight: 1.55,
       letterSpacing: 0,
     },
     body2: {
       fontFamily: bodyFontStack,
       fontWeight: 400,
-      fontSize: "0.9375rem",
+      fontSize: '0.9375rem',
       lineHeight: 1.5,
       letterSpacing: 0,
     },
     button: {
       fontFamily: titleFontStack,
       fontWeight: 700,
-      fontSize: "0.95rem",
+      fontSize: '0.95rem',
       lineHeight: 1.2,
       letterSpacing: 0,
-      textTransform: "none",
+      textTransform: 'none',
     },
     caption: {
       fontFamily: bodyFontStack,
       fontWeight: 400,
-      fontSize: "0.75rem",
+      fontSize: '0.75rem',
       lineHeight: 1.35,
       letterSpacing: 0,
     },
     overline: {
       fontFamily: titleFontStack,
       fontWeight: 700,
-      fontSize: "0.75rem",
+      fontSize: '0.75rem',
       lineHeight: 1.35,
       letterSpacing: 0,
-      textTransform: "uppercase",
+      textTransform: 'uppercase',
     },
   },
   components: {
     MuiCssBaseline: {
       styleOverrides: `
-        @font-face {
-          font-family: '${nestleTextBookCndFamily}';
-          src: url('${nestleTextBookCnd}') format('truetype');
-          font-weight: 400;
-          font-style: normal;
-          font-display: swap;
-        }
-
-        @font-face {
-          font-family: '${nestleTextBookCndFamily}';
-          src: url('${nestleTextBookCndItalic}') format('truetype');
-          font-weight: 400;
-          font-style: italic;
-          font-display: swap;
-        }
-
-        @font-face {
-          font-family: '${nestleTextBoldCndFamily}';
-          src: url('${nestleTextBoldCnd}') format('truetype');
-          font-weight: 700;
-          font-style: normal;
-          font-display: swap;
-        }
-
-        @font-face {
-          font-family: '${nestleTextBoldCndFamily}';
-          src: url('${nestleTextBoldCndItalic}') format('truetype');
-          font-weight: 700;
-          font-style: italic;
-          font-display: swap;
-        }
-
-        @font-face {
-          font-family: '${nestleTextBoldFamily}';
-          src: url('${nestleTextBold}') format('truetype');
-          font-weight: 700;
-          font-style: normal;
-          font-display: swap;
-        }
-
-        @font-face {
-          font-family: '${nestleTextBoldFamily}';
-          src: url('${nestleTextBoldItalic}') format('truetype');
-          font-weight: 700;
-          font-style: italic;
-          font-display: swap;
-        }
-
-        @font-face {
-          font-family: '${nestleTextLightCndFamily}';
-          src: url('${nestleTextLightCnd}') format('truetype');
-          font-weight: 300;
-          font-style: normal;
-          font-display: swap;
-        }
-
         :root {
-          --nestle-red: ${brandColors.red};
-          --nestle-dark-oak: ${brandColors.darkOak};
-          --nestle-white: ${brandColors.white};
-          --nestle-blue-dark: ${brandColors.blueDark};
-          --nestle-blue-light: ${brandColors.blueLight};
-          --nestle-green-dark: ${brandColors.greenDark};
-          --nestle-green-light: ${brandColors.greenLight};
-          --nestle-turquoise-dark: ${brandColors.turquoiseDark};
-          --nestle-turquoise-light: ${brandColors.turquoiseLight};
-          --nestle-purple-dark: ${brandColors.purpleDark};
-          --nestle-purple-light: ${brandColors.purpleLight};
-          --nestle-orange: ${brandColors.orange};
-          --nestle-yellow-dark: ${brandColors.yellowDark};
-          --nestle-yellow-light: ${brandColors.yellowLight};
+          --app-red: ${brandColors.red};
+          --app-dark-oak: ${brandColors.darkOak};
+          --app-white: ${brandColors.white};
+          --app-blue-dark: ${brandColors.blueDark};
+          --app-blue-light: ${brandColors.blueLight};
+          --app-green-dark: ${brandColors.greenDark};
+          --app-green-light: ${brandColors.greenLight};
+          --app-turquoise-dark: ${brandColors.turquoiseDark};
+          --app-turquoise-light: ${brandColors.turquoiseLight};
+          --app-purple-dark: ${brandColors.purpleDark};
+          --app-purple-light: ${brandColors.purpleLight};
+          --app-orange: ${brandColors.orange};
+          --app-yellow-dark: ${brandColors.yellowDark};
+          --app-yellow-light: ${brandColors.yellowLight};
         }
 
         body {
@@ -508,31 +370,31 @@ const theme = createTheme({
       },
       variants: [
         {
-          props: { variant: "contained", color: "primary" },
+          props: { variant: 'contained', color: 'primary' },
           style: {
             backgroundColor: brandColors.red,
             color: brandColors.white,
-            "&:hover": {
-              backgroundColor: "#E94B4C",
+            '&:hover': {
+              backgroundColor: '#E94B4C',
             },
           },
         },
         {
-          props: { variant: "contained", color: "secondary" },
+          props: { variant: 'contained', color: 'secondary' },
           style: {
             backgroundColor: brandColors.blueDark,
             color: brandColors.white,
-            "&:hover": {
-              backgroundColor: "#008ECA",
+            '&:hover': {
+              backgroundColor: '#008ECA',
             },
           },
         },
         {
-          props: { variant: "outlined" },
+          props: { variant: 'outlined' },
           style: {
-            borderColor: "currentColor",
+            borderColor: 'currentColor',
             borderWidth: 2,
-            "&:hover": {
+            '&:hover': {
               borderWidth: 2,
             },
           },
@@ -562,21 +424,21 @@ const theme = createTheme({
     },
     MuiContainer: {
       defaultProps: {
-        maxWidth: "lg",
+        maxWidth: 'lg',
       },
       styleOverrides: {
         root: {
-          width: "100%",
+          width: '100%',
         },
       },
     },
     MuiLink: {
       styleOverrides: {
         root: {
-          color: "inherit",
+          color: 'inherit',
           fontFamily: emphasisFontStack,
           fontWeight: 700,
-          textDecorationColor: "currentColor",
+          textDecorationColor: 'currentColor',
           textUnderlineOffset: 3,
         },
       },
@@ -598,8 +460,8 @@ const theme = createTheme({
   },
 });
 
-export const nestlePageGuidelines = {
-  useRedAsMainKeyVisualBackgroundOnly: true,
+export const appBrandGuidelines = {
+  useAccentColorAsMainKeyVisualBackgroundOnly: true,
   useDarkShadeBackgroundsWhenPagesContainText: true,
   keywordTextColor: brandColors.darkOak,
   keywordFillColors: Object.values({
@@ -612,8 +474,8 @@ export const nestlePageGuidelines = {
   }),
   shapeForbiddenColors: [brandColors.red, brandColors.darkOak, brandColors.white],
   logoUsage: {
-    onColorBackgrounds: 'white',
-    onWhiteBackgrounds: 'dark-oak version required when available',
+    onColorBackgrounds: 'light mark',
+    onLightBackgrounds: 'dark mark when available',
   },
 } as const;
 
