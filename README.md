@@ -59,4 +59,3 @@ pnpm build
 
 - Environment variables are expected to be provided locally and are not committed.
 - Asset seeding is intentionally disabled in this sanitized case-study version.
-- Generated output artifacts under `output/pdf/` are ignored.

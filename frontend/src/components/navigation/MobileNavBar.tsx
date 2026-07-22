@@ -12,7 +12,6 @@ import {
 import MenuIcon from '@mui/icons-material/Menu'
 import PeopleIcon from '@mui/icons-material/People'
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings'
-import DownloadIcon from '@mui/icons-material/Download'
 import HelpOutlineIcon from '@mui/icons-material/HelpOutlined'
 import type { MouseEvent } from 'react'
 import type { User } from '../../contexts/AuthContext'
@@ -29,7 +28,6 @@ interface MobileNavBarProps {
   onNavigate: (path: string) => void
   canStartTour: boolean
   currentTourTitle: string | null
-  guideUrl: string
   onStartTour: () => void
   user: User
 }
@@ -47,7 +45,6 @@ export function MobileNavBar({
   onNavigate,
   canStartTour,
   currentTourTitle,
-  guideUrl,
   onStartTour,
   user,
 }: MobileNavBarProps) {
@@ -57,7 +54,7 @@ export function MobileNavBar({
     <Box sx={{ display: { xs: 'flex', md: 'none' } }}>
       <IconButton
         onClick={onMenuOpen}
-        aria-label="Abrir menú de navegación"
+        aria-label="Abrir menu de navegacion"
         sx={{ color: 'brand.white' }}
       >
         <MenuIcon />
@@ -151,12 +148,6 @@ export function MobileNavBar({
           </Box>
         ) : null}
         <Divider />
-        <MenuItem component="a" href={guideUrl} download onClick={onMenuClose}>
-          <ListItemIcon>
-            <DownloadIcon fontSize="small" />
-          </ListItemIcon>
-          Descargar guía de usuario
-        </MenuItem>
         {canStartTour ? (
           <MenuItem
             onClick={() => {
@@ -167,12 +158,12 @@ export function MobileNavBar({
             <ListItemIcon>
               <HelpOutlineIcon fontSize="small" />
             </ListItemIcon>
-            {currentTourTitle ? `Recorrer: ${currentTourTitle}` : 'Recorrer esta página'}
+            {currentTourTitle ? `Recorrer: ${currentTourTitle}` : 'Recorrer esta pagina'}
           </MenuItem>
         ) : null}
         <Divider />
         <MenuItem onClick={onLogout} sx={{ color: 'error.main', fontWeight: 600 }}>
-          Cerrar sesión
+          Cerrar sesion
         </MenuItem>
       </Menu>
     </Box>

@@ -7,8 +7,6 @@ import { MobileNavBar } from './navigation/MobileNavBar'
 import { navLinks } from './navigation/navigation'
 import { useOnboarding } from '../onboarding/OnboardingProvider'
 
-const guideUrl = `${import.meta.env.BASE_URL}guia-de-usuario-ai-newsletter.pdf`
-
 export function Navigation() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -110,7 +108,6 @@ export function Navigation() {
             onNavigate={handleNavigate}
             canStartTour={canStartCurrentTour}
             currentTourTitle={currentTourTitle}
-            guideUrl={guideUrl}
             onStartTour={startCurrentTour}
             user={user}
           />
@@ -125,7 +122,6 @@ export function Navigation() {
             onNavigate={handleNavigate}
             canStartTour={canStartCurrentTour}
             currentTourTitle={currentTourTitle}
-            guideUrl={guideUrl}
             onStartTour={startCurrentTour}
             user={user}
           />
