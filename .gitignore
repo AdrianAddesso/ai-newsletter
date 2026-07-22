@@ -16,5 +16,6 @@ frontend/build/
 node_modules/
 dist/
 packages/shared/dist/
+output/pdf/
 
 backend/eslint.config.mjs
